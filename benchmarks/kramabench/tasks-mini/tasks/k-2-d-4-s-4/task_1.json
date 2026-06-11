@@ -1,0 +1,94 @@
+{
+  "question": "Among Boston, Chatham, Amherst, and Ashburnham, which region had the largest total rainfall across June, July, and August in 2020? Write your answer as [ANSWER].",
+  "answer": "Ashburnham",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-easy-5/files/monthly_precipitations_boston.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\nwith open(path, newline='', encoding='utf-8') as f:\n    row = next(r for r in csv.DictReader(f) if r['Year'] == '2020')\nmonths = ['Jun', 'Jul', 'Aug']\nresult = round(sum(float(row[month]) for month in months), 2)\nprint(result)\n",
+      "subquestion": "What was the total June-through-August rainfall for Boston in 2020?",
+      "answer": 6.89
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-easy-5/files/monthly_precipitations_chatham.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv'\nwith open(path, newline='', encoding='utf-8') as f:\n    row = next(r for r in csv.DictReader(f) if r['Year'] == '2020')\nmonths = ['Jun', 'Jul', 'Aug']\nresult = round(sum(float(row[month]) for month in months), 2)\nprint(result)\n",
+      "subquestion": "What was the total June-through-August rainfall for Chatham in 2020?",
+      "answer": 2.78
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-easy-5/files/monthly_precipitations_amherst.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv'\nwith open(path, newline='', encoding='utf-8') as f:\n    row = next(r for r in csv.DictReader(f) if r['Year'] == '2020')\nmonths = ['Jun', 'Jul', 'Aug']\nresult = round(sum(float(row[month]) for month in months), 2)\nprint(result)\n",
+      "subquestion": "What was the total June-through-August rainfall for Amherst in 2020?",
+      "answer": 9.49
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-easy-5/files/monthly_precipitations_ashburnham.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv'\nwith open(path, newline='', encoding='utf-8') as f:\n    row = next(r for r in csv.DictReader(f) if r['Year'] == '2020')\nmonths = ['Jun', 'Jul', 'Aug']\nresult = round(sum(float(row[month]) for month in months), 2)\nprint(result)\n",
+      "subquestion": "What was the total June-through-August rainfall for Ashburnham in 2020?",
+      "answer": 11.08
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-easy-5/files/monthly_precipitations_ashburnham.csv",
+      "fact": "import os\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv'\nif not os.path.exists(path):\n    raise FileNotFoundError(path)\nnode_1_answer = 6.89\nnode_2_answer = 2.78\nnode_3_answer = 9.49\nnode_4_answer = 11.08\ntotals = {\n    'Boston': node_1_answer,\n    'Chatham': node_2_answer,\n    'Amherst': node_3_answer,\n    'Ashburnham': node_4_answer,\n}\nresult = max(totals, key=totals.get)\nprint(result)\n",
+      "subquestion": "Using the four regional summer rainfall totals, which region had the largest total?",
+      "answer": "Ashburnham"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Boston's June-through-August 2020 rainfall total is 6.89.",
+    "Node 2: Chatham's June-through-August 2020 rainfall total is 2.78.",
+    "Node 3: Amherst's June-through-August 2020 rainfall total is 9.49.",
+    "Node 4: Ashburnham's June-through-August 2020 rainfall total is 11.08.",
+    "Node 5 depends on nodes 1, 2, 3, and 4: Ashburnham has the largest total rainfall among the four regions.",
+    "Final answer: Ashburnham"
+  ],
+  "datasets_used": [
+    "kramabench-environment-easy-5"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Compute each region's June-through-August 2020 rainfall total.",
+      "answer": "Boston = 6.89; Chatham = 2.78; Amherst = 9.49; Ashburnham = 11.08"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on nodes 1, 2, 3, and 4: select the region with the largest summer rainfall total.",
+      "answer": "Ashburnham"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-easy-5",
+    "domain": "environment",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-easy-5.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-5",
+    "s3_mirror_prefix": "datagov/kramabench-environment-easy-5/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

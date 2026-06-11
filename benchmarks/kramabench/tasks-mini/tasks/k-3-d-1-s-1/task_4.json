@@ -1,0 +1,86 @@
+{
+  "question": "Across the years, what was the percent of years the wet-dry index was increasing? Give your answer in percentage, round your answer to 2 decimal places. Write your answer as [ANSWER].",
+  "answer": "37.95",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nresult = str(len(climate))\nprint(result)\n",
+      "subquestion": "After cleaning the climate measurements table as in the source script, how many rows are evaluated?",
+      "answer": "8360"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\ndef is_increasing(row):\n    year = row['year']\n    previous_year = climate[climate['year'] < year].sort_values('year', ascending=False).head(1)\n    next_year = climate[climate['year'] > year].sort_values('year', ascending=True).head(1)\n    try:\n        previous_year = previous_year.iloc[0]\n        last_wet = previous_year['ODP 967 wet-dry index']\n    except IndexError:\n        last_wet = 0\n    try:\n        next_year = next_year.iloc[0]\n        next_wet = next_year['ODP 967 wet-dry index']\n    except IndexError:\n        next_wet = last_wet\n    return 1 if next_wet - last_wet > 0 else 0\nflags = climate.apply(is_increasing, axis=1)\nresult = str(int(flags.sum()))\nprint(result)\n",
+      "subquestion": "Using the source-script previous/next-year comparison, how many rows have an increasing wet-dry index?",
+      "answer": "3173"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\ndef is_increasing(row):\n    year = row['year']\n    previous_year = climate[climate['year'] < year].sort_values('year', ascending=False).head(1)\n    next_year = climate[climate['year'] > year].sort_values('year', ascending=True).head(1)\n    try:\n        previous_year = previous_year.iloc[0]\n        last_wet = previous_year['ODP 967 wet-dry index']\n    except IndexError:\n        last_wet = 0\n    try:\n        next_year = next_year.iloc[0]\n        next_wet = next_year['ODP 967 wet-dry index']\n    except IndexError:\n        next_wet = last_wet\n    return 1 if next_wet - last_wet > 0 else 0\nflags = climate.apply(is_increasing, axis=1)\nresult = f\"{flags.mean() * 100:.2f}\"\nprint(result)\n",
+      "subquestion": "What percent of evaluated rows have an increasing wet-dry index, rounded to two decimals?",
+      "answer": "37.95"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read and clean the climate measurements table as the source script does.",
+    "Node 2 depends on node 1: For each row, compare the nearest earlier and later wet-dry index values and count increases.",
+    "Node 3 depends on node 2: Divide the increasing count by all evaluated rows and express it as a percentage.",
+    "Final answer: 37.95"
+  ],
+  "datasets_used": [
+    "kramabench-archeology-hard-2"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read and clean the climate measurements table as the source script does.",
+      "answer": "8360"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: For each row, compare the nearest earlier and later wet-dry index values and count increases.",
+      "answer": "3173"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Divide the increasing count by all evaluated rows and express it as a percentage.",
+      "answer": "37.95"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-hard-2",
+    "domain": "archeology",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-hard-2.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-2",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-hard-2/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "candidate_workload_answer": "38.42",
+    "source_script_verified_answer": "37.95",
+    "answer_correction_note": "The raw workload/candidate answer is stale; checked-in source script archeology-hard-2.py computes 0.3795 as a fraction, which is 37.95 percent."
+  }
+}

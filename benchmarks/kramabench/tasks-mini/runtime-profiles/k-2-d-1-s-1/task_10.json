@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-21"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-21/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv",
+    "datagov/kramabench-legal-easy-21/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter the state identity-theft table to Alabama and sum the report counts.",
+    "2. Return the Alabama total as the final count."
+  ],
+  "original_final_question": "What is the total number of identity theft reports in Alabama in 2024? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter the state identity-theft table to Alabama and sum the report counts.",
+    "Node 2 depends on node 1: Return the Alabama total as the final count.",
+    "Final answer: 16589"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-21",
+      "source": "datagov/kramabench-legal-easy-21/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv",
+      "intent": "How many Alabama identity-theft type rows are present, and what is their total report count?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nalabama_rows = [row for row in rows if row.get('State') == 'Alabama']\ncounts = [int(row['# of Reports'].replace(',', '').strip()) for row in alabama_rows]\ntotal = sum(counts)\nresult = f'{len(alabama_rows)}|{total}'\nprint(result)\n",
+      "answer": "7|16589"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-21",
+      "source": "datagov/kramabench-legal-easy-21/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv",
+      "intent": "What is the summed number of Alabama identity theft reports across all theft types?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nalabama_rows = [row for row in rows if row.get('State') == 'Alabama']\ncounts = [int(row['# of Reports'].replace(',', '').strip()) for row in alabama_rows]\ntotal = sum(counts)\nprint(total)\n",
+      "answer": 16589
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-21",
+      "source": "datagov/kramabench-legal-easy-21/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv",
+      "intent": "How many Alabama identity-theft type rows are present, and what is their total report count?",
+      "answer": "7|16589",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) || '|' || CAST(SUM(CAST(REPLACE(column2, ',', '') AS BIGINT)) AS VARCHAR) AS answer FROM t WHERE \"State: Identity Theft Reports\" = 'Alabama' AND column2 IS NOT NULL"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-21",
+      "source": "datagov/kramabench-legal-easy-21/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Identity_Theft_Reports.csv",
+      "intent": "What is the summed number of Alabama identity theft reports across all theft types?",
+      "answer": 16589,
+      "sql": "SELECT SUM(CAST(REPLACE(column2, ',', '') AS BIGINT)) AS answer FROM t WHERE \"State: Identity Theft Reports\" = 'Alabama' AND column2 IS NOT NULL"
+    }
+  ]
+}

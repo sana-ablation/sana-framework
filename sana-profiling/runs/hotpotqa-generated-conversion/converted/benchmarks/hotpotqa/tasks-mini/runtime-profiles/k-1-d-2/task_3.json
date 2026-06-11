@@ -1,0 +1,22 @@
+{
+  "dataset_sequence": [
+    "wikipedia/hotpotqa__5a7385c45542992d56e7e359",
+    "wikipedia/hotpotqa__5a7385c45542992d56e7e359"
+  ],
+  "source_sequence": [
+    "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/Doris_Lessing.txt",
+    "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/Philip_K_Dick.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Read both supporting pages and determine the relevant evidence from each.",
+    "2. Compare the evidence from the two pages and return the answer requested by the question."
+  ],
+  "original_final_question": "Who was born first, British novelist Doris Lessing or American writer Philip K. Dick? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "ideal_code": [],
+  "ideal_query": []
+}

@@ -1,0 +1,76 @@
+{
+  "question": "What is the difference between the average false discovery rate (FDR) for CBX3 rows and the average FDR for all other genes in the phospho significance sheet? Write your answer as [ANSWER].",
+  "answer": "-0.0080039753738663198",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_authoring_path):\n    excel_path = local_authoring_path\nelif os.path.exists(source):\n    excel_path = source\nelif os.path.exists(cache_path):\n    excel_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    excel_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(excel_path, sheet_name='F-SS-phospho', usecols=['Gene', 'FDR.phos'])\ngenes = df['Gene'].astype(str).str.strip()\nfdr = pd.to_numeric(df['FDR.phos'], errors='coerce')\ncbx3_mean = fdr[genes.eq('CBX3')].mean()\nresult = format(float(cbx3_mean), '.17g')\nprint(result)\n",
+      "subquestion": "In the F-SS-phospho sheet, what is the average FDR.phos value for rows where Gene is CBX3?",
+      "answer": "0.016840668972299789"
+    },
+    "2": {
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_authoring_path):\n    excel_path = local_authoring_path\nelif os.path.exists(source):\n    excel_path = source\nelif os.path.exists(cache_path):\n    excel_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    excel_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(excel_path, sheet_name='F-SS-phospho', usecols=['Gene', 'FDR.phos'])\ngenes = df['Gene'].astype(str).str.strip()\nfdr = pd.to_numeric(df['FDR.phos'], errors='coerce')\nother_mean = fdr[~genes.eq('CBX3')].mean()\nresult = format(float(other_mean), '.17g')\nprint(result)\n",
+      "subquestion": "In the F-SS-phospho sheet, what is the average FDR.phos value for rows where Gene is not CBX3?",
+      "answer": "0.024844644346166109"
+    },
+    "3": {
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_authoring_path):\n    excel_path = local_authoring_path\nelif os.path.exists(source):\n    excel_path = source\nelif os.path.exists(cache_path):\n    excel_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    excel_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(excel_path, sheet_name='F-SS-phospho', usecols=['Gene', 'FDR.phos'])\ngenes = df['Gene'].astype(str).str.strip()\nfdr = pd.to_numeric(df['FDR.phos'], errors='coerce')\ncbx3_mean = fdr[genes.eq('CBX3')].mean()\nother_mean = fdr[~genes.eq('CBX3')].mean()\nresult = format(float(cbx3_mean - other_mean), '.17g')\nprint(result)\n",
+      "subquestion": "Using the CBX3 average FDR from node 1 and the non-CBX3 average FDR from node 2, what is the CBX3 average minus the non-CBX3 average?",
+      "answer": "-0.0080039753738663198"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: In the F-SS-phospho sheet, the mean FDR.phos for CBX3 rows is 0.016840668972299789.",
+    "Node 2: In the same sheet, the mean FDR.phos for non-CBX3 rows is 0.024844644346166109.",
+    "Node 3 depends on nodes 1 and 2: subtracting the non-CBX3 mean from the CBX3 mean gives -0.0080039753738663198.",
+    "Final answer: -0.0080039753738663198"
+  ],
+  "datasets_used": [
+    "kramabench-biomedical-easy-9"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Node 1 computes the mean FDR.phos for CBX3 rows, while node 2 computes the mean FDR.phos for all other genes from the same sheet.",
+      "answer": "CBX3 mean = 0.016840668972299789; non-CBX3 mean = 0.024844644346166109"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 subtracts the non-CBX3 mean from the CBX3 mean to answer the requested difference.",
+      "answer": "-0.0080039753738663198"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "biomedical-easy-9",
+    "domain": "biomedical",
+    "difficulty": "easy",
+    "promoted_from": "./tasks-mini-kramabench/candidates/biomedical-easy-9.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/biomedical/biomedical-easy-9",
+    "s3_mirror_prefix": "datagov/kramabench-biomedical-easy-9/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "2": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "3": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

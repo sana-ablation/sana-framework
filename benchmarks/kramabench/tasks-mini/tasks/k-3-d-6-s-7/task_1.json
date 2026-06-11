@@ -1,0 +1,168 @@
+{
+  "question": "What are the top 5 distinct Metropolitan areas in New England that have the most Identity Theft reports in 2024? Write your answer as [ANSWER].",
+  "answer": [
+    "Boston-Cambridge-Newton, MA-NH Metropolitan Statistical Area",
+    "Providence-Warwick, RI-MA Metropolitan Statistical Area",
+    "Hartford-West Hartford-East Hartford, CT Metropolitan Statistical Area",
+    "Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area",
+    "Worcester, MA Metropolitan Statistical Area"
+  ],
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-hard-14/files/new_england_states.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/new_england_states.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    states = [row['Name'] for row in csv.DictReader(f)]\nprint(states)\n",
+      "subquestion": "Which state names are listed as New England states?",
+      "answer": [
+        "Connecticut",
+        "Maine",
+        "Massachusetts",
+        "New Hampshire",
+        "Rhode Island",
+        "Vermont"
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Connecticut.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Connecticut.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\nprint(len(df))\n",
+      "subquestion": "How many metropolitan-area rows are in the Connecticut identity-theft MSA table?",
+      "answer": 6
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Maine.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Maine.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\nprint(len(df))\n",
+      "subquestion": "How many metropolitan-area rows are in the Maine identity-theft MSA table?",
+      "answer": 4
+    },
+    "4": {
+      "source": "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Massachusetts.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Massachusetts.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\nprint(len(df))\n",
+      "subquestion": "How many metropolitan-area rows are in the Massachusetts identity-theft MSA table?",
+      "answer": 7
+    },
+    "5": {
+      "source": "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/NewHampshire.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/NewHampshire.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\nprint(len(df))\n",
+      "subquestion": "How many metropolitan-area rows are in the NewHampshire identity-theft MSA table?",
+      "answer": 4
+    },
+    "6": {
+      "source": "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/RhodeIsland.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/RhodeIsland.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\nprint(len(df))\n",
+      "subquestion": "How many metropolitan-area rows are in the RhodeIsland identity-theft MSA table?",
+      "answer": 1
+    },
+    "7": {
+      "source": "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Vermont.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Vermont.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\nprint(len(df))\n",
+      "subquestion": "How many metropolitan-area rows are in the Vermont identity-theft MSA table?",
+      "answer": 2
+    },
+    "8": {
+      "source": "datagov/kramabench-legal-hard-14/files/new_england_states.csv",
+      "fact": "import csv\nimport pandas as pd\nnew_england_path = 'other-benchmarks/Kramabench/data/legal/input/new_england_states.csv'\nwith open(new_england_path, newline='', encoding='utf-8-sig') as f:\n    new_england_states = [row['Name'] for row in csv.DictReader(f)]\npaths = ['other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Connecticut.csv', 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Maine.csv', 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Massachusetts.csv', 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/NewHampshire.csv', 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/RhodeIsland.csv', 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Vermont.csv']\nframes = []\nfor path in paths:\n    df = pd.read_csv(path, skiprows=2).dropna()\n    df['# of Reports'] = df['# of Reports'].apply(lambda x: x.replace(',', '') if isinstance(x, str) else x).astype(int)\n    frames.append(df)\noverall_df = pd.concat(frames, ignore_index=True).reset_index(drop=True)\noverall_df = overall_df.sort_values(by='# of Reports', ascending=False)\noverall_df = overall_df.drop_duplicates(subset=['Metropolitan Area'], keep='first')\nresult = list(overall_df.head(5)['Metropolitan Area'].values)\nprint(result)\n",
+      "subquestion": "After combining New England state MSA identity-theft rows and dropping duplicate metropolitan areas, which five areas have the most reports?",
+      "answer": [
+        "Boston-Cambridge-Newton, MA-NH Metropolitan Statistical Area",
+        "Providence-Warwick, RI-MA Metropolitan Statistical Area",
+        "Hartford-West Hartford-East Hartford, CT Metropolitan Statistical Area",
+        "Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area",
+        "Worcester, MA Metropolitan Statistical Area"
+      ]
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the list of New England states.",
+    "Nodes 2-7 depend on node 1: Read each New England state MSA identity-theft file and confirm the available rows.",
+    "Node 8 depends on nodes 2-7: Combine the rows, sort by report count, drop duplicate metropolitan areas, and take the top five.",
+    "Final answer: ['Boston-Cambridge-Newton, MA-NH Metropolitan Statistical Area', 'Providence-Warwick, RI-MA Metropolitan Statistical Area', 'Hartford-West Hartford-East Hartford, CT Metropolitan Statistical Area', 'Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area', 'Worcester, MA Metropolitan Statistical Area']"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-legal-hard-14/files/new_england_states.csv",
+    "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Connecticut.csv",
+    "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Maine.csv",
+    "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Massachusetts.csv",
+    "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/NewHampshire.csv",
+    "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/RhodeIsland.csv",
+    "datagov/kramabench-legal-hard-14/files/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Vermont.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the list of New England states.",
+      "answer": [
+        "Connecticut",
+        "Maine",
+        "Massachusetts",
+        "New Hampshire",
+        "Rhode Island",
+        "Vermont"
+      ]
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "reasoning": "Nodes 2-7 depend on node 1: Read each New England state MSA identity-theft file and confirm the available rows.",
+      "answer": {
+        "Connecticut": 6,
+        "Maine": 4,
+        "Massachusetts": 7,
+        "NewHampshire": 4,
+        "RhodeIsland": 1,
+        "Vermont": 2
+      }
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8 depends on nodes 2-7: Combine the rows, sort by report count, drop duplicate metropolitan areas, and take the top five.",
+      "answer": [
+        "Boston-Cambridge-Newton, MA-NH Metropolitan Statistical Area",
+        "Providence-Warwick, RI-MA Metropolitan Statistical Area",
+        "Hartford-West Hartford-East Hartford, CT Metropolitan Statistical Area",
+        "Bridgeport-Stamford-Danbury, CT Metropolitan Statistical Area",
+        "Worcester, MA Metropolitan Statistical Area"
+      ]
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-hard-14",
+    "domain": "legal",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-hard-14.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-14",
+    "s3_mirror_prefix": "datagov/kramabench-legal-hard-14/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/new_england_states.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Connecticut.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Maine.csv",
+      "4": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Massachusetts.csv",
+      "5": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/NewHampshire.csv",
+      "6": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/RhodeIsland.csv",
+      "7": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Identity Theft data/Vermont.csv",
+      "8": "other-benchmarks/Kramabench/data/legal/input/new_england_states.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

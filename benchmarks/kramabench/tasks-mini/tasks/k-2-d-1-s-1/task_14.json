@@ -1,0 +1,76 @@
+{
+  "question": "How many frauds were reported by FTC over the web between 2022 and 2024 in total? Write your answer as [ANSWER].",
+  "answer": 2111635,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[3:]))\nfiltered = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    contributor = row.get('Data Contributor', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and 2022 <= int(year) <= 2024 and contributor == 'FTC - Web Reports (Fraud & Other)':\n        filtered.append(int(reports.replace(',', '')))\ntotal = sum(filtered)\nprint(filtered)\n",
+      "subquestion": "What are the FTC Web Reports (Fraud & Other) counts for 2022, 2023, and 2024?",
+      "answer": [
+        693789,
+        702598,
+        715248
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[3:]))\nfiltered = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    contributor = row.get('Data Contributor', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and 2022 <= int(year) <= 2024 and contributor == 'FTC - Web Reports (Fraud & Other)':\n        filtered.append(int(reports.replace(',', '')))\ntotal = sum(filtered)\nprint(total)\n",
+      "subquestion": "What is the total FTC Web Reports (Fraud & Other) count from 2022 through 2024?",
+      "answer": 2111635
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Filter the data contributors table to FTC Web Reports (Fraud & Other) for 2022-2024.",
+    "Node 2 depends on node 1: Sum the filtered yearly counts.",
+    "Final answer: 2111635"
+  ],
+  "datasets_used": [
+    "kramabench-legal-easy-4"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Filter the data contributors table to FTC Web Reports (Fraud & Other) for 2022-2024.",
+      "answer": [
+        693789,
+        702598,
+        715248
+      ]
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Sum the filtered yearly counts.",
+      "answer": 2111635
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-4",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-4.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-4",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-4/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_execution_note": "The bundled runtime lacks bs4, an unused import in the checked-in script; system Python executed the exact script."
+  }
+}

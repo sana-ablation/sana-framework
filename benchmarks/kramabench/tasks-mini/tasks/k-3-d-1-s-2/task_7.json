@@ -1,0 +1,83 @@
+{
+  "question": "If the 2007 report category distribution were exactly like the 2024 one, how many reports in 2007 would be Auto Related, rounded to the nearest integer? Write your answer as [ANSWER].",
+  "answer": 32542,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\nprint(int(df[df['Year'] == 2007]['# of Reports'].iloc[0]))\n",
+      "subquestion": "What is the total number of reports in 2007?",
+      "answer": 1070447
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat_df = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\npct = cat_df[cat_df['Category'] == 'Auto Related']['Percentage'].iloc[0]\nprint(f'{float(pct.strip(\"%\")) / 100:.4f}')\n",
+      "subquestion": "What is the 2024 Auto Related report-category proportion?",
+      "answer": "0.0304"
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import numpy as np\nimport pandas as pd\ncount_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ncat_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ndf = pd.read_csv(count_path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\ntotal_2007_reports = df[df['Year'] == 2007]['# of Reports'].iloc[0]\ncat_df = pd.read_csv(cat_path, skiprows=2, encoding='unicode_escape').dropna()\nauto_related_percentage = cat_df[cat_df['Category'] == 'Auto Related']['Percentage'].iloc[0]\nauto_related_percentage = float(auto_related_percentage.strip('%')) / 100\nprint(int(np.round(auto_related_percentage * total_2007_reports)))\n",
+      "subquestion": "Multiplying the 2007 total by the 2024 Auto Related proportion, what rounded count results?",
+      "answer": 32542
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the report-count table and extract total reports for 2007.",
+    "Node 2: Read the 2024 report categories table and extract the Auto Related proportion.",
+    "Node 3 depends on nodes 1 and 2: Multiply the 2007 total by the 2024 proportion and round to the nearest integer.",
+    "Final answer: 32542"
+  ],
+  "datasets_used": [
+    "kramabench-legal-hard-17"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the report-count table and extract total reports for 2007.",
+      "answer": 1070447
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Read the 2024 report categories table and extract the Auto Related proportion.",
+      "answer": "0.0304"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: Multiply the 2007 total by the 2024 proportion and round to the nearest integer.",
+      "answer": 32542
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-hard-17",
+    "domain": "legal",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-hard-17.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-17",
+    "s3_mirror_prefix": "datagov/kramabench-legal-hard-17/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

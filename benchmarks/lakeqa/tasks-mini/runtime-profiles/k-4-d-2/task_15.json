@@ -1,0 +1,63 @@
+{
+  "dataset_sequence": [
+    "Eastern_Washington",
+    "Whitman_County,_Washington",
+    "Spokane_County,_Washington",
+    "Pullman,_Washington",
+    "report-card-enrollment-2017-18-school-year"
+  ],
+  "source_sequence": [
+    "wikipedia/Eastern_Washington/content.txt",
+    "wikipedia/Whitman_County,_Washington/content.txt",
+    "wikipedia/Spokane_County,_Washington/content.txt",
+    "wikipedia/Pullman,_Washington/content.txt",
+    "datagov/report-card-enrollment-2017-18-school-year/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. From the listed Washington counties, identify which ones are in Eastern Washington.",
+    "2. For the Eastern Washington counties from step 1, determine which one borders Idaho and had 2020 census population under 300,000.",
+    "3. For the county identified in step 2, determine its most populous city according to the 2020 census.",
+    "4. Using the city identified in step 3, determine the 2017-18 total enrollment for its school district."
+  ],
+  "original_final_question": "Consider the counties King, Clark, Pierce, Whitman, Thurston, and Spokane. Among these, identify the Eastern Washington county that borders Idaho and had a 2020 population under 300,000. In the most populous city in that county according to the 2020 census, what was the total school district enrollment for 2017-18? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia Eastern Washington - node 1):",
+    "  Node 1 (Wikipedia Eastern Washington): Whitman and Spokane are Eastern Washington counties",
+    "  Result: Whitman and Spokane are the Eastern Washington counties from the provided list",
+    "",
+    "HOP 2 (d=2, Wikipedia county pages - nodes 2-3):",
+    "  Node 2 (Wikipedia Whitman_County): Borders Idaho (YES), pop 47,973 -> MEETS BOTH CRITERIA",
+    "  Node 3 (Wikipedia Spokane_County): Borders Idaho (YES), pop 539,339 -> DOES NOT MEET (pop > 300k)",
+    "  Result: Whitman County (REQUIRES hop 1 to know which counties to check)",
+    "",
+    "HOP 3 (d=1, Wikipedia Pullman - node 4):",
+    "  Node 4 (Wikipedia Pullman): Pullman is the most populous city in Whitman County (2020 census) and is located in southeastern Washington within the Palouse region of the Pacific Northwest",
+    "  Result: Pullman is the most populous city in Whitman County (2020 census) (REQUIRES hop 2)",
+    "",
+    "HOP 4 (d=1, WA Report Card Enrollment 2017-18 - node 5):",
+    "  Node 5 (WA Report Card Enrollment 2017-18): Pullman School District = 2,941 students",
+    "  Result: 2941 (REQUIRES hop 3 to know the city is Pullman)",
+    "",
+    "Final answer: 2941"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "5",
+      "dataset_id": "report-card-enrollment-2017-18-school-year",
+      "source": "datagov/report-card-enrollment-2017-18-school-year/files/rows.txt",
+      "intent": "What is the 2017-18 total student enrollment for the school district in <hop 3 answer: Pullman>? (Filter: OrganizationLevel=District; DistrictName=Pullman School District; GradeLevel=All Grades; column=All Students.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-enrollment-2017-18-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nresult = df[\n    (df[\"SchoolYear\"] == \"2017-18\")\n    & (df[\"OrganizationLevel\"] == \"District\")\n    & (df[\"DistrictName\"] == \"Pullman School District\")\n    & (df[\"GradeLevel\"] == \"All Grades\")\n]\n\nanswer = result.iloc[0][\"All Students\"]\nanswer = str(answer)",
+      "answer": "2941"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "5",
+      "dataset_id": "report-card-enrollment-2017-18-school-year",
+      "source": "datagov/report-card-enrollment-2017-18-school-year/files/rows.txt",
+      "intent": "What is the 2017-18 total student enrollment for the school district in <hop 3 answer: Pullman>? (Filter: OrganizationLevel=District; DistrictName=Pullman School District; GradeLevel=All Grades; column=All Students.)",
+      "sql": "SELECT CAST(\"All Students\" AS VARCHAR) AS answer\nFROM t\nWHERE \"SchoolYear\" = '2017-18'\n  AND \"OrganizationLevel\" = 'District'\n  AND \"DistrictName\" = 'Pullman School District'\n  AND \"GradeLevel\" = 'All Grades'\nLIMIT 1",
+      "answer": "2941"
+    }
+  ]
+}

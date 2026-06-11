@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-easy-6"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+    "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+    "datagov/kramabench-archeology-easy-6/files/worldcities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter world city rows to the Western Hemisphere using negative longitude.",
+    "2. Further filter to the Southern Hemisphere using negative latitude.",
+    "3. Choose the remaining city row with the maximum population."
+  ],
+  "original_final_question": "What city contained in both the southern and western hemispheres has the highest population? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter world city rows to the Western Hemisphere using negative longitude.",
+    "Node 2 depends on node 1: Further filter to the Southern Hemisphere using negative latitude.",
+    "Node 3 depends on node 2: Choose the remaining city row with the maximum population.",
+    "Final answer: São Paulo"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-6",
+      "source": "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+      "intent": "How many city rows are in the Western Hemisphere?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nresult = str(int((df['lng'] < 0).sum()))\nprint(result)\n",
+      "answer": "16412"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-6",
+      "source": "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+      "intent": "How many city rows are in both the Western and Southern Hemispheres?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nsouthwest = df[(df['lng'] < 0) & (df['lat'] < 0)]\nresult = str(len(southwest))\nprint(result)\n",
+      "answer": "4095"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-easy-6",
+      "source": "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+      "intent": "Among city rows in both the Western and Southern Hemispheres, which city has the largest population?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nsouthwest = df[(df['lng'] < 0) & (df['lat'] < 0)]\nrow = southwest.loc[southwest['population'].idxmax()]\nresult = row['city']\nprint(result)\n",
+      "answer": "São Paulo"
+    }
+  ]
+}

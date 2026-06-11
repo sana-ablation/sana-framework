@@ -1,0 +1,114 @@
+{
+  "dataset_sequence": [
+    "budget-2018-budget-ordinance-appropriations",
+    "budget-2019-budget-ordinance-appropriations",
+    "Chicago_Fire_Department",
+    "Pittsburgh_Bureau_of_Fire",
+    "Pittsburgh",
+    "pittsburgh-international-airport-scheduled-passenger-traffic"
+  ],
+  "source_sequence": [
+    "datagov/budget-2018-budget-ordinance-appropriations/files/rows.txt",
+    "datagov/budget-2019-budget-ordinance-appropriations/files/rows.txt",
+    "wikipedia/Chicago_Fire_Department/content.txt",
+    "wikipedia/Pittsburgh_Bureau_of_Fire/content.txt",
+    "wikipedia/Pittsburgh/content.txt",
+    "datagov/pittsburgh-international-airport-scheduled-passenger-traffic/files/pittsburgh-international-traffic-report-march-2019.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify Chicago city departments with 2018 budget totals between $400 million and $700 million.",
+    "2. From those departments, keep the ones with 2019 budget totals between $600 million and $700 million.",
+    "3. Determine when the Chicago department identified in step 2 became a paid professional force.",
+    "4. Determine when Pittsburgh's fire bureau became a paid professional force, compare with the date from step 3, and keep the city whose department became paid later.",
+    "5. For the city identified in step 4, determine its largest airport.",
+    "6. In that airport's March 2019 scheduled traffic report, identify the top destination by total seats and return its total seats."
+  ],
+  "original_final_question": "Start by finding the Chicago city department with a budget of $400 million to $700 million in 2018 and $600 million to $700 million in 2019. Determine if this department became a paid professional force before or after Pittsburgh's fire bureau did, and focus on the city whose department became paid later. For that city, identify its largest airport; in its March 2019 scheduled traffic report, how many total seats did the top destination have? Please return the number only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2): Identify the Chicago department meeting both 2018 and 2019 budget ranges",
+    "  Node 1: 2018 budget range -> {CFD: $642.6M, CDOT: $459.1M}",
+    "  Node 2: 2019 budget range -> {CFD: $652.3M, DFSS: $633.6M}",
+    "  Intersection: {CFD}",
+    "  Result: CFD (Chicago Fire Department)",
+    "",
+    "HOP 2 (d=2): Compare paid-department dates for CFD and Pittsburgh Bureau of Fire",
+    "  Node 3: Chicago Fire Department became paid on August 2, 1858",
+    "  Node 4: Pittsburgh Bureau of Fire became paid on May 23, 1870",
+    "  Comparative: 1870 > 1858 -> Pittsburgh became paid later",
+    "  Result: Pittsburgh",
+    "",
+    "HOP 3 (d=1): Identify the largest airport in Pittsburgh",
+    "  Node 5: Pittsburgh International Airport is the largest airport in Pittsburgh",
+    "  Result: Pittsburgh International Airport",
+    "",
+    "HOP 4 (d=1): Find the number of seats for the top March 2019 destination",
+    "  Node 6: Top destination has 44,912 seats",
+    "  Result: 44912",
+    "",
+    "Final answer: 44912"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "budget-2018-budget-ordinance-appropriations",
+      "source": "datagov/budget-2018-budget-ordinance-appropriations/files/rows.txt",
+      "intent": "Which Chicago city department had a budget between $400 million and $700 million in 2018 AND between $600 million and $700 million in 2019? (Filter for this node: group by DEPARTMENT DESCRIPTION; sum 2018 ORDINANCE (AMOUNT $); keep totals between 400000000 and 700000000.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/budget-2018-budget-ordinance-appropriations/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\namount_col = \"2018 ORDINANCE (AMOUNT $)\"\nresult = (\n    df.groupby(\"DEPARTMENT DESCRIPTION\", dropna=False)[amount_col]\n    .sum()\n    .loc[lambda s: (s >= 400000000) & (s <= 700000000)]\n    .sort_values(ascending=False)\n)\nanswer = result.round().astype(int).to_dict()\nprint(answer)",
+      "answer": {
+        "CFD": 642620615,
+        "CDOT": 459129158
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "budget-2019-budget-ordinance-appropriations",
+      "source": "datagov/budget-2019-budget-ordinance-appropriations/files/rows.txt",
+      "intent": "Which Chicago city department had a budget between $400 million and $700 million in 2018 AND between $600 million and $700 million in 2019? (Filter for this node: group by DEPARTMENT DESCRIPTION; sum 2019 ORDINANCE (AMOUNT $); keep totals between 600000000 and 700000000.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/budget-2019-budget-ordinance-appropriations/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\namount_col = \"2019 ORDINANCE (AMOUNT $)\"\nresult = (\n    df.groupby(\"DEPARTMENT DESCRIPTION\", dropna=False)[amount_col]\n    .sum()\n    .loc[lambda s: (s >= 600000000) & (s <= 700000000)]\n    .sort_values(ascending=False)\n)\nanswer = result.round().astype(int).to_dict()\nprint(answer)",
+      "answer": {
+        "CFD": 652282316,
+        "DFSS": 633571744
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "pittsburgh-international-airport-scheduled-passenger-traffic",
+      "source": "datagov/pittsburgh-international-airport-scheduled-passenger-traffic/files/pittsburgh-international-traffic-report-march-2019.txt",
+      "intent": "For the airport identified in hop 3 (from hop 3), how many total scheduled seats did the top destination have in March 2019? (Filter for this node: group by Destination Code; sum Seats March 2019; select max; return seats.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/pittsburgh-international-airport-scheduled-passenger-traffic/files/pittsburgh-international-traffic-report-march-2019.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = str(int(df.groupby(\"Destination Code\", dropna=False)[\"Seats March 2019\"].sum().max()))",
+      "answer": "44912"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "budget-2018-budget-ordinance-appropriations",
+      "source": "datagov/budget-2018-budget-ordinance-appropriations/files/rows.txt",
+      "intent": "Which Chicago city department had a budget between $400 million and $700 million in 2018 AND between $600 million and $700 million in 2019? (Filter for this node: group by DEPARTMENT DESCRIPTION; sum 2018 ORDINANCE (AMOUNT $); keep totals between 400000000 and 700000000.)",
+      "sql": "WITH totals AS (\n  SELECT \"DEPARTMENT DESCRIPTION\" AS department,\n         SUM(TRY_CAST(\"2018 ORDINANCE (AMOUNT $)\" AS DOUBLE)) AS total_amount\n  FROM t\n  GROUP BY department\n), filtered AS (\n  SELECT department, CAST(round(total_amount) AS BIGINT) AS amount\n  FROM totals\n  WHERE total_amount >= 400000000 AND total_amount <= 700000000\n)\nSELECT json_group_object(department, amount) AS answer FROM filtered",
+      "answer": {
+        "CFD": 642620615,
+        "CDOT": 459129158
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "budget-2019-budget-ordinance-appropriations",
+      "source": "datagov/budget-2019-budget-ordinance-appropriations/files/rows.txt",
+      "intent": "Which Chicago city department had a budget between $400 million and $700 million in 2018 AND between $600 million and $700 million in 2019? (Filter for this node: group by DEPARTMENT DESCRIPTION; sum 2019 ORDINANCE (AMOUNT $); keep totals between 600000000 and 700000000.)",
+      "sql": "WITH totals AS (\n  SELECT \"DEPARTMENT DESCRIPTION\" AS department,\n         SUM(TRY_CAST(\"2019 ORDINANCE (AMOUNT $)\" AS DOUBLE)) AS total_amount\n  FROM t\n  GROUP BY department\n), filtered AS (\n  SELECT department, CAST(round(total_amount) AS BIGINT) AS amount\n  FROM totals\n  WHERE total_amount >= 600000000 AND total_amount <= 700000000\n)\nSELECT json_group_object(department, amount) AS answer FROM filtered",
+      "answer": {
+        "CFD": 652282316,
+        "DFSS": 633571744
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "pittsburgh-international-airport-scheduled-passenger-traffic",
+      "source": "datagov/pittsburgh-international-airport-scheduled-passenger-traffic/files/pittsburgh-international-traffic-report-march-2019.txt",
+      "intent": "For the airport identified in hop 3 (from hop 3), how many total scheduled seats did the top destination have in March 2019? (Filter for this node: group by Destination Code; sum Seats March 2019; select max; return seats.)",
+      "sql": "SELECT CAST(MAX(total_seats) AS VARCHAR) AS answer\nFROM (\n  SELECT \"Destination Code\", SUM(TRY_CAST(\"Seats March 2019\" AS BIGINT)) AS total_seats\n  FROM t\n  GROUP BY \"Destination Code\"\n) grouped",
+      "answer": "44912"
+    }
+  ]
+}

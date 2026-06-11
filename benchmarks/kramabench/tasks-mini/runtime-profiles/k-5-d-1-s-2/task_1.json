@@ -1,0 +1,107 @@
+{
+  "dataset_sequence": [
+    "kramabench-biomedical-hard-1"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+    "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+    "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+    "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+    "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify the global-proteomics and phospho-proteomics sheets needed for the requested protein and phosphosite abundance measurements.",
+    "2. Filter the clinical table to non-excluded endometrioid or serous tumor cases.",
+    "3. Locate the requested protein in the global-proteomics sheet and collect cohort measurements.",
+    "4. Locate the requested phosphosite in the phospho-proteomics sheet and keep cases with both abundance values present.",
+    "5. Compute the Spearman rank correlation across the paired non-missing abundance vectors and round to four decimals."
+  ],
+  "original_final_question": "What is the Spearman correlation between the abundance of the protein PLK1 and the abundance of CHEK2-S163 in included Endometrioid or Serous tumor samples after dropping samples with missing values? Round the result to 4 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Identify the global-proteomics and phospho-proteomics sheets needed for PLK1 and CHEK2-S163 abundance measurements.",
+    "Node 2: Filter the clinical table to non-excluded Endometrioid or Serous tumor cases.",
+    "Node 3 depends on nodes 1 and 2: Locate PLK1 in the global-proteomics sheet and confirm available measurements for the tumor-case cohort.",
+    "Node 4 depends on nodes 1, 2, and 3: Locate CHEK2-S163 in the phospho-proteomics sheet and keep only cases with both PLK1 and CHEK2-S163 values.",
+    "Node 5 depends on node 4: Compute the Spearman rank correlation across the paired non-missing abundance vectors.",
+    "Final answer: 0.4765"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "Which proteomics sheets are available for measuring global protein abundance and phosphosite abundance?",
+      "code": "from openpyxl import load_workbook\npath = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc2.xlsx'\nwb = load_workbook(path, read_only=True, data_only=True)\nproteomics_sheets = [name for name in wb.sheetnames if 'proteomics' in name.lower()]\nresult = '|'.join(proteomics_sheets)\nprint(result)\n",
+      "answer": "A-global-proteomics|B-phospho-proteomics"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "How many non-excluded Endometrioid or Serous tumor cases are in the clinical table, and what are the first and last case identifiers in table order?",
+      "code": "from openpyxl import load_workbook\npath = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nwb = load_workbook(path, read_only=True, data_only=True)\nws = wb.active\nrows = ws.iter_rows(values_only=True)\nheaders = list(next(rows))\nidx_i = headers.index('idx')\nexcluded_i = headers.index('Case_excluded')\nhistology_i = headers.index('Histologic_type')\ncase_ids = []\nfor row in rows:\n    if row[excluded_i] == 'No' and row[histology_i] in ('Endometrioid', 'Serous'):\n        case_ids.append(str(row[idx_i]))\nresult = f'{len(case_ids)}|{case_ids[0]}|{case_ids[-1]}'\nprint(result)\n",
+      "answer": "95|S001|S103"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "Within the tumor-case cohort, how many PLK1 global-proteomics measurements are non-missing, and what are the first and last observed PLK1 values in cohort order?",
+      "code": "from openpyxl import load_workbook\nimport math\n\ndef tumor_case_ids():\n    clinical_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\n    wb = load_workbook(clinical_path, read_only=True, data_only=True)\n    ws = wb.active\n    rows = ws.iter_rows(values_only=True)\n    headers = list(next(rows))\n    idx_i = headers.index('idx')\n    excluded_i = headers.index('Case_excluded')\n    histology_i = headers.index('Histologic_type')\n    cases = []\n    for row in rows:\n        if row[excluded_i] == 'No' and row[histology_i] in ('Endometrioid', 'Serous'):\n            cases.append(str(row[idx_i]))\n    return cases\n\ndef proteomics_row(sheet_name, row_label, case_ids):\n    proteomics_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc2.xlsx'\n    wb = load_workbook(proteomics_path, read_only=True, data_only=True)\n    ws = wb[sheet_name]\n    rows = ws.iter_rows(values_only=True)\n    headers = [str(value) if value is not None else '' for value in next(rows)]\n    column_by_case = {name: index for index, name in enumerate(headers)}\n    for row in rows:\n        if row[0] == row_label:\n            return [row[column_by_case[case_id]] for case_id in case_ids]\n    raise ValueError(f'Missing row {row_label!r} in {sheet_name!r}')\n\ndef is_number(value):\n    return isinstance(value, (int, float)) and not math.isnan(value)\n\ncase_ids = tumor_case_ids()\nplk1_values = proteomics_row('A-global-proteomics', 'PLK1', case_ids)\nobserved = [value for value in plk1_values if is_number(value)]\nresult = f'{len(observed)}|{observed[0]:.4g}|{observed[-1]:.4g}'\nprint(result)\n",
+      "answer": "95|0.295|0.55"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "After pairing PLK1 and CHEK2-S163 measurements for the tumor-case cohort, how many samples have both values, and what are the first and last paired case identifiers?",
+      "code": "from openpyxl import load_workbook\nimport math\n\ndef tumor_case_ids():\n    clinical_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\n    wb = load_workbook(clinical_path, read_only=True, data_only=True)\n    ws = wb.active\n    rows = ws.iter_rows(values_only=True)\n    headers = list(next(rows))\n    idx_i = headers.index('idx')\n    excluded_i = headers.index('Case_excluded')\n    histology_i = headers.index('Histologic_type')\n    cases = []\n    for row in rows:\n        if row[excluded_i] == 'No' and row[histology_i] in ('Endometrioid', 'Serous'):\n            cases.append(str(row[idx_i]))\n    return cases\n\ndef proteomics_row(sheet_name, row_label, case_ids):\n    proteomics_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc2.xlsx'\n    wb = load_workbook(proteomics_path, read_only=True, data_only=True)\n    ws = wb[sheet_name]\n    rows = ws.iter_rows(values_only=True)\n    headers = [str(value) if value is not None else '' for value in next(rows)]\n    column_by_case = {name: index for index, name in enumerate(headers)}\n    for row in rows:\n        if row[0] == row_label:\n            return [row[column_by_case[case_id]] for case_id in case_ids]\n    raise ValueError(f'Missing row {row_label!r} in {sheet_name!r}')\n\ndef is_number(value):\n    return isinstance(value, (int, float)) and not math.isnan(value)\n\ncase_ids = tumor_case_ids()\nplk1_values = proteomics_row('A-global-proteomics', 'PLK1', case_ids)\nchek2_values = proteomics_row('B-phospho-proteomics', 'CHEK2-S163', case_ids)\npaired_cases = [case_id for case_id, plk1, chek2 in zip(case_ids, plk1_values, chek2_values) if is_number(plk1) and is_number(chek2)]\nresult = f'{len(paired_cases)}|{paired_cases[0]}|{paired_cases[-1]}'\nprint(result)\n",
+      "answer": "51|S001|S101"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "For the paired non-missing PLK1 and CHEK2-S163 abundance vectors, what is the Spearman rank correlation rounded to four decimal places?",
+      "code": "from openpyxl import load_workbook\nimport math\n\ndef tumor_case_ids():\n    clinical_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\n    wb = load_workbook(clinical_path, read_only=True, data_only=True)\n    ws = wb.active\n    rows = ws.iter_rows(values_only=True)\n    headers = list(next(rows))\n    idx_i = headers.index('idx')\n    excluded_i = headers.index('Case_excluded')\n    histology_i = headers.index('Histologic_type')\n    cases = []\n    for row in rows:\n        if row[excluded_i] == 'No' and row[histology_i] in ('Endometrioid', 'Serous'):\n            cases.append(str(row[idx_i]))\n    return cases\n\ndef proteomics_row(sheet_name, row_label, case_ids):\n    proteomics_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc2.xlsx'\n    wb = load_workbook(proteomics_path, read_only=True, data_only=True)\n    ws = wb[sheet_name]\n    rows = ws.iter_rows(values_only=True)\n    headers = [str(value) if value is not None else '' for value in next(rows)]\n    column_by_case = {name: index for index, name in enumerate(headers)}\n    for row in rows:\n        if row[0] == row_label:\n            return [row[column_by_case[case_id]] for case_id in case_ids]\n    raise ValueError(f'Missing row {row_label!r} in {sheet_name!r}')\n\ndef is_number(value):\n    return isinstance(value, (int, float)) and not math.isnan(value)\n\ndef ranks(values):\n    ordered = sorted(enumerate(values), key=lambda item: item[1])\n    ranked = [0.0] * len(values)\n    i = 0\n    while i < len(ordered):\n        j = i\n        while j + 1 < len(ordered) and ordered[j + 1][1] == ordered[i][1]:\n            j += 1\n        average_rank = (i + 1 + j + 1) / 2\n        for k in range(i, j + 1):\n            ranked[ordered[k][0]] = average_rank\n        i = j + 1\n    return ranked\n\ndef pearson(xs, ys):\n    mean_x = sum(xs) / len(xs)\n    mean_y = sum(ys) / len(ys)\n    numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))\n    denominator = (sum((x - mean_x) ** 2 for x in xs) * sum((y - mean_y) ** 2 for y in ys)) ** 0.5\n    return numerator / denominator\n\ncase_ids = tumor_case_ids()\nplk1_values = proteomics_row('A-global-proteomics', 'PLK1', case_ids)\nchek2_values = proteomics_row('B-phospho-proteomics', 'CHEK2-S163', case_ids)\npaired = [(float(plk1), float(chek2)) for plk1, chek2 in zip(plk1_values, chek2_values) if is_number(plk1) and is_number(chek2)]\nplk1_ranks = ranks([item[0] for item in paired])\nchek2_ranks = ranks([item[1] for item in paired])\nresult = f'{pearson(plk1_ranks, chek2_ranks):.4f}'\nprint(result)\n",
+      "answer": "0.4765"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "Which proteomics sheets are available for measuring global protein abundance and phosphosite abundance?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "How many non-excluded Endometrioid or Serous tumor cases are in the clinical table, and what are the first and last case identifiers in table order?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "Within the tumor-case cohort, how many PLK1 global-proteomics measurements are non-missing, and what are the first and last observed PLK1 values in cohort order?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "After pairing PLK1 and CHEK2-S163 measurements for the tumor-case cohort, how many samples have both values, and what are the first and last paired case identifiers?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-biomedical-hard-1",
+      "source": "datagov/kramabench-biomedical-hard-1/files/1-s2.0-S0092867420301070-mmc2.xlsx",
+      "intent": "For the paired non-missing PLK1 and CHEK2-S163 abundance vectors, what is the Spearman rank correlation rounded to four decimal places?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

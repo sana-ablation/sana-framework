@@ -1,0 +1,128 @@
+{
+  "question": "Train a density prediction model using OMNI2 variables (f10.7_index, Kp_index, Dst_index_nT) and GOES variables (xrsb_flux_observed, xrsa_flux_observed) to forecast Swarm Alpha's atmospheric density 4 hours ahead. Specifically, use a 16-hour context window to project the input time series forward using a VAR(1) model, then fit a linear regression model to predict the next 4 hours of density. Use data from wu334 (OMNI/GOES: 2016-10-22 to 2016-10-23; Density: 2016-10-23 to 2016-10-24) for training, and wu335 (OMNI/GOES: 2016-10-25 to 2016-10-26; Density: 2016-10-29) for evaluation. Assume that all windows contain valid data. Note that the data for training VAR lies at the end of the OMNI2 and GOES input window, and the corresponding Swarm Alpha density data begins immediately afterward; i.e., they only overlap at a single timestamp where OMNI/GOES ends and Density begins. Report the RMSE between the predicted and observed density values over the 4-hour forecast window. Write your answer as [ANSWER].",
+  "answer": "1.211e-13",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv'\ndf = pd.read_csv(path)\nresult = f'{df.shape[0]}|{df.shape[1]}'\nprint(result)\n",
+      "subquestion": "What is the row and column count for omni2-wu334-20160824_to_20161023.csv?",
+      "answer": "1441|57"
+    },
+    "2": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv'\ndf = pd.read_csv(path)\nresult = f'{df.shape[0]}|{df.shape[1]}'\nprint(result)\n",
+      "subquestion": "What is the row and column count for goes-wu334-20160824_to_20161023.csv?",
+      "answer": "86401|13"
+    },
+    "3": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv'\ndf = pd.read_csv(path)\nresult = f'{df.shape[0]}|{df.shape[1]}'\nprint(result)\n",
+      "subquestion": "What is the row and column count for swarma-wu334-20161023_to_20161026.csv?",
+      "answer": "433|2"
+    },
+    "4": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv'\ndf = pd.read_csv(path)\nresult = f'{df.shape[0]}|{df.shape[1]}'\nprint(result)\n",
+      "subquestion": "What is the row and column count for omni2-wu335-20160827_to_20161026.csv?",
+      "answer": "1441|57"
+    },
+    "5": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv'\ndf = pd.read_csv(path)\nresult = f'{df.shape[0]}|{df.shape[1]}'\nprint(result)\n",
+      "subquestion": "What is the row and column count for goes-wu335-20160827_to_20161026.csv?",
+      "answer": "86401|13"
+    },
+    "6": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv'\ndf = pd.read_csv(path)\nresult = f'{df.shape[0]}|{df.shape[1]}'\nprint(result)\n",
+      "subquestion": "What is the row and column count for swarma-wu335-20161026_to_20161029.csv?",
+      "answer": "433|2"
+    },
+    "7": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+      "fact": "import pandas as pd\nimport numpy as np\nomni_train_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv'\ngoes_train_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv'\ndens_train_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv'\nomni_test_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv'\ngoes_test_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv'\ndens_test_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv'\nOMNI_COLS = ['f10.7_index', 'Kp_index', 'Dst_index_nT']\nGOES_COLS = ['xrsb_flux_observed', 'xrsa_flux_observed']\nFEATS = OMNI_COLS + GOES_COLS\ndef load_df(omni_path, goes_path, dens_path):\n    omni = pd.read_csv(omni_path, parse_dates=['Timestamp'])[['Timestamp'] + OMNI_COLS]\n    omni['Kp_index'] /= 10\n    goes = pd.read_csv(goes_path, parse_dates=['Timestamp'])[['Timestamp'] + GOES_COLS]\n    dens = pd.read_csv(dens_path, parse_dates=['Timestamp'])[['Timestamp', 'Orbit Mean Density (kg/m^3)']].rename(columns={'Orbit Mean Density (kg/m^3)': 'rho'})\n    return (omni.merge(goes, on='Timestamp', how='inner').set_index('Timestamp').sort_index().resample('1h').mean(), dens.set_index('Timestamp').sort_index().resample('1h').mean())\ndef samples(df):\n    win = df.loc[df.index[-16]:df.index[-1], FEATS]\n    Y, X = win.iloc[1:].values, win.iloc[:-1].values\n    A = np.linalg.lstsq(X, Y, rcond=None)[0].T\n    y1 = (A @ win.iloc[-1].values.reshape(-1, 1)).ravel()\n    rows = []\n    for _ in range(4):\n        rows.append(y1)\n        y1 = (A @ y1).ravel()\n    return pd.DataFrame(rows, columns=[f'{c}_f1h' for c in FEATS])\ndef fit_predict_linear(X_train, y_train, X_test):\n    Xb = np.column_stack([np.ones(len(X_train)), X_train])\n    coef = np.linalg.lstsq(Xb, y_train, rcond=None)[0]\n    return np.column_stack([np.ones(len(X_test)), X_test]) @ coef\ntrain_df, train_dens = load_df(omni_train_path, goes_train_path, dens_train_path)\ntest_df, test_dens = load_df(omni_test_path, goes_test_path, dens_test_path)\ntrain_s = samples(train_df)\ntest_s = samples(test_df)\nX_tr = train_s[[f'{c}_f1h' for c in FEATS]].values\ny_tr = train_dens['rho'][1:5].values\nX_te = test_s[[f'{c}_f1h' for c in FEATS]].values\ny_te = test_dens['rho'][1:5].values\npred = fit_predict_linear(X_tr, y_tr, X_te)\nrmse = float(np.sqrt(np.mean((y_te - pred) ** 2)))\nresult = f'{train_df.shape[0]}|{test_df.shape[0]}|{train_dens.shape[0]}|{test_dens.shape[0]}'\nprint(result)\n",
+      "subquestion": "What are the hourly row counts for the training and test feature and density frames?",
+      "answer": "1441|1441|73|73"
+    },
+    "8": {
+      "source": "datagov/kramabench-astronomy-hard-7/files/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+      "fact": "import pandas as pd\nimport numpy as np\nomni_train_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv'\ngoes_train_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv'\ndens_train_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv'\nomni_test_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv'\ngoes_test_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv'\ndens_test_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv'\nOMNI_COLS = ['f10.7_index', 'Kp_index', 'Dst_index_nT']\nGOES_COLS = ['xrsb_flux_observed', 'xrsa_flux_observed']\nFEATS = OMNI_COLS + GOES_COLS\ndef load_df(omni_path, goes_path, dens_path):\n    omni = pd.read_csv(omni_path, parse_dates=['Timestamp'])[['Timestamp'] + OMNI_COLS]\n    omni['Kp_index'] /= 10\n    goes = pd.read_csv(goes_path, parse_dates=['Timestamp'])[['Timestamp'] + GOES_COLS]\n    dens = pd.read_csv(dens_path, parse_dates=['Timestamp'])[['Timestamp', 'Orbit Mean Density (kg/m^3)']].rename(columns={'Orbit Mean Density (kg/m^3)': 'rho'})\n    return (omni.merge(goes, on='Timestamp', how='inner').set_index('Timestamp').sort_index().resample('1h').mean(), dens.set_index('Timestamp').sort_index().resample('1h').mean())\ndef samples(df):\n    win = df.loc[df.index[-16]:df.index[-1], FEATS]\n    Y, X = win.iloc[1:].values, win.iloc[:-1].values\n    A = np.linalg.lstsq(X, Y, rcond=None)[0].T\n    y1 = (A @ win.iloc[-1].values.reshape(-1, 1)).ravel()\n    rows = []\n    for _ in range(4):\n        rows.append(y1)\n        y1 = (A @ y1).ravel()\n    return pd.DataFrame(rows, columns=[f'{c}_f1h' for c in FEATS])\ndef fit_predict_linear(X_train, y_train, X_test):\n    Xb = np.column_stack([np.ones(len(X_train)), X_train])\n    coef = np.linalg.lstsq(Xb, y_train, rcond=None)[0]\n    return np.column_stack([np.ones(len(X_test)), X_test]) @ coef\ntrain_df, train_dens = load_df(omni_train_path, goes_train_path, dens_train_path)\ntest_df, test_dens = load_df(omni_test_path, goes_test_path, dens_test_path)\ntrain_s = samples(train_df)\ntest_s = samples(test_df)\nX_tr = train_s[[f'{c}_f1h' for c in FEATS]].values\ny_tr = train_dens['rho'][1:5].values\nX_te = test_s[[f'{c}_f1h' for c in FEATS]].values\ny_te = test_dens['rho'][1:5].values\npred = fit_predict_linear(X_tr, y_tr, X_te)\nrmse = float(np.sqrt(np.mean((y_te - pred) ** 2)))\nresult = f'{rmse:.3e}'\nprint(result)\n",
+      "subquestion": "What is the RMSE for the 4-hour density prediction on the test window?",
+      "answer": "1.211e-13"
+    }
+  },
+  "reasoning_chain": [
+    "Nodes 1-6: Inspect the OMNI2, GOES, and Sat_Density train/test files used by the source computation.",
+    "Node 7 depends on nodes 1-6: Build hourly feature and density frames for the train and test windows.",
+    "Node 8 depends on node 7: Project the VAR(1) features, fit the linear model, and compute test RMSE.",
+    "Final answer: 1.211e-13"
+  ],
+  "datasets_used": [
+    "STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+    "STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv",
+    "STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv",
+    "STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv",
+    "STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv",
+    "STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Nodes 1-6: Inspect the OMNI2, GOES, and Sat_Density train/test files used by the source computation.",
+      "answer": "six source files loaded"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7 depends on nodes 1-6: Build hourly feature and density frames for the train and test windows.",
+      "answer": "1441|1441|73|73"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8 depends on node 7: Project the VAR(1) features, fit the linear model, and compute test RMSE.",
+      "answer": "1.211e-13"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "astronomy-hard-7",
+    "domain": "astronomy",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/astronomy-hard-7.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-7",
+    "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-7/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+      "2": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv",
+      "3": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv",
+      "4": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv",
+      "5": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv",
+      "6": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv",
+      "7": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+      "8": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

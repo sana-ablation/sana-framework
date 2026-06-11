@@ -1,0 +1,187 @@
+{
+  "question": "From the top three Texas counties by average state expenditure from 2018 to 2020, identify the county with the oldest incorporated county seat. In that county, identify the independent school district that had the highest average identified student percentage between 2018 and 2021. What year did that school district become independent? Please return the year only. Your response should be in the format [Answer].",
+  "answer": "1952",
+  "nodes": {
+    "1": {
+      "source": "datagov/texas-state-expenditures-by-county-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['TRAVIS', 'HARRIS', 'DALLAS']\nlabels = {'TRAVIS': 'Travis', 'HARRIS': 'Harris', 'DALLAS': 'Dallas'}\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\nfiltered = df[df['County'].isin(counties)].copy()\ntotals = filtered.groupby('County')['Amount'].sum()\nanswer = '; '.join(f\"{labels[county]}: ${totals[county] / 1_000_000_000:.2f}B\" for county in counties)",
+      "subquestion": "What were the total state expenditures in 2018 for Travis, Harris, and Dallas counties? (Filter County in {TRAVIS, HARRIS, DALLAS}; exclude County == 'INTEX' or null; group by County; sum Amount.)",
+      "answer": "Travis: $29.37B; Harris: $28.16B; Dallas: $21.39B"
+    },
+    "2": {
+      "source": "datagov/texas-state-expenditures-by-county-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['TRAVIS', 'HARRIS', 'DALLAS']\nlabels = {'TRAVIS': 'Travis', 'HARRIS': 'Harris', 'DALLAS': 'Dallas'}\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\nfiltered = df[df['County'].isin(counties)].copy()\ntotals = filtered.groupby('County')['Amount'].sum()\nanswer = '; '.join(f\"{labels[county]}: ${totals[county] / 1_000_000_000:.2f}B\" for county in counties)",
+      "subquestion": "What were the total state expenditures in 2019 for Travis, Harris, and Dallas counties? (Filter County in {TRAVIS, HARRIS, DALLAS}; exclude County == 'INTEX' or null; group by County; sum Amount.)",
+      "answer": "Travis: $16.34B; Harris: $14.99B; Dallas: $10.58B"
+    },
+    "3": {
+      "source": "datagov/texas-state-expenditures-by-county-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['TRAVIS', 'HARRIS', 'DALLAS']\nlabels = {'TRAVIS': 'Travis', 'HARRIS': 'Harris', 'DALLAS': 'Dallas'}\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\nfiltered = df[df['County'].isin(counties)].copy()\ntotals = filtered.groupby('County')['Amount'].sum()\nanswer = '; '.join(f\"{labels[county]}: ${totals[county] / 1_000_000_000:.2f}B\" for county in counties)",
+      "subquestion": "What were the total state expenditures in 2020 for Travis, Harris, and Dallas counties? (Filter County in {TRAVIS, HARRIS, DALLAS}; exclude County == 'INTEX' or null; group by County; sum Amount.)",
+      "answer": "Travis: $16.76B; Harris: $16.45B; Dallas: $12.50B"
+    },
+    "4": {
+      "source": "wikipedia/Travis_County,_Texas/content.txt",
+      "fact": "Travis County is located in Central Texas. Its county seat and most populous city is Austin, the state's capital.",
+      "subquestion": "What is the county seat of each of the top 3 counties (from hop 1)?",
+      "answer": "Austin is the county seat of Travis County"
+    },
+    "5": {
+      "source": "wikipedia/Harris_County,_Texas/content.txt",
+      "fact": "Harris County is a county located in the U.S. state of Texas. Its county seat is Houston.",
+      "subquestion": "What is the county seat of each of the top 3 counties (from hop 1)?",
+      "answer": "Houston is the county seat of Harris County"
+    },
+    "6": {
+      "source": "wikipedia/Dallas_County,_Texas/content.txt",
+      "fact": "Dallas County is a county located in the U.S. state of Texas. Its county seat is Dallas.",
+      "subquestion": "What is the county seat of each of the top 3 counties (from hop 1)?",
+      "answer": "Dallas is the county seat of Dallas County"
+    },
+    "7": {
+      "source": "wikipedia/Austin,_Texas/content.txt",
+      "fact": "Austin is the capital city of the U.S. state of Texas. Incorporated on December 27, 1839, it has been one of the fastest-growing large cities in the United States.",
+      "subquestion": "When was each county seat (from hop 2) incorporated?",
+      "answer": "Austin was incorporated on December 27, 1839"
+    },
+    "8": {
+      "source": "wikipedia/Houston/content.txt",
+      "fact": "Houston was incorporated as a city on June 5, 1837.",
+      "subquestion": "When was each county seat (from hop 2) incorporated?",
+      "answer": "Houston was incorporated on June 5, 1837."
+    },
+    "9": {
+      "source": "wikipedia/Dallas/content.txt",
+      "fact": "Dallas was formally incorporated as a city on February 2, 1856.",
+      "subquestion": "When was each county seat (from hop 2) incorporated?",
+      "answer": "Dallas was incorporated in February 2, 1856"
+    },
+    "10": {
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'HARRIS') & (df['CEName'] == 'SHELDON ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Sheldon ISD: {average_isp:.2f}% average ISP'",
+      "subquestion": "For Harris County in 2018-2019, what is the average SiteISP for each ISD? (Filter SiteCounty == 'HARRIS'; filter CEName contains 'ISD'; group by CEName; average SiteISP.)",
+      "answer": "Sheldon ISD: 81.47% average ISP"
+    },
+    "11": {
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'HARRIS') & (df['CEName'] == 'SHELDON ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Sheldon ISD: {average_isp:.2f}% average ISP'",
+      "subquestion": "For Harris County in 2019-2020, what is the average SiteISP for each ISD? (Filter SiteCounty == 'HARRIS'; filter CEName contains 'ISD'; group by CEName; average SiteISP.)",
+      "answer": "Sheldon ISD: 60.66% average ISP"
+    },
+    "12": {
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'HARRIS') & (df['CEName'] == 'SHELDON ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Sheldon ISD: {average_isp:.2f}% average ISP'",
+      "subquestion": "For Harris County in 2020-2021, what is the average SiteISP for each ISD? (Filter SiteCounty == 'HARRIS'; filter CEName contains 'ISD'; group by CEName; average SiteISP.)",
+      "answer": "Sheldon ISD: 66.11% average ISP"
+    },
+    "13": {
+      "source": "wikipedia/Sheldon_Independent_School_District/content.txt",
+      "fact": "The Sheldon Independent School District became an independent school district in 1952.",
+      "subquestion": "In what year did the ISD with highest average ISP (from hop 4) become an independent school district?",
+      "answer": "1952"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3): What are the top 3 Texas counties by average state expenditure (2018-2020)?",
+    "  Node 1: 2018 Texas State Expenditures by county",
+    "  Node 2: 2019 Texas State Expenditures by county",
+    "  Node 3: 2020 Texas State Expenditures by county",
+    "  Aggregation: Calculate average expenditure per county across 3 datasets",
+    "    Travis County: ($29.37B + $16.34B + $16.76B) / 3 = $20.82B average",
+    "    Harris County: ($28.16B + $14.99B + $16.45B) / 3 = $19.87B average",
+    "    Dallas County: ($21.39B + $10.58B + $12.50B) / 3 = $14.82B average",
+    "  Result: Top 3 are Travis, Harris, Dallas counties",
+    "",
+    "HOP 2 (d=3): What is the county seat of each of the top 3 counties (from hop 1)?",
+    "  Node 4: Travis County -> county seat: Austin",
+    "  Node 5: Harris County -> county seat: Houston",
+    "  Node 6: Dallas County -> county seat: Dallas",
+    "  Result: Three county seats identified (Austin, Houston, Dallas)",
+    "",
+    "HOP 3 (d=3): When was each county seat (from hop 2) founded?",
+    "  Node 7: Austin -> incorporated December 27, 1839",
+    "  Node 8: Houston -> incorporated on June 5, 1837",
+    "  Node 9: Dallas -> incorporated in February 2, 1856",
+    "  Comparison: Houston (1837) < Austin (1839) < Dallas (1856)",
+    "  Result: Houston is the oldest county seat -> Harris County is the target",
+    "",
+    "HOP 4 (d=3): Which ISD in the selected county (from hop 3) had the highest average ISP across 2018-2021?",
+    "  Node 10: 2018-2019 School Nutrition for Harris County ISDs",
+    "  Node 11: 2019-2020 School Nutrition for Harris County ISDs",
+    "  Node 12: 2020-2021 School Nutrition for Harris County ISDs",
+    "  Aggregation: Calculate average ISP per ISD in Harris County across 3 years",
+    "    Sheldon ISD: (81.47% + 60.66% + 66.11%) / 3 = 69.41% average ISP (highest among ISDs)",
+    "  Result: Sheldon ISD has highest average ISP in Harris County",
+    "",
+    "HOP 5 (d=1): In what year did the ISD with highest average ISP (from hop 4) become an independent school district?",
+    "  Node 13: Sheldon ISD became an independent school district in 1952",
+    "",
+    "Final answer: 1952"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Austin,_Texas",
+    "Dallas",
+    "Dallas_County,_Texas",
+    "Harris_County,_Texas",
+    "Houston",
+    "Sheldon_Independent_School_District",
+    "Travis_County,_Texas",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2018",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020",
+    "texas-state-expenditures-by-county-2018",
+    "texas-state-expenditures-by-county-2019",
+    "texas-state-expenditures-by-county-2020"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: 2018 Texas State Expenditures by county Node 2: 2019 Texas State Expenditures by county Node 3: 2020 Texas State Expenditures by county Aggregation: Calculate average expenditure per county across 3 datasets Travis County: ($29.37B + $16.34B + $16.76B) / 3 = $20.82B average Harris County: ($28.16B + $14.99B + $16.45B) / 3 = $19.87B average Dallas County: ($21.39B + $10.58B + $12.50B) / 3 = $14.82B average Result: Top 3 are Travis, Harris, Dallas counties",
+      "answer": "Top 3 are Travis, Harris, Dallas counties"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Node 4: Travis County -> county seat: Austin Node 5: Harris County -> county seat: Houston Node 6: Dallas County -> county seat: Dallas Result: Three county seats identified (Austin, Houston, Dallas)",
+      "answer": "Three county seats identified (Austin, Houston, Dallas)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Node 7: Austin -> incorporated December 27, 1839 Node 8: Houston -> incorporated on June 5, 1837 Node 9: Dallas -> incorporated in February 2, 1856 Comparison: Houston (1837) < Austin (1839) < Dallas (1856) Result: Houston is the oldest county seat -> Harris County is the target",
+      "answer": "Houston is the oldest county seat -> Harris County is the target"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        10,
+        11,
+        12
+      ],
+      "reasoning": "Node 10: 2018-2019 School Nutrition for Harris County ISDs Node 11: 2019-2020 School Nutrition for Harris County ISDs Node 12: 2020-2021 School Nutrition for Harris County ISDs Aggregation: Calculate average ISP per ISD in Harris County across 3 years Sheldon ISD: (81.47% + 60.66% + 66.11%) / 3 = 69.41% average ISP (highest among ISDs) Result: Sheldon ISD has highest average ISP in Harris County",
+      "answer": "Sheldon ISD has highest average ISP in Harris County"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        13
+      ],
+      "reasoning": "Node 13: Sheldon ISD became an independent school district in 1952",
+      "answer": "1952"
+    }
+  ]
+}

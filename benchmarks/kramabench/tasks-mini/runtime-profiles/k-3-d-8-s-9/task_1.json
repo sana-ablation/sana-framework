@@ -1,0 +1,134 @@
+{
+  "dataset_sequence": [
+    "kramabench-environment-hard-12"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-environment-hard-12/files/boston-harbor-beaches.txt",
+    "datagov/kramabench-environment-hard-12/files/constitution_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/city_point_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/m_street_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/carson_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/malibu_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/tenean_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/wollaston_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-12/files/boston-harbor-beaches.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Read and normalize the Boston Harbor beach list.",
+    "2. For the first relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "3. For the second relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "4. For the third relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "5. For the fourth relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "6. For the fifth relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "7. For the sixth relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "8. For the seventh relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "9. For the eighth relevant beach datasheet, keep samples with no rainfall in the preceding three days and count swimming-standard failures.",
+    "10. Compare the per-beach failure counts and return the beach with the largest count."
+  ],
+  "original_final_question": "Which Boston Harbor beach had the highest number of samples that failed to meet swimming standards when there was no rainfall in the preceding three days? A sample meets the standard if it contains fewer than 104 counts of Enterococcus per 100 milliliters of water. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the Boston Harbor beach list from the text source.",
+    "Nodes 2-9 depend on node 1: For each relevant beach datasheet, flatten the two-row measurement header, keep samples with 3-Day Rain equal to 0, and count samples with Enterococcus at least 104 counts per 100 mL.",
+    "Node 10 depends on nodes 2-9: Compare the per-beach failure counts and select the beach with the largest count.",
+    "Final answer: Wollaston Beach"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/boston-harbor-beaches.txt",
+      "intent": "Which beaches are listed as Boston Harbor beaches in the provided beach list?",
+      "code": "path = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nwith open(path, encoding='utf-8') as handle:\n    names = [line.strip() for line in handle if line.strip()]\nresult = '|'.join(names)\nprint(result)\n",
+      "answer": "Constitution Beach|Castle Island Beach|Pleasure Bay Beach|City Point Beach|M Street Beach|Carson Beach|Malibu Beach|Tenean Beach|Wollaston Beach"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/constitution_beach_datasheet.csv",
+      "intent": "How many Constitution Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "36"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "intent": "How many no-rain samples in the Pleasure Bay and Castle Island beach datasheet failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "4"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/city_point_beach_datasheet.csv",
+      "intent": "How many City Point Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/city_point_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "6"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/m_street_beach_datasheet.csv",
+      "intent": "How many M Street Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/m_street_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "7"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/carson_beach_datasheet.csv",
+      "intent": "How many Carson Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/carson_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "24"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/malibu_beach_datasheet.csv",
+      "intent": "How many Malibu Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/malibu_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "20"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/tenean_beach_datasheet.csv",
+      "intent": "How many Tenean Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/tenean_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "40"
+    },
+    {
+      "node_id": "9",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/wollaston_beach_datasheet.csv",
+      "intent": "How many Wollaston Beach no-rain samples failed the Enterococcus swimming standard?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv'\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.split('_').str[0]\nmelted['Measure'] = melted['Variable'].str.split('_').str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\nfailures = tidy[(tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))]\nresult = str(len(failures))\nprint(result)\n",
+      "answer": "129"
+    },
+    {
+      "node_id": "10",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/boston-harbor-beaches.txt",
+      "intent": "Which listed Boston Harbor beach has the largest count of no-rain samples that failed the Enterococcus swimming standard?",
+      "code": "from pathlib import Path\nimport pandas as pd\nroot = Path('other-benchmarks/Kramabench/data/environment/input')\nbeach_list_path = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nwith open(beach_list_path, encoding='utf-8') as handle:\n    harbor_beaches = {line.strip() for line in handle if line.strip()}\nfiles = ['constitution_beach_datasheet.csv', 'pleasure_bay_and_castle_island_beach_datasheet.csv', 'city_point_beach_datasheet.csv', 'm_street_beach_datasheet.csv', 'carson_beach_datasheet.csv', 'malibu_beach_datasheet.csv', 'tenean_beach_datasheet.csv', 'wollaston_beach_datasheet.csv']\ndef prepare(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    melted = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    melted['Location'] = melted['Variable'].str.split('_').str[0]\n    melted['Measure'] = melted['Variable'].str.split('_').str[1]\n    tidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\ndef beach_name(path):\n    with open(path, encoding='utf-8-sig') as handle:\n        title = handle.readline().strip().strip('\"')\n    return title.split(':')[0].split(',')[0].strip()\ncounts = {}\nfor filename in files:\n    path = root / filename\n    name = beach_name(path)\n    if name in harbor_beaches:\n        tidy = prepare(path)\n        counts[name] = int(((tidy['3-Day Rain'].eq(0)) & (tidy['Enterococcus'].ge(104))).sum())\nresult = max(counts, key=counts.get)\nprint(result)\n",
+      "answer": "Wollaston Beach"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/boston-harbor-beaches.txt",
+      "intent": "Which beaches are listed as Boston Harbor beaches in the provided beach list?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "10",
+      "dataset_id": "kramabench-environment-hard-12",
+      "source": "datagov/kramabench-environment-hard-12/files/boston-harbor-beaches.txt",
+      "intent": "Which listed Boston Harbor beach has the largest count of no-rain samples that failed the Enterococcus swimming standard?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    }
+  ]
+}

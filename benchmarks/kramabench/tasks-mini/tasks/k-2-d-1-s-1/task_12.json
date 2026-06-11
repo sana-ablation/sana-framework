@@ -1,0 +1,88 @@
+{
+  "question": "Which states had Identity Theft as their top report category? Write your answer as [ANSWER].",
+  "answer": [
+    "Arizona",
+    "California",
+    "Massachusetts",
+    "Ohio",
+    "Oklahoma",
+    "Rhode Island"
+  ],
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-26/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+      "fact": "import csv\nfrom collections import defaultdict\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\ndata_rows = []\nfor row in rows:\n    state = (row.get('State') or '').strip()\n    category = (row.get('Category') or '').strip()\n    reports = (row.get('# of Reports') or '').strip()\n    if state and category and reports:\n        data_rows.append({'State': state, 'Category': category, '# of Reports': int(reports.replace(',', ''))})\nby_state = defaultdict(list)\nfor row in data_rows:\n    by_state[row['State']].append(row)\nfor state in by_state:\n    by_state[state].sort(key=lambda row: row['# of Reports'], reverse=True)\nresult = f'{len(data_rows)}|{len(by_state)}'\nprint(result)\n",
+      "subquestion": "How many category rows and state groups are in the state top-ten report categories table?",
+      "answer": "520|52"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-26/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+      "fact": "import csv\nfrom collections import defaultdict\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\ndata_rows = []\nfor row in rows:\n    state = (row.get('State') or '').strip()\n    category = (row.get('Category') or '').strip()\n    reports = (row.get('# of Reports') or '').strip()\n    if state and category and reports:\n        data_rows.append({'State': state, 'Category': category, '# of Reports': int(reports.replace(',', ''))})\nby_state = defaultdict(list)\nfor row in data_rows:\n    by_state[row['State']].append(row)\nfor state in by_state:\n    by_state[state].sort(key=lambda row: row['# of Reports'], reverse=True)\nresult = sorted(state for state, rows in by_state.items() if rows[0]['Category'] == 'Identity Theft')\nprint(result)\n",
+      "subquestion": "Which states have Identity Theft as the highest-report-count category?",
+      "answer": [
+        "Arizona",
+        "California",
+        "Massachusetts",
+        "Ohio",
+        "Oklahoma",
+        "Rhode Island"
+      ]
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Clean the state top-ten report categories table and group rows by state.",
+    "Node 2 depends on node 1: Sort each state group by report count and keep states whose top category is Identity Theft.",
+    "Final answer: ['Arizona', 'California', 'Massachusetts', 'Ohio', 'Oklahoma', 'Rhode Island']"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-legal-easy-26/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Clean the state top-ten report categories table and group rows by state.",
+      "answer": "520|52"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Sort each state group by report count and keep states whose top category is Identity Theft.",
+      "answer": [
+        "Arizona",
+        "California",
+        "Massachusetts",
+        "Ohio",
+        "Oklahoma",
+        "Rhode Island"
+      ]
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-26",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-26.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-26",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-26/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "dataset_sequence": [
+    "San_Antonio",
+    "San_Antonio_Spurs",
+    "New_York_Knicks",
+    "Manhattan",
+    "hate-crimes-by-county-and-bias-type-beginning-2010",
+    "index-violent-property-and-firearm-rates-by-county-beginning-1990"
+  ],
+  "source_sequence": [
+    "wikipedia/San_Antonio/content.txt",
+    "wikipedia/San_Antonio_Spurs/content.txt",
+    "wikipedia/New_York_Knicks/content.txt",
+    "wikipedia/Manhattan/content.txt",
+    "datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt",
+    "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify the NBA champion team based in San Antonio.",
+    "2. Determine which team it defeated in its first NBA Finals win.",
+    "3. Determine where that opponent team is based and map that place to its county.",
+    "4. In 2020 hate-crime records for that county, count reported hate crime incidents.",
+    "5. In 2020 county crime records for the same county, determine the firearm crime count.",
+    "6. Return the absolute difference between the firearm crime count and the hate crime incident count."
+  ],
+  "original_final_question": "The NBA champion team based in San Antonio won its first NBA Finals against another team. Find the county that `another` team is based in. In 2020, what is the absolute difference between firearm crimes and hate crime incidents reported in that county? Only report the number in your answer. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia San_Antonio - node 1):",
+    "  Node 1: Five-time NBA champion team based in San Antonio -> San Antonio Spurs",
+    "",
+    "HOP 2 (d=1, Wikipedia San_Antonio_Spurs - node 2):",
+    "  Node 2: Team Spurs defeated in first Finals (1999) -> New York Knicks",
+    "",
+    "HOP 3 (d=1, Wikipedia New_York_Knicks - node 3):",
+    "  Node 3: Knicks are based in Manhattan",
+    "",
+    "HOP 4 (d=1, Wikipedia Manhattan - node 4):",
+    "  Node 4: Manhattan is coextensive with New York County",
+    "",
+    "HOP 5 (d=2, NY data.gov hate crimes + index crimes 2020 - nodes 5-6):",
+    "  Node 5: New York County 2020 hate crime incidents -> 82",
+    "  Node 6: New York County 2020 firearm crimes -> 898",
+    "  Computation: |898 - 82| = 816",
+    "",
+    "Final answer: 816"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "5",
+      "dataset_id": "hate-crimes-by-county-and-bias-type-beginning-2010",
+      "source": "datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt",
+      "intent": "How many total hate crime incidents were there in <node_4 answer> in 2020? (Filter: Year == 2020; County == New York; Crime Type in {Crimes Against Persons, Property Crimes}; sum Total Incidents.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = int(df.loc[\n    (df[\"Year\"] == 2020)\n    & (df[\"County\"] == \"New York\")\n    & (df[\"Crime Type\"].isin([\"Crimes Against Persons\", \"Property Crimes\"])),\n    \"Total Incidents\",\n].sum())",
+      "answer": "82"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "How many firearm crimes were there in <node_4 answer> in 2020? (Filter: Year == 2020; County == New York; use Firearm Count.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = int(df.loc[\n    (df[\"Year\"] == 2020) & (df[\"County\"] == \"New York\"),\n    \"Firearm Count\",\n].iloc[0])",
+      "answer": "898"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "5",
+      "dataset_id": "hate-crimes-by-county-and-bias-type-beginning-2010",
+      "source": "datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt",
+      "intent": "How many total hate crime incidents were there in <node_4 answer> in 2020? (Filter: Year == 2020; County == New York; Crime Type in {Crimes Against Persons, Property Crimes}; sum Total Incidents.)",
+      "sql": "SELECT CAST(SUM(TRY_CAST(\"Total Incidents\" AS BIGINT)) AS BIGINT) AS answer\nFROM t\nWHERE TRY_CAST(\"Year\" AS INTEGER) = 2020\n  AND \"County\" = 'New York'\n  AND \"Crime Type\" IN ('Crimes Against Persons', 'Property Crimes')",
+      "answer": "82"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "How many firearm crimes were there in <node_4 answer> in 2020? (Filter: Year == 2020; County == New York; use Firearm Count.)",
+      "sql": "SELECT CAST(\"Firearm Count\" AS BIGINT) AS answer\nFROM t\nWHERE TRY_CAST(\"Year\" AS INTEGER) = 2020\n  AND \"County\" = 'New York'\nLIMIT 1",
+      "answer": "898"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-hard-7"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-hard-7/files/roman_cities.csv",
+    "datagov/kramabench-archeology-hard-7/files/worldcities.csv",
+    "datagov/kramabench-archeology-hard-7/files/worldcities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Load Roman-era city coordinates from the Roman cities table.",
+    "2. Filter the modern world cities table to population greater than 100,000.",
+    "3. For each large modern city, test whether any Roman-era coordinate is within 0.1 degrees."
+  ],
+  "original_final_question": "How many modern cities with a population of over 100k are within 0.1 degrees of ancient Roman-era cities? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Load Roman-era city coordinates from the Roman cities table.",
+    "Node 2: Filter the modern world cities table to population greater than 100,000.",
+    "Node 3 depends on nodes 1 and 2: For each large modern city, test whether any Roman-era coordinate is within 0.1 degrees.",
+    "Final answer: 274"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-hard-7",
+      "source": "datagov/kramabench-archeology-hard-7/files/roman_cities.csv",
+      "intent": "How many ancient Roman-era city rows are available for coordinate matching?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nresult = str(len(df))\nprint(result)\n",
+      "answer": "1388"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-hard-7",
+      "source": "datagov/kramabench-archeology-hard-7/files/worldcities.csv",
+      "intent": "How many modern city rows have population greater than 100,000?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nmodern = df[df['population'] > 100000]\nresult = str(len(modern))\nprint(result)\n",
+      "answer": "5873"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-hard-7",
+      "source": "datagov/kramabench-archeology-hard-7/files/worldcities.csv",
+      "intent": "How many modern cities over 100,000 people are within 0.1 degrees of at least one Roman-era city?",
+      "code": "import pandas as pd\nimport numpy as np\nimport re\nroman_path = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\nworld_path = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\nroman = pd.read_csv(roman_path)\nworld = pd.read_csv(world_path)\nroman_xy = roman[['Longitude (X)', 'Latitude (Y)']].to_numpy(float)\ndef match_indices(modern, radius=0.1):\n    points = modern[['lng', 'lat']].to_numpy(float)\n    good = []\n    roman_matches = []\n    for start in range(0, len(points), 512):\n        chunk = points[start:start + 512]\n        dist2 = ((chunk[:, None, :] - roman_xy[None, :, :]) ** 2).sum(axis=2)\n        mask = dist2 <= radius * radius\n        for offset, row in enumerate(mask):\n            indices = np.flatnonzero(row)\n            if len(indices):\n                good.append(start + offset)\n                roman_matches.append(indices.tolist())\n    return good, roman_matches\nmodern = world[world['population'] > 100000].reset_index(drop=True)\nmatched, _ = match_indices(modern)\nresult = str(len(matched))\nprint(result)\n",
+      "answer": "274"
+    }
+  ]
+}

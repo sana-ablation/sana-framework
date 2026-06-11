@@ -1,0 +1,242 @@
+{
+  "question": "I am researching several U.S. agencies. First, identify the federal police agency that consistently ranked in the top 20 for January parking fines from 2019 to 2021. Among these agencies, identify the agency that is a national law-enforcement body and had the highest average number of moving violations in those same months. The agency belongs to a federal agency that is within a specific U.S. Department. Who is the head of that department, and which university did this person graduate from? Return the university name only. Your response should be in the format [Answer].",
+  "answer": "North Dakota State University",
+  "nodes": {
+    "1": {
+      "source": "datagov/parking-violations-issued-in-january-2019/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/parking-violations-issued-in-january-2019/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.BytesIO(obj[\"Body\"].read()))\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\ndf[\"FINE_AMOUNT\"] = pd.to_numeric(df[\"FINE_AMOUNT\"], errors=\"coerce\")\n\nresult = (\n    df.groupby(\"ISSUING_AGENCY_NAME\", dropna=False)[\"FINE_AMOUNT\"]\n    .sum(min_count=1)\n    .sort_values(ascending=False)\n    .head(20)\n)\nanswer = result.index.tolist()",
+      "subquestion": "Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? (Filter for this node: group by ISSUING_AGENCY_NAME; sum FINE_AMOUNT; rank desc; take top 20.)",
+      "answer": [
+        "DEPARTMENT OF PUBLIC WORKS",
+        "METROPOLITAN POLICE DPT-DISTRICT 2",
+        "METROPOLITAN POLICE DPT-DISTRICT 1",
+        "METROPOLITAN POLICE DPT-DISTRICT 4",
+        "METROPOLITAN POLICE DPT-DISTRICT 5",
+        "METROPOLITAN POLICE DPT-DISTRICT 7",
+        "D.C. HOUSING AUTHORITY",
+        "METROPOLITAN POLICE DPT-DISTRICT 3",
+        "METROPOLITAN POLICE DPT-DISTRICT 6",
+        "SPECIAL OPERATION DIV & TRAFFIC DIV",
+        "UNITED STATES CAPITOL POLICE",
+        "METRO POLICE",
+        "DDOT",
+        "PROTECTIVE SERVICES DEPT (DC GOVT)",
+        "SPECIAL INSPECTION DIVISION",
+        "MPD RESERVE CORPS",
+        "UNVRSTY OF THE D.C. SECURITY POLICE",
+        "TAXI COMMISSION",
+        "US. SECRET SERVICE UNIFORM DIVISION",
+        "UNITED STATES PARK POLICE"
+      ]
+    },
+    "2": {
+      "source": "datagov/parking-violations-issued-in-january-2020/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/parking-violations-issued-in-january-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.BytesIO(obj[\"Body\"].read()))\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\ndf[\"FINE_AMOUNT\"] = pd.to_numeric(df[\"FINE_AMOUNT\"], errors=\"coerce\")\n\nresult = (\n    df.groupby(\"ISSUING_AGENCY_NAME\", dropna=False)[\"FINE_AMOUNT\"]\n    .sum(min_count=1)\n    .sort_values(ascending=False)\n    .head(20)\n)\nanswer = result.index.tolist()",
+      "subquestion": "Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? (Filter for this node: group by ISSUING_AGENCY_NAME; sum FINE_AMOUNT; rank desc; take top 20.)",
+      "answer": [
+        "DEPARTMENT OF PUBLIC WORKS",
+        "METROPOLITAN POLICE DPT-DISTRICT 2",
+        "D.C. HOUSING AUTHORITY",
+        "METROPOLITAN POLICE DPT-DISTRICT 6",
+        "METROPOLITAN POLICE DPT-DISTRICT 7",
+        "METROPOLITAN POLICE DPT-DISTRICT 4",
+        "DDOT",
+        "METROPOLITAN POLICE DPT-DISTRICT 3",
+        "METROPOLITAN POLICE DPT-DISTRICT 1",
+        "METROPOLITAN POLICE DPT-DISTRICT 5",
+        "METRO POLICE",
+        "SPECIAL OPERATION DIV & TRAFFIC DIV",
+        "UNITED STATES PARK POLICE",
+        "UNITED STATES CAPITOL POLICE",
+        "TAXI COMMISSION",
+        "SPECIAL INSPECTION DIVISION",
+        "PROTECTIVE SERVICES DEPT (DC GOVT)",
+        "US. SECRET SERVICE UNIFORM DIVISION",
+        "BOLLING AFB",
+        "US. GOVERNMENT PRINTING OFFICE"
+      ]
+    },
+    "3": {
+      "source": "datagov/parking-violations-issued-in-january-2021/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/parking-violations-issued-in-january-2021/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.BytesIO(obj[\"Body\"].read()))\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\ndf[\"FINE_AMOUNT\"] = pd.to_numeric(df[\"FINE_AMOUNT\"], errors=\"coerce\")\n\nresult = (\n    df.groupby(\"ISSUING_AGENCY_NAME\", dropna=False)[\"FINE_AMOUNT\"]\n    .sum(min_count=1)\n    .sort_values(ascending=False)\n    .head(20)\n)\nanswer = result.index.tolist()",
+      "subquestion": "Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? (Filter for this node: group by ISSUING_AGENCY_NAME; sum FINE_AMOUNT; rank desc; take top 20.)",
+      "answer": [
+        "DEPARTMENT OF PUBLIC WORKS",
+        "METROPOLITAN POLICE DPT-DISTRICT 7",
+        "METROPOLITAN POLICE DPT-DISTRICT 3",
+        "METROPOLITAN POLICE DPT-DISTRICT 6",
+        "METROPOLITAN POLICE DPT-DISTRICT 1",
+        "METROPOLITAN POLICE DPT-DISTRICT 2",
+        "METROPOLITAN POLICE DPT-DISTRICT 4",
+        "METROPOLITAN POLICE DPT-DISTRICT 5",
+        "SPECIAL OPERATION DIV & TRAFFIC DIV",
+        "D.C. HOUSING AUTHORITY",
+        "UNITED STATES PARK POLICE",
+        "METRO POLICE",
+        "TAXI COMMISSION",
+        "UNITED STATES CAPITOL POLICE",
+        "MPD RESERVE CORPS",
+        "US. SECRET SERVICE UNIFORM DIVISION",
+        "PROTECTIVE SERVICES DEPT (DC GOVT)",
+        "DPT. OF GENERAL SERVICES GUARDS",
+        "US. GOVERNMENT PRINTING OFFICE",
+        "OTHER"
+      ]
+    },
+    "4": {
+      "source": "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/moving-violations-issued-in-january-2019/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.BytesIO(obj[\"Body\"].read()))\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\nagencies = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\n\nresult = (\n    df[df[\"ISSUING_AGENCY_NAME\"].isin(agencies)]\n    .groupby(\"ISSUING_AGENCY_NAME\")\n    .size()\n    .reindex(agencies)\n)\nanswer = result.to_dict()",
+      "subquestion": "Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "answer": {
+        "UNITED STATES PARK POLICE": 103,
+        "UNITED STATES CAPITOL POLICE": 176,
+        "US. SECRET SERVICE UNIFORM DIVISION": 145
+      }
+    },
+    "5": {
+      "source": "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/moving-violations-issued-in-january-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.BytesIO(obj[\"Body\"].read()))\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\nagencies = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\n\nresult = (\n    df[df[\"ISSUING_AGENCY_NAME\"].isin(agencies)]\n    .groupby(\"ISSUING_AGENCY_NAME\")\n    .size()\n    .reindex(agencies)\n)\nanswer = result.to_dict()",
+      "subquestion": "Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "answer": {
+        "UNITED STATES PARK POLICE": 204,
+        "UNITED STATES CAPITOL POLICE": 139,
+        "US. SECRET SERVICE UNIFORM DIVISION": 118
+      }
+    },
+    "6": {
+      "source": "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/moving-violations-issued-in-january-2021/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.BytesIO(obj[\"Body\"].read()))\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\nagencies = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\ncounts_2019 = {\n    \"UNITED STATES PARK POLICE\": 103,\n    \"UNITED STATES CAPITOL POLICE\": 176,\n    \"US. SECRET SERVICE UNIFORM DIVISION\": 145,\n}\ncounts_2020 = {\n    \"UNITED STATES PARK POLICE\": 204,\n    \"UNITED STATES CAPITOL POLICE\": 139,\n    \"US. SECRET SERVICE UNIFORM DIVISION\": 118,\n}\ncounts_2021 = (\n    df[df[\"ISSUING_AGENCY_NAME\"].isin(agencies)]\n    .groupby(\"ISSUING_AGENCY_NAME\")\n    .size()\n    .reindex(agencies)\n    .astype(int)\n    .to_dict()\n)\naverages = {\n    agency: (counts_2019[agency] + counts_2020[agency] + counts_2021[agency]) / 3\n    for agency in agencies\n}\nanswer = sorted(averages, key=lambda agency: (-averages[agency], agency))[0]",
+      "subquestion": "Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "answer": "UNITED STATES PARK POLICE"
+    },
+    "7": {
+      "source": "wikipedia/United_States_Park_Police/content.txt",
+      "fact": "The United States Park Police is an operation of the National Park Service.",
+      "subquestion": "Which federal agency operates the United States Park Police (from hop 2)?",
+      "answer": "National Park Service"
+    },
+    "8": {
+      "source": "wikipedia/National_Park_Service/content.txt",
+      "fact": "The National Park Service is an agency within the United States Department of the Interior.",
+      "subquestion": "The agency (from hop 3) is within which U.S. department?",
+      "answer": "United States Department of the Interior"
+    },
+    "9": {
+      "source": "wikipedia/United_States_Department_of_the_Interior/content.txt",
+      "fact": "The department is headed by the secretary of the interior, who reports directly to the president of the United States and is a member of the president's Cabinet. The current interior secretary is Doug Burgum.",
+      "subquestion": "Who is the head of the department (from hop 4)?",
+      "answer": "Doug Burgum"
+    },
+    "10": {
+      "source": "wikipedia/Doug_Burgum/content.txt",
+      "fact": "After graduating from North Dakota State University in 1978 with a bachelor's degree in university studies and earning an MBA from Stanford University two years later.",
+      "subquestion": "Which university did the head of the department (from hop 5) graduate from in 1978?",
+      "answer": "North Dakota State University"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3, January parking-violation fine totals 2019-2021 - nodes 1-3):",
+    "  Question: Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021?",
+    "  Node 1: 2019 top 20 agencies by fine total -> DEPARTMENT OF PUBLIC WORKS; METROPOLITAN POLICE DPT-DISTRICT 2; METROPOLITAN POLICE DPT-DISTRICT 1; METROPOLITAN POLICE DPT-DISTRICT 4; METROPOLITAN POLICE DPT-DISTRICT 5; METROPOLITAN POLICE DPT-DISTRICT 7; D.C. HOUSING AUTHORITY; METROPOLITAN POLICE DPT-DISTRICT 3; METROPOLITAN POLICE DPT-DISTRICT 6; SPECIAL OPERATION DIV & TRAFFIC DIV; UNITED STATES CAPITOL POLICE; METRO POLICE; DDOT; PROTECTIVE SERVICES DEPT (DC GOVT); SPECIAL INSPECTION DIVISION; MPD RESERVE CORPS; UNVRSTY OF THE D.C. SECURITY POLICE; TAXI COMMISSION; US. SECRET SERVICE UNIFORM DIVISION; UNITED STATES PARK POLICE",
+    "  Node 2: 2020 top 20 agencies by fine total -> DEPARTMENT OF PUBLIC WORKS; METROPOLITAN POLICE DPT-DISTRICT 2; D.C. HOUSING AUTHORITY; METROPOLITAN POLICE DPT-DISTRICT 6; METROPOLITAN POLICE DPT-DISTRICT 7; METROPOLITAN POLICE DPT-DISTRICT 4; DDOT; METROPOLITAN POLICE DPT-DISTRICT 3; METROPOLITAN POLICE DPT-DISTRICT 1; METROPOLITAN POLICE DPT-DISTRICT 5; METRO POLICE; SPECIAL OPERATION DIV & TRAFFIC DIV; UNITED STATES PARK POLICE; UNITED STATES CAPITOL POLICE; TAXI COMMISSION; SPECIAL INSPECTION DIVISION; PROTECTIVE SERVICES DEPT (DC GOVT); US. SECRET SERVICE UNIFORM DIVISION; BOLLING AFB; US. GOVERNMENT PRINTING OFFICE",
+    "  Node 3: 2021 top 20 agencies by fine total -> DEPARTMENT OF PUBLIC WORKS; METROPOLITAN POLICE DPT-DISTRICT 7; METROPOLITAN POLICE DPT-DISTRICT 3; METROPOLITAN POLICE DPT-DISTRICT 6; METROPOLITAN POLICE DPT-DISTRICT 1; METROPOLITAN POLICE DPT-DISTRICT 2; METROPOLITAN POLICE DPT-DISTRICT 4; METROPOLITAN POLICE DPT-DISTRICT 5; SPECIAL OPERATION DIV & TRAFFIC DIV; D.C. HOUSING AUTHORITY; UNITED STATES PARK POLICE; METRO POLICE; TAXI COMMISSION; UNITED STATES CAPITOL POLICE; MPD RESERVE CORPS; US. SECRET SERVICE UNIFORM DIVISION; PROTECTIVE SERVICES DEPT (DC GOVT); DPT. OF GENERAL SERVICES GUARDS; US. GOVERNMENT PRINTING OFFICE; OTHER",
+    "  Answer: Intersection across 2019-2021 -> {DEPARTMENT OF PUBLIC WORKS, METROPOLITAN POLICE DPT-DISTRICT 2, METROPOLITAN POLICE DPT-DISTRICT 1, METROPOLITAN POLICE DPT-DISTRICT 4, METROPOLITAN POLICE DPT-DISTRICT 5, METROPOLITAN POLICE DPT-DISTRICT 7, D.C. HOUSING AUTHORITY, METROPOLITAN POLICE DPT-DISTRICT 3, METROPOLITAN POLICE DPT-DISTRICT 6, SPECIAL OPERATION DIV & TRAFFIC DIV, UNITED STATES CAPITOL POLICE, METRO POLICE, PROTECTIVE SERVICES DEPT (DC GOVT), TAXI COMMISSION, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}",
+    "  Subset rule: keep agencies in the intersection that are U.S. national law-enforcement bodies -> {UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}",
+    "",
+    "HOP 2 (d=3, January moving-violation counts 2019-2021 for hop 1 subset - nodes 4-6):",
+    "  Question: Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021?",
+    "  Node 4: 2019 moving violations -> UNITED STATES PARK POLICE 103; UNITED STATES CAPITOL POLICE 176; US. SECRET SERVICE UNIFORM DIVISION 145",
+    "  Node 5: 2020 moving violations -> UNITED STATES PARK POLICE 204; UNITED STATES CAPITOL POLICE 139; US. SECRET SERVICE UNIFORM DIVISION 118",
+    "  Node 6: 2021 moving violations -> UNITED STATES PARK POLICE 71; UNITED STATES CAPITOL POLICE 30; US. SECRET SERVICE UNIFORM DIVISION 32; averages 2019-2021 -> UNITED STATES PARK POLICE 126.0; UNITED STATES CAPITOL POLICE 115.0; US. SECRET SERVICE UNIFORM DIVISION 98.33",
+    "  Answer: UNITED STATES PARK POLICE",
+    "",
+    "HOP 3 (d=1, Wikipedia United States Park Police - node 7):",
+    "  Question: Which federal agency operates the United States Park Police (from hop 2)?",
+    "  Node 7: United States Park Police is an operation of the National Park Service",
+    "  Answer: National Park Service",
+    "",
+    "HOP 4 (d=1, Wikipedia National Park Service - node 8):",
+    "  Question: The agency (from hop 3) is within which U.S. department?",
+    "  Node 8: National Park Service is within the United States Department of the Interior",
+    "  Answer: United States Department of the Interior",
+    "",
+    "HOP 5 (d=1, Wikipedia United States Department of the Interior - node 9):",
+    "  Question: Who is the head of the department (from hop 4)?",
+    "  Node 9: The current interior secretary is Doug Burgum",
+    "  Answer: Doug Burgum",
+    "",
+    "HOP 6 (d=1, Wikipedia Doug Burgum - node 10):",
+    "  Question: Which university did Doug Burgum graduate from in 1978?",
+    "  Node 10: Graduated from North Dakota State University in 1978",
+    "  Answer: North Dakota State University",
+    "",
+    "Final answer: North Dakota State University"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "National_Park_Service",
+    "United_States_Department_of_the_Interior",
+    "United_States_Park_Police",
+    "Doug_Burgum",
+    "moving-violations-issued-in-january-2019",
+    "moving-violations-issued-in-january-2020",
+    "moving-violations-issued-in-january-2021",
+    "parking-violations-issued-in-january-2019",
+    "parking-violations-issued-in-january-2020",
+    "parking-violations-issued-in-january-2021"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Question: Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? Node 1: 2019 top 20 agencies by fine total -> DEPARTMENT OF PUBLIC WORKS; METROPOLITAN POLICE DPT-DISTRICT 2; METROPOLITAN POLICE DPT-DISTRICT 1; METROPOLITAN POLICE DPT-DISTRICT 4; METROPOLITAN POLICE DPT-DISTRICT 5; METROPOLITAN POLICE DPT-DISTRICT 7; D.C. HOUSING AUTHORITY; METROPOLITAN POLICE DPT-DISTRICT 3; METROPOLITAN POLICE DPT-DISTRICT 6; SPECIAL OPERATION DIV & TRAFFIC DIV; UNITED STATES CAPITOL POLICE; METRO POLICE; DDOT; PROTECTIVE SERVICES DEPT (DC GOVT); SPECIAL INSPECTION DIVISION; MPD RESERVE CORPS; UNVRSTY OF THE D.C. SECURITY POLICE; TAXI COMMISSION; US. SECRET SERVICE UNIFORM DIVISION; UNITED STATES PARK POLICE Node 2: 2020 top 20 agencies by fine total -> DEPARTMENT OF PUBLIC WORKS; METROPOLITAN POLICE DPT-DISTRICT 2; D.C. HOUSING AUTHORITY; METROPOLITAN POLICE DPT-DISTRICT 6; METROPOLITAN POLICE DPT-DISTRICT 7; METROPOLITAN POLICE DPT-DISTRICT 4; DDOT; METROPOLITAN POLICE DPT-DISTRICT 3; METROPOLITAN POLICE DPT-DISTRICT 1; METROPOLITAN POLICE DPT-DISTRICT 5; METRO POLICE; SPECIAL OPERATION DIV & TRAFFIC DIV; UNITED STATES PARK POLICE; UNITED STATES CAPITOL POLICE; TAXI COMMISSION; SPECIAL INSPECTION DIVISION; PROTECTIVE SERVICES DEPT (DC GOVT); US. SECRET SERVICE UNIFORM DIVISION; BOLLING AFB; US. GOVERNMENT PRINTING OFFICE Node 3: 2021 top 20 agencies by fine total -> DEPARTMENT OF PUBLIC WORKS; METROPOLITAN POLICE DPT-DISTRICT 7; METROPOLITAN POLICE DPT-DISTRICT 3; METROPOLITAN POLICE DPT-DISTRICT 6; METROPOLITAN POLICE DPT-DISTRICT 1; METROPOLITAN POLICE DPT-DISTRICT 2; METROPOLITAN POLICE DPT-DISTRICT 4; METROPOLITAN POLICE DPT-DISTRICT 5; SPECIAL OPERATION DIV & TRAFFIC DIV; D.C. HOUSING AUTHORITY; UNITED STATES PARK POLICE; METRO POLICE; TAXI COMMISSION; UNITED STATES CAPITOL POLICE; MPD RESERVE CORPS; US. SECRET SERVICE UNIFORM DIVISION; PROTECTIVE SERVICES DEPT (DC GOVT); DPT. OF GENERAL SERVICES GUARDS; US. GOVERNMENT PRINTING OFFICE; OTHER Answer: Intersection across 2019-2021 -> {DEPARTMENT OF PUBLIC WORKS, METROPOLITAN POLICE DPT-DISTRICT 2, METROPOLITAN POLICE DPT-DISTRICT 1, METROPOLITAN POLICE DPT-DISTRICT 4, METROPOLITAN POLICE DPT-DISTRICT 5, METROPOLITAN POLICE DPT-DISTRICT 7, D.C. HOUSING AUTHORITY, METROPOLITAN POLICE DPT-DISTRICT 3, METROPOLITAN POLICE DPT-DISTRICT 6, SPECIAL OPERATION DIV & TRAFFIC DIV, UNITED STATES CAPITOL POLICE, METRO POLICE, PROTECTIVE SERVICES DEPT (DC GOVT), TAXI COMMISSION, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE} Subset rule: keep agencies in the intersection that are U.S. national law-enforcement bodies -> {UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}",
+      "answer": "{UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Question: Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? Node 4: 2019 moving violations -> UNITED STATES PARK POLICE 103; UNITED STATES CAPITOL POLICE 176; US. SECRET SERVICE UNIFORM DIVISION 145 Node 5: 2020 moving violations -> UNITED STATES PARK POLICE 204; UNITED STATES CAPITOL POLICE 139; US. SECRET SERVICE UNIFORM DIVISION 118 Node 6: 2021 moving violations -> UNITED STATES PARK POLICE 71; UNITED STATES CAPITOL POLICE 30; US. SECRET SERVICE UNIFORM DIVISION 32; averages 2019-2021 -> UNITED STATES PARK POLICE 126.0; UNITED STATES CAPITOL POLICE 115.0; US. SECRET SERVICE UNIFORM DIVISION 98.33 Answer: UNITED STATES PARK POLICE",
+      "answer": "UNITED STATES PARK POLICE 71; UNITED STATES CAPITOL POLICE 30; US. SECRET SERVICE UNIFORM DIVISION 32; averages 2019-2021 -> UNITED STATES PARK POLICE 126.0; UNITED STATES CAPITOL POLICE 115.0; US. SECRET SERVICE UNIFORM DIVISION 98.33"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Question: Which federal agency operates the United States Park Police (from hop 2)? Node 7: United States Park Police is an operation of the National Park Service Answer: National Park Service",
+      "answer": "National Park Service"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Question: The agency (from hop 3) is within which U.S. department? Node 8: National Park Service is within the United States Department of the Interior Answer: United States Department of the Interior",
+      "answer": "United States Department of the Interior"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Question: Who is the head of the department (from hop 4)? Node 9: The current interior secretary is Doug Burgum Answer: Doug Burgum",
+      "answer": "Doug Burgum"
+    },
+    {
+      "hop": 6,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Question: Which university did Doug Burgum graduate from in 1978? Node 10: Graduated from North Dakota State University in 1978 Answer: North Dakota State University",
+      "answer": "North Dakota State University"
+    }
+  ]
+}

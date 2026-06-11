@@ -1,0 +1,82 @@
+{
+  "dataset_sequence": [
+    "Chicago_Police_Department",
+    "O._W._Wilson",
+    "Wichita_Police_Department",
+    "Wichita,_Kansas",
+    "fy-2020-disability-compensation-recipients-by-county",
+    "fy-2023-disability-compensation-recipients-by-county"
+  ],
+  "source_sequence": [
+    "wikipedia/Chicago_Police_Department/content.txt",
+    "wikipedia/O._W._Wilson/content.txt",
+    "wikipedia/Wichita_Police_Department/content.txt",
+    "wikipedia/Wichita,_Kansas/content.txt",
+    "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+    "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify the first civilian superintendent of the Chicago Police Department.",
+    "2. For that person, determine the cities where that person previously served as police chief.",
+    "3. From those cities, keep the city where he founded a criminal justice program at a local university.",
+    "4. Determine the county containing that city.",
+    "5. Determine the number of veterans receiving disability compensation in that county in fiscal year 2020.",
+    "6. Determine the number of veterans receiving disability compensation in that county in fiscal year 2023 and return the absolute change from fiscal year 2020."
+  ],
+  "original_final_question": "Identify the first civilian superintendent of the Chicago Police Department. In the city where that person previously served as police chief and founded a criminal justice program at a local university, find the county the city is located in and report the absolute change in the number of veterans receiving disability compensation between 2020 and 2023. Only report the numeric change as a whole number. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia Chicago_Police_Department - node 1):",
+    "  Node 1: First civilian superintendent of CPD -> O. W. Wilson (served 1960-1967)",
+    "",
+    "HOP 2 (d=2, Wikipedia O._W._Wilson + Wichita_Police_Department - nodes 2-3):",
+    "  Node 2 (Wikipedia O._W._Wilson): Cities where Wilson was police chief -> {Fullerton, Wichita}",
+    "  Node 3 (Wikipedia Wichita_Police_Department): City where Wilson started CJ program at university -> Wichita (at WSU in 1937)",
+    "  Filter: City where Wilson was BOTH police chief AND started CJ program -> {Wichita}",
+    "",
+    "HOP 3 (d=1, Wikipedia Wichita,_Kansas - node 4):",
+    "  Node 4: County containing Wichita -> Sedgwick County, Kansas",
+    "",
+    "HOP 4 (d=2, data.gov VA disability compensation FY 2020 and FY 2023 - nodes 5-6):",
+    "  Node 5: Sedgwick County VA disability recipients FY 2020 -> 7,871",
+    "  Node 6: Sedgwick County VA disability recipients FY 2023 -> 8,701",
+    "  Computation: Increase = 8,701 - 7,871 = 830",
+    "",
+    "Final answer: 830"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "5",
+      "dataset_id": "fy-2020-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "How many VA disability compensation recipients were in <county from node 4: Sedgwick County, Kansas> in FY 2020?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = int(df.loc[(df[\"State\"] == \"Kansas\") & (df[\"County Name\"] == \"Sedgwick\"), \"Total: Disability Compensation Recipients\"].iloc[0])\nanswer = str(answer)",
+      "answer": "7871"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "How many VA disability compensation recipients were in <county from node 4: Sedgwick County, Kansas> in FY 2023?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = int(df.loc[(df[\"State\"] == \"Kansas\") & (df[\"County Name\"] == \"Sedgwick\"), \"Total: Disability Compensation Recipients\"].iloc[0])\nanswer = str(answer)",
+      "answer": "8701"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "5",
+      "dataset_id": "fy-2020-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "How many VA disability compensation recipients were in <county from node 4: Sedgwick County, Kansas> in FY 2020?",
+      "sql": "SELECT CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) AS answer\nFROM t\nWHERE State = 'Kansas' AND \"County Name\" = 'Sedgwick'\nLIMIT 1",
+      "answer": "7871"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "How many VA disability compensation recipients were in <county from node 4: Sedgwick County, Kansas> in FY 2023?",
+      "sql": "SELECT CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) AS answer\nFROM t\nWHERE State = 'Kansas' AND \"County Name\" = 'Sedgwick'\nLIMIT 1",
+      "answer": "8701"
+    }
+  ]
+}

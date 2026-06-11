@@ -1,0 +1,102 @@
+{
+  "question": "What was the difference in bacterial exceedance rates to two decimal places for marine beach samples collected in 2023 between communities with more than 50% environmental justice populations and those with less than 25% environmental justice populations?. Write your answer as [ANSWER].",
+  "answer": 10.87,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-7/files/environmental-justice-populations.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/environmental-justice-populations.csv'\ndf = pd.read_csv(path)\npct = pd.to_numeric(df['Percent of population in EJ BGs'], errors='coerce')\nmunicipalities = df.loc[pct.gt(50), 'Municipality'].astype(str).str.strip().str.lower().sort_values().tolist()\nprint('|'.join(municipalities))\n",
+      "subquestion": "Which municipalities have more than 50% of their population in environmental justice block groups?",
+      "answer": "adams|amherst|aquinnah|ashland|avon|becket|boston|boxborough|braintree|brockton|brookline|burlington|cambridge|canton|charlemont|chelsea|chicopee|clinton|everett|fall river|fitchburg|framingham|gardner|greenfield|haverhill|hawley|holbrook|holyoke|lawrence|leominster|lexington|lowell|lynn|malden|marlborough|medford|methuen|milford|monroe|nantucket|new bedford|north adams|norwood|quincy|randolph|revere|rowe|salem|saugus|savoy|shrewsbury|somerville|southbridge|springfield|stoughton|sunderland|taunton|tisbury|waltham|watertown|webster|west springfield|westborough|worcester"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-7/files/environmental-justice-populations.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/environmental-justice-populations.csv'\ndf = pd.read_csv(path)\npct = pd.to_numeric(df['Percent of population in EJ BGs'], errors='coerce')\nmunicipalities = df.loc[pct.lt(25), 'Municipality'].astype(str).str.strip().str.lower().sort_values().tolist()\nprint('|'.join(municipalities))\n",
+      "subquestion": "Which municipalities have less than 25% of their population in environmental justice block groups?",
+      "answer": "acton|acushnet|agawam|amesbury|andover|auburn|bedford|bellingham|belmont|blackstone|bourne|brewster|bridgewater|chatham|chelmsford|concord|danvers|dartmouth|fairhaven|falmouth|foxborough|grafton|halifax|hamilton|hanover|harvard|harwich|hingham|holliston|hopkinton|hudson|lee|leicester|lincoln|mansfield|marblehead|marion|marshfield|mashpee|maynard|merrimac|middleborough|millbury|millis|monson|newburyport|newton|norfolk|north attleborough|north brookfield|orleans|oxford|palmer|pepperell|plymouth|provincetown|reading|rockport|sandwich|sharon|sheffield|south hadley|stoneham|swampscott|townsend|tyngsborough|wakefield|walpole|wellesley|westford|westport|williamstown|winchendon|winchester|yarmouth"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-7/files/water-body-testing-2023.csv",
+      "fact": "import pandas as pd\n\nmunicipalities = set('adams|amherst|aquinnah|ashland|avon|becket|boston|boxborough|braintree|brockton|brookline|burlington|cambridge|canton|charlemont|chelsea|chicopee|clinton|everett|fall river|fitchburg|framingham|gardner|greenfield|haverhill|hawley|holbrook|holyoke|lawrence|leominster|lexington|lowell|lynn|malden|marlborough|medford|methuen|milford|monroe|nantucket|new bedford|north adams|norwood|quincy|randolph|revere|rowe|salem|saugus|savoy|shrewsbury|somerville|southbridge|springfield|stoughton|sunderland|taunton|tisbury|waltham|watertown|webster|west springfield|westborough|worcester'.split('|'))\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv'\ndf = pd.read_csv(path)\ndf['Community'] = df['Community'].astype(str).str.strip().str.lower()\ndf['Violation'] = df['Violation'].astype(str).str.strip().str.lower()\nmarine = df[df['Beach Type Description'].astype(str).str.strip().eq('Marine')]\nsubset = marine[marine['Community'].isin(municipalities)]\nyes_count = int(subset['Violation'].eq('yes').sum())\ntotal_count = int(len(subset))\nrate = yes_count / total_count * 100\nprint(f'{yes_count}/{total_count}:{rate:.6f}')\n",
+      "subquestion": "For 2023 marine beach samples in >50% EJ communities from <node_1 answer>, what violation count, sample count, and percentage exceedance rate are observed?",
+      "answer": "312/2063:15.123606"
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-7/files/water-body-testing-2023.csv",
+      "fact": "import pandas as pd\n\nmunicipalities = set('acton|acushnet|agawam|amesbury|andover|auburn|bedford|bellingham|belmont|blackstone|bourne|brewster|bridgewater|chatham|chelmsford|concord|danvers|dartmouth|fairhaven|falmouth|foxborough|grafton|halifax|hamilton|hanover|harvard|harwich|hingham|holliston|hopkinton|hudson|lee|leicester|lincoln|mansfield|marblehead|marion|marshfield|mashpee|maynard|merrimac|middleborough|millbury|millis|monson|newburyport|newton|norfolk|north attleborough|north brookfield|orleans|oxford|palmer|pepperell|plymouth|provincetown|reading|rockport|sandwich|sharon|sheffield|south hadley|stoneham|swampscott|townsend|tyngsborough|wakefield|walpole|wellesley|westford|westport|williamstown|winchendon|winchester|yarmouth'.split('|'))\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv'\ndf = pd.read_csv(path)\ndf['Community'] = df['Community'].astype(str).str.strip().str.lower()\ndf['Violation'] = df['Violation'].astype(str).str.strip().str.lower()\nmarine = df[df['Beach Type Description'].astype(str).str.strip().eq('Marine')]\nsubset = marine[marine['Community'].isin(municipalities)]\nyes_count = int(subset['Violation'].eq('yes').sum())\ntotal_count = int(len(subset))\nrate = yes_count / total_count * 100\nprint(f'{yes_count}/{total_count}:{rate:.6f}')\n",
+      "subquestion": "For 2023 marine beach samples in <25% EJ communities from <node_2 answer>, what violation count, sample count, and percentage exceedance rate are observed?",
+      "answer": "140/3295:4.248862"
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-hard-7/files/water-body-testing-2023.csv",
+      "fact": "source_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv'\nhigh = '312/2063:15.123606'\nlow = '140/3295:4.248862'\nhigh_rate = float(high.split(':')[1])\nlow_rate = float(low.split(':')[1])\nprint(f'{high_rate - low_rate:.2f}')\n",
+      "subquestion": "What is the difference between the >50% EJ marine exceedance rate from <node_3 answer> and the <25% EJ marine exceedance rate from <node_4 answer>, rounded to two decimals?",
+      "answer": 10.87
+    }
+  },
+  "reasoning_chain": [
+    "Nodes 1-2 identify the municipalities above 50% and below 25% population in EJ block groups.",
+    "Nodes 3-4 depend on nodes 1-2 and compute the 2023 marine beach exceedance rate for each municipality group.",
+    "Node 5 subtracts the lower-EJ group rate from the higher-EJ group rate and rounds to two decimals.",
+    "Final answer: 10.87"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-environment-hard-7/files/environmental-justice-populations.csv",
+    "datagov/kramabench-environment-hard-7/files/water-body-testing-2023.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Select the two municipality groups from the environmental justice table.",
+      "answer": ">50% EJ municipalities and <25% EJ municipalities"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3,
+        4
+      ],
+      "reasoning": "Compute 2023 marine beach exceedance rates for both groups.",
+      "answer": "group-specific exceedance rates"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Subtract and round the exceedance-rate difference.",
+      "answer": "10.87"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-7",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-hard-7.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/environment.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/environment/environment-hard-7.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-7",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-7/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/environmental-justice-populations.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/environmental-justice-populations.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

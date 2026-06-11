@@ -1,0 +1,79 @@
+{
+  "dataset_sequence": [
+    "fy-2019-disability-pension-recipient-by-county",
+    "fy-2023-disability-compensation-recipients-by-county",
+    "Glacier_County,_Montana",
+    "Cut_Bank,_Montana"
+  ],
+  "source_sequence": [
+    "datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt",
+    "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+    "wikipedia/Glacier_County,_Montana/content.txt",
+    "wikipedia/Cut_Bank,_Montana/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify Montana counties with between 210 and 225 veteran disability recipients in 2019.",
+    "2. Identify Montana counties with between 220 and 235 veteran disability recipients in 2023, and keep the county that also qualified in step 1.",
+    "3. Determine the county seat of the Montana county kept in step 2.",
+    "4. For the county seat from step 3, determine the iconic statue located there and return the statue name."
+  ],
+  "original_final_question": "I'm exploring quirky roadside attractions in Montana. What iconic statue is located in the county seat of a Montana county that had 210-225 veteran disability recipients in 2019 and 220-235 recipients after 4 years? Please answer the name of the statue. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Find Montana counties with 210-225 VA disability recipients in FY 2019 → {Glacier (210), Custer (213), Carbon (223)}",
+    "Node 2: Find Montana counties with 220-235 VA disability recipients in FY 2023 → {Glacier (232), Madison (225)}",
+    "Intersection of <node_1>, <node_2>: Madison had 178 in FY 2019 (not 210-225), Custer had 292 in FY 2023 (not 220-235), Carbon had 296 in FY 2023 (not 220-235) → Only Glacier County is in both sets",
+    "Node 3 depends on intersection: Find county seat of Glacier County → Cut Bank",
+    "Node 4 depends on node 3: Find iconic statue in Cut Bank → The world's largest statue of a penguin (the Cut Bank Penguin)",
+    "Final answer: The world's largest statue of a penguin (the Cut Bank Penguin)"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "fy-2019-disability-pension-recipient-by-county",
+      "source": "datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt",
+      "intent": "Which Montana counties had 210-225 VA disability compensation recipients in FY 2019?",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt')\ndf['# Total: Disability Compensation Recipients'] = pd.to_numeric(df['# Total: Disability Compensation Recipients'], errors='coerce')\n\nfiltered = df[(df['State'] == 'Montana') & (df['# Total: Disability Compensation Recipients'] >= 210) & (df['# Total: Disability Compensation Recipients'] < 225)].copy()\nfiltered['county_out'] = filtered['County name'].astype(str).str.strip() + ' County'\nranked = filtered.sort_values(['# Total: Disability Compensation Recipients', 'county_out'], ascending=[True, True])\nresult = ranked['county_out'].tolist()",
+      "answer": [
+        "Glacier County",
+        "Custer County",
+        "Carbon County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "Which Montana counties had 220-235 VA disability compensation recipients in FY 2023?",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt')\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\n\nfiltered = df[(df['State'] == 'Montana') & (df['Total: Disability Compensation Recipients'] >= 220) & (df['Total: Disability Compensation Recipients'] <= 235)].copy()\nfiltered['county_out'] = filtered['County Name'].astype(str).str.strip() + ' County'\nranked = filtered.sort_values(['Total: Disability Compensation Recipients', 'county_out'], ascending=[False, True])\nresult = ranked['county_out'].tolist()",
+      "answer": [
+        "Glacier County",
+        "Madison County"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "fy-2019-disability-pension-recipient-by-county",
+      "source": "datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt",
+      "intent": "Which Montana counties had 210-225 VA disability compensation recipients in FY 2019?",
+      "sql": "SELECT trim(\"County name\") || ' County' AS answer\nFROM t\nWHERE State = 'Montana'\n  AND TRY_CAST(\"# Total: Disability Compensation Recipients\" AS INTEGER) >= 210\n  AND TRY_CAST(\"# Total: Disability Compensation Recipients\" AS INTEGER) < 225\nORDER BY TRY_CAST(\"# Total: Disability Compensation Recipients\" AS INTEGER) ASC, answer ASC",
+      "answer": [
+        "Glacier County",
+        "Custer County",
+        "Carbon County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "Which Montana counties had 220-235 VA disability compensation recipients in FY 2023?",
+      "sql": "SELECT trim(\"County Name\") || ' County' AS answer\nFROM t\nWHERE State = 'Montana'\n  AND TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) >= 220\n  AND TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) <= 235\nORDER BY TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) DESC, answer ASC",
+      "answer": [
+        "Glacier County",
+        "Madison County"
+      ]
+    }
+  ]
+}

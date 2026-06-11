@@ -1,0 +1,67 @@
+{
+  "question": "What is the age of the non-excluded endometrioid or serous patient whose APP-Z score is the lowest? Write your answer as [ANSWER].",
+  "answer": "60",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc7.xlsx",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc7.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc7.xlsx'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    xlsx_path = local_path\nelif os.path.exists(local_authoring_path):\n    xlsx_path = local_authoring_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    xlsx_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(xlsx_path, sheet_name='B-APM subtypes', usecols=['idx', 'APP_Z_score'])\nscores = pd.to_numeric(df['APP_Z_score'], errors='coerce')\nanswer = str(df.loc[scores.idxmin(), 'idx']).strip()\nresult = answer\nprint(answer)\n",
+      "subquestion": "In the APM subtype table, which patient identifier has the lowest APP-Z score?",
+      "answer": "S019"
+    },
+    "2": {
+      "source": "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc1.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    xlsx_path = local_path\nelif os.path.exists(local_authoring_path):\n    xlsx_path = local_authoring_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    xlsx_path = io.BytesIO(obj['Body'].read())\n\nnode_1_answer = 'S019'\ndf = pd.read_excel(xlsx_path, usecols=['idx', 'Case_excluded', 'Histologic_type', 'Age'])\nfiltered = df[\n    df['idx'].astype(str).str.strip().eq(node_1_answer)\n    & df['Case_excluded'].astype(str).str.strip().eq('No')\n    & df['Histologic_type'].astype(str).str.strip().isin(['Endometrioid', 'Serous'])\n]\nage = pd.to_numeric(filtered['Age'], errors='coerce').dropna().iloc[0]\nanswer = str(int(age))\nresult = answer\nprint(answer)\n",
+      "subquestion": "In the clinical metadata, what is the age of non-excluded endometrioid or serous patient <node_1 answer>?",
+      "answer": "60"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: The APM subtype table shows patient identifier S019 has the lowest APP-Z score.",
+    "Node 2 depends on node 1: The clinical metadata lists non-excluded endometrioid patient S019 with age 60.",
+    "Final answer: 60"
+  ],
+  "datasets_used": [
+    "kramabench-biomedical-hard-3"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: The APM subtype table shows patient identifier S019 has the lowest APP-Z score.",
+      "answer": "S019"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: The clinical metadata lists non-excluded endometrioid patient S019 with age 60.",
+      "answer": "60"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "biomedical-hard-3",
+    "domain": "biomedical",
+    "difficulty": "hard",
+    "promoted_from": "./tasks-mini-kramabench/candidates/biomedical-hard-3.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-3/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc7.xlsx",
+      "2": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

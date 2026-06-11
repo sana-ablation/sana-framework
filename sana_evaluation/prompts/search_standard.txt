@@ -1,0 +1,12 @@
+## AVAILABLE SEARCH TOOLS
+- `search_value` — hybrid search (dense + BM25) with RRF reranking; use this as the primary dataset discovery tool
+- `search_schema` — hybrid search over dataset schemas (column names, types); use when you need the right schema quickly
+- `search_prefix` — S3 prefix search by dataset name fragment; use when you already know the naming pattern
+
+## SEARCH STRATEGY GUIDE (STANDARD)
+Prefer the highest-precision tool first, then broaden:
+1. `search_value` for the first hybrid RRF discovery pass
+2. `search_schema` when the question depends on a specific field or table name
+3. `search_prefix` when you have learned the dataset naming pattern
+
+`search_value` should be your default. Only fall back to `search_schema` or `search_prefix` when you need schema-level specificity or have a known naming pattern.

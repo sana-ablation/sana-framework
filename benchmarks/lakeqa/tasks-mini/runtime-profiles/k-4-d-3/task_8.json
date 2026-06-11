@@ -1,0 +1,139 @@
+{
+  "dataset_sequence": [
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "Marble_Hill,_Manhattan",
+    "Tuckahoe_marble",
+    "Stanford_White",
+    "Washington_Square_Arch"
+  ],
+  "source_sequence": [
+    "datagov/2007-2008-school-progress-report/files/rows.txt",
+    "datagov/2008-2009-school-progress-report/files/rows.txt",
+    "datagov/2009-2010-school-progress-report/files/rows.txt",
+    "wikipedia/Marble_Hill,_Manhattan/content.txt",
+    "wikipedia/Tuckahoe_marble/content.txt",
+    "wikipedia/Stanford_White/content.txt",
+    "wikipedia/Washington_Square_Arch/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify NYC high schools ranked in the top 7 by overall score in 2007-08, 2008-09, and 2009-10, and keep the school common to all three years.",
+    "2. Determine the Manhattan neighborhood containing the school kept in step 1 and what that neighborhood is named after.",
+    "3. Identify NYC structures built with the material from step 2 and NYC structures designed by Stanford White, then keep the structure common to both sets.",
+    "4. Determine the year that structure was designed and return the year."
+  ],
+  "original_final_question": "Can you find out the Manhattan neighborhood containing a top 7 high school from 2007-2010 by overall score. Then, find out which NYC structure was built with what this neighborhood is named after and was designed by Stanford White. Report in what year is this structure designed. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Find top 7 NYC high schools by overall score in 2007-08 → includes Marble Hill",
+    "Node 2: Find top 7 NYC high schools by overall score in 2008-09 → includes Marble Hill",
+    "Node 3: Find top 7 NYC high schools by overall score in 2009-10 → includes Marble Hill",
+    "Intersection of <node_1>, <node_2>, <node_3>: Only school in top 7 all three years → Marble Hill HS",
+    "Node 4 depends on intersection: Find type of marble Marble Hill is named after → Tuckahoe marble",
+    "Node 5 depends on node 4: Find NYC structures built with Tuckahoe marble → {Washington Square Arch, Federal Hall, etc.}",
+    "Node 6: Find NYC structures designed by Stanford White → {Washington Square Arch, Madison Square Garden, etc.}",
+    "Intersection of <node_5>, <node_6>: Only structure in both sets → Washington Square Arch",
+    "Node 7 depends on intersection: Find who donated $4,500 to Washington Square Arch → Ignacy Jan Paderewski",
+    "Final answer: Ignacy Jan Paderewski"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 7 by overall score in 2007-08?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2007-2008-school-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndef clean_name(name):\n    s = str(name).strip()\n    s = s.replace(' FOR SCIENCE AND MATHEMATICS', '')\n    words = s.lower().split()\n    keep = {\"and\", \"of\", \"for\", \"the\", \"at\", \"in\", \"on\", \"to\", \"a\"}\n    return \" \".join(w if i > 0 and w in keep else w.capitalize() for i, w in enumerate(words))\n\nscore_col = [c for c in df.columns if \"OVERALL SCORE\" in c.upper()][0]\nlevel_col = [c for c in df.columns if \"SCHOOL LEVEL\" in c.upper()][0]\ndf[score_col] = pd.to_numeric(df[score_col], errors=\"coerce\")\nfiltered = df[df[level_col].astype(str).str.contains(\"High\", case=False, na=False)].copy()\nfiltered = filtered.sort_values([score_col, \"SCHOOL\"], ascending=[False, True])\nanswer = filtered[\"SCHOOL\"].dropna().astype(str).head(7).map(clean_name).tolist()",
+      "answer": [
+        "Brooklyn International High School",
+        "Gregorio Luperon High School",
+        "High School for Contemporary Arts",
+        "Bedford Academy High School",
+        "Manhattan Bridges High School",
+        "Marble Hill High School for International Studies",
+        "New World High School"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 7 by overall score in 2008-09?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2008-2009-school-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndef clean_name(name):\n    s = str(name).strip()\n    s = s.replace('HIGH SCHOOL OF HOSPITALITY MANAGEMENT', 'High School of Hospitality Management')\n    s = s.replace('SOUTH BRONX PREPARATORY: A COLLEGE BOARD SCHOOL', 'South Bronx Preparatory')\n    words = s.lower().split()\n    keep = {\"and\", \"of\", \"for\", \"the\", \"at\", \"in\", \"on\", \"to\", \"a\"}\n    return \" \".join(w if i > 0 and w in keep else w.capitalize() for i, w in enumerate(words))\n\nscore_col = [c for c in df.columns if \"OVERALL SCORE\" in c.upper()][0]\nlevel_col = [c for c in df.columns if \"SCHOOL LEVEL\" in c.upper()][0]\ndf[score_col] = pd.to_numeric(df[score_col], errors=\"coerce\")\nfiltered = df[df[level_col].astype(str).str.contains(\"High\", case=False, na=False)].copy()\nfiltered = filtered.sort_values([score_col, \"SCHOOL\"], ascending=[False, True])\nanswer = filtered[\"SCHOOL\"].dropna().astype(str).head(7).map(clean_name).tolist()",
+      "answer": [
+        "High School of Hospitality Management",
+        "Bedford Academy High School",
+        "Williamsburg Preparatory School",
+        "South Bronx Preparatory",
+        "Marble Hill High School for International Studies",
+        "High School for Violin and Dance",
+        "Essex Street Academy"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 7 by overall score in 2009-10?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2009-2010-school-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndef clean_name(name):\n    s = str(name).strip()\n    s = s.replace(\" at Water's Edge\", '')\n    words = s.lower().split()\n    keep = {\"and\", \"of\", \"for\", \"the\", \"at\", \"in\", \"on\", \"to\", \"a\"}\n    return \" \".join(w if i > 0 and w in keep else w.capitalize() for i, w in enumerate(words))\n\nscore_col = [c for c in df.columns if \"2009-2010 OVERALL SCORE\" in c.upper()][0]\nlevel_col = [c for c in df.columns if \"SCHOOL LEVEL\" in c.upper()][0]\ndf[score_col] = pd.to_numeric(df[score_col], errors=\"coerce\")\nfiltered = df[df[level_col].astype(str).str.contains(\"High\", case=False, na=False)].copy()\nfiltered = filtered.sort_values([score_col, \"SCHOOL\"], ascending=[False, True])\nanswer = filtered[\"SCHOOL\"].dropna().astype(str).head(7).map(clean_name).tolist()",
+      "answer": [
+        "Theatre Arts Production Company School",
+        "Brooklyn International High School",
+        "Williamsburg Preparatory School",
+        "Marble Hill High School for International Studies",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Village Academy",
+        "High School for Violin and Dance"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 7 by overall score in 2007-08?",
+      "sql": "WITH ranked AS (\n  SELECT CASE trim(\"SCHOOL\")\n    WHEN 'BROOKLYN INTERNATIONAL HIGH SCHOOL' THEN 'Brooklyn International High School'\n    WHEN 'GREGORIO LUPERON HIGH SCHOOL FOR SCIENCE AND MATHEMATICS' THEN 'Gregorio Luperon High School'\n    WHEN 'HIGH SCHOOL FOR CONTEMPORARY ARTS' THEN 'High School for Contemporary Arts'\n    WHEN 'BEDFORD ACADEMY HIGH SCHOOL' THEN 'Bedford Academy High School'\n    WHEN 'MANHATTAN BRIDGES HIGH SCHOOL' THEN 'Manhattan Bridges High School'\n    WHEN 'MARBLE HILL HIGH SCHOOL FOR INTERNATIONAL STUDIES' THEN 'Marble Hill High School for International Studies'\n    WHEN 'NEW WORLD HIGH SCHOOL' THEN 'New World High School'\n    ELSE trim(\"SCHOOL\") END AS answer, TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t WHERE regexp_matches(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'High', 'i')\n)\nSELECT answer FROM ranked WHERE score IS NOT NULL ORDER BY score DESC LIMIT 7",
+      "answer": [
+        "Brooklyn International High School",
+        "Gregorio Luperon High School",
+        "High School for Contemporary Arts",
+        "Bedford Academy High School",
+        "Manhattan Bridges High School",
+        "Marble Hill High School for International Studies",
+        "New World High School"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 7 by overall score in 2008-09?",
+      "sql": "WITH ranked AS (\n  SELECT CASE trim(\"SCHOOL\")\n    WHEN 'HIGH SCHOOL OF HOSPITALITY MANAGEMENT' THEN 'High School of Hospitality Management'\n    WHEN 'BEDFORD ACADEMY HIGH SCHOOL' THEN 'Bedford Academy High School'\n    WHEN 'WILLIAMSBURG PREPARATORY SCHOOL' THEN 'Williamsburg Preparatory School'\n    WHEN 'SOUTH BRONX PREPARATORY: A COLLEGE BOARD SCHOOL' THEN 'South Bronx Preparatory'\n    WHEN 'MARBLE HILL HIGH SCHOOL FOR INTERNATIONAL STUDIES' THEN 'Marble Hill High School for International Studies'\n    WHEN 'HIGH SCHOOL FOR VIOLIN AND DANCE' THEN 'High School for Violin and Dance'\n    WHEN 'ESSEX STREET ACADEMY' THEN 'Essex Street Academy'\n    ELSE trim(\"SCHOOL\") END AS answer, TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t WHERE regexp_matches(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'High', 'i')\n)\nSELECT answer FROM ranked WHERE score IS NOT NULL ORDER BY score DESC LIMIT 7",
+      "answer": [
+        "High School of Hospitality Management",
+        "Bedford Academy High School",
+        "Williamsburg Preparatory School",
+        "South Bronx Preparatory",
+        "Marble Hill High School for International Studies",
+        "High School for Violin and Dance",
+        "Essex Street Academy"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 7 by overall score in 2009-10?",
+      "sql": "WITH ranked AS (\n  SELECT CASE trim(\"SCHOOL\")\n    WHEN 'Theatre Arts Production Company School' THEN 'Theatre Arts Production Company School'\n    WHEN 'Brooklyn International High School at Water''s Edge' THEN 'Brooklyn International High School'\n    WHEN 'Williamsburg Preparatory School' THEN 'Williamsburg Preparatory School'\n    WHEN 'Marble Hill High School for International Studies' THEN 'Marble Hill High School for International Studies'\n    WHEN 'Williamsburg High School for Architecture and Design' THEN 'Williamsburg High School for Architecture and Design'\n    WHEN 'Manhattan Village Academy' THEN 'Manhattan Village Academy'\n    WHEN 'High School for Violin and Dance' THEN 'High School for Violin and Dance'\n    ELSE trim(\"SCHOOL\") END AS answer, TRY_CAST(\"2009-2010 OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t WHERE regexp_matches(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'High', 'i')\n)\nSELECT answer FROM ranked WHERE score IS NOT NULL ORDER BY score DESC LIMIT 7",
+      "answer": [
+        "Theatre Arts Production Company School",
+        "Brooklyn International High School",
+        "Williamsburg Preparatory School",
+        "Marble Hill High School for International Studies",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Village Academy",
+        "High School for Violin and Dance"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "question": "Which of the 10 NICC-defined geographic areas requested the most helicopters for firefighting? Write your answer as [ANSWER].",
+  "answer": "Great Basin Area",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/cleaned_helicopter_requests_by_region.csv'\ndf = pd.read_csv(path)\nrow = df.loc[df['Total Helicopter Requests'].idxmax()]\nprint(str(row['Region']) + '|' + str(int(row['Total Helicopter Requests'])))\n",
+      "subquestion": "Which region row has the highest total helicopter requests, and how many requests does it have?",
+      "answer": "Great Basin Area|232"
+    },
+    "2": {
+      "source": "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/cleaned_helicopter_requests_by_region.csv'\ndf = pd.read_csv(path)\nrow = df.loc[df['Total Helicopter Requests'].idxmax()]\nprint(str(row['Region']))\n",
+      "subquestion": "What region name should be reported for the maximum-request row?",
+      "answer": "Great Basin Area"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 reads helicopter requests by region and finds the row with the maximum request count.",
+    "Node 2 depends on node 1 and returns the region name.",
+    "Final answer: Great Basin Area"
+  ],
+  "datasets_used": [
+    "kramabench-wildfire-easy-13"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Find the maximum total helicopter-request row.",
+      "answer": "Great Basin Area|232"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Return the region name for that maximum.",
+      "answer": "Great Basin Area"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "wildfire-easy-13",
+    "domain": "wildfire",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/wildfire-easy-13.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {
+        "parallel_avoidance": "avoided legal-hard-29, legal-hard-30, legal-hard-6, legal-hard-7, legal-hard-8 because another agent was working them"
+      }
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-easy-13.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-13/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/wildfire/input/cleaned_helicopter_requests_by_region.csv",
+      "2": "other-benchmarks/Kramabench/data/wildfire/input/cleaned_helicopter_requests_by_region.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_execution": "The checked-in source script ends with a dataframe expression and prints no value as a plain script; the promoted facts execute the same idxmax operation and reproduce the candidate answer."
+  }
+}

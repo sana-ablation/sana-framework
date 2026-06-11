@@ -1,0 +1,129 @@
+{
+  "question": "From 2007 to 2009 inclusive, between fresh water beaches and marine beaches, which had the higher Pearson correlation between monthly summer rainfall and beach-water exceedance rate? Use June, July, and August rainfall; use Boston, Chatham, Amherst, and Ashburnham for fresh water beaches; use Boston and Chatham for marine beaches; and impute missing rainfall values with the median for that month across non-missing years. Answer with either Freshwater or Marine. Write your answer as [ANSWER].",
+  "answer": "Marine",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-14/files/water-body-testing-2007.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2007.csv'\ndf = pd.read_csv(path)\nrates = []\nfor beach_type in ['Marine', 'Fresh']:\n    subset = df[df['Beach Type Description'].eq(beach_type)]\n    violations = subset['Violation'].astype(str).str.strip().str.lower().eq('yes')\n    rates.append(violations.sum() / len(subset))\nresult = f'{rates[0]:.6f}|{rates[1]:.6f}'\nprint(result)\n",
+      "subquestion": "In the 2007 water-body testing file, what are the marine and fresh beach exceedance rates?",
+      "answer": "0.030961|0.027841"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-14/files/water-body-testing-2008.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2008.csv'\ndf = pd.read_csv(path)\nrates = []\nfor beach_type in ['Marine', 'Fresh']:\n    subset = df[df['Beach Type Description'].eq(beach_type)]\n    violations = subset['Violation'].astype(str).str.strip().str.lower().eq('yes')\n    rates.append(violations.sum() / len(subset))\nresult = f'{rates[0]:.6f}|{rates[1]:.6f}'\nprint(result)\n",
+      "subquestion": "In the 2008 water-body testing file, what are the marine and fresh beach exceedance rates?",
+      "answer": "0.053884|0.039053"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-14/files/water-body-testing-2009.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2009.csv'\ndf = pd.read_csv(path)\nrates = []\nfor beach_type in ['Marine', 'Fresh']:\n    subset = df[df['Beach Type Description'].eq(beach_type)]\n    violations = subset['Violation'].astype(str).str.strip().str.lower().eq('yes')\n    rates.append(violations.sum() / len(subset))\nresult = f'{rates[0]:.6f}|{rates[1]:.6f}'\nprint(result)\n",
+      "subquestion": "In the 2009 water-body testing file, what are the marine and fresh beach exceedance rates?",
+      "answer": "0.067496|0.027034"
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-14/files/monthly_precipitations_boston.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\nmonths = ['Jun', 'Jul', 'Aug']\nyears = [2007, 2008, 2009]\ndf = pd.read_csv(path, dtype=str)\nyear_num = pd.to_numeric(df['Year'], errors='coerce')\nyear_rows = year_num.notna()\nfor month in months:\n    values = pd.to_numeric(df.loc[year_rows, month].replace('M', pd.NA), errors='coerce')\n    df.loc[year_rows, month] = values.fillna(values.dropna().median()).astype(str)\nselected = df[year_rows & year_num.isin(years)].copy()\nselected['Year_num'] = year_num[year_rows & year_num.isin(years)].astype(int)\nfor month in months:\n    selected[month] = pd.to_numeric(selected[month], errors='coerce')\ntotals = selected.sort_values('Year_num')[months].sum(axis=1).tolist()\nresult = '|'.join(f'{value:.2f}'.rstrip('0').rstrip('.') for value in totals)\nprint(result)\n",
+      "subquestion": "In the Boston monthly precipitation file, what are the summer rainfall totals for 2007, 2008, and 2009 after month-median imputation?",
+      "answer": "8.04|13.93|13.36"
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-hard-14/files/monthly_precipitations_chatham.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv'\nmonths = ['Jun', 'Jul', 'Aug']\nyears = [2007, 2008, 2009]\ndf = pd.read_csv(path, dtype=str)\nyear_num = pd.to_numeric(df['Year'], errors='coerce')\nyear_rows = year_num.notna()\nfor month in months:\n    values = pd.to_numeric(df.loc[year_rows, month].replace('M', pd.NA), errors='coerce')\n    df.loc[year_rows, month] = values.fillna(values.dropna().median()).astype(str)\nselected = df[year_rows & year_num.isin(years)].copy()\nselected['Year_num'] = year_num[year_rows & year_num.isin(years)].astype(int)\nfor month in months:\n    selected[month] = pd.to_numeric(selected[month], errors='coerce')\ntotals = selected.sort_values('Year_num')[months].sum(axis=1).tolist()\nresult = '|'.join(f'{value:.2f}'.rstrip('0').rstrip('.') for value in totals)\nprint(result)\n",
+      "subquestion": "In the Chatham monthly precipitation file, what are the summer rainfall totals for 2007, 2008, and 2009 after month-median imputation?",
+      "answer": "4.61|7.19|15.54"
+    },
+    "6": {
+      "source": "datagov/kramabench-environment-hard-14/files/monthly_precipitations_amherst.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv'\nmonths = ['Jun', 'Jul', 'Aug']\nyears = [2007, 2008, 2009]\ndf = pd.read_csv(path, dtype=str)\nyear_num = pd.to_numeric(df['Year'], errors='coerce')\nyear_rows = year_num.notna()\nfor month in months:\n    values = pd.to_numeric(df.loc[year_rows, month].replace('M', pd.NA), errors='coerce')\n    df.loc[year_rows, month] = values.fillna(values.dropna().median()).astype(str)\nselected = df[year_rows & year_num.isin(years)].copy()\nselected['Year_num'] = year_num[year_rows & year_num.isin(years)].astype(int)\nfor month in months:\n    selected[month] = pd.to_numeric(selected[month], errors='coerce')\ntotals = selected.sort_values('Year_num')[months].sum(axis=1).tolist()\nresult = '|'.join(f'{value:.2f}'.rstrip('0').rstrip('.') for value in totals)\nprint(result)\n",
+      "subquestion": "In the Amherst monthly precipitation file, what are the summer rainfall totals for 2007, 2008, and 2009 after month-median imputation?",
+      "answer": "9.21|17.49|17.93"
+    },
+    "7": {
+      "source": "datagov/kramabench-environment-hard-14/files/monthly_precipitations_ashburnham.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv'\nmonths = ['Jun', 'Jul', 'Aug']\nyears = [2007, 2008, 2009]\ndf = pd.read_csv(path, dtype=str)\nyear_num = pd.to_numeric(df['Year'], errors='coerce')\nyear_rows = year_num.notna()\nfor month in months:\n    values = pd.to_numeric(df.loc[year_rows, month].replace('M', pd.NA), errors='coerce')\n    df.loc[year_rows, month] = values.fillna(values.dropna().median()).astype(str)\nselected = df[year_rows & year_num.isin(years)].copy()\nselected['Year_num'] = year_num[year_rows & year_num.isin(years)].astype(int)\nfor month in months:\n    selected[month] = pd.to_numeric(selected[month], errors='coerce')\ntotals = selected.sort_values('Year_num')[months].sum(axis=1).tolist()\nresult = '|'.join(f'{value:.2f}'.rstrip('0').rstrip('.') for value in totals)\nprint(result)\n",
+      "subquestion": "In the Ashburnham monthly precipitation file, what are the summer rainfall totals for 2007, 2008, and 2009 after month-median imputation?",
+      "answer": "11.31|15.84|17.89"
+    },
+    "8": {
+      "source": "datagov/kramabench-environment-hard-14/files/water-body-testing-2007.csv",
+      "fact": "import numpy as np\nimport pandas as pd\nwater_paths = {\n    2007: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2007.csv',\n    2008: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2008.csv',\n    2009: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2009.csv',\n}\nprecip_paths = {\n    'boston': 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv',\n    'chatham': 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv',\n    'amherst': 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv',\n    'ashburnham': 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv',\n}\nyears = [2007, 2008, 2009]\nmonths = ['Jun', 'Jul', 'Aug']\ndef rates(beach_type):\n    output = []\n    for year in years:\n        df = pd.read_csv(water_paths[year])\n        subset = df[df['Beach Type Description'].eq(beach_type)]\n        violations = subset['Violation'].astype(str).str.strip().str.lower().eq('yes')\n        output.append(violations.sum() / len(subset))\n    return output\ndef summer_totals(city):\n    df = pd.read_csv(precip_paths[city], dtype=str)\n    year_num = pd.to_numeric(df['Year'], errors='coerce')\n    year_rows = year_num.notna()\n    for month in months:\n        values = pd.to_numeric(df.loc[year_rows, month].replace('M', pd.NA), errors='coerce')\n        df.loc[year_rows, month] = values.fillna(values.dropna().median()).astype(str)\n    selected = df[year_rows & year_num.isin(years)].copy()\n    selected['Year_num'] = year_num[year_rows & year_num.isin(years)].astype(int)\n    for month in months:\n        selected[month] = pd.to_numeric(selected[month], errors='coerce')\n    return selected.sort_values('Year_num')[months].sum(axis=1).to_numpy(dtype=float)\ndef average_rainfall(cities):\n    return np.mean([summer_totals(city) for city in cities], axis=0)\nmarine_corr = np.corrcoef(rates('Marine'), average_rainfall(['boston', 'chatham']))[0, 1]\nfresh_corr = np.corrcoef(rates('Fresh'), average_rainfall(['boston', 'chatham', 'amherst', 'ashburnham']))[0, 1]\nresult = 'Marine' if abs(marine_corr) > abs(fresh_corr) else 'Freshwater'\nprint(result)\n",
+      "subquestion": "After averaging rainfall over the specified locations and correlating each rainfall vector with its beach-type exceedance-rate vector, which beach type has the higher absolute Pearson correlation?",
+      "answer": "Marine"
+    }
+  },
+  "reasoning_chain": [
+    "Nodes 1-3: For each water-body testing year from 2007 through 2009, compute marine and fresh exceedance rates from the beach type and violation columns.",
+    "Nodes 4-7: For each rainfall station, impute missing monthly values from non-missing year medians and compute June-August totals for 2007 through 2009.",
+    "Node 8 depends on nodes 1-7: Average the rainfall totals over the marine and fresh station sets, correlate each averaged rainfall vector with the matching exceedance-rate vector, and select the beach type with the larger absolute correlation.",
+    "Final answer: Marine"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-environment-hard-14/files/monthly_precipitations_amherst.csv",
+    "datagov/kramabench-environment-hard-14/files/monthly_precipitations_ashburnham.csv",
+    "datagov/kramabench-environment-hard-14/files/monthly_precipitations_boston.csv",
+    "datagov/kramabench-environment-hard-14/files/monthly_precipitations_chatham.csv",
+    "datagov/kramabench-environment-hard-14/files/water-body-testing-2007.csv",
+    "datagov/kramabench-environment-hard-14/files/water-body-testing-2008.csv",
+    "datagov/kramabench-environment-hard-14/files/water-body-testing-2009.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Nodes 1-3: Compute the yearly marine and fresh exceedance rates from the 2007, 2008, and 2009 water-body testing files.",
+      "answer": "0.030961|0.027841;0.053884|0.039053;0.067496|0.027034"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "reasoning": "Nodes 4-7: Compute June-August rainfall totals for Boston, Chatham, Amherst, and Ashburnham after month-median imputation.",
+      "answer": "8.04|13.93|13.36;4.61|7.19|15.54;9.21|17.49|17.93;11.31|15.84|17.89"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8 depends on nodes 1-7: Marine rainfall/exceedance correlation is higher than fresh rainfall/exceedance correlation.",
+      "answer": "Marine"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-14",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-hard-14.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-14",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-14/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2007.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2008.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2009.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv",
+      "6": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv",
+      "7": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv",
+      "8": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2007.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

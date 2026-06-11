@@ -1,0 +1,206 @@
+{
+  "question": "What percentage of the population in the county containing the city that borders both of the Texas cities with above 12% diabetes rates between 2016 and 2019 was aged 65 or older in 2022? (These cities had populations under 100,000 in 2020.). Your response should be in the format [Answer].",
+  "answer": "12.3",
+  "nodes": {
+    "1": {
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2016-release/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2016-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nstate = df[\"StateAbbr\"].astype(str).str.strip()\ncity = df[\"PlaceName\"].astype(str).str.strip()\ndiabetes = pd.to_numeric(df[\"DIABETES_CrudePrev\"], errors=\"coerce\")\nanswer = sorted(city[state.eq(\"TX\") & diabetes.gt(12)].unique().tolist())",
+      "subquestion": "Which Texas cities had diabetes prevalence above 12% in the CDC 500 Cities 2016 release?",
+      "answer": [
+        "Beaumont",
+        "Brownsville",
+        "Corpus Christi",
+        "Edinburg",
+        "El Paso",
+        "Laredo",
+        "McAllen",
+        "Mission",
+        "Pharr",
+        "San Antonio"
+      ]
+    },
+    "2": {
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2017-release/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2017-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nstate = df[\"StateAbbr\"].astype(str).str.strip()\ncity = df[\"PlaceName\"].astype(str).str.strip()\ndiabetes = pd.to_numeric(df[\"DIABETES_CrudePrev\"], errors=\"coerce\")\nanswer = sorted(city[state.eq(\"TX\") & diabetes.gt(12)].unique().tolist())",
+      "subquestion": "Which Texas cities had diabetes prevalence above 12% in the CDC 500 Cities 2017 release?",
+      "answer": [
+        "Baytown",
+        "Beaumont",
+        "Brownsville",
+        "Corpus Christi",
+        "Edinburg",
+        "El Paso",
+        "Houston",
+        "Laredo",
+        "McAllen",
+        "Mission",
+        "Pharr",
+        "San Antonio"
+      ]
+    },
+    "3": {
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nstate = df[\"StateAbbr\"].astype(str).str.strip()\ncity = df[\"PlaceName\"].astype(str).str.strip()\ndiabetes = pd.to_numeric(df[\"DIABETES_CrudePrev\"], errors=\"coerce\")\nanswer = sorted(city[state.eq(\"TX\") & diabetes.gt(12)].unique().tolist())",
+      "subquestion": "Which Texas cities had diabetes prevalence above 12% in the CDC 500 Cities 2018 release?",
+      "answer": [
+        "Beaumont",
+        "Brownsville",
+        "Corpus Christi",
+        "El Paso",
+        "Houston",
+        "Laredo",
+        "Longview",
+        "McAllen",
+        "Mission",
+        "Pharr",
+        "San Antonio",
+        "Tyler"
+      ]
+    },
+    "4": {
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nstate = df[\"StateAbbr\"].astype(str).str.strip()\ncity = df[\"PlaceName\"].astype(str).str.strip()\ndiabetes = pd.to_numeric(df[\"DIABETES_CrudePrev\"], errors=\"coerce\")\nanswer = sorted(city[state.eq(\"TX\") & diabetes.gt(12)].unique().tolist())",
+      "subquestion": "Which Texas cities had diabetes prevalence above 12% in the CDC 500 Cities 2019 release?",
+      "answer": [
+        "Beaumont",
+        "Brownsville",
+        "Corpus Christi",
+        "Edinburg",
+        "El Paso",
+        "Laredo",
+        "Longview",
+        "McAllen",
+        "Mission",
+        "Pharr",
+        "San Antonio",
+        "Tyler",
+        "Waco"
+      ]
+    },
+    "5": {
+      "source": "datagov/2020-census-redistricting-data-all-texas-places/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/2020-census-redistricting-data-all-texas-places/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\ncandidates = [\n    \"Beaumont\",\n    \"Brownsville\",\n    \"Corpus Christi\",\n    \"El Paso\",\n    \"Laredo\",\n    \"McAllen\",\n    \"Mission\",\n    \"Pharr\",\n    \"San Antonio\",\n]\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nstate = df[\"STUSAB\"].astype(str).str.strip()\nsumlev = pd.to_numeric(df[\"SUMLEV\"], errors=\"coerce\")\ncity = df[\"BASENAME\"].astype(str).str.strip()\npopulation = pd.to_numeric(df[\"POP100\"], errors=\"coerce\")\nanswer = [\n    name\n    for name in candidates\n    if ((state.eq(\"TX\")) & sumlev.eq(160) & city.eq(name) & population.lt(100000)).any()\n]",
+      "subquestion": "Which cities from <intersection of nodes 1-4: Beaumont, Brownsville, Corpus Christi, El Paso, Laredo, McAllen, Mission, Pharr, San Antonio> had population under 100,000 in the 2020 Census?",
+      "answer": [
+        "Mission",
+        "Pharr"
+      ]
+    },
+    "6": {
+      "source": "wikipedia/Pharr,_Texas/content.txt",
+      "fact": "According to the Wikipedia article for Pharr, Texas, the city 'borders McAllen to the west, Edinburg to the north, San Juan to the east, and Hidalgo to the southwest.'",
+      "subquestion": "Which cities border <city from node 5: Pharr>?",
+      "answer": [
+        "McAllen",
+        "Edinburg",
+        "San Juan",
+        "Hidalgo"
+      ]
+    },
+    "7": {
+      "source": "wikipedia/Mission,_Texas/content.txt",
+      "fact": "According to the Wikipedia article for Mission, Texas, the city borders 'McAllen to the east, Palmhurst to the north, and Palmview to the west.'",
+      "subquestion": "Which cities border <city from node 5: Mission>?",
+      "answer": [
+        "McAllen",
+        "Palmhurst",
+        "Palmview"
+      ]
+    },
+    "8": {
+      "source": "wikipedia/McAllen,_Texas/content.txt",
+      "fact": "According to the Wikipedia article for McAllen, Texas: 'McAllen is a city in Hidalgo County in the Rio Grande Valley of the southern tip of the U.S. state of Texas.' McAllen is the most populous city in Hidalgo County, though the county seat is Edinburg.",
+      "subquestion": "Which Texas county is <intersection of nodes 6-7: McAllen> located in?",
+      "answer": "Hidalgo County"
+    },
+    "9": {
+      "source": "datagov/aps-1-1-texas-adult-populations-at-risk-by-county-region-fy2013-fy2022/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/aps-1-1-texas-adult-populations-at-risk-by-county-region-fy2013-fy2022/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nresult = df.loc[\n    df[\"County\"].astype(str).str.strip().str.upper().eq(\"HIDALGO\")\n    & pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\").eq(2022),\n    \"65 and older: % of Population\",\n].reset_index(drop=True)\nanswer = str(result.iloc[0])",
+      "subquestion": "What percentage of the population was aged 65 and older in 2022 in <county from node 8: Hidalgo County>?",
+      "answer": "12.3"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, CDC 500 Cities diabetes data 2016-2019 - nodes 1-4):",
+    "  Node 1: TX cities with diabetes > 12% in 2016 release -> 10 cities",
+    "  Node 2: TX cities with diabetes > 12% in 2017 release -> 12 cities",
+    "  Node 3: TX cities with diabetes > 12% in 2018 release -> 12 cities (Edinburg dropped, Longview/Tyler added)",
+    "  Node 4: TX cities with diabetes > 12% in 2019 release -> 13 cities (Edinburg returned, Waco added)",
+    "  Intersection of nodes 1-4: Cities meeting criterion all 4 years -> 9 cities (Beaumont, Brownsville, Corpus Christi, El Paso, Laredo, McAllen, Mission, Pharr, San Antonio)",
+    "",
+    "HOP 2 (d=1, 2020 Census Texas Places - node 5):",
+    "  Node 5: Filter 9-city intersection by 2020 Census pop < 100k -> Mission (85,778) and Pharr (79,715)",
+    "  Result: 2 cities remaining (Mission, Pharr)",
+    "",
+    "HOP 3 (d=2, Wikipedia adjacent cities - nodes 6-7):",
+    "  Node 6 (Wikipedia Pharr,_Texas): Cities bordering Pharr -> McAllen, Edinburg, San Juan, Hidalgo",
+    "  Node 7 (Wikipedia Mission,_Texas): Cities bordering Mission -> McAllen, Palmhurst, Palmview",
+    "  Intersection: City that borders BOTH Pharr and Mission -> McAllen",
+    "",
+    "HOP 4 (d=1, Wikipedia McAllen,_Texas - node 8):",
+    "  Node 8: McAllen is in Hidalgo County, Texas (most populous city in the county)",
+    "",
+    "HOP 5 (d=1, data.gov Texas Adult Populations at Risk - node 9):",
+    "  Node 9: Hidalgo County had 12.3% of population aged 65 and older in 2022",
+    "",
+    "Final answer: 12.3 (percentage of Hidalgo County population aged 65+ in 2022)"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "2020-census-redistricting-data-all-texas-places",
+    "500-cities-city-level-data-gis-friendly-format-2016-release",
+    "500-cities-city-level-data-gis-friendly-format-2017-release",
+    "500-cities-city-level-data-gis-friendly-format-2018-release",
+    "500-cities-city-level-data-gis-friendly-format-2019-release",
+    "McAllen,_Texas",
+    "Mission,_Texas",
+    "Pharr,_Texas",
+    "aps-1-1-texas-adult-populations-at-risk-by-county-region-fy2013-fy2022"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: TX cities with diabetes > 12% in 2016 release -> 10 cities Node 2: TX cities with diabetes > 12% in 2017 release -> 12 cities Node 3: TX cities with diabetes > 12% in 2018 release -> 12 cities (Edinburg dropped, Longview/Tyler added) Node 4: TX cities with diabetes > 12% in 2019 release -> 13 cities (Edinburg returned, Waco added) Intersection of nodes 1-4: Cities meeting criterion all 4 years -> 9 cities (Beaumont, Brownsville, Corpus Christi, El Paso, Laredo, McAllen, Mission, Pharr, San Antonio)",
+      "answer": "9 cities (Beaumont, Brownsville, Corpus Christi, El Paso, Laredo, McAllen, Mission, Pharr, San Antonio)"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: Filter 9-city intersection by 2020 Census pop < 100k -> Mission (85,778) and Pharr (79,715) Result: 2 cities remaining (Mission, Pharr)",
+      "answer": "2 cities remaining (Mission, Pharr)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6,
+        7
+      ],
+      "reasoning": "Node 6 (Wikipedia Pharr,_Texas): Cities bordering Pharr -> McAllen, Edinburg, San Juan, Hidalgo Node 7 (Wikipedia Mission,_Texas): Cities bordering Mission -> McAllen, Palmhurst, Palmview Intersection: City that borders BOTH Pharr and Mission -> McAllen",
+      "answer": "McAllen"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8: McAllen is in Hidalgo County, Texas (most populous city in the county)",
+      "answer": "Hidalgo County"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Hidalgo County had 12.3% of population aged 65 and older in 2022",
+      "answer": "12.3"
+    }
+  ]
+}

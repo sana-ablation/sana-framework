@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-easy-1"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-easy-1/files/noaa_wildfires_monthly_stats.csv",
+    "datagov/kramabench-wildfire-easy-1/files/noaa_wildfires_monthly_stats.csv",
+    "datagov/kramabench-wildfire-easy-1/files/noaa_wildfires_monthly_stats.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Load the NOAA monthly wildfire statistics after the non-data header rows and sort the monthly records chronologically from Jan 2000 onward.",
+    "2. Scan only consecutive three-month windows and identify the window whose summed Acres Burned value is largest.",
+    "3. Return the numeric total Acres Burned for that maximum window, not the window's date range."
+  ],
+  "original_final_question": "Find the 3-month period with the highest total acres burned since Jan 2000, according to NOAA. What was the total acres burned in that period? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 loads the NOAA monthly wildfire statistics after skipping the 3 non-data rows.",
+    "Node 2 depends on node 1 and identifies the highest-acres consecutive 3-month window.",
+    "Node 3 depends on node 2 and returns the total acres burned for that window.",
+    "Final answer: 7805421"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-1",
+      "source": "datagov/kramabench-wildfire-easy-1/files/noaa_wildfires_monthly_stats.csv",
+      "intent": "How many NOAA monthly wildfire rows remain after skipping the non-data header rows?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_monthly_stats.csv'\ndf = pd.read_csv(path, skiprows=3).sort_values('Date')\nprint(str(len(df)))\n",
+      "answer": "303"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-easy-1",
+      "source": "datagov/kramabench-wildfire-easy-1/files/noaa_wildfires_monthly_stats.csv",
+      "intent": "Which consecutive 3-month period has the highest total acres burned?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_monthly_stats.csv'\ndf = pd.read_csv(path, skiprows=3).sort_values('Date')\ndf['AbsMonth'] = df['Date'].apply(lambda x: int(str(x)[:4]) * 12 + int(str(x)[4:6]))\nbest_total = 0\nbest_start = best_end = None\nfor i in range(len(df) - 2):\n    if df['AbsMonth'].iloc[i] == df['AbsMonth'].iloc[i+1] - 1 and df['AbsMonth'].iloc[i+1] == df['AbsMonth'].iloc[i+2] - 1:\n        total = int(df['Acres Burned'].iloc[i:i+3].sum())\n        if total > best_total:\n            best_total = total; best_start = int(df['Date'].iloc[i]); best_end = int(df['Date'].iloc[i+2])\nprint(str(best_start) + '|' + str(best_end))\n",
+      "answer": "201506|201508"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-easy-1",
+      "source": "datagov/kramabench-wildfire-easy-1/files/noaa_wildfires_monthly_stats.csv",
+      "intent": "What is the total acres burned in that period?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_monthly_stats.csv'\ndf = pd.read_csv(path, skiprows=3).sort_values('Date')\ndf['AbsMonth'] = df['Date'].apply(lambda x: int(str(x)[:4]) * 12 + int(str(x)[4:6]))\nbest_total = 0\nfor i in range(len(df) - 2):\n    if df['AbsMonth'].iloc[i] == df['AbsMonth'].iloc[i+1] - 1 and df['AbsMonth'].iloc[i+1] == df['AbsMonth'].iloc[i+2] - 1:\n        total = int(df['Acres Burned'].iloc[i:i+3].sum())\n        if total > best_total: best_total = total\nprint(str(best_total))\n",
+      "answer": "7805421"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-hard-10"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-hard-10/files/Wildfire_Acres_by_State.csv",
+    "datagov/kramabench-wildfire-hard-10/files/democratic_vs_republican_votes_by_usa_state_2020.csv",
+    "datagov/kramabench-wildfire-hard-10/files/wildfire_total_fires_p45_54.csv",
+    "datagov/kramabench-wildfire-hard-10/files/wildfire_total_fires_p45_54.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the wildfire state coverage and the 2020 state vote-share table.",
+    "2. Classify each state as Democratic or Republican from its vote share.",
+    "3. Merge party labels with state wildfire counts and sum total fires by party group.",
+    "4. Return the party group with the larger total fire count."
+  ],
+  "original_final_question": "By count, are there more fires in Democratic states or Republican states? Answer **only** with 'Democratic' or 'Republican'. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 reads wildfire acres state coverage.",
+    "Node 2 classifies states by Democratic/Republican 2020 vote share.",
+    "Node 3 depends on nodes 1-2 and sums wildfire counts by party.",
+    "Node 4 returns the larger party group.",
+    "Final answer: Republican"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-hard-10",
+      "source": "datagov/kramabench-wildfire-hard-10/files/Wildfire_Acres_by_State.csv",
+      "intent": "How many states are represented in the wildfire acres table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\ndf = pd.read_csv(path)\nprint(str(len(df)))\n",
+      "answer": "52"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-hard-10",
+      "source": "datagov/kramabench-wildfire-hard-10/files/democratic_vs_republican_votes_by_usa_state_2020.csv",
+      "intent": "How many states are classified as Democratic or Republican by the 2020 vote share table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/democratic_vs_republican_votes_by_usa_state_2020.csv'\ndf = pd.read_csv(path)\ndf['party'] = df['percent_democrat'].apply(lambda x: 'democrat' if x >= 50 else 'republican')\ncounts = df['party'].value_counts().to_dict()\nprint('democrat=' + str(int(counts.get('democrat', 0))) + '|republican=' + str(int(counts.get('republican', 0))))\n",
+      "answer": "democrat=26|republican=25"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-hard-10",
+      "source": "datagov/kramabench-wildfire-hard-10/files/wildfire_total_fires_p45_54.csv",
+      "intent": "After merging state fire counts with party labels, what are the total fire counts by party?",
+      "code": "import pandas as pd\nacres_path = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\nvotes_path = 'other-benchmarks/Kramabench/data/wildfire/input/democratic_vs_republican_votes_by_usa_state_2020.csv'\nfires_path = 'other-benchmarks/Kramabench/data/wildfire/input/wildfire_total_fires_p45_54.csv'\nacres = pd.read_csv(acres_path)\nvotes = pd.read_csv(votes_path)\nvotes['party'] = votes['percent_democrat'].apply(lambda x: 'democrat' if x >= 50 else 'republican')\nfires = pd.read_csv(fires_path)\ncombined = acres.merge(votes[['state', 'party']].rename(columns={'state': 'State'}), on='State', how='outer').merge(fires, on='State', how='outer')\nsums = combined.groupby('party')['Total Fires'].sum().to_dict()\nprint('democrat=' + str(int(sums.get('democrat', 0))) + '|republican=' + str(int(sums.get('republican', 0))))\n",
+      "answer": "democrat=29115|republican=35782"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-wildfire-hard-10",
+      "source": "datagov/kramabench-wildfire-hard-10/files/wildfire_total_fires_p45_54.csv",
+      "intent": "Which party-labelled group has the larger total fire count?",
+      "code": "import pandas as pd\nacres_path = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\nvotes_path = 'other-benchmarks/Kramabench/data/wildfire/input/democratic_vs_republican_votes_by_usa_state_2020.csv'\nfires_path = 'other-benchmarks/Kramabench/data/wildfire/input/wildfire_total_fires_p45_54.csv'\nacres = pd.read_csv(acres_path)\nvotes = pd.read_csv(votes_path)\nvotes['party'] = votes['percent_democrat'].apply(lambda x: 'democrat' if x >= 50 else 'republican')\nfires = pd.read_csv(fires_path)\ncombined = acres.merge(votes[['state', 'party']].rename(columns={'state': 'State'}), on='State', how='outer').merge(fires, on='State', how='outer')\nsums = combined.groupby('party')['Total Fires'].sum().to_dict()\nprint('Republican' if sums.get('republican', 0) > sums.get('democrat', 0) else 'Democratic')\n",
+      "answer": "Republican"
+    }
+  ]
+}

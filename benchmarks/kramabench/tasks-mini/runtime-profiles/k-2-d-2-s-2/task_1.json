@@ -1,0 +1,51 @@
+{
+  "dataset_sequence": [
+    "kramabench-astronomy-easy-6"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-astronomy-easy-6/files/space-track/58214_quiet.csv",
+    "datagov/kramabench-astronomy-easy-6/files/space-track/58214_storm.csv",
+    "datagov/kramabench-astronomy-easy-6/files/space-track/58214_quiet.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read and filter the May 1-4 quiet-period TLE records, then compute the semi-major-axis change rate from mean motion using the provided constants.",
+    "2. Read and filter the May 10-13 storm-period TLE records, then compute the same semi-major-axis change rate.",
+    "3. Report only the two rounded rates as an ordered pair in quiet-period, storm-period order."
+  ],
+  "original_final_question": "Using TLE data fetched for Starlink satellites 58214, calculate the average rate of semi-major axis decay (km/day) for the Gannon storm (May 10-13, 2024) and the preceding quiet period (May 1-4, 2024). Use earth's gravitational paremeter mu = 398600.4418 km^3/s^2, earth radius 6371.0 km, and Kepler's law as a rough estimate of the semi-major axis length. Report in a pair of numbers: (average_quiet_rate_km_day, average_storm_rate_km_day). The tle files are located in input/space-track/, with format <NORAD_ID>_storm.csv and <NORAD_ID>_quiet.csv. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the quiet-period TLE history and compute the semi-major-axis change rate.",
+    "Node 2: Read the storm-period TLE history and compute the semi-major-axis change rate.",
+    "Node 3 depends on nodes 1 and 2: Return the two rates in the requested quiet, storm order.",
+    "Final answer: [0.0193, -0.002]"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-easy-6",
+      "source": "datagov/kramabench-astronomy-easy-6/files/space-track/58214_quiet.csv",
+      "intent": "For the quiet-period TLE file, how many valid records are used and what is the semi-major-axis rate?",
+      "code": "import csv\nimport math\nfrom datetime import datetime, timezone, timedelta\nMU_EARTH = 398600.4418\nSECONDS_PER_DAY = 86400.0\ndef calculate_semi_major_from_mean_motion(mean_motion_rev_per_day):\n    mean_motion_rad_per_sec = float(mean_motion_rev_per_day) * 2.0 * math.pi / SECONDS_PER_DAY\n    return (MU_EARTH / (mean_motion_rad_per_sec ** 2)) ** (1.0 / 3.0)\ndef parse_epoch(epoch_str):\n    text = epoch_str.replace(' ', 'T')\n    if '.' not in text:\n        text += '.0'\n    return datetime.strptime(text, '%Y-%m-%dT%H:%M:%S.%f').replace(tzinfo=timezone.utc)\ndef load_records(path):\n    with open(path, newline='', encoding='utf-8') as f:\n        return [row for row in csv.DictReader(f) if row.get('EPOCH') and row.get('MEAN_MOTION')]\ndef endpoints(records, start, end):\n    parsed = sorted(((parse_epoch(r['EPOCH']), i, r) for i, r in enumerate(records)), key=lambda x: (x[0], x[1]))\n    first = None\n    before = None\n    for ts, _, rec in parsed:\n        if ts >= start:\n            first = rec\n            break\n        before = rec\n    if first is None:\n        first = before\n    last = None\n    first_ts = parse_epoch(first['EPOCH']) if first else None\n    for ts, _, rec in reversed(parsed):\n        if ts <= end and first_ts is not None and ts >= first_ts:\n            last = rec\n            break\n    if last is None and first is not None:\n        last = parsed[-1][2]\n    return first, last\ndef rate_for(path, start, end):\n    records = load_records(path)\n    first, last = endpoints(records, start, end)\n    start_alt = calculate_semi_major_from_mean_motion(first['MEAN_MOTION'])\n    end_alt = calculate_semi_major_from_mean_motion(last['MEAN_MOTION'])\n    days = (parse_epoch(last['EPOCH']) - parse_epoch(first['EPOCH'])).total_seconds() / SECONDS_PER_DAY\n    return len(records), (end_alt - start_alt) / days\nquiet_path = 'other-benchmarks/Kramabench/data/astronomy/input/space-track/58214_quiet.csv'\nstorm_path = 'other-benchmarks/Kramabench/data/astronomy/input/space-track/58214_storm.csv'\nquiet_count, quiet_rate = rate_for(quiet_path, datetime(2024, 5, 1, tzinfo=timezone.utc), datetime(2024, 5, 4, 23, 59, 59, 999999, tzinfo=timezone.utc))\nstorm_count, storm_rate = rate_for(storm_path, datetime(2024, 5, 10, tzinfo=timezone.utc), datetime(2024, 5, 13, 23, 59, 59, 999999, tzinfo=timezone.utc))\nresult = f'{quiet_count}|{quiet_rate:.4f}'\nprint(result)\n",
+      "answer": "8|0.0193"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-easy-6",
+      "source": "datagov/kramabench-astronomy-easy-6/files/space-track/58214_storm.csv",
+      "intent": "For the storm-period TLE file, how many valid records are used and what is the semi-major-axis rate?",
+      "code": "import csv\nimport math\nfrom datetime import datetime, timezone, timedelta\nMU_EARTH = 398600.4418\nSECONDS_PER_DAY = 86400.0\ndef calculate_semi_major_from_mean_motion(mean_motion_rev_per_day):\n    mean_motion_rad_per_sec = float(mean_motion_rev_per_day) * 2.0 * math.pi / SECONDS_PER_DAY\n    return (MU_EARTH / (mean_motion_rad_per_sec ** 2)) ** (1.0 / 3.0)\ndef parse_epoch(epoch_str):\n    text = epoch_str.replace(' ', 'T')\n    if '.' not in text:\n        text += '.0'\n    return datetime.strptime(text, '%Y-%m-%dT%H:%M:%S.%f').replace(tzinfo=timezone.utc)\ndef load_records(path):\n    with open(path, newline='', encoding='utf-8') as f:\n        return [row for row in csv.DictReader(f) if row.get('EPOCH') and row.get('MEAN_MOTION')]\ndef endpoints(records, start, end):\n    parsed = sorted(((parse_epoch(r['EPOCH']), i, r) for i, r in enumerate(records)), key=lambda x: (x[0], x[1]))\n    first = None\n    before = None\n    for ts, _, rec in parsed:\n        if ts >= start:\n            first = rec\n            break\n        before = rec\n    if first is None:\n        first = before\n    last = None\n    first_ts = parse_epoch(first['EPOCH']) if first else None\n    for ts, _, rec in reversed(parsed):\n        if ts <= end and first_ts is not None and ts >= first_ts:\n            last = rec\n            break\n    if last is None and first is not None:\n        last = parsed[-1][2]\n    return first, last\ndef rate_for(path, start, end):\n    records = load_records(path)\n    first, last = endpoints(records, start, end)\n    start_alt = calculate_semi_major_from_mean_motion(first['MEAN_MOTION'])\n    end_alt = calculate_semi_major_from_mean_motion(last['MEAN_MOTION'])\n    days = (parse_epoch(last['EPOCH']) - parse_epoch(first['EPOCH'])).total_seconds() / SECONDS_PER_DAY\n    return len(records), (end_alt - start_alt) / days\nquiet_path = 'other-benchmarks/Kramabench/data/astronomy/input/space-track/58214_quiet.csv'\nstorm_path = 'other-benchmarks/Kramabench/data/astronomy/input/space-track/58214_storm.csv'\nquiet_count, quiet_rate = rate_for(quiet_path, datetime(2024, 5, 1, tzinfo=timezone.utc), datetime(2024, 5, 4, 23, 59, 59, 999999, tzinfo=timezone.utc))\nstorm_count, storm_rate = rate_for(storm_path, datetime(2024, 5, 10, tzinfo=timezone.utc), datetime(2024, 5, 13, 23, 59, 59, 999999, tzinfo=timezone.utc))\nresult = f'{storm_count}|{storm_rate:.4f}'\nprint(result)\n",
+      "answer": "13|-0.0020"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-easy-6",
+      "source": "datagov/kramabench-astronomy-easy-6/files/space-track/58214_quiet.csv",
+      "intent": "What ordered pair of quiet and storm semi-major-axis rates should be reported?",
+      "code": "import csv\nimport math\nfrom datetime import datetime, timezone, timedelta\nMU_EARTH = 398600.4418\nSECONDS_PER_DAY = 86400.0\ndef calculate_semi_major_from_mean_motion(mean_motion_rev_per_day):\n    mean_motion_rad_per_sec = float(mean_motion_rev_per_day) * 2.0 * math.pi / SECONDS_PER_DAY\n    return (MU_EARTH / (mean_motion_rad_per_sec ** 2)) ** (1.0 / 3.0)\ndef parse_epoch(epoch_str):\n    text = epoch_str.replace(' ', 'T')\n    if '.' not in text:\n        text += '.0'\n    return datetime.strptime(text, '%Y-%m-%dT%H:%M:%S.%f').replace(tzinfo=timezone.utc)\ndef load_records(path):\n    with open(path, newline='', encoding='utf-8') as f:\n        return [row for row in csv.DictReader(f) if row.get('EPOCH') and row.get('MEAN_MOTION')]\ndef endpoints(records, start, end):\n    parsed = sorted(((parse_epoch(r['EPOCH']), i, r) for i, r in enumerate(records)), key=lambda x: (x[0], x[1]))\n    first = None\n    before = None\n    for ts, _, rec in parsed:\n        if ts >= start:\n            first = rec\n            break\n        before = rec\n    if first is None:\n        first = before\n    last = None\n    first_ts = parse_epoch(first['EPOCH']) if first else None\n    for ts, _, rec in reversed(parsed):\n        if ts <= end and first_ts is not None and ts >= first_ts:\n            last = rec\n            break\n    if last is None and first is not None:\n        last = parsed[-1][2]\n    return first, last\ndef rate_for(path, start, end):\n    records = load_records(path)\n    first, last = endpoints(records, start, end)\n    start_alt = calculate_semi_major_from_mean_motion(first['MEAN_MOTION'])\n    end_alt = calculate_semi_major_from_mean_motion(last['MEAN_MOTION'])\n    days = (parse_epoch(last['EPOCH']) - parse_epoch(first['EPOCH'])).total_seconds() / SECONDS_PER_DAY\n    return len(records), (end_alt - start_alt) / days\nquiet_path = 'other-benchmarks/Kramabench/data/astronomy/input/space-track/58214_quiet.csv'\nstorm_path = 'other-benchmarks/Kramabench/data/astronomy/input/space-track/58214_storm.csv'\nquiet_count, quiet_rate = rate_for(quiet_path, datetime(2024, 5, 1, tzinfo=timezone.utc), datetime(2024, 5, 4, 23, 59, 59, 999999, tzinfo=timezone.utc))\nstorm_count, storm_rate = rate_for(storm_path, datetime(2024, 5, 10, tzinfo=timezone.utc), datetime(2024, 5, 13, 23, 59, 59, 999999, tzinfo=timezone.utc))\nresult = [round(quiet_rate, 4), round(storm_rate, 3)]\nprint(result)\n",
+      "answer": [
+        0.0193,
+        -0.002
+      ]
+    }
+  ]
+}

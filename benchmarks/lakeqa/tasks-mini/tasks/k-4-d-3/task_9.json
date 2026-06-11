@@ -1,0 +1,148 @@
+{
+  "question": "I am analyzing a specific New York State county which supports a significant population, reporting between 29,000 and 75,000 households on SNAP, 350 to 600 children in foster care, and 5,000 to 18,000 adults in mental health programs. Operationally, it manages a Temporary Assistance caseload of 4,000 to 6,000 using a staff of 600 to 1,000, while processing between 200 and 400 new case openings per month. What year was its county seat incorporated as a city? Please return the year only. Your response should be in the format [Answer].",
+  "answer": "1847",
+  "practical_motivation": "A social worker studying public assistance patterns across New York counties wants to understand more about Syracuse's history as a major urban center in Central New York, including when it achieved city status and how that relates to its current role as a regional hub for social services.",
+  "nodes": {
+    "1": {
+      "source": "datagov/supplemental-nutrition-assistance-program-snap-caseloads-and-expenditures-beginning-2002/files/rows.txt",
+      "fact": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf.columns = [c.strip() for c in df.columns]\ndf = df[\n    (df[\"Year\"] == 2015)\n    & (df[\"County\"] != \"New York City\")\n    & (df[\"Secure/Mixed Admissions\"] > 90)\n].copy()\ndf = df.sort_values(\"Secure/Mixed Admissions\", ascending=False)\nanswer = df[\"County\"].tolist()\nanswer = [str(x) + \" County\" for x in answer]",
+      "subquestion": "Which NY counties had SNAP households between 29,000 and 75,000 in February 2023?",
+      "answer": [
+        "Suffolk County",
+        "Monroe County",
+        "Westchester County",
+        "Onondaga County",
+        "Nassau County"
+      ]
+    },
+    "2": {
+      "source": "datagov/children-in-foster-care-annually-beginning-1994/files/rows.txt",
+      "fact": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/jail-population-by-county-beginning-1997/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf = df[df[\"Year\"] == 2021].copy()\ndf = df[df[\"Facility Name (ORI)\"] != \"All NYC Facilities\"].copy()\ndf[\"County\"] = df[\"Facility Name (ORI)\"].str.extract(r\"^(.+?) County\")\ndf = df.dropna(subset=[\"County\"])\ndf = df.groupby(\"County\", as_index=False)[\"Census\"].sum()\ndf = df[df[\"Census\"] < 750].copy()\ndf = df.sort_values(\"Census\", ascending=False)\nanswer = df[\"County\"].head(10).tolist()\nanswer = [str(x) + \" County\" for x in answer]",
+      "subquestion": "Which NY counties had between 350 and 600 children in foster care in 2023?",
+      "answer": [
+        "Erie County",
+        "Onondaga County",
+        "Suffolk County",
+        "Oneida County",
+        "Monroe County"
+      ]
+    },
+    "3": {
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "fact": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf = df[\n    (df[\"Levy Year\"] == 2022)\n    & (df[\"County\"] != \"New York City\")\n    & (df[\"Number of Basic Exemptions\"] > 65500)\n].copy()\ndf = df.sort_values(\"Number of Basic Exemptions\", ascending=False)\nanswer = df[\"County\"].tolist()\nanswer = [str(x) + \" County\" for x in answer]",
+      "subquestion": "Which NY counties had between 5,000 and 18,000 adult mental health clinic recipients for the OMH Licensed Clinic Treatment control group in 2015?",
+      "answer": [
+        "Monroe County",
+        "Erie County",
+        "Westchester County",
+        "Suffolk County",
+        "Nassau County",
+        "Onondaga County"
+      ]
+    },
+    "4": {
+      "source": "datagov/public-assistance-pa-caseloads-and-expenditures-beginning-2002/files/rows.txt",
+      "fact": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/public-assistance-pa-caseloads-and-expenditures-beginning-2002/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ncandidates = [\"Suffolk\", \"Monroe\", \"Onondaga\"]\ndf = df[\n    (df[\"Year\"] == 2023)\n    & (df[\"Month\"] == \"February\")\n    & (df[\"District\"].isin(candidates))\n    & (df[\"Total Temporary Assistance Cases\"].between(4000, 6000))\n].copy()\ndf = df.sort_values(\"Total Temporary Assistance Cases\", ascending=False)\nanswer = [str(x) + \" County\" for x in df[\"District\"].tolist()]",
+      "subquestion": "Which of <intersection of nodes 1-3> had Temporary Assistance cases between 4,000 and 6,000 in February 2023?",
+      "answer": [
+        "Suffolk County",
+        "Onondaga County"
+      ]
+    },
+    "5": {
+      "source": "datagov/local-social-services-district-ssd-staff-counts-by-function-beginning-state-fiscal-ye-2004/files/rows.txt",
+      "fact": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/local-social-services-district-ssd-staff-counts-by-function-beginning-state-fiscal-ye-2004/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ncandidates = [\"Suffolk\", \"Monroe\", \"Onondaga\"]\ndf = df[\n    (df[\"State Fiscal Year Ending\"] == 2017)\n    & (df[\"District\"].isin(candidates))\n    & (df[\"Total Staffing\"].between(600, 1000))\n].copy()\ndf = df.sort_values(\"Total Staffing\", ascending=False)\nanswer = [str(x) + \" County\" for x in df[\"District\"].tolist()]",
+      "subquestion": "Which of <intersection of nodes 1-3> had social services staff between 600 and 1,000 in 2017?",
+      "answer": [
+        "Monroe County",
+        "Onondaga County"
+      ]
+    },
+    "6": {
+      "source": "datagov/public-assistance-cases-opened-by-month-beginning-2006/files/rows.txt",
+      "fact": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/public-assistance-cases-opened-by-month-beginning-2006/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ncandidates = [\"Suffolk\", \"Monroe\", \"Onondaga\"]\ndf = df[\n    (df[\"Year\"] == 2021)\n    & (df[\"Month\"] == \"March\")\n    & (df[\"District\"].isin(candidates))\n    & (df[\"Total Public Assistance Case Openings\"].between(200, 400))\n].copy()\ndf = df.sort_values(\"Total Public Assistance Case Openings\", ascending=False)\nanswer = [str(x) + \" County\" for x in df[\"District\"].tolist()]",
+      "subquestion": "Which of <intersection of nodes 1-3> had Public Assistance case openings between 200 and 400 in March 2021?",
+      "answer": [
+        "Monroe County",
+        "Onondaga County"
+      ]
+    },
+    "7": {
+      "source": "wikipedia/Onondaga_County,_New_York/content.txt",
+      "fact": "Onondaga County's county seat is Syracuse. The county name derives from the Onondaga tribe, one of the original Five Nations of the Haudenosaunee (Iroquois Confederacy). The word Onondaga means 'People of the Hills'.",
+      "subquestion": "What is the county seat of <intersection of nodes 4-6>?",
+      "answer": "Syracuse"
+    },
+    "8": {
+      "source": "wikipedia/Onondaga_County,_New_York/content.txt",
+      "fact": "The city of Syracuse, New York was incorporated as a village in 1825 and as a city in 1847. The city developed at the southern end of Onondaga Lake around salt springs.",
+      "subquestion": "In what year was <node_7 answer> incorporated as a city?",
+      "answer": "1847"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 (SNAP Caseloads): Find NY counties with SNAP households 29K-75K → {Suffolk, Monroe, Westchester, Onondaga, Nassau}",
+    "Node 2 (Foster Care): Find NY counties with 350-600 children in care → {Erie, Onondaga, Suffolk, Oneida, Monroe}",
+    "Node 3 (Mental Health): Find NY counties with 5K-18K adult MH recipients → {Monroe, Erie, Westchester, Suffolk, Nassau, Onondaga}",
+    "Intersection of nodes 1-3: {Suffolk, Monroe, Onondaga} - Westchester excluded (foster care 271), Nassau excluded (foster care 125), Erie/Oneida excluded (SNAP out of range)",
+    "Nodes 1-3 form Hop 1 (d=3): Three independent criteria intersect to identify three counties",
+    "Node 4 (PA Caseloads): From {Suffolk, Monroe, Onondaga}, filter to TA cases 4K-6K → {Suffolk, Onondaga} (Monroe 6,940 excluded)",
+    "Node 5 (SSD Staff): From {Suffolk, Monroe, Onondaga}, filter to staff 600-1000 → {Monroe, Onondaga} (Suffolk 1,499 excluded)",
+    "Node 6 (PA Cases Opened): From {Suffolk, Monroe, Onondaga}, filter to openings 200-400 → {Monroe, Onondaga} (Suffolk 640 excluded)",
+    "Intersection of nodes 4-6: {Suffolk, Onondaga} ∩ {Monroe, Onondaga} ∩ {Monroe, Onondaga} = {Onondaga}",
+    "Nodes 4-6 form Hop 2 (d=3): Three criteria ALL applied to same input {Suffolk, Monroe, Onondaga}, results intersected",
+    "Node 7 (Wikipedia): Find county seat of Onondaga County → Syracuse",
+    "Node 7 forms Hop 3 (d=1): Single Wikipedia lookup for county seat",
+    "Node 8 (Wikipedia): Find when Syracuse was incorporated as a city → 1847",
+    "Node 8 forms Hop 4 (d=1): Single Wikipedia lookup for final answer",
+    "Final answer: 1847"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Onondaga_County,_New_York",
+    "children-in-foster-care-annually-beginning-1994",
+    "county-mental-health-profiles-phase-2-beginning-2014",
+    "local-social-services-district-ssd-staff-counts-by-function-beginning-state-fiscal-ye-2004",
+    "public-assistance-cases-opened-by-month-beginning-2006",
+    "public-assistance-pa-caseloads-and-expenditures-beginning-2002",
+    "supplemental-nutrition-assistance-program-snap-caseloads-and-expenditures-beginning-2002"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1 (SNAP Caseloads): Find NY counties with SNAP households 29K-75K → {Suffolk, Monroe, Westchester, Onondaga, Nassau} Node 2 (Foster Care): Find NY counties with 350-600 children in care → {Erie, Onondaga, Suffolk, Oneida, Monroe} Node 3 (Mental Health): Find NY counties with 5K-18K adult MH recipients → {Monroe, Erie, Westchester, Suffolk, Nassau, Onondaga} Intersection of nodes 1-3: {Suffolk, Monroe, Onondaga} - Westchester excluded (foster care 271), Nassau excluded (foster care 125), Erie/Oneida excluded (SNAP out of range) Nodes 1-3 form Hop 1 (d=3): Three independent criteria intersect to identify three counties",
+      "answer": "{Monroe, Erie, Westchester, Suffolk, Nassau, Onondaga}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Node 4 (PA Caseloads): From {Suffolk, Monroe, Onondaga}, filter to TA cases 4K-6K → {Suffolk, Onondaga} (Monroe 6,940 excluded) Node 5 (SSD Staff): From {Suffolk, Monroe, Onondaga}, filter to staff 600-1000 → {Monroe, Onondaga} (Suffolk 1,499 excluded) Node 6 (PA Cases Opened): From {Suffolk, Monroe, Onondaga}, filter to openings 200-400 → {Monroe, Onondaga} (Suffolk 640 excluded) Intersection of nodes 4-6: {Suffolk, Onondaga} ∩ {Monroe, Onondaga} ∩ {Monroe, Onondaga} = {Onondaga} Nodes 4-6 form Hop 2 (d=3): Three criteria ALL applied to same input {Suffolk, Monroe, Onondaga}, results intersected",
+      "answer": "{Monroe, Onondaga} (Suffolk 640 excluded)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7 (Wikipedia): Find county seat of Onondaga County → Syracuse Node 7 forms Hop 3 (d=1): Single Wikipedia lookup for county seat",
+      "answer": "Syracuse"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8 (Wikipedia): Find when Syracuse was incorporated as a city → 1847 Node 8 forms Hop 4 (d=1): Single Wikipedia lookup for final answer",
+      "answer": "1847"
+    }
+  ]
+}

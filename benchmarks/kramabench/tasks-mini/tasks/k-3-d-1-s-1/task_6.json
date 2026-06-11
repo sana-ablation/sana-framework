@@ -1,0 +1,85 @@
+{
+  "question": "What is the proportion (round to 3 decimal places) of fraud reporters who lost between $1-$500 in 2024? Write your answer as [ANSWER].",
+  "answer": "0.523",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-19/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv",
+      "fact": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r') as f:\n        raw_contents = f.readlines()\n    attributes = {}\n    current_block = []\n    for line in raw_contents[1:]:\n        cleaned_line = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned_line.replace(',', '').strip() == '':\n            if not current_block:\n                continue\n            sub_table_name = [v.strip() for v in current_block[0].split(',') if v.strip() != '']\n            if len(sub_table_name) == 1 and len(current_block) >= 3:\n                columns = [col.strip() for col in current_block[1].split(',')]\n                values = [[val.strip() for val in l.split(',')] for l in current_block[2:]]\n                attributes[sub_table_name[0]] = TableCsv(columns, values)\n            else:\n                for l in current_block:\n                    attr_name = l.split(',')[0]\n                    attr_content = '|'.join([v.strip() for v in l.split(',')[1:] if v.strip() != ''])\n                    attributes[attr_name] = attr_content\n            current_block = []\n        else:\n            current_block.append(cleaned_line)\n    return attributes\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv'\nattrs = parse_table(path)\ntotal_reports = int(attrs['Reports with $ Loss'].split('|')[0])\nsub_table = attrs['Reported Fraud Losses in $1 - $1000 Range']\nloss_bins = ['$1 - $100', '$101 - $200', '$201 - $300', '$301 - $400', '$401 - $500']\ntotal_below_500 = sum(int(row[1]) for row in sub_table.values if row[0] in loss_bins)\nproportion = total_below_500 / total_reports\nresult = str(total_reports)\nprint(result)\n",
+      "subquestion": "How many 2024 fraud reports had a dollar loss recorded?",
+      "answer": "987520"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-19/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv",
+      "fact": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r') as f:\n        raw_contents = f.readlines()\n    attributes = {}\n    current_block = []\n    for line in raw_contents[1:]:\n        cleaned_line = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned_line.replace(',', '').strip() == '':\n            if not current_block:\n                continue\n            sub_table_name = [v.strip() for v in current_block[0].split(',') if v.strip() != '']\n            if len(sub_table_name) == 1 and len(current_block) >= 3:\n                columns = [col.strip() for col in current_block[1].split(',')]\n                values = [[val.strip() for val in l.split(',')] for l in current_block[2:]]\n                attributes[sub_table_name[0]] = TableCsv(columns, values)\n            else:\n                for l in current_block:\n                    attr_name = l.split(',')[0]\n                    attr_content = '|'.join([v.strip() for v in l.split(',')[1:] if v.strip() != ''])\n                    attributes[attr_name] = attr_content\n            current_block = []\n        else:\n            current_block.append(cleaned_line)\n    return attributes\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv'\nattrs = parse_table(path)\ntotal_reports = int(attrs['Reports with $ Loss'].split('|')[0])\nsub_table = attrs['Reported Fraud Losses in $1 - $1000 Range']\nloss_bins = ['$1 - $100', '$101 - $200', '$201 - $300', '$301 - $400', '$401 - $500']\ntotal_below_500 = sum(int(row[1]) for row in sub_table.values if row[0] in loss_bins)\nproportion = total_below_500 / total_reports\nresult = str(total_below_500)\nprint(result)\n",
+      "subquestion": "How many reports fall in the $1 through $500 loss bins?",
+      "answer": "516308"
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-easy-19/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv",
+      "fact": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r') as f:\n        raw_contents = f.readlines()\n    attributes = {}\n    current_block = []\n    for line in raw_contents[1:]:\n        cleaned_line = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned_line.replace(',', '').strip() == '':\n            if not current_block:\n                continue\n            sub_table_name = [v.strip() for v in current_block[0].split(',') if v.strip() != '']\n            if len(sub_table_name) == 1 and len(current_block) >= 3:\n                columns = [col.strip() for col in current_block[1].split(',')]\n                values = [[val.strip() for val in l.split(',')] for l in current_block[2:]]\n                attributes[sub_table_name[0]] = TableCsv(columns, values)\n            else:\n                for l in current_block:\n                    attr_name = l.split(',')[0]\n                    attr_content = '|'.join([v.strip() for v in l.split(',')[1:] if v.strip() != ''])\n                    attributes[attr_name] = attr_content\n            current_block = []\n        else:\n            current_block.append(cleaned_line)\n    return attributes\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv'\nattrs = parse_table(path)\ntotal_reports = int(attrs['Reports with $ Loss'].split('|')[0])\nsub_table = attrs['Reported Fraud Losses in $1 - $1000 Range']\nloss_bins = ['$1 - $100', '$101 - $200', '$201 - $300', '$301 - $400', '$401 - $500']\ntotal_below_500 = sum(int(row[1]) for row in sub_table.values if row[0] in loss_bins)\nproportion = total_below_500 / total_reports\nresult = f'{proportion:.3f}'\nprint(result)\n",
+      "subquestion": "What proportion of fraud reporters with a loss lost between $1 and $500, rounded to three decimals?",
+      "answer": "0.523"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Parse the fraud-loss table and recover the total number of reports with dollar loss.",
+    "Node 2 depends on node 1: Sum the $1 through $500 loss bins.",
+    "Node 3 depends on nodes 1 and 2: Divide the $1-$500 total by all reports with dollar loss and round to three decimals.",
+    "Final answer: 0.523"
+  ],
+  "datasets_used": [
+    "kramabench-legal-easy-19"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Parse the fraud-loss table and recover the total number of reports with dollar loss.",
+      "answer": "987520"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Sum the $1 through $500 loss bins.",
+      "answer": "516308"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: Divide the $1-$500 total by all reports with dollar loss and round to three decimals.",
+      "answer": "0.523"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-19",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-19.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-19",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-19/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud_Reports_by_Amount_Lost.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_raw_answer": "0.5228329552819183",
+    "answer_rounding_note": "The checked-in source script prints the unrounded fraction; the workload question asks to round to three decimal places."
+  }
+}

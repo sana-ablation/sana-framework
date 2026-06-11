@@ -1,0 +1,60 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-hard-16"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires_variabledescrip.csv",
+    "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires.csv",
+    "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Confirms the fields used for the regional cause test.",
+    "2. Filters NOAA wildfire records to January-March fires with known causes and builds the contingency table.",
+    "3. And computes the chi-square statistic and p-value without relying on SciPy."
+  ],
+  "original_final_question": "According to NOAA, find the breakdowns of causes of fires of each geographical region for fires with known causes that start in the months of January, February, and March? Perform a chi-square statistics test. What are the chi-square statistic and p-value? Report a list of two numbers. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 confirms the fields used for the regional cause test.",
+    "Node 2 filters NOAA wildfire records to January-March fires with known causes and builds the contingency table.",
+    "Node 3 depends on node 2 and computes the chi-square statistic and p-value without relying on SciPy.",
+    "Final answer: [6.326, 0.787]"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-hard-16",
+      "source": "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires_variabledescrip.csv",
+      "intent": "Which NOAA fields needed for the seasonal cause-by-region test are described in the variable-description file?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_variabledescrip.csv'\ndf = pd.read_csv(path, encoding='latin1')\nterms = []\nfor name in ['start_date', 'region', 'cause']:\n    if name in set(df['Variable Name '].astype(str).str.strip()): terms.append(name)\nprint('|'.join(terms))\n",
+      "answer": "start_date|region|cause"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-hard-16",
+      "source": "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires.csv",
+      "intent": "What is the shape and total count of the January-March known-cause region-by-cause contingency table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\ndf['start_date'] = pd.to_datetime(df['start_date'])\nwinter = df[df['start_date'].dt.month.isin([1, 2, 3])]\nwinter = winter[winter['cause'] != 'U']\ncontingency = pd.crosstab(winter['region'], winter['cause'])\nprint(str(contingency.shape[0]) + 'x' + str(contingency.shape[1]) + '|' + str(int(contingency.to_numpy().sum())))\n",
+      "answer": "6x3|170"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-hard-16",
+      "source": "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires.csv",
+      "intent": "What are the chi-square statistic and p-value for the known-cause January-March contingency table?",
+      "code": "import pandas as pd\nimport numpy as np\nimport math\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\ndf['start_date'] = pd.to_datetime(df['start_date'])\nwinter = df[df['start_date'].dt.month.isin([1, 2, 3])]\nwinter = winter[winter['cause'] != 'U']\ncontingency = pd.crosstab(winter['region'], winter['cause'])\nobs = contingency.to_numpy(dtype=float)\nrow = obs.sum(axis=1)\ncol = obs.sum(axis=0)\ntotal = obs.sum()\nexpected = np.outer(row, col) / total\nchi2 = float(((obs - expected) ** 2 / expected).sum())\ndfree = (obs.shape[0] - 1) * (obs.shape[1] - 1)\nz = chi2 / 2.0\n# Survival function for chi-square with even degrees of freedom.\np_value = math.exp(-z) * sum((z ** i) / math.factorial(i) for i in range(dfree // 2))\nprint('[{:.3f}, {:.3f}]'.format(chi2, p_value))\n",
+      "answer": [
+        6.326,
+        0.787
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-hard-16",
+      "source": "datagov/kramabench-wildfire-hard-16/files/noaa_wildfires_variabledescrip.csv",
+      "intent": "Which NOAA fields needed for the seasonal cause-by-region test are described in the variable-description file?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

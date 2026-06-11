@@ -1,0 +1,79 @@
+{
+  "dataset_sequence": [
+    "fy-2019-disability-pension-recipient-by-county",
+    "fy-2023-disability-compensation-recipients-by-county",
+    "Big_Horn_County,_Wyoming",
+    "Basin,_Wyoming"
+  ],
+  "source_sequence": [
+    "datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt",
+    "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+    "wikipedia/Big_Horn_County,_Wyoming/content.txt",
+    "wikipedia/Basin,_Wyoming/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify Wyoming counties with between 150 and 180 veteran disability recipients in 2019.",
+    "2. Identify Wyoming counties with between 260 and 280 veteran disability recipients in 2023, and keep the county that also qualified in step 1.",
+    "3. Determine the county seat of the Wyoming county kept in step 2.",
+    "4. For the county seat from step 3, determine the record high temperature ever recorded there and return the Fahrenheit integer."
+  ],
+  "original_final_question": "I'm interested in extreme weather records across Wyoming. What is the record high temperature ever recorded in the county seat of the Wyoming county that had between 150-180 veteran disability recipients in 2019 and 260-280 recipients in 2023? Answer the integer in Fahrenheit. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, nodes 1): Wyoming counties with 150-180 VA recipients 2019 → {Big Horn, Crook, Teton, Sublette}; Wyoming counties with 260-280 VA recipients 2023 → {Big Horn, Weston}",
+    "HOP 2 (d=1, nodes 2): Intersection → Big Horn County; county seat → Basin",
+    "HOP 3 (d=1, nodes 3): Record high temperature in Basin → 115°F",
+    "Final answer: 115"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "fy-2019-disability-pension-recipient-by-county",
+      "source": "datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt",
+      "intent": "Which Wyoming counties had 150-180 VA disability compensation recipients in FY 2019?",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt')\ndf['# Total: Disability Compensation Recipients'] = pd.to_numeric(df['# Total: Disability Compensation Recipients'], errors='coerce')\n\nfiltered = df[(df['State'] == 'Wyoming') & (df['# Total: Disability Compensation Recipients'].between(150, 180, inclusive='both'))].copy()\nfiltered['county_out'] = filtered['County name'].astype(str).str.strip() + ' County'\nranked = filtered.sort_values(['# Total: Disability Compensation Recipients', 'county_out'], ascending=[False, True])\nresult = ranked['county_out'].tolist()",
+      "answer": [
+        "Big Horn County",
+        "Crook County",
+        "Teton County",
+        "Sublette County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "Which Wyoming counties had 260-280 VA disability compensation recipients in FY 2023?",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt')\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\n\nfiltered = df[(df['State'] == 'Wyoming') & (df['Total: Disability Compensation Recipients'].between(260, 280, inclusive='both'))].copy()\nfiltered['county_out'] = filtered['County Name'].astype(str).str.strip() + ' County'\nranked = filtered.sort_values(['Total: Disability Compensation Recipients', 'county_out'], ascending=[False, True])\nresult = ranked['county_out'].tolist()",
+      "answer": [
+        "Big Horn County",
+        "Weston County"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "fy-2019-disability-pension-recipient-by-county",
+      "source": "datagov/fy-2019-disability-pension-recipient-by-county/files/rows.txt",
+      "intent": "Which Wyoming counties had 150-180 VA disability compensation recipients in FY 2019?",
+      "sql": "SELECT trim(\"County name\") || ' County' AS answer\nFROM t\nWHERE State = 'Wyoming'\n  AND TRY_CAST(\"# Total: Disability Compensation Recipients\" AS INTEGER) BETWEEN 150 AND 180\nORDER BY TRY_CAST(\"# Total: Disability Compensation Recipients\" AS INTEGER) DESC, answer ASC",
+      "answer": [
+        "Big Horn County",
+        "Crook County",
+        "Teton County",
+        "Sublette County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "Which Wyoming counties had 260-280 VA disability compensation recipients in FY 2023?",
+      "sql": "SELECT trim(\"County Name\") || ' County' AS answer\nFROM t\nWHERE State = 'Wyoming'\n  AND TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) BETWEEN 260 AND 280\nORDER BY TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) DESC, answer ASC",
+      "answer": [
+        "Big Horn County",
+        "Weston County"
+      ]
+    }
+  ]
+}

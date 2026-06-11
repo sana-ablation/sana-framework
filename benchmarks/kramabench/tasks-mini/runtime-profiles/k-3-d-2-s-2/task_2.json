@@ -1,0 +1,68 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-easy-15"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires_variabledescrip.csv",
+    "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+    "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+    "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Use the variable-description file to identify the NOAA fields for median wind speed and fire size.",
+    "2. Filter the wildfire records to the July day-of-year window.",
+    "3. Compute the correlation between median wind speed and fire size for that July subset.",
+    "4. Convert the correlation strength into the required Yes or No answer."
+  ],
+  "original_final_question": "According to NOAA, in Julies, are the size of a fire and the median wind speed in the area strongly correlated? The answer should be Yes or No. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 confirms the wind speed and fire-size columns from the variable-description file.",
+    "Node 2 filters the NOAA wildfire records to the July day-of-year window.",
+    "Node 3 depends on nodes 1-2 and computes the correlation between wind_med and hec.",
+    "Node 4 maps the weak absolute correlation to the required Yes/No answer.",
+    "Final answer: No"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-15",
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires_variabledescrip.csv",
+      "intent": "Which requested NOAA variable names are described in the variable-description file?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_variabledescrip.csv'\ndf = pd.read_csv(path, encoding='latin1')\nterms = []\nfor name in ['wind_med', 'hec']:\n    if name in set(df['Variable Name '].astype(str).str.strip()): terms.append(name)\nprint('|'.join(terms))\n",
+      "answer": "wind_med|hec"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-easy-15",
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+      "intent": "How many wildfire incidents fall in the July day-of-year window used by the source script?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\njuly = df[(df['start_day_of_year'] >= 181) & (df['start_day_of_year'] < 213)]\nprint(str(len(july)))\n",
+      "answer": "2049"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-easy-15",
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+      "intent": "What is the July correlation between median wind speed and fire size in hectares?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\njuly = df[(df['start_day_of_year'] >= 181) & (df['start_day_of_year'] < 213)]\ncorrelation = july['wind_med'].corr(july['hec'])\nprint('{:.6f}'.format(correlation))\n",
+      "answer": "-0.010027"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-wildfire-easy-15",
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+      "intent": "Is that absolute correlation strong enough to answer Yes?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\njuly = df[(df['start_day_of_year'] >= 181) & (df['start_day_of_year'] < 213)]\ncorrelation = july['wind_med'].corr(july['hec'])\nprint('Yes' if abs(correlation) >= 0.5 else 'No')\n",
+      "answer": "No"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-15",
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires_variabledescrip.csv",
+      "intent": "Which requested NOAA variable names are described in the variable-description file?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "question": "For each year from 2016 through 2023, compute a growth-amplified overdose burden score as annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate). Which year has the highest score? Your response should be in the format [Answer].",
+  "answer": "2021",
+  "practical_motivation": "A public health analyst wants to identify the year with both high overdose burden and sharp acceleration, not just the highest raw total.",
+  "nodes": {
+    "1": {
+      "source": "datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt",
+      "fact": "import pandas as pd\n\ndf = pd.read_csv('datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt', low_memory=False)\ndf['Year'] = pd.to_numeric(df['Year'], errors='coerce')\ndf['Data Value'] = pd.to_numeric(df['Data Value'], errors='coerce')\n\nfiltered = df[\n    (df['Indicator'] == 'Number of Drug Overdose Deaths')\n    & (df['Period'] == '12 month-ending')\n    & (df['Month'] == 'December')\n    & (df['State'] != 'US')\n    & (df['Year'].between(2015, 2023, inclusive='both'))\n]\n\nannual = filtered.groupby('Year', as_index=False)['Data Value'].sum().rename(columns={'Data Value': 'total'})\nannual = annual.sort_values('Year')\nannual['growth'] = annual['total'].pct_change()\nannual['score'] = annual['total'] * (1 + annual['growth'].clip(lower=0))\nranked = annual[annual['Year'].between(2016, 2023, inclusive='both')].sort_values(['score', 'Year'], ascending=[False, True])\nresult = str(int(ranked.iloc[0]['Year']))",
+      "subquestion": "For each year from 2016 through 2023, compute a growth-amplified overdose burden score: annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate).",
+      "answer": "2021"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Sum the December rolling 12-month overdose death totals across all U.S. states for each year, compute year-over-year growth in that total, then score each year from 2016-2023 as total x (1 + max(growth, 0)). The highest growth-amplified score occurs in 2021.",
+    "Final answer: 2021"
+  ],
+  "datasets_used": [
+    "vsrr-provisional-drug-overdose-death-counts"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Sum the December rolling 12-month overdose death totals across all U.S. states for each year, compute year-over-year growth in that total, then score each year from 2016-2023 as total x (1 + max(growth, 0)). The highest growth-amplified score occurs in 2021. Final answer: 2021",
+      "answer": "node 1: 2021"
+    }
+  ]
+}

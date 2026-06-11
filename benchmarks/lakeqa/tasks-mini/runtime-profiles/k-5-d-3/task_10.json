@@ -1,0 +1,283 @@
+{
+  "dataset_sequence": [
+    "building-permits-in-2022",
+    "building-permits-in-2023",
+    "building-permits-in-2024",
+    "crime-incidents-in-2022",
+    "crime-incidents-in-2023",
+    "crime-incidents-in-2024",
+    "street-sweeping-schedule-2022",
+    "street-sweeping-schedule-2023",
+    "street-sweeping-schedule-2024",
+    "dc-charter-schools",
+    "Sojourner_Truth"
+  ],
+  "source_sequence": [
+    "datagov/building-permits-in-2022/files/data.txt",
+    "datagov/building-permits-in-2023/files/data.txt",
+    "datagov/building-permits-in-2024/files/data.txt",
+    "datagov/crime-incidents-in-2022/files/data.txt",
+    "datagov/crime-incidents-in-2023/files/data.txt",
+    "datagov/crime-incidents-in-2024/files/data.txt",
+    "datagov/street-sweeping-schedule-2022/files/data.txt",
+    "datagov/street-sweeping-schedule-2023/files/data.txt",
+    "datagov/street-sweeping-schedule-2024/files/data.txt",
+    "datagov/dc-charter-schools/files/data.txt",
+    "wikipedia/Sojourner_Truth/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Washington, DC in 2022, 2023, and 2024, identify the wards that ranked in the top four by building-permit count every year.",
+    "2. For those wards, calculate average crime-incident counts across 2022, 2023, and 2024 and keep the wards with the highest averages.",
+    "3. Among the remaining wards, compare street-sweeping schedule frequency across 2022, 2023, and 2024 and keep the ward with the most frequent schedule.",
+    "4. In that ward, identify the charter school whose served grade span includes both grade 8 and grade 9 and whose name refers to a famous person.",
+    "5. Determine where that famous person was born and return the place name."
+  ],
+  "original_final_question": "First, identify the Washington, DC ward that consistently ranked in the top four for building permits from 2022 to 2024 and had one of the highest crime rates. Among the top candidates, identify the ward that had the most frequent street sweeping schedule. In that specific ward, find the charter school whose serving spans grades 8 and 9, and is named after a famous person. Where was that person born? Please return the place name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3, building permits 2022-2024 - nodes 1-3):",
+    "  Node 1: 2022 top 4 wards by permits -> {Ward 6 (8,371), Ward 2 (8,286), Ward 4 (6,971), Ward 5 (6,580)}",
+    "  Node 2: 2023 top 4 wards by permits -> {Ward 2 (8,392), Ward 6 (6,845), Ward 4 (6,525), Ward 5 (6,072)}",
+    "  Node 3: 2024 top 4 wards by permits -> {Ward 2 (7,897), Ward 4 (6,856), Ward 6 (6,658), Ward 5 (6,213)}",
+    "  Intersection(1,2,3) -> {Ward 2, Ward 4, Ward 5, Ward 6}",
+    "",
+    "HOP 2 (d=3, crime incidents 2022-2024 - nodes 4-6):",
+    "  Node 4: 2022 incidents -> Ward 2 4,794; Ward 5 4,497; Ward 6 3,685; Ward 4 2,547",
+    "  Node 5: 2023 incidents -> Ward 2 5,469; Ward 5 5,629; Ward 6 4,281; Ward 4 3,135",
+    "  Node 6: 2024 incidents -> Ward 2 4,420; Ward 5 4,585; Ward 6 3,549; Ward 4 2,595",
+    "  Average incidents (2022-2024): Ward 5 4,903.7; Ward 2 4,894.3; Ward 6 3,838.3; Ward 4 2,759.0",
+    "  Result: {Ward 5, Ward 2}",
+    "",
+    "HOP 3 (d=3, street sweeping schedule 2022-2024 - nodes 7-9):",
+    "  Node 7: 2022 schedule rows -> Ward 2 72; Ward 5 80",
+    "  Node 8: 2023 schedule rows -> Ward 2 54; Ward 5 83",
+    "  Node 9: 2024 schedule rows -> Ward 2 54; Ward 5 87",
+    "  Average schedule rows (2022-2024): Ward 5 83.3 > Ward 2 60.0",
+    "  Result: Ward 5",
+    "",
+    "HOP 4 (d=1, DC charter schools - node 10):",
+    "  Node 10: Ward 5 charter school with spanning grade 8 and grade 9 -> Sojourner Truth PCS",
+    "",
+    "HOP 5 (d=1, Wikipedia Sojourner Truth - node 11):",
+    "  Node 11: Sojourner Truth born in Swartekill, New York",
+    "",
+    "Final answer: Swartekill, New York"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "building-permits-in-2022",
+      "source": "datagov/building-permits-in-2022/files/data.txt",
+      "intent": "Which Washington, DC wards were in the top 4 by number of building permits across 2022-2024? (Filter for this node: 2022 file; WARD not null; count permits by WARD; rank desc; take top 4.)",
+      "code": "import boto3\nimport io\nimport xml.etree.ElementTree as ET\nfrom collections import Counter\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/building-permits-in-2022/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\nroot = ET.parse(io.BytesIO(obj[\"Body\"].read())).getroot()\nns = {\"k\": \"http://www.opengis.net/kml/2.2\"}\ncounts = Counter()\nfor schema_data in root.findall('.//k:SchemaData', ns):\n    row = {e.attrib.get('name'): (e.text or '') for e in schema_data.findall('k:SimpleData', ns)}\n    ward = row.get('WARD')\n    if str(ward).strip() != '':\n        counts[f\"Ward {ward}\"] += 1\nanswer = dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4])\n",
+      "answer": {
+        "Ward 6": 8371,
+        "Ward 2": 8286,
+        "Ward 4": 6971,
+        "Ward 5": 6580
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "building-permits-in-2023",
+      "source": "datagov/building-permits-in-2023/files/data.txt",
+      "intent": "Which Washington, DC wards were in the top 4 by number of building permits across 2022-2024? (Filter for this node: 2023 file; WARD not null; count permits by WARD; rank desc; take top 4.)",
+      "code": "import boto3\nimport io\nimport json\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/building-permits-in-2023/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ncounts = (\n    df[df[\"properties.WARD\"].notna() & (df[\"properties.WARD\"].astype(str).str.strip() != \"\")]\n    .groupby(\"properties.WARD\")\n    .size()\n    .sort_values(ascending=False)\n    .head(4)\n)\ncounts.index = counts.index.map(lambda x: f\"Ward {x}\")\nanswer = counts.to_dict()\n",
+      "answer": {
+        "Ward 2": 8392,
+        "Ward 6": 6845,
+        "Ward 4": 6525,
+        "Ward 5": 6072
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "building-permits-in-2024",
+      "source": "datagov/building-permits-in-2024/files/data.txt",
+      "intent": "Which Washington, DC wards were in the top 4 by number of building permits across 2022-2024? (Filter for this node: 2024 file; WARD not null; count permits by WARD; rank desc; take top 4.)",
+      "code": "import boto3\nimport io\nimport xml.etree.ElementTree as ET\nfrom collections import Counter\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/building-permits-in-2024/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\nroot = ET.parse(io.BytesIO(obj[\"Body\"].read())).getroot()\nns = {\"k\": \"http://www.opengis.net/kml/2.2\"}\ncounts = Counter()\nfor schema_data in root.findall('.//k:SchemaData', ns):\n    row = {e.attrib.get('name'): (e.text or '') for e in schema_data.findall('k:SimpleData', ns)}\n    ward = row.get('WARD')\n    if str(ward).strip() != '':\n        counts[f\"Ward {ward}\"] += 1\nanswer = dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4])\n",
+      "answer": {
+        "Ward 2": 7897,
+        "Ward 4": 6856,
+        "Ward 6": 6658,
+        "Ward 5": 6213
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-incidents-in-2022",
+      "source": "datagov/crime-incidents-in-2022/files/data.txt",
+      "intent": "Among the wards (from hop 1), which two had the highest average crime-incident counts across 2022-2024? (Filter for this node: 2022 file; WARD in {2,4,5,6}; count incidents by WARD.)",
+      "code": "import boto3\nimport io\nimport json\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/crime-incidents-in-2022/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ncounts = (\n    df[df[\"properties.WARD\"].astype(str).isin([\"2\", \"4\", \"5\", \"6\"])]\n    .groupby(\"properties.WARD\")\n    .size()\n    .sort_index()\n)\ncounts.index = counts.index.map(lambda x: f\"Ward {x}\")\nanswer = counts.to_dict()\n",
+      "answer": {
+        "Ward 2": 4794,
+        "Ward 4": 2547,
+        "Ward 5": 4497,
+        "Ward 6": 3685
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "crime-incidents-in-2023",
+      "source": "datagov/crime-incidents-in-2023/files/data.txt",
+      "intent": "Among the wards (from hop 1), which two had the highest average crime-incident counts across 2022-2024? (Filter for this node: 2023 file; WARD in {2,4,5,6}; count incidents by WARD.)",
+      "code": "import boto3\nimport io\nimport json\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/crime-incidents-in-2023/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ncounts = (\n    df[df[\"properties.WARD\"].astype(str).isin([\"2\", \"4\", \"5\", \"6\"])]\n    .groupby(\"properties.WARD\")\n    .size()\n    .sort_index()\n)\ncounts.index = counts.index.map(lambda x: f\"Ward {x}\")\nanswer = counts.to_dict()\n",
+      "answer": {
+        "Ward 2": 5469,
+        "Ward 4": 3135,
+        "Ward 5": 5629,
+        "Ward 6": 4281
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "crime-incidents-in-2024",
+      "source": "datagov/crime-incidents-in-2024/files/data.txt",
+      "intent": "Among the wards (from hop 1), which two had the highest average crime-incident counts across 2022-2024? (Filter for this node: 2024 file; WARD in {2,4,5,6}; count incidents by WARD.)",
+      "code": "import boto3\nimport io\nimport json\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/crime-incidents-in-2024/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ncounts = (\n    df[df[\"properties.WARD\"].astype(str).isin([\"2\", \"4\", \"5\", \"6\"])]\n    .groupby(\"properties.WARD\")\n    .size()\n    .sort_index()\n)\ncounts.index = counts.index.map(lambda x: f\"Ward {x}\")\nanswer = counts.to_dict()\n",
+      "answer": {
+        "Ward 2": 4420,
+        "Ward 4": 2595,
+        "Ward 5": 4585,
+        "Ward 6": 3549
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "street-sweeping-schedule-2022",
+      "source": "datagov/street-sweeping-schedule-2022/files/data.txt",
+      "intent": "Among the wards (from hop 2), which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2022 file; WARD in {2,5}; count rows by WARD.)",
+      "code": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/street-sweeping-schedule-2022/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ncatalog = json.loads(obj[\"Body\"].read())\n\ntitle = \"Street Sweeping Schedule - 2022\"\nurl = None\nfor dataset in catalog.get(\"dataset\", []):\n    if dataset.get(\"title\") == title:\n        for dist in dataset.get(\"distribution\", []):\n            if dist.get(\"mediaType\") == \"text/csv\" or \"/rows.csv\" in str(dist.get(\"downloadURL\", \"\")):\n                url = dist.get(\"downloadURL\")\n                break\n    if url:\n        break\nif not url:\n    raise ValueError(f\"Could not find CSV distribution for {title}\")\n\ndf = pd.read_csv(url)\ncounts = df[df[\"WARD\"].isin([2, 5])].groupby(\"WARD\").size().to_dict()\nanswer = {\"Ward 2\": int(counts.get(2, 0)), \"Ward 5\": int(counts.get(5, 0))}",
+      "answer": {
+        "Ward 2": 72,
+        "Ward 5": 80
+      }
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "street-sweeping-schedule-2023",
+      "source": "datagov/street-sweeping-schedule-2023/files/data.txt",
+      "intent": "Among the wards (from hop 2), which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2023 file; WARD in {2,5}; count rows by WARD.)",
+      "code": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/street-sweeping-schedule-2023/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ncatalog = json.loads(obj[\"Body\"].read())\n\ntitle = \"Street Sweeping Schedule - 2023\"\nurl = None\nfor dataset in catalog.get(\"dataset\", []):\n    if dataset.get(\"title\") == title:\n        for dist in dataset.get(\"distribution\", []):\n            if dist.get(\"mediaType\") == \"text/csv\" or \"/rows.csv\" in str(dist.get(\"downloadURL\", \"\")):\n                url = dist.get(\"downloadURL\")\n                break\n    if url:\n        break\nif not url:\n    raise ValueError(f\"Could not find CSV distribution for {title}\")\n\ndf = pd.read_csv(url)\ncounts = df[df[\"WARD\"].isin([2, 5])].groupby(\"WARD\").size().to_dict()\nanswer = {\"Ward 2\": int(counts.get(2, 0)), \"Ward 5\": int(counts.get(5, 0))}",
+      "answer": {
+        "Ward 2": 54,
+        "Ward 5": 83
+      }
+    },
+    {
+      "node_id": "9",
+      "dataset_id": "street-sweeping-schedule-2024",
+      "source": "datagov/street-sweeping-schedule-2024/files/data.txt",
+      "intent": "Among the wards (from hop 2), which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2024 file; WARD in {2,5}; count rows by WARD.)",
+      "code": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/street-sweeping-schedule-2024/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ncatalog = json.loads(obj[\"Body\"].read())\n\ntitle = \"Street Sweeping Schedule - 2024\"\nurl = None\nfor dataset in catalog.get(\"dataset\", []):\n    if dataset.get(\"title\") == title:\n        for dist in dataset.get(\"distribution\", []):\n            if dist.get(\"mediaType\") == \"text/csv\" or \"/rows.csv\" in str(dist.get(\"downloadURL\", \"\")):\n                url = dist.get(\"downloadURL\")\n                break\n    if url:\n        break\nif not url:\n    raise ValueError(f\"Could not find CSV distribution for {title}\")\n\ndf = pd.read_csv(url)\ncounts = df[df[\"WARD\"].isin([2, 5])].groupby(\"WARD\").size().to_dict()\nanswer = {\"Ward 2\": int(counts.get(2, 0)), \"Ward 5\": int(counts.get(5, 0))}",
+      "answer": {
+        "Ward 2": 54,
+        "Ward 5": 87
+      }
+    },
+    {
+      "node_id": "10",
+      "dataset_id": "dc-charter-schools",
+      "source": "datagov/dc-charter-schools/files/data.txt",
+      "intent": "Which charter school in the ward (from hop 3) spans grade 8 and grade 9? (Filter for this node: WARD == 5; GRADES include 8 and 9 in the range.)",
+      "code": "import boto3\nimport io\nimport json\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/dc-charter-schools/files/data.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\n\ngrade_map = {\n    \"PK3\": -2,\n    \"PK4\": -1,\n    \"KG\": 0,\n    \"1st\": 1,\n    \"2nd\": 2,\n    \"3rd\": 3,\n    \"4th\": 4,\n    \"5th\": 5,\n    \"6th\": 6,\n    \"7th\": 7,\n    \"8th\": 8,\n    \"9th\": 9,\n    \"10th\": 10,\n    \"11th\": 11,\n    \"12th\": 12,\n}\n\ndef spans_8_and_9(grades):\n    if not isinstance(grades, str):\n        return False\n    for part in grades.replace(\"–\", \"-\").split(\";\"):\n        part = part.strip()\n        if \"-\" in part:\n            start, end = [x.strip() for x in part.split(\"-\", 1)]\n            if start in grade_map and end in grade_map and grade_map[start] <= 8 <= grade_map[end] and grade_map[start] <= 9 <= grade_map[end]:\n                return True\n    return False\n\nmatches = (\n    df[(df[\"properties.WARD\"] == \"Ward 5\") & (df[\"properties.GRADES\"].apply(spans_8_and_9))]\n    [\"properties.NAME\"]\n    .tolist()\n)\nanswer = matches[0] if len(matches) == 1 else matches\n",
+      "answer": "Sojourner Truth PCS"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "building-permits-in-2022",
+      "source": "datagov/building-permits-in-2022/files/data.txt",
+      "intent": "Which Washington, DC wards were in the top 4 by number of building permits across 2022-2024? (Filter for this node: 2022 file; WARD not null; count permits by WARD; rank desc; take top 4.)",
+      "answer": "Cannot execute SQL: XML/KML source is unsupported by query_file."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "building-permits-in-2023",
+      "source": "datagov/building-permits-in-2023/files/data.txt",
+      "intent": "Which Washington, DC wards were in the top 4 by number of building permits across 2022-2024? (Filter for this node: 2023 file; WARD not null; count permits by WARD; rank desc; take top 4.)",
+      "sql": "SELECT json_group_object('Ward ' || ward, cnt) AS answer\nFROM (\n  SELECT CAST(f.properties.WARD AS VARCHAR) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.WARD AS VARCHAR) IS NOT NULL AND trim(CAST(f.properties.WARD AS VARCHAR)) != ''\n  GROUP BY ward\n  ORDER BY cnt DESC, ward ASC\n  LIMIT 4\n) q",
+      "answer": {
+        "Ward 2": 8392,
+        "Ward 6": 6845,
+        "Ward 4": 6525,
+        "Ward 5": 6072
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "building-permits-in-2024",
+      "source": "datagov/building-permits-in-2024/files/data.txt",
+      "intent": "Which Washington, DC wards were in the top 4 by number of building permits across 2022-2024? (Filter for this node: 2024 file; WARD not null; count permits by WARD; rank desc; take top 4.)",
+      "answer": "Cannot execute SQL: XML/KML source is unsupported by query_file."
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-incidents-in-2022",
+      "source": "datagov/crime-incidents-in-2022/files/data.txt",
+      "intent": "Among the wards (from hop 1), which two had the highest average crime-incident counts across 2022-2024? (Filter for this node: 2022 file; WARD in {2,4,5,6}; count incidents by WARD.)",
+      "sql": "SELECT json_group_object('Ward ' || ward, cnt) AS answer\nFROM (\n  SELECT CAST(f.properties.WARD AS VARCHAR) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.WARD AS VARCHAR) IS NOT NULL AND trim(CAST(f.properties.WARD AS VARCHAR)) != '' AND CAST(f.properties.WARD AS VARCHAR) IN ('2', '4', '5', '6')\n  GROUP BY ward\n  ORDER BY cnt DESC, ward ASC\n) q",
+      "answer": {
+        "Ward 2": 4794,
+        "Ward 4": 2547,
+        "Ward 5": 4497,
+        "Ward 6": 3685
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "crime-incidents-in-2023",
+      "source": "datagov/crime-incidents-in-2023/files/data.txt",
+      "intent": "Among the wards (from hop 1), which two had the highest average crime-incident counts across 2022-2024? (Filter for this node: 2023 file; WARD in {2,4,5,6}; count incidents by WARD.)",
+      "sql": "SELECT json_group_object('Ward ' || ward, cnt) AS answer\nFROM (\n  SELECT CAST(f.properties.WARD AS VARCHAR) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.WARD AS VARCHAR) IS NOT NULL AND trim(CAST(f.properties.WARD AS VARCHAR)) != '' AND CAST(f.properties.WARD AS VARCHAR) IN ('2', '4', '5', '6')\n  GROUP BY ward\n  ORDER BY cnt DESC, ward ASC\n) q",
+      "answer": {
+        "Ward 2": 5469,
+        "Ward 4": 3135,
+        "Ward 5": 5629,
+        "Ward 6": 4281
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "crime-incidents-in-2024",
+      "source": "datagov/crime-incidents-in-2024/files/data.txt",
+      "intent": "Among the wards (from hop 1), which two had the highest average crime-incident counts across 2022-2024? (Filter for this node: 2024 file; WARD in {2,4,5,6}; count incidents by WARD.)",
+      "sql": "SELECT json_group_object('Ward ' || ward, cnt) AS answer\nFROM (\n  SELECT CAST(f.properties.WARD AS VARCHAR) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.WARD AS VARCHAR) IS NOT NULL AND trim(CAST(f.properties.WARD AS VARCHAR)) != '' AND CAST(f.properties.WARD AS VARCHAR) IN ('2', '4', '5', '6')\n  GROUP BY ward\n  ORDER BY cnt DESC, ward ASC\n) q",
+      "answer": {
+        "Ward 2": 4420,
+        "Ward 4": 2595,
+        "Ward 5": 4585,
+        "Ward 6": 3549
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "street-sweeping-schedule-2022",
+      "source": "datagov/street-sweeping-schedule-2022/files/data.txt",
+      "intent": "Among the wards (from hop 2), which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2022 file; WARD in {2,5}; count rows by WARD.)",
+      "answer": "Cannot execute SQL: source is a metadata catalog, not the CSV rows needed for this computation."
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "street-sweeping-schedule-2023",
+      "source": "datagov/street-sweeping-schedule-2023/files/data.txt",
+      "intent": "Among the wards (from hop 2), which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2023 file; WARD in {2,5}; count rows by WARD.)",
+      "answer": "Cannot execute SQL: source is a metadata catalog, not the CSV rows needed for this computation."
+    },
+    {
+      "node_id": "9",
+      "dataset_id": "street-sweeping-schedule-2024",
+      "source": "datagov/street-sweeping-schedule-2024/files/data.txt",
+      "intent": "Among the wards (from hop 2), which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2024 file; WARD in {2,5}; count rows by WARD.)",
+      "answer": "Cannot execute SQL: source is a metadata catalog, not the CSV rows needed for this computation."
+    },
+    {
+      "node_id": "10",
+      "dataset_id": "dc-charter-schools",
+      "source": "datagov/dc-charter-schools/files/data.txt",
+      "intent": "Which charter school in the ward (from hop 3) spans grade 8 and grade 9? (Filter for this node: WARD == 5; GRADES include 8 and 9 in the range.)",
+      "sql": "SELECT CAST(f.properties.NAME AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE CAST(f.properties.WARD AS VARCHAR) = 'Ward 5'\n  AND CAST(f.properties.GRADES AS VARCHAR) = '6th-9th'\nLIMIT 1",
+      "answer": "Sojourner Truth PCS"
+    }
+  ]
+}

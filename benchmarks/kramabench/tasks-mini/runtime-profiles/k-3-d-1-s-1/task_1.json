@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-easy-11"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+    "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+    "datagov/kramabench-archeology-easy-11/files/worldcities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter world city records to rows marked as primary capitals.",
+    "2. Count the distinct countries represented among primary capital rows.",
+    "3. For countries with multiple primary capitals, retain the one with largest population and average the selected latitudes."
+  ],
+  "original_final_question": "What is the average latitude of capital cities? If there're more than one capital in a country, only count the lat of the capital with the largest population. Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter world city records to rows marked as primary capitals.",
+    "Node 2 depends on node 1: Count the distinct countries represented among primary capital rows.",
+    "Node 3 depends on node 2: For countries with multiple primary capitals, retain the one with largest population and average the selected latitudes.",
+    "Final answer: 17.4274"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-11",
+      "source": "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+      "intent": "How many rows are marked as primary capital cities?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\ncapitals = df[df['capital'] == 'primary']\nresult = str(len(capitals))\nprint(result)\n",
+      "answer": "250"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-11",
+      "source": "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+      "intent": "How many countries have at least one primary capital-city row?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\ncapitals = df[df['capital'] == 'primary']\nresult = str(capitals['country'].nunique())\nprint(result)\n",
+      "answer": "237"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-easy-11",
+      "source": "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+      "intent": "After keeping only the largest-population primary capital per country, what is the average latitude rounded to four decimals?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\ncapitals = df[df['capital'] == 'primary'].copy()\nselected = capitals.sort_values(['country', 'population'], ascending=[True, False]).drop_duplicates('country')\nresult = f\"{selected['lat'].mean():.4f}\"\nprint(result)\n",
+      "answer": "17.4274"
+    }
+  ]
+}

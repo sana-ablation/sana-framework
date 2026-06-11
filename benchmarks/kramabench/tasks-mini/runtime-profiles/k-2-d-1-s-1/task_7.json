@@ -1,0 +1,53 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-12"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+    "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the 2024 report-categories table and sort categories by percentage.",
+    "2. Accumulate category percentages until they pass one half."
+  ],
+  "original_final_question": "What is the minimum number of report categories that collectively account for at least 50% of reports in 2024? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the 2024 report-categories table and sort categories by percentage.",
+    "Node 2 depends on node 1: Accumulate category percentages until they pass one half.",
+    "Final answer: 3"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-12",
+      "source": "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What are the three largest report-category percentages by rank?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\ncat['Percentage'] = cat['Percentage'].astype(str).str.replace('%', '').astype(float) / 100\ncat['Rank'] = cat['Rank'].astype(int)\ncat[' # of Reports '] = cat[' # of Reports '].astype(str).str.replace(',', '').astype(int)\ncat_sorted = cat.sort_values(by='Percentage', ascending=False).copy()\ncat_sorted['Percentage_cumsum'] = cat_sorted['Percentage'].cumsum()\ntop = cat_sorted[['Rank', 'Percentage']].head(3)\nresult = '|'.join([f\"{int(r.Rank)}:{r.Percentage:.3f}\" for r in top.itertuples()])\nprint(result)\n",
+      "answer": "1:0.209|2:0.175|3:0.131"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-12",
+      "source": "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the minimum rank count needed for cumulative category share to exceed one half?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\ncat['Percentage'] = cat['Percentage'].astype(str).str.replace('%', '').astype(float) / 100\ncat['Rank'] = cat['Rank'].astype(int)\ncat[' # of Reports '] = cat[' # of Reports '].astype(str).str.replace(',', '').astype(int)\ncat_sorted = cat.sort_values(by='Percentage', ascending=False).copy()\ncat_sorted['Percentage_cumsum'] = cat_sorted['Percentage'].cumsum()\nresult = str(int(cat_sorted.loc[cat_sorted['Percentage_cumsum'] > 0.5, 'Rank'].iloc[0]))\nprint(result)\n",
+      "answer": "3"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-12",
+      "source": "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What are the three largest report-category percentages by rank?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-12",
+      "source": "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the minimum rank count needed for cumulative category share to exceed one half?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

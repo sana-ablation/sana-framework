@@ -1,0 +1,165 @@
+{
+  "dataset_sequence": [
+    "2006-2007-school-progress-report",
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "2013-2014-school-locations",
+    "Upper_West_Side",
+    "Central_Park",
+    "American_Museum_of_Natural_History"
+  ],
+  "source_sequence": [
+    "datagov/2006-2007-school-progress-report/files/rows.txt",
+    "datagov/2007-2008-school-progress-report/files/rows.txt",
+    "datagov/2008-2009-school-progress-report/files/rows.txt",
+    "datagov/2009-2010-school-progress-report/files/rows.txt",
+    "datagov/2013-2014-school-locations/files/rows.txt",
+    "wikipedia/Upper_West_Side/content.txt",
+    "wikipedia/Central_Park/content.txt",
+    "wikipedia/American_Museum_of_Natural_History/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For each school year, 2006-07, 2007-08, 2008-09, and 2009-10, identify NYC District 3 elementary schools ranked in the top three by performance category score.",
+    "2. Intersect the yearly top-three sets and keep the elementary school that appears in all four school years.",
+    "3. Determine the Manhattan neighborhood containing the school from step 2.",
+    "4. Identify notable museums in that neighborhood and museums adjacent to Central Park, then keep the museum that satisfies both conditions.",
+    "5. Determine the year that museum was built and return the year."
+  ],
+  "original_final_question": "Can you find the Manhattan neighborhood where the only NYC elementary school in District 3 that ranked in the top 3 by performance category score in all four consecutive years from 2006-2010. There is a museum that is a notable structure in that neighborhood and is adjacent to the Central Park, in what year is that museum built?. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4 superlative - nodes 1,2,3,4 all independent, all data.gov from different years):",
+    "  Node 1: Progress report 2006-07 → {PS 009, PS 199, PS 180}",
+    "  Node 2: Progress report 2007-08 → {PS 009, PS 166, PS 087}",
+    "  Node 3: Progress report 2008-09 → {PS 009, PS 163, PS 087}",
+    "  Node 4: Progress report 2009-10 → {PS 009, PS 199, PS 163}",
+    "  Intersection(1,2,3,4) → PS 009 Sarah Anderson (only school in top 3 all 4 years)",
+    "",
+    "HOP 2 (d=2 - nodes 6,7 depend on node 5, mix of data.gov and Wikipedia):",
+    "  Node 5: School locations (data.gov) → PS 009 is in Upper West Side",
+    "  Node 6: Upper West Side Wikipedia → museums in neighborhood → {AMNH, Lincoln Center}",
+    "  Node 7: Central Park Wikipedia → museums adjacent to park → {AMNH, Metropolitan Museum of Art}",
+    "  Intersection(6,7) → American Museum of Natural History (only museum in both Upper West Side AND adjacent to Central Park)",
+    "",
+    "HOP 3 (d=1 - depends on hop 2 result, Wikipedia):",
+    "  Node 8: AMNH Wikipedia → established in 1869",
+    "",
+    "Final answer: 1869"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2006-2007-school-progress-report",
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2006-07?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2006-2007-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'PS 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'PS 199 JESSIE ISADOR STRAUS': 'PS 199 Jessie Isador Straus', 'PS 180 HUGO NEWMAN': 'PS 180 Hugo Newman'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 199 Jessie Isador Straus",
+        "PS 180 Hugo Newman"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2007-08?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2007-2008-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'P.S. 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'P.S. 166 THE RICHARD RODGERS SCHOOL OF THE ARTS AND TECHNOLOGY': 'PS 166 Richard Rodgers School', 'P.S. 087 WILLIAM SHERMAN': 'PS 087 William Sherman'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 166 Richard Rodgers School",
+        "PS 087 William Sherman"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2008-09?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2008-2009-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'P.S. 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'P.S. 163 ALFRED E. SMITH': 'PS 163 Alfred E. Smith', 'P.S. 087 WILLIAM SHERMAN': 'PS 087 William Sherman'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 163 Alfred E. Smith",
+        "PS 087 William Sherman"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2009-10?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2009-2010-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['2009-2010 PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['2009-2010 PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'P.S. 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'P.S. 199 JESSIE ISADOR STRAUS': 'PS 199 Jessie Isador Straus', 'P.S. 163 ALFRED E. SMITH': 'PS 163 Alfred E. Smith'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['2009-2010 PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 199 Jessie Isador Straus",
+        "PS 163 Alfred E. Smith"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "In which neighborhood is <intersection of node_1, node_2, node_3, node_4: PS 009 Sarah Anderson> located?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2013-2014-school-locations/files/rows.txt'\ndf = pd.read_csv(source)\nfiltered = df[df['LOCATION_NAME'].astype(str).str.upper().str.contains('SARAH ANDERSON', na=False)].copy()\nresult = filtered.iloc[0]['NTA_NAME'].strip()",
+      "answer": "Upper West Side"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2006-2007-school-progress-report",
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2006-07?",
+      "sql": "WITH ranked AS (\n  SELECT CASE upper(trim(SCHOOL))\n  WHEN 'PS 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'P.S. 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'PS 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'P.S. 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'PS 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 166 THE RICHARD RODGERS SCHOOL OF THE ARTS AND TECHNOLOGY' THEN 'PS 166 Richard Rodgers School'\n  WHEN 'P.S. 087 WILLIAM SHERMAN' THEN 'PS 087 William Sherman'\n  WHEN 'P.S. 163 ALFRED E. SMITH' THEN 'PS 163 Alfred E. Smith'\n  ELSE trim(SCHOOL)\nEND AS school,\n         TRY_CAST(\"PERFORMANCE CATEGORY SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 3\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n)\nSELECT school AS answer\nFROM ranked\nORDER BY score DESC, school ASC\nLIMIT 3",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 199 Jessie Isador Straus",
+        "PS 180 Hugo Newman"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2007-08?",
+      "sql": "WITH ranked AS (\n  SELECT CASE upper(trim(SCHOOL))\n  WHEN 'PS 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'P.S. 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'PS 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'P.S. 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'PS 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 166 THE RICHARD RODGERS SCHOOL OF THE ARTS AND TECHNOLOGY' THEN 'PS 166 Richard Rodgers School'\n  WHEN 'P.S. 087 WILLIAM SHERMAN' THEN 'PS 087 William Sherman'\n  WHEN 'P.S. 163 ALFRED E. SMITH' THEN 'PS 163 Alfred E. Smith'\n  ELSE trim(SCHOOL)\nEND AS school,\n         TRY_CAST(\"PERFORMANCE CATEGORY SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 3\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n)\nSELECT school AS answer\nFROM ranked\nORDER BY score DESC, school ASC\nLIMIT 3",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 166 Richard Rodgers School",
+        "PS 087 William Sherman"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2008-09?",
+      "sql": "WITH ranked AS (\n  SELECT CASE upper(trim(SCHOOL))\n  WHEN 'PS 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'P.S. 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'PS 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'P.S. 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'PS 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 166 THE RICHARD RODGERS SCHOOL OF THE ARTS AND TECHNOLOGY' THEN 'PS 166 Richard Rodgers School'\n  WHEN 'P.S. 087 WILLIAM SHERMAN' THEN 'PS 087 William Sherman'\n  WHEN 'P.S. 163 ALFRED E. SMITH' THEN 'PS 163 Alfred E. Smith'\n  ELSE trim(SCHOOL)\nEND AS school,\n         TRY_CAST(\"PERFORMANCE CATEGORY SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 3\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n)\nSELECT school AS answer\nFROM ranked\nORDER BY score DESC, school ASC\nLIMIT 3",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 163 Alfred E. Smith",
+        "PS 087 William Sherman"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2009-10?",
+      "sql": "WITH ranked AS (\n  SELECT CASE upper(trim(SCHOOL))\n  WHEN 'PS 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'P.S. 009 SARAH ANDERSON' THEN 'PS 009 Sarah Anderson'\n  WHEN 'PS 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'P.S. 199 JESSIE ISADOR STRAUS' THEN 'PS 199 Jessie Isador Straus'\n  WHEN 'PS 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 180 HUGO NEWMAN' THEN 'PS 180 Hugo Newman'\n  WHEN 'P.S. 166 THE RICHARD RODGERS SCHOOL OF THE ARTS AND TECHNOLOGY' THEN 'PS 166 Richard Rodgers School'\n  WHEN 'P.S. 087 WILLIAM SHERMAN' THEN 'PS 087 William Sherman'\n  WHEN 'P.S. 163 ALFRED E. SMITH' THEN 'PS 163 Alfred E. Smith'\n  ELSE trim(SCHOOL)\nEND AS school,\n         TRY_CAST(\"2009-2010 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 3\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n)\nSELECT school AS answer\nFROM ranked\nORDER BY score DESC, school ASC\nLIMIT 3",
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 199 Jessie Isador Straus",
+        "PS 163 Alfred E. Smith"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "In which neighborhood is <intersection of node_1, node_2, node_3, node_4: PS 009 Sarah Anderson> located?",
+      "sql": "SELECT trim(NTA_NAME) AS answer\nFROM t\nWHERE upper(LOCATION_NAME) LIKE '%SARAH ANDERSON%'\nLIMIT 1",
+      "answer": "Upper West Side"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-easy-8"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+    "datagov/kramabench-archeology-easy-8/files/roman_cities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter the Roman cities table to rows with a non-empty bibliography field.",
+    "2. Split bibliography entries on semicolons, normalize punctuation and page suffixes, and count unique references."
+  ],
+  "original_final_question": "How many unique sources were used in the Roman cities dataset? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter the Roman cities table to rows with a non-empty bibliography field.",
+    "Node 2 depends on node 1: Split bibliography entries on semicolons, normalize punctuation and page suffixes, and count unique references.",
+    "Final answer: 52"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-8",
+      "source": "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+      "intent": "How many Roman city rows list at least one bibliography source?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nresult = str(int(df['Select Bibliography'].notna().sum()))\nprint(result)\n",
+      "answer": "1385"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-8",
+      "source": "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+      "intent": "After splitting bibliography strings into individual normalized references, how many unique source references are present?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nsources = set()\nfor values in df.loc[df['Select Bibliography'].notna(), 'Select Bibliography']:\n    for ref in values.split(';'):\n        ref = ref.strip().replace('?', '').replace('.', '')\n        ref = ref.split(':')[0]\n        if ref:\n            sources.add(ref)\nresult = str(len(sources))\nprint(result)\n",
+      "answer": "52"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-8",
+      "source": "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+      "intent": "How many Roman city rows list at least one bibliography source?",
+      "answer": "1385",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer FROM t WHERE \"Select Bibliography\" IS NOT NULL"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-8",
+      "source": "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+      "intent": "After splitting bibliography strings into individual normalized references, how many unique source references are present?",
+      "answer": "52",
+      "sql": "WITH refs AS (SELECT trim(split_part(replace(replace(ref, '?', ''), '.', ''), ':', 1)) AS ref FROM t, UNNEST(string_split(\"Select Bibliography\", ';')) AS u(ref) WHERE \"Select Bibliography\" IS NOT NULL) SELECT CAST(COUNT(DISTINCT ref) AS VARCHAR) AS answer FROM refs WHERE ref <> ''"
+    }
+  ]
+}

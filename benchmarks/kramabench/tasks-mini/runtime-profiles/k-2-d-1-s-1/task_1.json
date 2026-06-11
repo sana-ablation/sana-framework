@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-easy-10"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-easy-10/files/worldcities.csv",
+    "datagov/kramabench-archeology-easy-10/files/worldcities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Count city records with non-missing population values in the world cities table.",
+    "2. Group the populated records by country and choose the country with the highest mean population."
+  ],
+  "original_final_question": "Which country has the highest average population in its cities? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Count city records with non-missing population values in the world cities table.",
+    "Node 2 depends on node 1: Group the populated records by country and choose the country with the highest mean population.",
+    "Final answer: Singapore"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-10",
+      "source": "datagov/kramabench-archeology-easy-10/files/worldcities.csv",
+      "intent": "How many city rows have population values available?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nresult = str(int(df['population'].notna().sum()))\nprint(result)\n",
+      "answer": "44384"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-10",
+      "source": "datagov/kramabench-archeology-easy-10/files/worldcities.csv",
+      "intent": "After grouping populated city rows by country, which country has the highest average city population?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\npopulated = df[df['population'].notna()]\nmeans = populated.groupby('country')['population'].mean()\nresult = means.idxmax()\nprint(result)\n",
+      "answer": "Singapore"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-10",
+      "source": "datagov/kramabench-archeology-easy-10/files/worldcities.csv",
+      "intent": "How many city rows have population values available?",
+      "answer": "44384",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer FROM t WHERE population IS NOT NULL"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-10",
+      "source": "datagov/kramabench-archeology-easy-10/files/worldcities.csv",
+      "intent": "After grouping populated city rows by country, which country has the highest average city population?",
+      "answer": "Singapore",
+      "sql": "SELECT country AS answer FROM t WHERE population IS NOT NULL GROUP BY country ORDER BY AVG(population) DESC LIMIT 1"
+    }
+  ]
+}

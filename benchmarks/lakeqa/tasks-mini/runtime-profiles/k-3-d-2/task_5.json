@@ -1,0 +1,81 @@
+{
+  "dataset_sequence": [
+    "California",
+    "postsecondary-school-locations-current-5a74c",
+    "public-school-locations-current-23297",
+    "school-district-office-locations-current-c8f9d"
+  ],
+  "source_sequence": [
+    "wikipedia/California/content.txt",
+    "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+    "datagov/public-school-locations-current-23297/files/data.txt",
+    "datagov/school-district-office-locations-current-c8f9d/files/data.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine California's capital city.",
+    "2. Using the relevant school-location records, determine the county associated with that city.",
+    "3. Count public schools in the county from step 2 for school year 2022-2023.",
+    "4. Count school district administrative offices in that same county for school year 2022-2023, then subtract this count from the public-school count from step 3."
+  ],
+  "original_final_question": "In school year 2022-2023, in the capital city of California, what is the number of public schools in its county minus the number of district administrative offices in its county? . Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: California's capital city is Sacramento.",
+    "Node 2 depends on node 1: In school year 2022-2023, postsecondary institutions located in Sacramento are in Sacramento County.",
+    "Node 3 depends on nodes 1 and 2: Public schools in Sacramento in Sacramento County (school year 2022-2023) = 203.",
+    "Node 4 depends on nodes 1 and 2: School district offices in Sacramento in Sacramento County (school year 2022-2023) = 27.",
+    "Compute 203 - 27 = 176.",
+    "Final answer: 176"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "In school year 2022-2023, among postsecondary institutions located in the city of <node_1 answer>, what is the county name?",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['CITY'] = df['CITY'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ndf['SCHOOLYEAR'] = df['SCHOOLYEAR'].astype(str).str.strip()\n\nfiltered = df[(df['CITY'].str.upper() == 'SACRAMENTO') & (df['SCHOOLYEAR'] == '2022-2023')]\ncounties = sorted(v for v in filtered['NMCNTY'].dropna().unique() if str(v).strip())\nresult = counties[0] if counties else None",
+      "answer": "Sacramento County"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "In school year 2022-2023, how many public schools are located in the city of <node_1 answer> in <node_2 answer>?",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/public-school-locations-current-23297/files/data-oyCYxF.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['CITY'] = df['CITY'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ndf['SCHOOLYEAR'] = df['SCHOOLYEAR'].astype(str).str.strip()\n\ncount = len(df[(df['CITY'].str.upper() == 'SACRAMENTO') & (df['NMCNTY'].str.upper() == 'SACRAMENTO COUNTY') & (df['SCHOOLYEAR'] == '2022-2023')])\nresult = str(int(count))",
+      "answer": "203"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "school-district-office-locations-current-c8f9d",
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "intent": "In school year 2022-2023, how many school district offices are located in the city of <node_1 answer> in <node_2 answer>?",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['CITY'] = df['CITY'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ndf['SCHOOLYEAR'] = df['SCHOOLYEAR'].astype(str).str.strip()\n\ncount = len(df[(df['CITY'].str.upper() == 'SACRAMENTO') & (df['NMCNTY'].str.upper() == 'SACRAMENTO COUNTY') & (df['SCHOOLYEAR'] == '2022-2023')])\nresult = str(int(count))",
+      "answer": "27"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "In school year 2022-2023, among postsecondary institutions located in the city of <node_1 answer>, what is the county name?",
+      "sql": "SELECT f.properties.NMCNTY AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE upper(trim(f.properties.CITY)) = 'SACRAMENTO'\n  AND trim(f.properties.SCHOOLYEAR) = '2022-2023'\n  AND trim(f.properties.NMCNTY) <> ''\nGROUP BY f.properties.NMCNTY\nORDER BY f.properties.NMCNTY ASC\nLIMIT 1",
+      "answer": "Sacramento County"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "In school year 2022-2023, how many public schools are located in the city of <node_1 answer> in <node_2 answer>?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE upper(trim(f.properties.CITY)) = 'SACRAMENTO'\n  AND upper(trim(f.properties.NMCNTY)) = 'SACRAMENTO COUNTY'\n  AND trim(f.properties.SCHOOLYEAR) = '2022-2023'",
+      "answer": "203"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "school-district-office-locations-current-c8f9d",
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "intent": "In school year 2022-2023, how many school district offices are located in the city of <node_1 answer> in <node_2 answer>?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE upper(trim(f.properties.CITY)) = 'SACRAMENTO'\n  AND upper(trim(f.properties.NMCNTY)) = 'SACRAMENTO COUNTY'\n  AND trim(f.properties.SCHOOLYEAR) = '2022-2023'",
+      "answer": "27"
+    }
+  ]
+}

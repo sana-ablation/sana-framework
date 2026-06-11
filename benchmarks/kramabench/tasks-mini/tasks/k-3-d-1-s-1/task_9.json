@@ -1,0 +1,83 @@
+{
+  "question": "Between 2002 and 2024 inclusive, which year saw the greatest relative increase in total reports compared to the previous year? Write your answer as [ANSWER].",
+  "answer": 2002,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nseries = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and reports:\n        series.append((int(year), int(reports.replace(',', ''))))\nchanges = []\nfor (prev_year, prev_reports), (year, reports) in zip(series, series[1:]):\n    changes.append((year, (reports - prev_reports) / prev_reports))\nmax_year, max_change = max(changes, key=lambda item: item[1])\nresult = f'{series[0][0]}|{series[-1][0]}|{len(series)}'\nprint(result)\n",
+      "subquestion": "What year range and row count are present in the report-count table?",
+      "answer": "2001|2024|24"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nseries = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and reports:\n        series.append((int(year), int(reports.replace(',', ''))))\nchanges = []\nfor (prev_year, prev_reports), (year, reports) in zip(series, series[1:]):\n    changes.append((year, (reports - prev_reports) / prev_reports))\nmax_year, max_change = max(changes, key=lambda item: item[1])\nresult = f'{max_year}|{max_change:.12f}'\nprint(result)\n",
+      "subquestion": "Which year has the largest year-over-year relative increase, and what is that increase?",
+      "answer": "2002|0.694592327944"
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nseries = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and reports:\n        series.append((int(year), int(reports.replace(',', ''))))\nchanges = []\nfor (prev_year, prev_reports), (year, reports) in zip(series, series[1:]):\n    changes.append((year, (reports - prev_reports) / prev_reports))\nmax_year, max_change = max(changes, key=lambda item: item[1])\nprint(max_year)\n",
+      "subquestion": "What year corresponds to the greatest relative increase in total reports?",
+      "answer": 2002
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the annual report-count table and confirm the year range.",
+    "Node 2 depends on node 1: Compute year-over-year relative increases and find the largest.",
+    "Node 3 depends on node 2: Return the year associated with the largest relative increase.",
+    "Final answer: 2002"
+  ],
+  "datasets_used": [
+    "kramabench-legal-easy-9"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the annual report-count table and confirm the year range.",
+      "answer": "2001|2024|24"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Compute year-over-year relative increases and find the largest.",
+      "answer": "2002|0.694592327944"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Return the year associated with the largest relative increase.",
+      "answer": 2002
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-9",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-9.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-9",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-9/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

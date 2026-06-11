@@ -1,0 +1,191 @@
+{
+  "question": "Among Texas counties in the top five for average capital outlay spending from 2018 to 2021, consider those that are not among the original 23 Texas counties. Which of those had the highest average criminal releases in 2019-20? For that county, compute the average number of veterans disability compensation recipients in 2020 and 2023. Return the average number only. Your response should be in the format [Answer].",
+  "answer": "26010.5",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/List_of_counties_in_Texas/content.txt",
+      "fact": "The Republic of Texas created 23 original counties in 1836: Austin, Bastrop, Bexar, Brazoria, Colorado, Fayette, Goliad, Gonzales, Harris, Jackson, Jasper, Jefferson, Liberty, Matagorda, Milam, Nacogdoches, Red River, Refugio, Sabine, San Augustine, San Patricio, Shelby, and Victoria.",
+      "subquestion": "Which counties were among the original 23 counties of Texas?",
+      "answer": [
+        "Austin",
+        "Bastrop",
+        "Bexar",
+        "Brazoria",
+        "Colorado",
+        "Fayette",
+        "Goliad",
+        "Gonzales",
+        "Harris",
+        "Jackson",
+        "Jasper",
+        "Jefferson",
+        "Liberty",
+        "Matagorda",
+        "Milam",
+        "Nacogdoches",
+        "Red River",
+        "Refugio",
+        "Sabine",
+        "San Augustine",
+        "San Patricio",
+        "Shelby",
+        "Victoria"
+      ]
+    },
+    "2": {
+      "source": "datagov/texas-state-expenditures-by-county-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2018/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf[\"Fiscal Year\"] = pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\")\ndf[\"Amount\"] = pd.to_numeric(df[\"Amount\"], errors=\"coerce\")\nfiltered = df[(df[\"Fiscal Year\"] == 2018) & df[\"County\"].notna() & (df[\"County\"].astype(str).str.strip() != \"\") & df[\"Major Spending Category\"].astype(str).str.contains(\"CAPITAL OUTLAY\", case=False, na=False)].copy()\ntotals = filtered.groupby(\"County\", as_index=False)[\"Amount\"].sum().round(2)\ntotals[\"county_out\"] = totals[\"County\"].astype(str).str.lower().str.title()\ntop = totals.sort_values([\"Amount\", \"county_out\"], ascending=[False, True]).head(5)\nanswer = dict(zip(top[\"county_out\"], top[\"Amount\"]))\n",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2018; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1303630847.3,
+        "Dallas": 838316444.65,
+        "Travis": 427160745.36,
+        "Montgomery": 424383088.05,
+        "Bexar": 269462082.97
+      }
+    },
+    "3": {
+      "source": "datagov/texas-state-expenditures-by-county-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2019/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf[\"Fiscal Year\"] = pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\")\ndf[\"Amount\"] = pd.to_numeric(df[\"Amount\"], errors=\"coerce\")\nfiltered = df[(df[\"Fiscal Year\"] == 2019) & df[\"County\"].notna() & (df[\"County\"].astype(str).str.strip() != \"\") & df[\"Major Spending Category\"].astype(str).str.contains(\"CAPITAL OUTLAY\", case=False, na=False)].copy()\ntotals = filtered.groupby(\"County\", as_index=False)[\"Amount\"].sum().round(2)\ntotals[\"county_out\"] = totals[\"County\"].astype(str).str.lower().str.title()\ntop = totals.sort_values([\"Amount\", \"county_out\"], ascending=[False, True]).head(5)\nanswer = dict(zip(top[\"county_out\"], top[\"Amount\"]))\n",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2019; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1391779835.06,
+        "Dallas": 827510409.8,
+        "Travis": 614936080.37,
+        "Montgomery": 416744287.28,
+        "Bexar": 302940592.72
+      }
+    },
+    "4": {
+      "source": "datagov/texas-state-expenditures-by-county-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2020/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf[\"Fiscal Year\"] = pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\")\ndf[\"Amount\"] = pd.to_numeric(df[\"Amount\"], errors=\"coerce\")\nfiltered = df[(df[\"Fiscal Year\"] == 2020) & df[\"County\"].notna() & (df[\"County\"].astype(str).str.strip() != \"\") & df[\"Major Spending Category\"].astype(str).str.contains(\"CAPITAL OUTLAY\", case=False, na=False)].copy()\ntotals = filtered.groupby(\"County\", as_index=False)[\"Amount\"].sum().round(2)\ntotals[\"county_out\"] = totals[\"County\"].astype(str).str.lower().str.title()\ntop = totals.sort_values([\"Amount\", \"county_out\"], ascending=[False, True]).head(5)\nanswer = dict(zip(top[\"county_out\"], top[\"Amount\"]))\n",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2020; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1663151150.96,
+        "Dallas": 1324261419.12,
+        "Travis": 821945717.49,
+        "Montgomery": 612813968.49,
+        "Bexar": 494340352.72
+      }
+    },
+    "5": {
+      "source": "datagov/texas-state-expenditures-by-county-2021/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-state-expenditures-by-county-2021/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf[\"Fiscal Year\"] = pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\")\ndf[\"Amount\"] = pd.to_numeric(df[\"Amount\"], errors=\"coerce\")\nfiltered = df[(df[\"Fiscal Year\"] == 2021) & df[\"County\"].notna() & (df[\"County\"].astype(str).str.strip() != \"\") & df[\"Major Spending Category\"].astype(str).str.contains(\"CAPITAL OUTLAY\", case=False, na=False)].copy()\ntotals = filtered.groupby(\"County\", as_index=False)[\"Amount\"].sum().round(2)\ntotals[\"county_out\"] = totals[\"County\"].astype(str).str.lower().str.title()\ntop = totals.sort_values([\"Amount\", \"county_out\"], ascending=[False, True]).head(5)\nanswer = dict(zip(top[\"county_out\"], top[\"Amount\"]))\n",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2021; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1741663003.68,
+        "Dallas": 1171406639.17,
+        "Travis": 774601022.23,
+        "Montgomery": 705433711.03,
+        "Bexar": 596386366.99
+      }
+    },
+    "6": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ncounties = [\"Dallas\", \"Travis\", \"Montgomery\"]\ncounty_col = \"County of Conviction\" if \"County of Conviction\" in df.columns else \"County\"\nrelease_col = \"Total Releases\" if \"Total Releases\" in df.columns else \"Total\"\ndf[release_col] = pd.to_numeric(df[release_col], errors=\"coerce\")\ndf[\"county_out\"] = df[county_col].astype(str).str.strip().str.lower().str.title()\nresult = df[df[\"county_out\"].isin(counties)].groupby(\"county_out\", as_index=False)[release_col].sum()\nlookup = dict(zip(result[\"county_out\"], result[release_col].astype(int)))\nanswer = {county: lookup[county] for county in counties}\n",
+      "subquestion": "For counties in <aggregation of nodes 2-5> that are not among <node_1>, what were the Texas Department of Criminal Justice release counts in 2019 and 2020? (Filter for this node: County in {Dallas, Travis, Montgomery}; count rows by County.)",
+      "answer": {
+        "Dallas": 5355,
+        "Travis": 1857,
+        "Montgomery": 1315
+      }
+    },
+    "7": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ncounties = [\"Dallas\", \"Travis\", \"Montgomery\"]\ncounty_col = \"County of Conviction\" if \"County of Conviction\" in df.columns else \"County\"\nrelease_col = \"Total Releases\" if \"Total Releases\" in df.columns else \"Total\"\ndf[release_col] = pd.to_numeric(df[release_col], errors=\"coerce\")\ndf[\"county_out\"] = df[county_col].astype(str).str.strip().str.lower().str.title()\nresult = df[df[\"county_out\"].isin(counties)].groupby(\"county_out\", as_index=False)[release_col].sum()\nlookup = dict(zip(result[\"county_out\"], result[release_col].astype(int)))\nanswer = {county: lookup[county] for county in counties}\n",
+      "subquestion": "For counties in <aggregation of nodes 2-5> that are not among <node_1>, what were the Texas Department of Criminal Justice release counts in 2019 and 2020? (Filter for this node: County in {Dallas, Travis, Montgomery}; count rows by County.)",
+      "answer": {
+        "Dallas": 4540,
+        "Travis": 1596,
+        "Montgomery": 1250
+      }
+    },
+    "8": {
+      "source": "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nmask = (df[\"State\"].astype(str) == \"Texas\") & (df[\"County Name\"].astype(str).str.lower().str.startswith(\"dallas\"))\nvalue_col = \"TOTAL\" if \"TOTAL\" in df.columns else \"Total\"\nvalue = pd.to_numeric(df.loc[mask, value_col], errors=\"coerce\").dropna().iloc[0]\nanswer = str(int(value))\n",
+      "subquestion": "For the county with the highest average releases, what were the U.S. Department of Veterans Affairs disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name == Dallas; use Total: Disability Compensation Recipients.)",
+      "answer": "26317"
+    },
+    "9": {
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nmask = (df[\"State\"].astype(str) == \"Texas\") & (df[\"County Name\"].astype(str).str.lower().str.startswith(\"dallas\"))\nvalue_col = \"TOTAL\" if \"TOTAL\" in df.columns else \"Total\"\nvalue = pd.to_numeric(df.loc[mask, value_col], errors=\"coerce\").dropna().iloc[0]\nanswer = str(int(value))\n",
+      "subquestion": "For the county with the highest average releases, what were the U.S. Department of Veterans Affairs disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name == Dallas; use Total: Disability Compensation Recipients.)",
+      "answer": "25704"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia List_of_counties_in_Texas - node 1):",
+    "  Node 1: Original 23 counties include Bexar and Harris among others",
+    "",
+    "HOP 2 (d=4, Texas Capital Outlay expenditures by county 2018-2021 - nodes 2-5):",
+    "  Node 2: 2018 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Node 3: 2019 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Node 4: 2020 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Node 5: 2021 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Result: {Harris, Dallas, Travis, Montgomery, Bexar}",
+    "  Not in original 23 -> {Dallas, Travis, Montgomery}",
+    "",
+    "HOP 3 (d=2, TDCJ releases FY2019-FY2020 - nodes 6-7):",
+    "  Node 6: 2019 releases -> Dallas 5,355; Travis 1,857; Montgomery 1,315",
+    "  Node 7: 2020 releases -> Dallas 4,540; Travis 1,596; Montgomery 1,250",
+    "  Average releases: Dallas 4,947.5; Travis 1,726.5; Montgomery 1,282.5",
+    "  Highest average releases: Dallas County",
+    "",
+    "HOP 4 (d=2, Disability compensation recipients 2020 and 2023 - nodes 8-9):",
+    "  Node 8: 2020 recipients -> Dallas 26,317",
+    "  Node 9: 2023 recipients -> Dallas 25,704",
+    "  Average recipients: (26,317 + 25,704) / 2 = 26,010.5",
+    "  Final answer: 26010.5"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "List_of_counties_in_Texas",
+    "texas-state-expenditures-by-county-2018",
+    "texas-state-expenditures-by-county-2019",
+    "texas-state-expenditures-by-county-2020",
+    "texas-state-expenditures-by-county-2021",
+    "texas-department-of-criminal-justice-releases-fy-2019",
+    "texas-department-of-criminal-justice-releases-fy-2020",
+    "fy-2020-disability-compensation-recipients-by-county",
+    "fy-2023-disability-compensation-recipients-by-county"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Original 23 counties include Bexar and Harris among others",
+      "answer": "Austin, Bastrop, Bexar, Brazoria, ..."
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "reasoning": "Node 2: 2018 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar Node 3: 2019 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar Node 4: 2020 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar Node 5: 2021 top 5 -> Harris, Dallas, Travis, Montgomery, Bexar Result: {Harris, Dallas, Travis, Montgomery, Bexar} Not in original 23 -> {Dallas, Travis, Montgomery}",
+      "answer": "{Dallas, Travis, Montgomery}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6,
+        7
+      ],
+      "reasoning": "Node 6: 2019 releases -> Dallas 5,355; Travis 1,857; Montgomery 1,315 Node 7: 2020 releases -> Dallas 4,540; Travis 1,596; Montgomery 1,250 Average releases: Dallas 4,947.5; Travis 1,726.5; Montgomery 1,282.5 Highest average releases: Dallas County",
+      "answer": "Dallas 4,540; Travis 1,596; Montgomery 1,250"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        8,
+        9
+      ],
+      "reasoning": "Node 8: 2020 recipients -> Dallas 26,317 Node 9: 2023 recipients -> Dallas 25,704 Average recipients: (26,317 + 25,704) / 2 = 26,010.5",
+      "answer": "26010.5"
+    }
+  ]
+}

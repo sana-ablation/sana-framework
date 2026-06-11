@@ -1,0 +1,10 @@
+"""CLI wrapper for description artifact generation."""
+
+from __future__ import annotations
+
+from dataindexing.descriptions.generator import main
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

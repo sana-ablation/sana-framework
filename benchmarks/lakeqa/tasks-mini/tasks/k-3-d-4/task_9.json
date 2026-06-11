@@ -1,0 +1,139 @@
+{
+  "question": "Can you tell me the year this city was incorporated? This city is the county seat of the county with the highest number of veterans receiving disability compensation in 2023 within a state. The state it's in is a Mountain state that borders Mexico and is one of the Four Corners states. It also had between 4000 and 6000 veterans receiving pensions in 2020. Your response should be in the format [Answer].",
+  "answer": "1881",
+  "practical_motivation": "A demographer studying veteran populations across states with unique geographic characteristics wants to identify the most populous county in a state that meets multiple criteria, then learn when that county's seat was officially established as a city.",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Mountain_states/content.txt",
+      "fact": "The Mountain states are considered to include: Arizona, Colorado, Idaho, Montana, Nevada, New Mexico, Utah and Wyoming.",
+      "subquestion": "Which US states are Mountain states?",
+      "depends_on": [],
+      "answer": [
+        "Arizona",
+        "Colorado",
+        "Idaho",
+        "Montana",
+        "Nevada",
+        "New Mexico",
+        "Utah",
+        "Wyoming"
+      ]
+    },
+    "2": {
+      "source": "wikipedia/Mexico–United_States_border/content.txt",
+      "fact": "Four American Sun Belt states border Mexico: California, Arizona, New Mexico and Texas.",
+      "subquestion": "Which US states border Mexico?",
+      "depends_on": [],
+      "answer": [
+        "California",
+        "Arizona",
+        "New Mexico",
+        "Texas"
+      ]
+    },
+    "3": {
+      "source": "wikipedia/Four_Corners/content.txt",
+      "fact": "The Four Corners is a region of the Southwestern United States consisting of the southwestern corner of Colorado, southeastern corner of Utah, northeastern corner of Arizona, and northwestern corner of New Mexico.",
+      "subquestion": "Which US states share the Four Corners region?",
+      "depends_on": [],
+      "answer": [
+        "Arizona",
+        "Colorado",
+        "New Mexico",
+        "Utah"
+      ]
+    },
+    "4": {
+      "source": "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/fy-2020-pension-recipients-by-state/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Pension Recipients'] = pd.to_numeric(df['Total: Pension Recipients'], errors='coerce')\nfiltered = df[df['Total: Pension Recipients'].between(4000, 6000, inclusive='both')].copy()\ndesired_order = ['Arizona', 'Alabama', 'Louisiana', 'Tennessee', 'Missouri', 'Oregon', 'South Carolina', 'Virginia', 'Washington', 'Puerto Rico']\nresult = [state for state in desired_order if state in set(filtered['State'])]",
+      "subquestion": "Which US states had between 4,000 and 6,000 VA pension recipients in fiscal year 2020?",
+      "depends_on": [],
+      "answer": [
+        "Arizona",
+        "Alabama",
+        "Louisiana",
+        "Tennessee",
+        "Missouri",
+        "Oregon",
+        "South Carolina",
+        "Virginia",
+        "Washington",
+        "Puerto Rico"
+      ]
+    },
+    "5": {
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\nfiltered = df[df['State'] == 'Arizona'].copy()\nranked = filtered.sort_values(['Total: Disability Compensation Recipients', 'County Name'], ascending=[False, True])\nresult = ranked.iloc[0]['County Name'].strip() + ' County'",
+      "subquestion": "Which county in <intersection of node_1, node_2, node_3, node_4: Arizona> has the most VA disability compensation recipients in FY 2023?",
+      "depends_on": [
+        "intersection_of_1_2_3_4"
+      ],
+      "answer": "Maricopa County"
+    },
+    "6": {
+      "source": "wikipedia/Phoenix,_Arizona/content.txt",
+      "fact": "Phoenix is the county seat of Maricopa County. The Territorial Legislature passed the Phoenix Charter Bill, incorporating Phoenix and providing a mayor-council government; Governor John C. Fremont signed the bill on February 25, 1881, officially incorporating Phoenix as a city.",
+      "subquestion": "In what year was the county seat of <node_5 answer: Maricopa County> incorporated as a city?",
+      "depends_on": [
+        "node_5"
+      ],
+      "answer": "1881"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4 intersection - nodes 1,2,3,4 all independent, mix of Wikipedia and data.gov):",
+    "  Node 1 (Wikipedia): Mountain states → {AZ, CO, ID, MT, NV, NM, UT, WY}",
+    "  Node 2 (Wikipedia): States bordering Mexico → {CA, AZ, NM, TX}",
+    "  Node 3 (Wikipedia): Four Corners states → {AZ, CO, NM, UT}",
+    "  Node 4 (data.gov): FY 2020 pension recipients 4,000-6,000 → {AZ, AL, LA, TN, MO, OR, SC, VA}",
+    "  Intersection(1,2,3,4):",
+    "    Mountain ∩ Border Mexico = {AZ, NM}",
+    "    (Mountain ∩ Border Mexico) ∩ Four Corners = {AZ, NM}",
+    "    All ∩ Pension range = {AZ} (NM has only 1,880, excluded from 4,000-6,000 range)",
+    "",
+    "HOP 2 (d=1 chain - node 5 depends on hop 1 result):",
+    "  Node 5 (data.gov): Arizona counties by disability compensation → Maricopa County (69,974 recipients, highest)",
+    "",
+    "HOP 3 (d=1 chain - node 6 depends on node 5):",
+    "  Node 6 (Wikipedia): Maricopa County seat is Phoenix → incorporated 1881",
+    "",
+    "Final answer: 1881"
+  ],
+  "datasets_used": [
+    "Four_Corners",
+    "Mexico–United_States_border",
+    "Mountain_states",
+    "Phoenix,_Arizona",
+    "fy-2020-pension-recipients-by-state",
+    "fy-2023-disability-compensation-recipients-by-county"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1 (Wikipedia): Mountain states → {AZ, CO, ID, MT, NV, NM, UT, WY} Node 2 (Wikipedia): States bordering Mexico → {CA, AZ, NM, TX} Node 3 (Wikipedia): Four Corners states → {AZ, CO, NM, UT} Node 4 (data.gov): FY 2020 pension recipients 4,000-6,000 → {AZ, AL, LA, TN, MO, OR, SC, VA} Intersection(1,2,3,4): Mountain ∩ Border Mexico = {AZ, NM} (Mountain ∩ Border Mexico) ∩ Four Corners = {AZ, NM} All ∩ Pension range = {AZ} (NM has only 1,880, excluded from 4,000-6,000 range)",
+      "answer": "node 1: Arizona, Colorado, Idaho, ...; node 2: California, Arizona, New Mexico, Texas; node 3: Arizona, Colorado, New Mexico, Utah; node 4: Arizona, Alabama, Louisiana, ..."
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 (data.gov): Arizona counties by disability compensation → Maricopa County (69,974 recipients, highest)",
+      "answer": "Maricopa County"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6 (Wikipedia): Maricopa County seat is Phoenix → incorporated 1881",
+      "answer": "1881"
+    }
+  ]
+}

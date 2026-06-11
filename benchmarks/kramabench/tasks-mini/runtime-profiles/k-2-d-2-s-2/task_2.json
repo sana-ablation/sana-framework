@@ -1,0 +1,69 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-23"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+    "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv",
+    "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. And 2: Parse both state ranking tables.",
+    "2. Join by state, derive population from identity-theft reports and density, compute combined density, and select the maximum."
+  ],
+  "original_final_question": "What state, including DC and PR, has the highest report density per 100K population considering identity theft, fraud, and other reports together? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Nodes 1 and 2: Parse both state ranking tables.",
+    "Node 3 depends on nodes 1 and 2: Join by state, derive population from identity-theft reports and density, compute combined density, and select the maximum.",
+    "Final answer: District of Columbia"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-23",
+      "source": "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+      "intent": "How many states or territories are in the identity-theft state rankings table?",
+      "code": "import csv\nid_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv'\nfo_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv'\ndef rows(path):\n    with open(path, newline='', encoding='utf-8', errors='replace') as f:\n        data = list(csv.DictReader(f.readlines()[2:]))\n    out = []\n    for row in data:\n        state = (row.get('State') or '').strip()\n        density = (row.get('Reports per 100K Population') or '').replace(',', '').strip()\n        reports = (row.get('# of Reports') or '').replace(',', '').strip()\n        if state and density and reports:\n            out.append((state, float(density), int(reports)))\n    return out\nid_rows = rows(id_path)\nfo_rows = rows(fo_path)\nprint(len(id_rows))\n",
+      "answer": 52
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-23",
+      "source": "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv",
+      "intent": "How many states or territories are in the fraud-and-other state rankings table?",
+      "code": "import csv\nid_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv'\nfo_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv'\ndef rows(path):\n    with open(path, newline='', encoding='utf-8', errors='replace') as f:\n        data = list(csv.DictReader(f.readlines()[2:]))\n    out = []\n    for row in data:\n        state = (row.get('State') or '').strip()\n        density = (row.get('Reports per 100K Population') or '').replace(',', '').strip()\n        reports = (row.get('# of Reports') or '').replace(',', '').strip()\n        if state and density and reports:\n            out.append((state, float(density), int(reports)))\n    return out\nid_rows = rows(id_path)\nfo_rows = rows(fo_path)\nprint(len(fo_rows))\n",
+      "answer": 52
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-23",
+      "source": "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+      "intent": "Joining the rankings by state, which state or territory has the highest combined report density?",
+      "code": "import csv\nid_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv'\nfo_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv'\ndef rows(path):\n    with open(path, newline='', encoding='utf-8', errors='replace') as f:\n        data = list(csv.DictReader(f.readlines()[2:]))\n    out = []\n    for row in data:\n        state = (row.get('State') or '').strip()\n        density = (row.get('Reports per 100K Population') or '').replace(',', '').strip()\n        reports = (row.get('# of Reports') or '').replace(',', '').strip()\n        if state and density and reports:\n            out.append((state, float(density), int(reports)))\n    return out\nid_rows = rows(id_path)\nfo_rows = rows(fo_path)\nfo_by_state = {state: (density, reports) for state, density, reports in fo_rows}\nbest_state = None\nbest_density = -1\nfor state, id_density, id_reports in id_rows:\n    if state in fo_by_state:\n        fo_density, fo_reports = fo_by_state[state]\n        population = id_reports / id_density\n        combined_density = (id_reports + fo_reports) / population\n        if combined_density > best_density:\n            best_density = combined_density\n            best_state = state\nprint(best_state)\n",
+      "answer": "District of Columbia"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-23",
+      "source": "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+      "intent": "How many states or territories are in the identity-theft state rankings table?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-23",
+      "source": "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv",
+      "intent": "How many states or territories are in the fraud-and-other state rankings table?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-23",
+      "source": "datagov/kramabench-legal-hard-23/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+      "intent": "Joining the rankings by state, which state or territory has the highest combined report density?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

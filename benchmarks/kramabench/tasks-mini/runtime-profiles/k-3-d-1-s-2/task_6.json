@@ -1,0 +1,71 @@
+{
+  "dataset_sequence": [
+    "kramabench-biomedical-hard-4"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc4.xlsx",
+    "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+    "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc1.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. Search the peptide workbook for the target peptide and recover the sample IDs.",
+    "2. Join those sample IDs to the clinical workbook.",
+    "3. Return the unique histological FIGO grades for the matching samples."
+  ],
+  "original_final_question": "What are the histological grades of tumors for which the peptide HPKPEVLGSSADGALLVSLDGLR was found? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Search the peptide workbook for the target peptide and recover the sample IDs.",
+    "Node 2 depends on node 1: Join those sample IDs to the clinical workbook.",
+    "Node 3 depends on node 2: Return the unique histological FIGO grades for the matching samples.",
+    "Final answer: ['FIGO grade 2']"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-hard-4",
+      "source": "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc4.xlsx",
+      "intent": "Which sample IDs contain peptide HPKPEVLGSSADGALLVSLDGLR?",
+      "code": "import warnings\nwarnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')\nimport pandas as pd\npeptide_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc4.xlsx'\nclinical_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nclinical = pd.read_excel(clinical_path)\npeptide_sheets = pd.read_excel(peptide_path, sheet_name=None)\npeptides = pd.concat([df for name, df in peptide_sheets.items() if name != 'README'], ignore_index=True)\nhit = peptides[peptides['Peptide'] == 'HPKPEVLGSSADGALLVSLDGLR']\nsample_ids = [sample.strip() for sample in hit['Samples_With_Peptide'].iloc[0].split(',')]\nsamples = clinical[clinical['idx'].isin(sample_ids)]\ngrades = list(samples['Histologic_Grade_FIGO'].dropna().unique())\nresult = ','.join(sample_ids)\nprint(result)\n",
+      "answer": "S028,S034,S040"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-hard-4",
+      "source": "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "How many clinical sample rows match those peptide-containing samples?",
+      "code": "import warnings\nwarnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')\nimport pandas as pd\npeptide_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc4.xlsx'\nclinical_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nclinical = pd.read_excel(clinical_path)\npeptide_sheets = pd.read_excel(peptide_path, sheet_name=None)\npeptides = pd.concat([df for name, df in peptide_sheets.items() if name != 'README'], ignore_index=True)\nhit = peptides[peptides['Peptide'] == 'HPKPEVLGSSADGALLVSLDGLR']\nsample_ids = [sample.strip() for sample in hit['Samples_With_Peptide'].iloc[0].split(',')]\nsamples = clinical[clinical['idx'].isin(sample_ids)]\ngrades = list(samples['Histologic_Grade_FIGO'].dropna().unique())\nresult = str(len(samples))\nprint(result)\n",
+      "answer": "3"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-biomedical-hard-4",
+      "source": "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "What histological tumor grades are recorded for those matching samples?",
+      "code": "import warnings\nwarnings.filterwarnings('ignore', category=UserWarning, module='openpyxl')\nimport pandas as pd\npeptide_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc4.xlsx'\nclinical_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nclinical = pd.read_excel(clinical_path)\npeptide_sheets = pd.read_excel(peptide_path, sheet_name=None)\npeptides = pd.concat([df for name, df in peptide_sheets.items() if name != 'README'], ignore_index=True)\nhit = peptides[peptides['Peptide'] == 'HPKPEVLGSSADGALLVSLDGLR']\nsample_ids = [sample.strip() for sample in hit['Samples_With_Peptide'].iloc[0].split(',')]\nsamples = clinical[clinical['idx'].isin(sample_ids)]\ngrades = list(samples['Histologic_Grade_FIGO'].dropna().unique())\nresult = str(grades)\nprint(result)\n",
+      "answer": "['FIGO grade 2']"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-hard-4",
+      "source": "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc4.xlsx",
+      "intent": "Which sample IDs contain peptide HPKPEVLGSSADGALLVSLDGLR?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-hard-4",
+      "source": "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "How many clinical sample rows match those peptide-containing samples?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-biomedical-hard-4",
+      "source": "datagov/kramabench-biomedical-hard-4/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "What histological tumor grades are recorded for those matching samples?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "question": "Among eligible tumor samples in the clinical study workbook, what is the most common FIGO_stage for patients aged 70 years or older? Write your answer as [ANSWER].",
+  "answer": "IA",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-biomedical-easy-6/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "from zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\npath = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}\n\ndef shared_text(si):\n    return ''.join((t.text or '') for t in si.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'))\n\ndef column_index(cell_ref):\n    letters = ''.join(ch for ch in cell_ref if ch.isalpha())\n    index = 0\n    for letter in letters:\n        index = index * 26 + ord(letter.upper()) - 64\n    return index - 1\n\ndef load_rows(xlsx_path):\n    with ZipFile(xlsx_path) as workbook:\n        shared = []\n        if 'xl/sharedStrings.xml' in workbook.namelist():\n            shared_root = ET.fromstring(workbook.read('xl/sharedStrings.xml'))\n            shared = [shared_text(si) for si in shared_root.findall('m:si', ns)]\n        sheet = ET.fromstring(workbook.read('xl/worksheets/sheet1.xml'))\n        table = []\n        for row in sheet.findall('.//m:sheetData/m:row', ns):\n            values = {}\n            for cell in row.findall('m:c', ns):\n                value_node = cell.find('m:v', ns)\n                value = '' if value_node is None else value_node.text\n                if cell.attrib.get('t') == 's' and value != '':\n                    value = shared[int(value)]\n                values[column_index(cell.attrib['r'])] = value\n            max_index = max(values) if values else -1\n            table.append([values.get(i, '') for i in range(max_index + 1)])\n    headers = table[0]\n    records = []\n    for row in table[1:]:\n        padded = row + [''] * (len(headers) - len(row))\n        records.append(dict(zip(headers, padded)))\n    return records\n\nrecords = load_rows(path)\nresult = str(len(records))\nprint(result)\n",
+      "subquestion": "How many sample rows are present in the clinical study workbook?",
+      "answer": "153"
+    },
+    "2": {
+      "source": "datagov/kramabench-biomedical-easy-6/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "from zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\npath = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}\n\ndef shared_text(si):\n    return ''.join((t.text or '') for t in si.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'))\n\ndef column_index(cell_ref):\n    letters = ''.join(ch for ch in cell_ref if ch.isalpha())\n    index = 0\n    for letter in letters:\n        index = index * 26 + ord(letter.upper()) - 64\n    return index - 1\n\ndef load_rows(xlsx_path):\n    with ZipFile(xlsx_path) as workbook:\n        shared = []\n        if 'xl/sharedStrings.xml' in workbook.namelist():\n            shared_root = ET.fromstring(workbook.read('xl/sharedStrings.xml'))\n            shared = [shared_text(si) for si in shared_root.findall('m:si', ns)]\n        sheet = ET.fromstring(workbook.read('xl/worksheets/sheet1.xml'))\n        table = []\n        for row in sheet.findall('.//m:sheetData/m:row', ns):\n            values = {}\n            for cell in row.findall('m:c', ns):\n                value_node = cell.find('m:v', ns)\n                value = '' if value_node is None else value_node.text\n                if cell.attrib.get('t') == 's' and value != '':\n                    value = shared[int(value)]\n                values[column_index(cell.attrib['r'])] = value\n            max_index = max(values) if values else -1\n            table.append([values.get(i, '') for i in range(max_index + 1)])\n    headers = table[0]\n    records = []\n    for row in table[1:]:\n        padded = row + [''] * (len(headers) - len(row))\n        records.append(dict(zip(headers, padded)))\n    return records\n\nrecords = load_rows(path)\neligible = [row for row in records if row['Case_excluded'] == 'No' and row['Histologic_type'] in {'Endometrioid', 'Serous'}]\nresult = str(len(eligible))\nprint(result)\n",
+      "subquestion": "After keeping rows where Case_excluded is No and Histologic_type is Endometrioid or Serous, how many eligible tumor samples remain?",
+      "answer": "95"
+    },
+    "3": {
+      "source": "datagov/kramabench-biomedical-easy-6/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "from zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\npath = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}\n\ndef shared_text(si):\n    return ''.join((t.text or '') for t in si.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'))\n\ndef column_index(cell_ref):\n    letters = ''.join(ch for ch in cell_ref if ch.isalpha())\n    index = 0\n    for letter in letters:\n        index = index * 26 + ord(letter.upper()) - 64\n    return index - 1\n\ndef load_rows(xlsx_path):\n    with ZipFile(xlsx_path) as workbook:\n        shared = []\n        if 'xl/sharedStrings.xml' in workbook.namelist():\n            shared_root = ET.fromstring(workbook.read('xl/sharedStrings.xml'))\n            shared = [shared_text(si) for si in shared_root.findall('m:si', ns)]\n        sheet = ET.fromstring(workbook.read('xl/worksheets/sheet1.xml'))\n        table = []\n        for row in sheet.findall('.//m:sheetData/m:row', ns):\n            values = {}\n            for cell in row.findall('m:c', ns):\n                value_node = cell.find('m:v', ns)\n                value = '' if value_node is None else value_node.text\n                if cell.attrib.get('t') == 's' and value != '':\n                    value = shared[int(value)]\n                values[column_index(cell.attrib['r'])] = value\n            max_index = max(values) if values else -1\n            table.append([values.get(i, '') for i in range(max_index + 1)])\n    headers = table[0]\n    records = []\n    for row in table[1:]:\n        padded = row + [''] * (len(headers) - len(row))\n        records.append(dict(zip(headers, padded)))\n    return records\n\nrecords = load_rows(path)\neligible = [row for row in records if row['Case_excluded'] == 'No' and row['Histologic_type'] in {'Endometrioid', 'Serous'}]\nolder = [row['idx'] for row in eligible if row['Age'] not in ('', 'NA') and float(row['Age']) >= 70]\nresult = ', '.join(older)\nprint(result)\n",
+      "subquestion": "Within the eligible tumor samples from <node_2 answer>, which sample indices have Age greater than or equal to 70?",
+      "answer": "S005, S009, S016, S024, S027, S028, S038, S046, S048, S049, S054, S060, S062, S063, S079, S082, S087, S090, S097, S100, S101, S102, S103"
+    },
+    "4": {
+      "source": "datagov/kramabench-biomedical-easy-6/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "from zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\npath = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nns = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}\n\ndef shared_text(si):\n    return ''.join((t.text or '') for t in si.iter('{http://schemas.openxmlformats.org/spreadsheetml/2006/main}t'))\n\ndef column_index(cell_ref):\n    letters = ''.join(ch for ch in cell_ref if ch.isalpha())\n    index = 0\n    for letter in letters:\n        index = index * 26 + ord(letter.upper()) - 64\n    return index - 1\n\ndef load_rows(xlsx_path):\n    with ZipFile(xlsx_path) as workbook:\n        shared = []\n        if 'xl/sharedStrings.xml' in workbook.namelist():\n            shared_root = ET.fromstring(workbook.read('xl/sharedStrings.xml'))\n            shared = [shared_text(si) for si in shared_root.findall('m:si', ns)]\n        sheet = ET.fromstring(workbook.read('xl/worksheets/sheet1.xml'))\n        table = []\n        for row in sheet.findall('.//m:sheetData/m:row', ns):\n            values = {}\n            for cell in row.findall('m:c', ns):\n                value_node = cell.find('m:v', ns)\n                value = '' if value_node is None else value_node.text\n                if cell.attrib.get('t') == 's' and value != '':\n                    value = shared[int(value)]\n                values[column_index(cell.attrib['r'])] = value\n            max_index = max(values) if values else -1\n            table.append([values.get(i, '') for i in range(max_index + 1)])\n    headers = table[0]\n    records = []\n    for row in table[1:]:\n        padded = row + [''] * (len(headers) - len(row))\n        records.append(dict(zip(headers, padded)))\n    return records\n\nfrom collections import Counter\n\nrecords = load_rows(path)\neligible = [row for row in records if row['Case_excluded'] == 'No' and row['Histologic_type'] in {'Endometrioid', 'Serous'}]\nolder = [row for row in eligible if row['Age'] not in ('', 'NA') and float(row['Age']) >= 70]\ncounts = Counter(row['FIGO_stage'] for row in older if row['FIGO_stage'] not in ('', 'NA'))\nresult = counts.most_common(1)[0][0]\nprint(result)\n",
+      "subquestion": "For the age-filtered eligible samples from <node_3 answer>, which FIGO_stage occurs most often?",
+      "answer": "IA"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Count all sample rows in the clinical study workbook.",
+    "Node 2 depends on node 1: Restrict to eligible tumor samples with Case_excluded equal to No and Histologic_type equal to Endometrioid or Serous, leaving 95 rows.",
+    "Node 3 depends on node 2: Among eligible samples, identify the sample indices with Age at least 70.",
+    "Node 4 depends on node 3: Count FIGO_stage values among those age-filtered samples and choose the most frequent stage.",
+    "Final answer: IA"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-biomedical-easy-6/files/1-s2.0-S0092867420301070-mmc1.xlsx"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Count all sample rows in the clinical study workbook.",
+      "answer": "153"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Restrict to eligible tumor samples with Case_excluded equal to No and Histologic_type equal to Endometrioid or Serous, leaving 95 rows.",
+      "answer": "95"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Among eligible samples, identify the sample indices with Age at least 70.",
+      "answer": "S005, S009, S016, S024, S027, S028, S038, S046, S048, S049, S054, S060, S062, S063, S079, S082, S087, S090, S097, S100, S101, S102, S103"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on node 3: Count FIGO_stage values among those age-filtered samples and choose the most frequent stage.",
+      "answer": "IA"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "biomedical-easy-6",
+    "domain": "biomedical",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/biomedical-easy-6.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-biomedical-easy-6/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "2": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "3": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "4": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

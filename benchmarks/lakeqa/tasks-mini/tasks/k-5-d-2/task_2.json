@@ -1,0 +1,114 @@
+{
+  "question": "The NBA champion team based in San Antonio won its first NBA Finals against another team. Find the county that `another` team is based in. In 2020, what is the absolute difference between firearm crimes and hate crime incidents reported in that county? Only report the number in your answer. Your response should be in the format [Answer].",
+  "answer": "816",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/San_Antonio/content.txt",
+      "fact": "According to the Wikipedia article for San Antonio, 'San Antonio is also home to the five-time NBA champion San Antonio Spurs.'",
+      "subquestion": "What five-time NBA champion team is based in San Antonio?",
+      "answer": "San Antonio Spurs"
+    },
+    "2": {
+      "source": "wikipedia/San_Antonio_Spurs/content.txt",
+      "fact": "According to the Wikipedia article for San Antonio Spurs. For their first championship in 1999, the article states they 'defeated the New York Knicks' in the NBA Finals.",
+      "subquestion": "Which team did <node_1 answer> defeat in their first NBA Finals championship?",
+      "answer": "New York Knicks"
+    },
+    "3": {
+      "source": "wikipedia/New_York_Knicks/content.txt",
+      "fact": "According to the Wikipedia article for New York Knicks, 'The New York Knickerbockers, commonly known as the New York Knicks, are an American professional basketball team based in the New York City borough of Manhattan.'",
+      "subquestion": "In which New York City borough is <node_2 answer> based?",
+      "answer": "Manhattan"
+    },
+    "4": {
+      "source": "wikipedia/Manhattan/content.txt",
+      "fact": "According to the Wikipedia article for Manhattan, Manhattan is coextensive with New York County.",
+      "subquestion": "Which county is coextensive with <node_3 answer>?",
+      "answer": "New York County"
+    },
+    "5": {
+      "source": "datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = int(df.loc[\n    (df[\"Year\"] == 2020)\n    & (df[\"County\"] == \"New York\")\n    & (df[\"Crime Type\"].isin([\"Crimes Against Persons\", \"Property Crimes\"])),\n    \"Total Incidents\",\n].sum())",
+      "subquestion": "How many total hate crime incidents were there in <node_4 answer> in 2020? (Filter: Year == 2020; County == New York; Crime Type in {Crimes Against Persons, Property Crimes}; sum Total Incidents.)",
+      "answer": "82"
+    },
+    "6": {
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nanswer = int(df.loc[\n    (df[\"Year\"] == 2020) & (df[\"County\"] == \"New York\"),\n    \"Firearm Count\",\n].iloc[0])",
+      "subquestion": "How many firearm crimes were there in <node_4 answer> in 2020? (Filter: Year == 2020; County == New York; use Firearm Count.)",
+      "answer": "898"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia San_Antonio - node 1):",
+    "  Node 1: Five-time NBA champion team based in San Antonio -> San Antonio Spurs",
+    "",
+    "HOP 2 (d=1, Wikipedia San_Antonio_Spurs - node 2):",
+    "  Node 2: Team Spurs defeated in first Finals (1999) -> New York Knicks",
+    "",
+    "HOP 3 (d=1, Wikipedia New_York_Knicks - node 3):",
+    "  Node 3: Knicks are based in Manhattan",
+    "",
+    "HOP 4 (d=1, Wikipedia Manhattan - node 4):",
+    "  Node 4: Manhattan is coextensive with New York County",
+    "",
+    "HOP 5 (d=2, NY data.gov hate crimes + index crimes 2020 - nodes 5-6):",
+    "  Node 5: New York County 2020 hate crime incidents -> 82",
+    "  Node 6: New York County 2020 firearm crimes -> 898",
+    "  Computation: |898 - 82| = 816",
+    "",
+    "Final answer: 816"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "San_Antonio",
+    "San_Antonio_Spurs",
+    "New_York_Knicks",
+    "Manhattan",
+    "hate-crimes-by-county-and-bias-type-beginning-2010",
+    "index-violent-property-and-firearm-rates-by-county-beginning-1990"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Five-time NBA champion team based in San Antonio -> San Antonio Spurs",
+      "answer": "San Antonio Spurs"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Team Spurs defeated in first Finals (1999) -> New York Knicks",
+      "answer": "New York Knicks"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3: Knicks are based in Manhattan",
+      "answer": "Manhattan"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4: Manhattan is coextensive with New York County",
+      "answer": "New York County"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        5,
+        6
+      ],
+      "reasoning": "Node 5: New York County 2020 hate crime incidents -> 82 Node 6: New York County 2020 firearm crimes -> 898 Computation: |898 - 82| = 816",
+      "answer": "816"
+    }
+  ]
+}

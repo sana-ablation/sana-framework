@@ -1,0 +1,8 @@
+## AVAILABLE SEARCH TOOLS
+- No search tools are available in this mode.
+
+## PRELOADED SOURCES REGIME
+- A `## PRELOADED DATASETS` block will appear in the prompt with the complete set of required dataset URIs.
+- Treat that list as authoritative and complete.
+- Do not search. Proceed directly to file inspection and extraction with `peek_file`, `peek_multiple`, `parse_xml_records`, `read_file`, `grep_file`, `download`, and `execute_code`.
+- Work only from the listed sources unless the task explicitly requires computation or synthesis across them.

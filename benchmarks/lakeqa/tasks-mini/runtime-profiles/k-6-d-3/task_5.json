@@ -1,0 +1,137 @@
+{
+  "dataset_sequence": [
+    "Graduate_Record_Examinations",
+    "Educational_Testing_Service",
+    "Princeton,_New_Jersey",
+    "school-district-office-locations-current-d848f",
+    "public-school-locations-2021-22-5a116",
+    "private-school-locations-2019-20-ee873",
+    "school-district-office-locations-2021-22-d5dd7",
+    "postsecondary-school-locations-current-5a74c"
+  ],
+  "source_sequence": [
+    "wikipedia/Graduate_Record_Examinations/content.txt",
+    "wikipedia/Educational_Testing_Service/content.txt",
+    "wikipedia/Princeton,_New_Jersey/content.txt",
+    "datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt",
+    "datagov/public-school-locations-2021-22-5a116/files/data.txt",
+    "datagov/private-school-locations-2019-20-ee873/files/data.txt",
+    "datagov/school-district-office-locations-2021-22-d5dd7/files/data-TEK2ZS.txt",
+    "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine the organization that owns and administers the GRE.",
+    "2. Determine the city where that organization has a New Jersey address.",
+    "3. Determine the county containing that city.",
+    "4. Using current school district office listings, determine the two-digit state FIPS code for that city and county.",
+    "5. In that state, identify counties ranked in the top three by 2021-22 public school count, 2019-20 private school count, and 2021-22 school district office count, and keep counties common to all three sets.",
+    "6. For the counties kept in step 5, compare postsecondary institution counts and return the highest count."
+  ],
+  "original_final_question": "The GRE is owned and administered by an organization. Determine the city where that organization has a New Jersey address, then the county it is in and the two-digit state FIPS code from school district office listings. In that state, find the counties that rank in the top three for public schools, private schools, and school district offices; among their intersection, what is the highest postsecondary institution count? Only report the number. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia Graduate_Record_Examinations - node 1):",
+    "  Node 1: The GRE is owned and administered by the Educational Testing Service (ETS).",
+    "",
+    "HOP 2 (d=1, Wikipedia Educational_Testing_Service - node 2):",
+    "  Node 2: ETS is headquartered in Mercer County, New Jersey, with a Princeton address.",
+    "",
+    "HOP 3 (d=1, Wikipedia Princeton,_New_Jersey - node 3):",
+    "  Node 3: Princeton is a borough in Mercer County, New Jersey.",
+    "",
+    "HOP 4 (d=1, State FIPS lookup - node 4):",
+    "  Node 4: CITY='Princeton' and NMCNTY='Mercer County' share STFIP 34.",
+    "",
+    "HOP 5 (d=3, County top counts - nodes 5-7):",
+    "  Node 5: For STFIP=34, the top 3 counties by public schools are Bergen, Essex, and Middlesex.",
+    "  Node 6: For STFIP=34, the top 3 counties by private schools are Bergen, Middlesex, and Essex.",
+    "  Node 7: For STFIP=34, the top 3 counties by school district offices are Bergen, Monmouth, and Camden.",
+    "",
+    "HOP 6 (d=4, Postsecondary selection - node 8):",
+    "  Node 8: The intersection yields Bergen County; its postsecondary count is 16 (highest).",
+    "",
+    "Final answer: 16"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "4",
+      "dataset_id": "school-district-office-locations-current-d848f",
+      "source": "datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt",
+      "intent": "In the school district office listings, entries with CITY='<node_2 answer>' and NMCNTY='<node_3 answer>' share what two-digit state FIPS code (STFIP)?",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read())\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\nmatches = df.loc[\n    (df[\"CITY\"] == \"Princeton\") & (df[\"NMCNTY\"] == \"Mercer County\"),\n    [\"CITY\", \"NMCNTY\", \"STFIP\"]\n].copy()\n\nstfip_values = matches[\"STFIP\"].dropna().drop_duplicates().tolist()\nanswer = stfip_values[0] if len(stfip_values) == 1 else stfip_values",
+      "answer": "34"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "public-school-locations-2021-22-5a116",
+      "source": "datagov/public-school-locations-2021-22-5a116/files/data.txt",
+      "intent": "For STFIP='<node_4 answer>', which 3 county names have the most public schools? Return the county names separated by '; '.",
+      "code": "import io\nimport xml.etree.ElementTree as ET\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/public-school-locations-2021-22-5a116/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\nroot = ET.parse(io.BytesIO(obj[\"Body\"].read())).getroot()\nns = {\"kml\": \"http://www.opengis.net/kml/2.2\"}\nrows = []\nfor placemark in root.findall('.//kml:Placemark', ns):\n    row = {}\n    for simple_data in placemark.findall('.//kml:SimpleData', ns):\n        row[simple_data.attrib[\"name\"]] = simple_data.text\n    if row:\n        rows.append(row)\ndf = pd.DataFrame(rows)\n\ncounty_counts = (\n    df.loc[df[\"STFIP\"] == \"34\"]\n    .groupby(\"NMCNTY\")\n    .size()\n    .reset_index(name=\"public_school_count\")\n    .sort_values([\"public_school_count\", \"NMCNTY\"], ascending=[False, True])\n    .reset_index(drop=True)\n)\n\ntop3 = county_counts.head(3)\nanswer = \"; \".join(top3[\"NMCNTY\"].tolist())",
+      "answer": "Bergen County; Essex County; Middlesex County"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "private-school-locations-2019-20-ee873",
+      "source": "datagov/private-school-locations-2019-20-ee873/files/data.txt",
+      "intent": "For STFIP='<node_4 answer>', which 3 county names have the most private schools? Return the county names separated by '; '.",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/private-school-locations-2019-20-ee873/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read())\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\ncounty_counts = (\n    df.loc[df[\"STFIP\"] == \"34\"]\n    .groupby(\"NMCNTY\")\n    .size()\n    .reset_index(name=\"private_school_count\")\n    .sort_values([\"private_school_count\", \"NMCNTY\"], ascending=[False, True])\n    .reset_index(drop=True)\n)\n\ntop3 = county_counts.head(3)\nanswer = \"; \".join(top3[\"NMCNTY\"].tolist())",
+      "answer": "Bergen County; Middlesex County; Essex County"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "school-district-office-locations-2021-22-d5dd7",
+      "source": "datagov/school-district-office-locations-2021-22-d5dd7/files/data-TEK2ZS.txt",
+      "intent": "For STFIP='<node_4 answer>', which 3 county names have the most school district offices? Return the county names separated by '; '.",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/school-district-office-locations-2021-22-d5dd7/files/data-TEK2ZS.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read())\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\ncounty_counts = (\n    df.loc[df[\"STFIP\"] == \"34\"]\n    .groupby(\"NMCNTY\")\n    .size()\n    .reset_index(name=\"school_district_office_count\")\n    .sort_values([\"school_district_office_count\", \"NMCNTY\"], ascending=[False, True])\n    .reset_index(drop=True)\n)\n\ntop3 = county_counts.head(3)\nanswer = \"; \".join(top3[\"NMCNTY\"].tolist())",
+      "answer": "Bergen County; Monmouth County; Camden County"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "Let A be the set of counties in <node_5 answer>, B be the set of counties in <node_6 answer>, and C be the set of counties in <node_7 answer>. Consider the intersection of A, B, and C. Among those counties, what is the highest postsecondary institution count in STFIP='<node_4 answer>'? Answer with the number only.",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read())\ndf = pd.DataFrame(feature[\"properties\"] for feature in data[\"features\"])\n\ncounty_counts = (\n    df.loc[(df[\"STFIP\"] == \"34\") & (df[\"NMCNTY\"] == \"Bergen County\")]\n    .groupby(\"NMCNTY\")\n    .size()\n    .reset_index(name=\"postsecondary_institution_count\")\n    .sort_values([\"postsecondary_institution_count\", \"NMCNTY\"], ascending=[False, True])\n    .reset_index(drop=True)\n)\n\nanswer = str(int(county_counts.iloc[0][\"postsecondary_institution_count\"]))",
+      "answer": "16"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "4",
+      "dataset_id": "school-district-office-locations-current-d848f",
+      "source": "datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt",
+      "intent": "In the school district office listings, entries with CITY='<node_2 answer>' and NMCNTY='<node_3 answer>' share what two-digit state FIPS code (STFIP)?",
+      "sql": "SELECT MIN(lpad(regexp_replace(CAST(f.properties.STFIP AS VARCHAR), '\\.0$', ''), 2, '0')) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE f.properties.CITY = 'Princeton'\n  AND f.properties.NMCNTY = 'Mercer County' ",
+      "answer": "34"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "public-school-locations-2021-22-5a116",
+      "source": "datagov/public-school-locations-2021-22-5a116/files/data.txt",
+      "intent": "For STFIP='<node_4 answer>', which 3 county names have the most public schools? Return the county names separated by '; '.",
+      "answer": "Cannot execute SQL: file contents are KML/XML; query_file only handles CSV and JSON."
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "private-school-locations-2019-20-ee873",
+      "source": "datagov/private-school-locations-2019-20-ee873/files/data.txt",
+      "intent": "For STFIP='<node_4 answer>', which 3 county names have the most private schools? Return the county names separated by '; '.",
+      "sql": "WITH counts AS (\n  SELECT f.properties.NMCNTY AS county,\n         COUNT(*) AS count_value\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.STFIP) = '34'\n    AND trim(f.properties.NMCNTY) <> ''\n  GROUP BY county\n  ORDER BY count_value DESC, county ASC\n  LIMIT 3\n)\nSELECT string_agg(county, '; ' ORDER BY count_value DESC, county ASC) AS answer\nFROM counts",
+      "answer": "Bergen County; Middlesex County; Essex County"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "school-district-office-locations-2021-22-d5dd7",
+      "source": "datagov/school-district-office-locations-2021-22-d5dd7/files/data-TEK2ZS.txt",
+      "intent": "For STFIP='<node_4 answer>', which 3 county names have the most school district offices? Return the county names separated by '; '.",
+      "sql": "WITH counts AS (\n  SELECT f.properties.NMCNTY AS county,\n         COUNT(*) AS count_value\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.STFIP) = '34'\n    AND trim(f.properties.NMCNTY) <> ''\n  GROUP BY county\n  ORDER BY count_value DESC, county ASC\n  LIMIT 3\n)\nSELECT string_agg(county, '; ' ORDER BY count_value DESC, county ASC) AS answer\nFROM counts",
+      "answer": "Bergen County; Monmouth County; Camden County"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "Let A be the set of counties in <node_5 answer>, B be the set of counties in <node_6 answer>, and C be the set of counties in <node_7 answer>. Consider the intersection of A, B, and C. Among those counties, what is the highest postsecondary institution count in STFIP='<node_4 answer>'? Answer with the number only.",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.STFIP) = '34'\n  AND trim(f.properties.NMCNTY) = 'Bergen County' ",
+      "answer": "16"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "question": "I'm tracking crime patterns in Washington, D.C. starting with the ward that contains Adams Morgan. After identifying the most common offense in that ward in 2017, determine which ward had the highest number of incidents for that specific offense in 2018. For that ward, identify the most frequent crime committed in 2019, and tell me the total number of such incidents recorded in 2020. Only report the total number in your response. Your response should be in the format [Answer].",
+  "answer": "10926",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Adams_Morgan/content.txt",
+      "fact": "Adams Morgan is part of Ward 1 of Washington, D.C.",
+      "subquestion": "Adams Morgan is part of which ward of Washington, D.C.?",
+      "answer": "1"
+    },
+    "2": {
+      "source": "datagov/crime-incidents-in-2017/files/data.txt",
+      "fact": "import os\nimport io\nimport json\nfrom collections import Counter\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-incidents-in-2017/files/data.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    with open(local_path, 'rb') as f:\n        raw = f.read()\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw = obj['Body'].read()\n\ndata = json.load(io.BytesIO(raw))\nnode_1_answer = '1'\ncounts = Counter()\nfor feature in data.get('features', []):\n    props = feature.get('properties') or {}\n    if str(props.get('WARD') or '').strip() == node_1_answer:\n        offense = str(props.get('OFFENSE') or '').strip()\n        if offense:\n            counts[offense] += 1\n\nanswer = str(max(counts, key=counts.get))\n",
+      "subquestion": "In 2017, within Ward <node_1 answer>, which offense is most common?",
+      "answer": "THEFT F/AUTO"
+    },
+    "3": {
+      "source": "datagov/crime-incidents-in-2018/files/data.txt",
+      "fact": "import os\nimport io\nimport json\nfrom collections import Counter\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-incidents-in-2018/files/data.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    with open(local_path, 'rb') as f:\n        raw = f.read()\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw = obj['Body'].read()\n\ndata = json.load(io.BytesIO(raw))\nnode_2_answer = 'THEFT F/AUTO'\ncounts = Counter()\nfor feature in data.get('features', []):\n    props = feature.get('properties') or {}\n    if str(props.get('OFFENSE') or '').strip() == node_2_answer:\n        ward = str(props.get('WARD') or '').strip()\n        if ward:\n            counts[ward] += 1\n\nanswer = str(max(counts, key=counts.get))\n",
+      "subquestion": "In 2018, which ward has the most <node_2 answer> incidents?",
+      "answer": "2"
+    },
+    "4": {
+      "source": "datagov/crime-incidents-in-2019/files/data.txt",
+      "fact": "import os\nimport io\nimport json\nfrom collections import Counter\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-incidents-in-2019/files/data.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    with open(local_path, 'rb') as f:\n        raw = f.read()\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw = obj['Body'].read()\n\ndata = json.load(io.BytesIO(raw))\nnode_3_answer = '2'\ncounts = Counter()\nfor feature in data.get('features', []):\n    props = feature.get('properties') or {}\n    if str(props.get('WARD') or '').strip() == node_3_answer:\n        offense = str(props.get('OFFENSE') or '').strip()\n        if offense:\n            counts[offense] += 1\n\nanswer = str(max(counts, key=counts.get))\n",
+      "subquestion": "In 2019, within Ward <node_3 answer>, which offense is most common?",
+      "answer": "THEFT/OTHER"
+    },
+    "5": {
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "fact": "import os\nimport io\nimport json\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-incidents-in-2020/files/data.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    with open(local_path, 'rb') as f:\n        raw = f.read()\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw = obj['Body'].read()\n\ndata = json.load(io.BytesIO(raw))\nnode_4_answer = 'THEFT/OTHER'\ncount = 0\nfor feature in data.get('features', []):\n    props = feature.get('properties') or {}\n    if str(props.get('OFFENSE') or '').strip() == node_4_answer:\n        count += 1\n\nanswer = str(count)\n",
+      "subquestion": "In 2020, how many incidents had OFFENSE = <node_4 answer>?",
+      "answer": "10926"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Adams Morgan is in Ward 1.",
+    "Node 2 depends on node 1: In 2017 Ward 1, the most common offense is THEFT F/AUTO.",
+    "Node 3 depends on node 2: In 2018, Ward 2 has the most THEFT F/AUTO incidents.",
+    "Node 4 depends on node 3: In 2019 Ward 2, the most common offense is THEFT/OTHER.",
+    "Node 5 depends on node 4: In 2020, THEFT/OTHER incidents total 10,926.",
+    "Final answer: 10926"
+  ],
+  "datasets_used": [
+    "Adams_Morgan",
+    "crime-incidents-in-2017",
+    "crime-incidents-in-2018",
+    "crime-incidents-in-2019",
+    "crime-incidents-in-2020"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Adams Morgan is in Ward 1.",
+      "answer": "1"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: In 2017 Ward 1, the most common offense is THEFT F/AUTO.",
+      "answer": "THEFT F/AUTO"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: In 2018, Ward 2 has the most THEFT F/AUTO incidents.",
+      "answer": "2"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on node 3: In 2019 Ward 2, the most common offense is THEFT/OTHER.",
+      "answer": "THEFT/OTHER"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on node 4: In 2020, THEFT/OTHER incidents total 10,926.",
+      "answer": "10926"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "question": "Two Connecticut counties satisfy both criteria: (1) over 200 accidental drug deaths in 2020, and (2) a COVID-19 health service area number above 80. Find the city in the County with higher accidental drug deaths in 2020 ranking 3rd among Connecticut's largest cities, and the city in the County with lower accidental drug deaths in 2020 ranking first among the state's largest cities. According to report by centers for disease control and prevention, find which of these two cities had the lower average lack-of-health-insurance rate across 2018 and 2019. Then find largest employer in that city. Just tell me after whom is that employer named?. Your response should be in the format [Answer].",
+  "answer": "Elihu Yale",
+  "practical_motivation": "A public health researcher studying the intersection of drug overdose epidemics and healthcare infrastructure in Connecticut wants to identify counties with both high mortality and specific healthcare regional designations. By focusing on the prominent cities in those counties (as ranked among Connecticut's largest) and comparing their health insurance coverage rates using CDC data, the researcher can analyze how healthcare access correlates with overdose outcomes. Identifying the city's largest employer and its namesake provides context for the socioeconomic factors that influence public health outcomes.",
+  "nodes": {
+    "1": {
+      "source": "datagov/accidental-drug-related-deaths-2012-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/accidental-drug-related-deaths-2012-2018/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Date\"] = pd.to_datetime(df[\"Date\"], errors=\"coerce\")\ndf_2020 = df[df[\"Date\"].dt.year == 2020].copy()\ndf_2020[\"Residence County\"] = df_2020[\"Residence County\"].fillna(\"\").astype(str).str.strip()\ncounty_counts = df_2020.loc[df_2020[\"Residence County\"] != \"\", \"Residence County\"].value_counts().rename_axis(\"county\").reset_index(name=\"count\")\ncounty_counts[\"county\"] = county_counts[\"county\"].str.title() + \" County\"\nanswer = county_counts.loc[county_counts[\"count\"] > 200, \"county\"].tolist()",
+      "subquestion": "Which Connecticut counties had over 200 accidental drug deaths in 2020?",
+      "answer": [
+        "New Haven County",
+        "Hartford County",
+        "Fairfield County"
+      ]
+    },
+    "2": {
+      "source": "datagov/connecticut-covid-19-community-levels-by-county-as-originally-posted/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/connecticut-covid-19-community-levels-by-county-as-originally-posted/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"state\"] == \"Connecticut\") & (df[\"health_service_area_number\"] > 80)].copy()\nanswer = filtered[\"county_name\"].drop_duplicates().tolist()",
+      "subquestion": "Which Connecticut counties have a COVID-19 health service area number above 80?",
+      "answer": [
+        "Fairfield County",
+        "New Haven County",
+        "Middlesex County",
+        "Litchfield County"
+      ]
+    },
+    "3": {
+      "source": "wikipedia/New_Haven_County,_Connecticut/content.txt",
+      "fact": "Two of the state's five largest cities, New Haven (3rd) and Waterbury (5th), are part of New Haven County.",
+      "subquestion": "Which city in <hop 1 answer: New Haven County> is ranked 3rd among Connecticut's five largest cities?",
+      "answer": "New Haven"
+    },
+    "4": {
+      "source": "wikipedia/Fairfield_County,_Connecticut/content.txt",
+      "fact": "Fairfield County contains four of the state's seven largest cities—Bridgeport (first), Stamford (second), Norwalk (sixth) and Danbury (seventh).",
+      "subquestion": "Which city in <hop 1 answer: Fairfield County> is ranked first among Connecticut's seven largest cities?",
+      "answer": "Bridgeport"
+    },
+    "5": {
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncities = [\"New Haven\", \"Bridgeport\"]\nfiltered = df[(df[\"StateAbbr\"] == \"CT\") & (df[\"PlaceName\"].isin(cities))].copy()\nfiltered[\"ACCESS2_CrudePrev\"] = pd.to_numeric(filtered[\"ACCESS2_CrudePrev\"], errors=\"coerce\")\nvalues = filtered.set_index(\"PlaceName\")[\"ACCESS2_CrudePrev\"].to_dict()\nanswer = {city: f\"{values[city]:.1f}%\" for city in cities}",
+      "subquestion": "What was the ACCESS2 (lack of health insurance) rate for <hop 2 answer: New Haven and Bridgeport> in 2018?",
+      "answer": {
+        "New Haven": "13.9%",
+        "Bridgeport": "16.9%"
+      }
+    },
+    "6": {
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncities = [\"New Haven\", \"Bridgeport\"]\nfiltered = df[(df[\"StateAbbr\"] == \"CT\") & (df[\"PlaceName\"].isin(cities))].copy()\nfiltered[\"ACCESS2_CrudePrev\"] = pd.to_numeric(filtered[\"ACCESS2_CrudePrev\"], errors=\"coerce\")\nvalues = filtered.set_index(\"PlaceName\")[\"ACCESS2_CrudePrev\"].to_dict()\nanswer = {city: f\"{values[city]:.1f}%\" for city in cities}",
+      "subquestion": "What was the ACCESS2 (lack of health insurance) rate for <hop 2 answer: New Haven and Bridgeport> in 2019?",
+      "answer": {
+        "New Haven": "15.4%",
+        "Bridgeport": "19.3%"
+      }
+    },
+    "7": {
+      "source": "wikipedia/New_Haven,_Connecticut/content.txt",
+      "fact": "Yale is the city's largest employer, followed by Yale-New Haven Hospital.",
+      "subquestion": "What is the largest employer in <hop 3 answer: New Haven, the city with lower average ACCESS2>?",
+      "answer": "Yale University"
+    },
+    "8": {
+      "source": "wikipedia/Yale_University/content.txt",
+      "fact": "Yale University is named after Elihu Yale (1649-1721), a colonial-era benefactor who donated books, portraits, and textiles to the Collegiate School, which was subsequently renamed in his honor.",
+      "subquestion": "After whom is <hop 4 answer: Yale University> named?",
+      "answer": "Elihu Yale"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=2, data.gov INTERSECTION - nodes 1-2):",
+    "  Node 1: CT Drug Deaths 2020, counties with >200 deaths -> {New Haven (383), Hartford (335), Fairfield (208)}",
+    "  Node 2: CT COVID data, counties with HSA number >80 -> {Fairfield (121), New Haven (85), Middlesex (85), Litchfield (85)}",
+    "  Intersection(1,2) -> {New Haven County, Fairfield County} = <hop 1 answer>",
+    "  Note: Hartford excluded (HSA=4, not >80); Middlesex and Litchfield excluded (<200 drug deaths)",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 3-4 identifying top-ranked cities within those counties):",
+    "  Node 3: New Haven County Wikipedia -> New Haven (3rd) is one of the state's five largest cities in the county",
+    "  Node 4: Fairfield County Wikipedia -> Bridgeport (first) is one of the state's seven largest cities in the county",
+    "  Result: {New Haven, Bridgeport} = <hop 2 answer>",
+    "",
+    "HOP 3 (d=2, data.gov AGGREGATION - nodes 5-6 comparing cities' health metrics):",
+    "  Node 5: 500 Cities 2018 -> New Haven ACCESS2=13.9%, Bridgeport ACCESS2=16.9%",
+    "  Node 6: 500 Cities 2019 -> New Haven ACCESS2=15.4%, Bridgeport ACCESS2=19.3%",
+    "  Aggregation: Average(2018, 2019)",
+    "    New Haven: (13.9 + 15.4) / 2 = 14.65%",
+    "    Bridgeport: (16.9 + 19.3) / 2 = 18.1%",
+    "  Result: New Haven has lower average (14.65% < 18.1%) -> New Haven wins = <hop 3 answer>",
+    "  Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 7 identifies largest employer in winning city):",
+    "  Node 7: New Haven Wikipedia -> Yale is the city's largest employer",
+    "  Result: Yale University = <hop 4 answer>",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 8 depends on node 7):",
+    "  Node 8: Yale University Wikipedia -> named after Elihu Yale (colonial-era benefactor)",
+    "  Result: Elihu Yale = <hop 5 answer>",
+    "",
+    "Final answer: Elihu Yale"
+  ],
+  "datasets_used": [
+    "500-cities-city-level-data-gis-friendly-format-2018-release",
+    "500-cities-city-level-data-gis-friendly-format-2019-release",
+    "Fairfield_County,_Connecticut",
+    "New_Haven,_Connecticut",
+    "New_Haven_County,_Connecticut",
+    "Yale_University",
+    "accidental-drug-related-deaths-2012-2018",
+    "connecticut-covid-19-community-levels-by-county-as-originally-posted"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Node 1: CT Drug Deaths 2020, counties with >200 deaths -> {New Haven (383), Hartford (335), Fairfield (208)} Node 2: CT COVID data, counties with HSA number >80 -> {Fairfield (121), New Haven (85), Middlesex (85), Litchfield (85)} Intersection(1,2) -> {New Haven County, Fairfield County} = <hop 1 answer> Note: Hartford excluded (HSA=4, not >80); Middlesex and Litchfield excluded (<200 drug deaths)",
+      "answer": "{New Haven County, Fairfield County} = <hop 1 answer>"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3,
+        4
+      ],
+      "reasoning": "Node 3: New Haven County Wikipedia -> New Haven (3rd) is one of the state's five largest cities in the county Node 4: Fairfield County Wikipedia -> Bridgeport (first) is one of the state's seven largest cities in the county Result: {New Haven, Bridgeport} = <hop 2 answer>",
+      "answer": "<hop 2 answer>"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5,
+        6
+      ],
+      "reasoning": "Node 5: 500 Cities 2018 -> New Haven ACCESS2=13.9%, Bridgeport ACCESS2=16.9% Node 6: 500 Cities 2019 -> New Haven ACCESS2=15.4%, Bridgeport ACCESS2=19.3% Aggregation: Average(2018, 2019) New Haven: (13.9 + 15.4) / 2 = 14.65% Bridgeport: (16.9 + 19.3) / 2 = 18.1% Result: New Haven has lower average (14.65% < 18.1%) -> New Haven wins = <hop 3 answer> Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+      "answer": "<hop 3 answer>"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7: New Haven Wikipedia -> Yale is the city's largest employer Result: Yale University = <hop 4 answer>",
+      "answer": "<hop 4 answer>"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8: Yale University Wikipedia -> named after Elihu Yale (colonial-era benefactor) Result: Elihu Yale = <hop 5 answer>",
+      "answer": "Elihu Yale"
+    }
+  ]
+}

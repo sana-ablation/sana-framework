@@ -1,0 +1,88 @@
+{
+  "question": "Which state has the most land area (in Acres) impacted by fire, per capita? Write your answer as [ANSWER].",
+  "answer": "Wyoming",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-wildfire-hard-11/files/Wildfire_Acres_by_State.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\ndf = pd.read_csv(path)\nprint(str(len(df)))\n",
+      "subquestion": "How many state rows are in the wildfire acres table?",
+      "answer": "52"
+    },
+    "2": {
+      "source": "datagov/kramabench-wildfire-hard-11/files/Wildfire_Acres_by_State.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\ndf = pd.read_csv(path)\ndf['acres per capita'] = df['Total Acres Burned'] / df['Population']\nrow = df.loc[df['acres per capita'].idxmax()]\nprint(str(row['State']) + '|' + '{:.6f}'.format(row['acres per capita']))\n",
+      "subquestion": "Which state has the highest total acres burned per capita, and what is that ratio?",
+      "answer": "Wyoming|1.055225"
+    },
+    "3": {
+      "source": "datagov/kramabench-wildfire-hard-11/files/Wildfire_Acres_by_State.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\ndf = pd.read_csv(path)\ndf['acres per capita'] = df['Total Acres Burned'] / df['Population']\nrow = df.loc[df['acres per capita'].idxmax()]\nprint(str(row['State']))\n",
+      "subquestion": "What state name should be reported for the maximum acres-per-capita row?",
+      "answer": "Wyoming"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 reads the state wildfire acres table.",
+    "Node 2 computes acres burned per capita and identifies the maximum row.",
+    "Node 3 depends on node 2 and returns the state name.",
+    "Final answer: Wyoming"
+  ],
+  "datasets_used": [
+    "kramabench-wildfire-hard-11"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Read the wildfire acres table.",
+      "answer": "52"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Compute acres burned per capita and find the maximum row.",
+      "answer": "Wyoming|1.055225"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Return the state name for that maximum.",
+      "answer": "Wyoming"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "wildfire-hard-11",
+    "domain": "wildfire",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/wildfire-hard-11.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {
+        "domain": "wildfire"
+      }
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-hard-11.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-11/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv",
+      "2": "other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv",
+      "3": "other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_execution": "The checked-in source script ends with a dataframe expression and prints no value as a plain script; promoted facts execute the same acres-per-capita idxmax operation and reproduce the candidate answer."
+  }
+}

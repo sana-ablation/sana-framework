@@ -1,0 +1,121 @@
+{
+  "dataset_sequence": [
+    "500-cities-city-level-data-gis-friendly-format-2016-release",
+    "500-cities-city-level-data-gis-friendly-format-2017-release",
+    "Compton,_California",
+    "San_Bernardino,_California",
+    "Los_Angeles_County,_California",
+    "San_Bernardino_County,_California",
+    "Los_Angeles",
+    "Felipe_de_Neve"
+  ],
+  "source_sequence": [
+    "datagov/500-cities-city-level-data-gis-friendly-format-2016-release/files/rows.txt",
+    "datagov/500-cities-city-level-data-gis-friendly-format-2017-release/files/rows.txt",
+    "wikipedia/Compton,_California/content.txt",
+    "wikipedia/San_Bernardino,_California/content.txt",
+    "wikipedia/Los_Angeles_County,_California/content.txt",
+    "wikipedia/San_Bernardino_County,_California/content.txt",
+    "wikipedia/Los_Angeles/content.txt",
+    "wikipedia/Felipe_de_Neve/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. In 2016 California city health records, identify cities with teeth-loss rates above the requested threshold.",
+    "2. In 2017 California city health records, identify cities with mental-health problem rates above the requested threshold, then keep cities also found in step 1.",
+    "3. For each remaining city, determine its county.",
+    "4. Compare those counties by formation year and keep the earliest-formed county.",
+    "5. Determine that county's county seat and identify the governor under whom the seat was founded.",
+    "6. Return the birth year of that governor."
+  ],
+  "original_final_question": "Find the California cities satisfying both criteria: (1) teeth loss rate above 19% in 2016 reported by the centers for disease control and prevention, and (2) mental health problems above 15% in the in 2017 reported by the centers for disease control and prevention. Find the county that each city is in. Then, find the county that was formed earliest. Under whom is its county seat founded? Find the governor's name and only tell me: in what year was this governeor born? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2, data.gov INTERSECTION - nodes 1-2):",
+    "  Node 1: 500 Cities 2016, CA cities with TEETHLOST_CrudePrev > 19% -> {Compton (19.1%), San Bernardino (19.3%)}",
+    "  Node 2: 500 Cities 2017, CA cities with MHLTH_CrudePrev > 15% -> {Compton, Hesperia, Lynwood, Merced, Perris, Salinas, San Bernardino, Santa Ana, Santa Maria, South Gate}",
+    "  Intersection(1,2) -> {Compton, San Bernardino}",
+    "  Note: Only Compton and San Bernardino meet BOTH criteria",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 3-4 deriving counties from cities):",
+    "  Node 3: Compton Wikipedia -> in Los Angeles County",
+    "  Node 4: San Bernardino Wikipedia -> in San Bernardino County",
+    "  Result: {Los Angeles County, San Bernardino County}",
+    "",
+    "HOP 3 (d=2, Wikipedia COMPARATIVE - nodes 5-6 comparing county formation years):",
+    "  Node 5: Los Angeles County Wikipedia -> formed in 1850 (original county at statehood)",
+    "  Node 6: San Bernardino County Wikipedia -> formed in 1853",
+    "  Comparative: 1850 < 1853 -> Los Angeles County formed earlier",
+    "  Result: Los Angeles County wins",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 7 identifies county seat founder):",
+    "  Node 7: Los Angeles Wikipedia -> county seat Los Angeles founded in 1781 under Spanish governor Felipe de Neve",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 8 depends on node 7):",
+    "  Node 8: Felipe de Neve Wikipedia -> born in 1724",
+    "",
+    "Final answer: 1724"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2016-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2016-release/files/rows.txt",
+      "intent": "Which California cities had teeth loss crude prevalence (TEETHLOST_CrudePrev) above 19% in the 2016 CDC 500 Cities data (StateAbbr = CA)?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2016-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nanswer = (\n    df.loc[(df[\"StateAbbr\"] == \"CA\") & (df[\"TEETHLOST_CrudePrev\"] > 19), \"PlaceName\"]\n    .sort_values()\n    .tolist()\n)",
+      "answer": [
+        "Compton",
+        "San Bernardino"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2017-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2017-release/files/rows.txt",
+      "intent": "Which California cities had mental health crude prevalence (MHLTH_CrudePrev) above 15% in the 2017 CDC 500 Cities data (StateAbbr = CA)?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2017-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nresult = (\n    df.loc[(df[\"StateAbbr\"] == \"CA\") & (df[\"MHLTH_CrudePrev\"] > 15), [\"PlaceName\", \"MHLTH_CrudePrev\"]]\n    .sort_values([\"PlaceName\", \"MHLTH_CrudePrev\"], ascending=[True, False])\n    .reset_index(drop=True)\n)\nanswer = result[\"PlaceName\"].tolist()",
+      "answer": [
+        "Compton",
+        "Hesperia",
+        "Lynwood",
+        "Merced",
+        "Perris",
+        "Salinas",
+        "San Bernardino",
+        "Santa Ana",
+        "Santa Maria",
+        "South Gate"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2016-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2016-release/files/rows.txt",
+      "intent": "Which California cities had teeth loss crude prevalence (TEETHLOST_CrudePrev) above 19% in the 2016 CDC 500 Cities data (StateAbbr = CA)?",
+      "sql": "SELECT \"PlaceName\" AS answer\nFROM t\nWHERE \"StateAbbr\" = 'CA'\n  AND TRY_CAST(\"TEETHLOST_CrudePrev\" AS DOUBLE) > 19\nORDER BY \"PlaceName\"",
+      "answer": [
+        "Compton",
+        "San Bernardino"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2017-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2017-release/files/rows.txt",
+      "intent": "Which California cities had mental health crude prevalence (MHLTH_CrudePrev) above 15% in the 2017 CDC 500 Cities data (StateAbbr = CA)?",
+      "sql": "SELECT \"PlaceName\" AS answer\nFROM t\nWHERE \"StateAbbr\" = 'CA'\n  AND TRY_CAST(\"MHLTH_CrudePrev\" AS DOUBLE) > 15\nORDER BY \"PlaceName\", TRY_CAST(\"MHLTH_CrudePrev\" AS DOUBLE) DESC",
+      "answer": [
+        "Compton",
+        "Hesperia",
+        "Lynwood",
+        "Merced",
+        "Perris",
+        "Salinas",
+        "San Bernardino",
+        "Santa Ana",
+        "Santa Maria",
+        "South Gate"
+      ]
+    }
+  ]
+}

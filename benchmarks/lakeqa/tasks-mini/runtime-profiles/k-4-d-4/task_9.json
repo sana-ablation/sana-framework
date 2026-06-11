@@ -1,0 +1,203 @@
+{
+  "dataset_sequence": [
+    "report-card-enrollment-2018-19-school-year",
+    "report-card-enrollment-2019-20-school-year",
+    "report-card-enrollment-2020-21-school-year",
+    "report-card-enrollment-2021-22-school-year",
+    "report-card-assessment-data-2021-22-school-year",
+    "King_County,_Washington",
+    "Kitsap_County,_Washington",
+    "Whitman_County,_Washington",
+    "Colfax,_Washington"
+  ],
+  "source_sequence": [
+    "datagov/report-card-enrollment-2018-19-school-year/files/rows.txt",
+    "datagov/report-card-enrollment-2019-20-school-year/files/rows.txt",
+    "datagov/report-card-enrollment-2020-21-school-year/files/rows.txt",
+    "datagov/report-card-enrollment-2021-22-school-year/files/rows.txt",
+    "datagov/report-card-assessment-data-2021-22-school-year/files/rows.txt",
+    "wikipedia/King_County,_Washington/content.txt",
+    "wikipedia/Kitsap_County,_Washington/content.txt",
+    "wikipedia/Whitman_County,_Washington/content.txt",
+    "wikipedia/Colfax,_Washington/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Washington counties in school years 2018-2019, 2019-2020, 2020-2021, and 2021-2022, compute low-income student enrollment percentage and keep counties between 32% and 40% every year.",
+    "2. From the remaining counties, keep those with district-average Math proficiency above 40% in 2021-2022.",
+    "3. Remove the county that is the most populous in Washington.",
+    "4. Among the remaining counties, compare 2020 census populations, keep the county with the lowest population, and determine its county seat.",
+    "5. Using that county seat, determine the town that beat it to host the agricultural college, then return the college name."
+  ],
+  "original_final_question": "Identify the agricultural college that was ultimately located in the town that beat the county seat of the Washington county with the lowest 2020 census population among those counties that (1) had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22, (2) had district-average Math proficiency above 40% in the 2021-22 school year, and (3) were not the most populous county in Washington. Only report the college name. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4, Washington Report Card Enrollment 2018-22 - nodes 1-4):",
+    "  Node 1: 2018-19 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Whitman}",
+    "  Node 2: 2019-20 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Whitman}",
+    "  Node 3: 2020-21 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Thurston, Whitman}",
+    "  Node 4: 2021-22 Low-Income 32-40% -> {King, Kitsap, San Juan, Whitman}",
+    "  Intersection: {King, Kitsap, San Juan, Whitman}",
+    "",
+    "HOP 2 (d=2, Assessment data + King Wikipedia - nodes 5-6):",
+    "  Node 5 (Assessment 2021-22): Math proficiency >40% -> {King, Kitsap, Whitman} (eliminates San Juan at 35.2%)",
+    "  Node 6 (King Wikipedia): King is most populous -> NOT most populous = {Kitsap, San Juan, Whitman}",
+    "  Intersection: {Kitsap, Whitman}",
+    "",
+    "HOP 3 (d=2, Wikipedia county articles - nodes 7-8):",
+    "  Node 7 (Kitsap Wikipedia): 2020 population = 275,611",
+    "  Node 8 (Whitman Wikipedia): 2020 population = 47,973; county seat is Colfax",
+    "  Comparison: 47,973 < 275,611 -> Whitman has lower population",
+    "  Result: Whitman County, county seat = Colfax",
+    "",
+    "HOP 4 (d=1, Colfax Wikipedia - node 9):",
+    "  Node 9: Colfax competed for WSU location in 1889-90, lost to Pullman",
+    "  Result: Washington State University",
+    "",
+    "Final answer: Washington State University"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "report-card-enrollment-2018-19-school-year",
+      "source": "datagov/report-card-enrollment-2018-19-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-enrollment-2018-19-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"OrganizationLevel\"] == \"District\") & (df[\"GradeLevel\"] == \"All Grades\")]\ncounty = filtered.groupby(\"County\", as_index=False)[[\"Low-Income\", \"All Students\"]].sum()\ncounty[\"Low-Income%\"] = county[\"Low-Income\"] / county[\"All Students\"] * 100\nanswer = county[(county[\"Low-Income%\"] >= 32) & (county[\"Low-Income%\"] <= 40)].sort_values(\"County\")[\"County\"].tolist()\nprint(answer)",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "report-card-enrollment-2019-20-school-year",
+      "source": "datagov/report-card-enrollment-2019-20-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-enrollment-2019-20-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"OrganizationLevel\"] == \"District\") & (df[\"GradeLevel\"] == \"All Grades\")]\ncounty = filtered.groupby(\"County\", as_index=False)[[\"Low-Income\", \"All Students\"]].sum()\ncounty[\"Low-Income%\"] = county[\"Low-Income\"] / county[\"All Students\"] * 100\nanswer = county[(county[\"Low-Income%\"] >= 32) & (county[\"Low-Income%\"] <= 40)].sort_values(\"County\")[\"County\"].tolist()\nprint(answer)",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "report-card-enrollment-2020-21-school-year",
+      "source": "datagov/report-card-enrollment-2020-21-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-enrollment-2020-21-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"OrganizationLevel\"] == \"District\") & (df[\"GradeLevel\"] == \"All Grades\")]\ncounty = filtered.groupby(\"County\", as_index=False)[[\"Low-Income\", \"All Students\"]].sum()\ncounty[\"Low-Income%\"] = county[\"Low-Income\"] / county[\"All Students\"] * 100\nanswer = county[(county[\"Low-Income%\"] >= 32) & (county[\"Low-Income%\"] <= 40)].sort_values(\"County\")[\"County\"].tolist()\nprint(answer)",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Thurston",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "report-card-enrollment-2021-22-school-year",
+      "source": "datagov/report-card-enrollment-2021-22-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-enrollment-2021-22-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"OrganizationLevel\"] == \"District\") & (df[\"GradeLevel\"] == \"All Grades\")]\ncounty = filtered.groupby(\"County\", as_index=False)[[\"Low-Income\", \"All Students\"]].sum()\ncounty[\"Low-Income%\"] = county[\"Low-Income\"] / county[\"All Students\"] * 100\nanswer = county[(county[\"Low-Income%\"] >= 32) & (county[\"Low-Income%\"] <= 40)].sort_values(\"County\")[\"County\"].tolist()\nprint(answer)",
+      "answer": [
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "report-card-assessment-data-2021-22-school-year",
+      "source": "datagov/report-card-assessment-data-2021-22-school-year/files/rows.txt",
+      "intent": "Among {King, Kitsap, San Juan, Whitman} (from hop 1), which counties had district-average Math proficiency above 40% in 2021-22? (Filter: OrganizationLevel=District; StudentGroup=All Students; GradeLevel=All Grades; TestSubject=Math; compute unweighted mean of PercentMetStandard by County; keep >40%.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-assessment-data-2021-22-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[\n    (df[\"OrganizationLevel\"] == \"District\")\n    & (df[\"StudentGroup\"] == \"All Students\")\n    & (df[\"GradeLevel\"] == \"All Grades\")\n    & (df[\"TestSubject\"] == \"Math\")\n    & (df[\"County\"].isin([\"King\", \"Kitsap\", \"San Juan\", \"Whitman\"]))\n].copy()\nfiltered[\"PercentMetStandard\"] = pd.to_numeric(\n    filtered[\"PercentMetStandard\"].astype(str).str.rstrip(\"%\"), errors=\"coerce\"\n)\ncounty = filtered.groupby(\"County\", as_index=False)[\"PercentMetStandard\"].mean()\nanswer = county[county[\"PercentMetStandard\"] > 40].sort_values(\"County\")[\"County\"].tolist()\nprint(answer)",
+      "answer": [
+        "King",
+        "Kitsap",
+        "Whitman"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "report-card-enrollment-2018-19-school-year",
+      "source": "datagov/report-card-enrollment-2018-19-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "sql": "WITH by_county AS (\n  SELECT County AS county,\n         100.0 * SUM(TRY_CAST(\"Low-Income\" AS DOUBLE)) / NULLIF(SUM(TRY_CAST(\"All Students\" AS DOUBLE)), 0) AS pct\n  FROM t\n  WHERE OrganizationLevel = 'District'\n    AND GradeLevel = 'All Grades'\n  GROUP BY County\n)\nSELECT county AS answer\nFROM by_county\nWHERE pct >= 32 AND pct <= 40\nORDER BY county ASC",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "report-card-enrollment-2019-20-school-year",
+      "source": "datagov/report-card-enrollment-2019-20-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "sql": "WITH by_county AS (\n  SELECT County AS county,\n         100.0 * SUM(TRY_CAST(\"Low-Income\" AS DOUBLE)) / NULLIF(SUM(TRY_CAST(\"All Students\" AS DOUBLE)), 0) AS pct\n  FROM t\n  WHERE OrganizationLevel = 'District'\n    AND GradeLevel = 'All Grades'\n  GROUP BY County\n)\nSELECT county AS answer\nFROM by_county\nWHERE pct >= 32 AND pct <= 40\nORDER BY county ASC",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "report-card-enrollment-2020-21-school-year",
+      "source": "datagov/report-card-enrollment-2020-21-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "sql": "WITH by_county AS (\n  SELECT County AS county,\n         100.0 * SUM(TRY_CAST(\"Low-Income\" AS DOUBLE)) / NULLIF(SUM(TRY_CAST(\"All Students\" AS DOUBLE)), 0) AS pct\n  FROM t\n  WHERE OrganizationLevel = 'District'\n    AND GradeLevel = 'All Grades'\n  GROUP BY County\n)\nSELECT county AS answer\nFROM by_county\nWHERE pct >= 32 AND pct <= 40\nORDER BY county ASC",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Thurston",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "report-card-enrollment-2021-22-school-year",
+      "source": "datagov/report-card-enrollment-2021-22-school-year/files/rows.txt",
+      "intent": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "sql": "WITH by_county AS (\n  SELECT County AS county,\n         100.0 * SUM(TRY_CAST(\"Low-Income\" AS DOUBLE)) / NULLIF(SUM(TRY_CAST(\"All Students\" AS DOUBLE)), 0) AS pct\n  FROM t\n  WHERE OrganizationLevel = 'District'\n    AND GradeLevel = 'All Grades'\n  GROUP BY County\n)\nSELECT county AS answer\nFROM by_county\nWHERE pct >= 32 AND pct <= 40\nORDER BY county ASC",
+      "answer": [
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Whitman"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "report-card-assessment-data-2021-22-school-year",
+      "source": "datagov/report-card-assessment-data-2021-22-school-year/files/rows.txt",
+      "intent": "Among {King, Kitsap, San Juan, Whitman} (from hop 1), which counties had district-average Math proficiency above 40% in 2021-22? (Filter: OrganizationLevel=District; StudentGroup=All Students; GradeLevel=All Grades; TestSubject=Math; compute unweighted mean of PercentMetStandard by County; keep >40%.)",
+      "sql": "WITH by_county AS (\n  SELECT County AS county,\n         100.0 * SUM(TRY_CAST(\"CountMetStandard\" AS DOUBLE)) / NULLIF(SUM(TRY_CAST(\"Count of Students Expected to Test\" AS DOUBLE)), 0) AS pct\n  FROM t\n  WHERE OrganizationLevel = 'District'\n    AND StudentGroup = 'All Students'\n    AND TestSubject = 'Math'\n    AND County IN ('King', 'Kitsap', 'San Juan', 'Whitman')\n  GROUP BY County\n)\nSELECT county AS answer\nFROM by_county\nWHERE pct > 40\nORDER BY county ASC",
+      "answer": [
+        "King",
+        "Kitsap",
+        "Whitman"
+      ]
+    }
+  ]
+}

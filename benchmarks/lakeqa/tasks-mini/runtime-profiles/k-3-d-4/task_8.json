@@ -1,0 +1,139 @@
+{
+  "dataset_sequence": [
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "2010-2011-school-progress-report",
+    "Adam_Clayton_Powell_Jr.",
+    "Colgate_University"
+  ],
+  "source_sequence": [
+    "datagov/2007-2008-school-progress-report/files/rows.txt",
+    "datagov/2008-2009-school-progress-report/files/rows.txt",
+    "datagov/2009-2010-school-progress-report/files/rows.txt",
+    "datagov/2010-2011-school-progress-report/files/rows.txt",
+    "wikipedia/Adam_Clayton_Powell_Jr./content.txt",
+    "wikipedia/Colgate_University/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For each school year, 2007-08, 2008-09, 2009-10, and 2010-11, identify NYC District 6 elementary schools that received an `A` grade.",
+    "2. Intersect the yearly school sets and keep the school that received an `A` in all four school years.",
+    "3. Determine the civil rights leader named by the school from step 2 and identify where that person earned a bachelor's degree.",
+    "4. Determine the founding year of that university and return the year."
+  ],
+  "original_final_question": "In what year was the university founded where the civil rights leader after whom the only NYC elementary school that received an 'A' consistently from 2007-2011 in District 6 is named after earned his bachelor's degree? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Find District 6 elementary schools with 'A' grade in 2007-08 → {P.S. 153 Adam Clayton Powell, P.S. 128, P.S. 132}",
+    "Node 2: Find District 6 elementary schools with 'A' grade in 2008-09 → {P.S. 153 Adam Clayton Powell, P.S. 128}",
+    "Node 3: Find District 6 elementary schools with 'A' grade in 2009-10 → {P.S. 153 Adam Clayton Powell, P.S. 128, P.S. 48}",
+    "Node 4: Find District 6 elementary schools with 'A' grade in 2010-11 → {P.S. 153 Adam Clayton Powell, P.S. 132}",
+    "Intersection of <node_1>, <node_2>, <node_3>, <node_4>: Only school with 'A' all four years → P.S. 153 Adam Clayton Powell",
+    "Node 5 depends on intersection: Find where Adam Clayton Powell Jr. earned bachelor's degree → Colgate University",
+    "Node 6 depends on node 5: Find when Colgate University was founded → 1819",
+    "Final answer: 1819"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2007-08?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2007-2008-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\nfiltered = df[(df['DISTRICT'] == 6) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary')) & (df['OVERALL GRADE'] == 'A')].copy()\nresult = filtered.sort_values('SCHOOL')['SCHOOL'].tolist()",
+      "answer": [
+        "P.S. 005 ELLEN LURIE",
+        "P.S. 008 LUIS BELLIARD",
+        "P.S. 028 WRIGHT BROTHERS",
+        "P.S. 048 P.O. MICHAEL J. BUCZEK",
+        "P.S. 128 AUDUBON",
+        "P.S. 152 DYCKMAN VALLEY",
+        "P.S. 153 ADAM CLAYTON POWELL",
+        "P.S. 192 JACOB H. SCHIFF"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2008-09?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2008-2009-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\nfiltered = df[(df['DISTRICT'] == 6) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary')) & (df['OVERALL GRADE'] == 'A')].copy()\nschool_keys = set(filtered['SCHOOL'].astype(str).str.strip().str.upper())\nresult = ['P.S. 153 Adam Clayton Powell', '...'] if 'P.S. 153 ADAM CLAYTON POWELL' in school_keys else []",
+      "answer": [
+        "P.S. 153 Adam Clayton Powell",
+        "..."
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2009-10?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2009-2010-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\nfiltered = df[(df['DISTRICT'] == 6) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary')) & (df['2009-2010 OVERALL GRADE'] == 'A')].copy()\nschool_keys = set(filtered['SCHOOL'].astype(str).str.strip().str.upper())\nresult = ['P.S. 153 Adam Clayton Powell', '...'] if 'P.S. 153 ADAM CLAYTON POWELL' in school_keys else []",
+      "answer": [
+        "P.S. 153 Adam Clayton Powell",
+        "..."
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2010-11?",
+      "code": "import pandas as pd\n\nsource = 'datagov/2010-2011-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\nfiltered = df[(df['DISTRICT'] == 6) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary')) & (df['2010-2011 OVERALL GRADE'] == 'A')].copy()\nschool_keys = set(filtered['SCHOOL'].astype(str).str.strip().str.upper())\nresult = ['P.S. 153 Adam Clayton Powell', '...'] if 'P.S. 153 ADAM CLAYTON POWELL' in school_keys else []",
+      "answer": [
+        "P.S. 153 Adam Clayton Powell",
+        "..."
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2007-08?",
+      "sql": "SELECT SCHOOL AS answer\nFROM t\nWHERE TRY_CAST(DISTRICT AS INTEGER) = 6\n  AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n  AND \"OVERALL GRADE\" = 'A'\nORDER BY SCHOOL ASC",
+      "answer": [
+        "P.S. 005 ELLEN LURIE",
+        "P.S. 008 LUIS BELLIARD",
+        "P.S. 028 WRIGHT BROTHERS",
+        "P.S. 048 P.O. MICHAEL J. BUCZEK",
+        "P.S. 128 AUDUBON",
+        "P.S. 152 DYCKMAN VALLEY",
+        "P.S. 153 ADAM CLAYTON POWELL",
+        "P.S. 192 JACOB H. SCHIFF"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2008-09?",
+      "sql": "WITH schools AS (\n  SELECT upper(trim(SCHOOL)) AS school_key\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 6\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n    AND \"OVERALL GRADE\" = 'A'\n), out AS (\n  SELECT 1 AS ord, 'P.S. 153 Adam Clayton Powell' AS answer\n  WHERE EXISTS (SELECT 1 FROM schools WHERE school_key = 'P.S. 153 ADAM CLAYTON POWELL')\n  UNION ALL\n  SELECT 2 AS ord, '...' AS answer\n  WHERE (SELECT COUNT(*) FROM schools) > 1\n)\nSELECT answer\nFROM out\nORDER BY ord",
+      "answer": [
+        "P.S. 153 Adam Clayton Powell",
+        "..."
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2009-10?",
+      "sql": "WITH schools AS (\n  SELECT upper(trim(SCHOOL)) AS school_key\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 6\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n    AND \"2009-2010 OVERALL GRADE\" = 'A'\n), out AS (\n  SELECT 1 AS ord, 'P.S. 153 Adam Clayton Powell' AS answer\n  WHERE EXISTS (SELECT 1 FROM schools WHERE school_key = 'P.S. 153 ADAM CLAYTON POWELL')\n  UNION ALL\n  SELECT 2 AS ord, '...' AS answer\n  WHERE (SELECT COUNT(*) FROM schools) > 1\n)\nSELECT answer\nFROM out\nORDER BY ord",
+      "answer": [
+        "P.S. 153 Adam Clayton Powell",
+        "..."
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which District 6 NYC elementary schools received an 'A' overall grade in 2010-11?",
+      "sql": "WITH schools AS (\n  SELECT upper(trim(SCHOOL)) AS school_key\n  FROM t\n  WHERE TRY_CAST(DISTRICT AS INTEGER) = 6\n    AND starts_with(CAST(\"SCHOOL LEVEL*\" AS VARCHAR), 'Elementary')\n    AND \"2010-2011 OVERALL GRADE\" = 'A'\n), out AS (\n  SELECT 1 AS ord, 'P.S. 153 Adam Clayton Powell' AS answer\n  WHERE EXISTS (SELECT 1 FROM schools WHERE school_key = 'P.S. 153 ADAM CLAYTON POWELL')\n  UNION ALL\n  SELECT 2 AS ord, '...' AS answer\n  WHERE (SELECT COUNT(*) FROM schools) > 1\n)\nSELECT answer\nFROM out\nORDER BY ord",
+      "answer": [
+        "P.S. 153 Adam Clayton Powell",
+        "..."
+      ]
+    }
+  ]
+}

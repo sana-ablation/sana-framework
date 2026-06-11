@@ -1,0 +1,105 @@
+{
+  "candidate_version": "kramabench_raw_all_v1",
+  "source_id": "biomedical-hard-7",
+  "domain": "biomedical",
+  "difficulty": "hard",
+  "source_mode": "full_domain_data",
+  "question": "How many are the significant genes by acetylproteomics?",
+  "answer": 16,
+  "answer_type": "numeric_exact",
+  "runtime": 0.5,
+  "subtask_count": 3,
+  "normalized_data_sources": [
+    "1-s2.0-S0092867420301070-mmc3.xlsx"
+  ],
+  "required_file_refs": [
+    "1-s2.0-S0092867420301070-mmc3.xlsx"
+  ],
+  "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+  "raw_data_files": [
+    "1-s2.0-S0092867420301070-mmc1.xlsx",
+    "1-s2.0-S0092867420301070-mmc2.xlsx",
+    "1-s2.0-S0092867420301070-mmc3.xlsx",
+    "1-s2.0-S0092867420301070-mmc4.xlsx",
+    "1-s2.0-S0092867420301070-mmc5.xlsx",
+    "1-s2.0-S0092867420301070-mmc6.xlsx",
+    "1-s2.0-S0092867420301070-mmc7.xlsx",
+    "hyperactivated.csv"
+  ],
+  "raw_data_ref_matches": {
+    "1-s2.0-S0092867420301070-mmc3.xlsx": [
+      "1-s2.0-S0092867420301070-mmc3.xlsx"
+    ]
+  },
+  "missing_required_refs": [],
+  "solution_path": "other-benchmarks/Kramabench/solutions/biomedical/biomedical-hard-7.py",
+  "solution_exists": true,
+  "solution_file_refs": [
+    "1-s2.0-S0092867420301070-mmc3.xlsx"
+  ],
+  "solution_ref_matches": {
+    "1-s2.0-S0092867420301070-mmc3.xlsx": [
+      "1-s2.0-S0092867420301070-mmc3.xlsx"
+    ]
+  },
+  "missing_solution_refs": [],
+  "dr_input_bundle": null,
+  "dr_input_files": [],
+  "dr_input_ref_matches": {},
+  "has_complete_dr_input": false,
+  "source_status": "ready",
+  "workload_path": "other-benchmarks/Kramabench/workload/biomedical.json",
+  "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-7/files/",
+  "task": {
+    "id": "biomedical-hard-7",
+    "query": "How many are the significant genes by acetylproteomics?",
+    "answer": 16,
+    "answer_type": "numeric_exact",
+    "runtime": 0.5,
+    "data_sources": [
+      "1-s2.0-S0092867420301070-mmc3.xlsx"
+    ],
+    "subtasks": [
+      {
+        "id": "biomedical-hard-7-1",
+        "step": "Load every sheet from the Excel workbook (1-s2.0-S0092867420301070-mmc3.xlsx).",
+        "query": "What file contains acetylproteomics data?",
+        "answer": "1-s2.0-S0092867420301070-mmc3.xlsx",
+        "answer_type": "string_exact",
+        "data_sources": [
+          "./"
+        ]
+      },
+      {
+        "id": "biomedical-hard-7-2",
+        "step": "From the README sheet, locate the row whose \"Description\" column contains the word \"acetylproteomics\" (case-insensitive) and extract the corresponding value in the \"Sheet\" column; this gives the name of the acetylproteomics data sheet.",
+        "query": "What sheet name corresponds to the acetylproteomics data?",
+        "answer": "D-SE-acetyl",
+        "answer_type": "string_exact",
+        "data_sources": [
+          "1-s2.0-S0092867420301070-mmc3.xlsx"
+        ]
+      },
+      {
+        "id": "biomedical-hard-7-3",
+        "step": "Determine the number of genes by taking the row count of that sheet and adding 1 (because the sheet's layout causes the first data row to be misread as the header).",
+        "query": "What is the total number of entries in the acetylproteomics data sheet, accounting for a header row?",
+        "answer": 16,
+        "answer_type": "numeric_exact",
+        "data_sources": [
+          "1-s2.0-S0092867420301070-mmc3.xlsx"
+        ]
+      }
+    ],
+    "deepresearch_subset": [
+      "1-s2.0-S0092867420301070-mmc7.xlsx",
+      "1-s2.0-S0092867420301070-mmc3.xlsx",
+      "hyperactivated.csv",
+      "1-s2.0-S0092867420301070-mmc4.xlsx",
+      "1-s2.0-S0092867420301070-mmc1.xlsx",
+      "1-s2.0-S0092867420301070-mmc2.xlsx",
+      "1-s2.0-S0092867420301070-mmc6.xlsx",
+      "1-s2.0-S0092867420301070-mmc5.xlsx"
+    ]
+  }
+}

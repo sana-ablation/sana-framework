@@ -1,0 +1,92 @@
+{
+  "question": "I'm analyzing 2020 crime statistics for the LAPD's Rampart Division. What was the most frequent crime reported in that division during that year? Tell me the total number of times that specific crime occurred across the entire city of Los Angeles in 2020. Only report the total number in the response. Your response should be in the format [Answer].",
+  "answer": "29141",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Rampart_Division/content.txt",
+      "fact": "The LAPD Rampart Division corresponds to the LAPD area name Rampart.",
+      "subquestion": "What LAPD area name corresponds to the Rampart Division?",
+      "answer": "Rampart"
+    },
+    "2": {
+      "source": "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_1_answer = 'Rampart'\ndf = pd.read_csv(csv_path, usecols=['Area Name', 'Area ID'], dtype=str, low_memory=False)\nfiltered = df[df['Area Name'].astype(str).str.strip().str.lower().eq(node_1_answer.lower())]\narea_ids = pd.to_numeric(filtered['Area ID'], errors='coerce').dropna().astype(int)\nanswer = str(int(area_ids.mode().iloc[0]))\n",
+      "subquestion": "In LAPD stop-incident entries, what Area ID corresponds to area name <node_1 answer> (answer as an integer)?",
+      "answer": "2"
+    },
+    "3": {
+      "source": "datagov/crime-data-from-2020-to-present/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-data-from-2020-to-present/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_2_answer = '2'\narea_id = pd.to_numeric(node_2_answer, errors='coerce')\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['DATE OCC', 'AREA', 'Crm Cd'], dtype=str, chunksize=500000, low_memory=False):\n    years = chunk['DATE OCC'].astype(str).str.contains('2020', na=False)\n    areas = pd.to_numeric(chunk['AREA'], errors='coerce').eq(area_id)\n    filtered = chunk[years & areas]\n    vc = filtered['Crm Cd'].astype(str).str.strip().value_counts()\n    for code, count in vc.items():\n        counts[code] = counts.get(code, 0) + int(count)\n\nanswer = str(max(counts, key=counts.get))\n",
+      "subquestion": "In 2020 crime entries for Area ID <node_2 answer>, which crime code is most common?",
+      "answer": "510"
+    },
+    "4": {
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-data-from-2010-to-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_3_answer = '510'\ntarget_code = pd.to_numeric(node_3_answer, errors='coerce')\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['Crm Cd', 'Crm Cd Desc'], dtype=str, chunksize=500000, low_memory=False):\n    codes = pd.to_numeric(chunk['Crm Cd'], errors='coerce')\n    filtered = chunk[codes.eq(target_code)]\n    vc = filtered['Crm Cd Desc'].astype(str).str.strip().value_counts()\n    for desc, count in vc.items():\n        counts[desc] = counts.get(desc, 0) + int(count)\n\nanswer = str(max(counts, key=counts.get))\n",
+      "subquestion": "In 2010 to 2019 crime entries, what crime description corresponds to crime code <node_3 answer>?",
+      "answer": "VEHICLE - STOLEN"
+    },
+    "5": {
+      "source": "datagov/crime-data-from-2020-to-present/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/crime-data-from-2020-to-present/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_4_answer = 'VEHICLE - STOLEN'\ncount = 0\nfor chunk in pd.read_csv(csv_path, usecols=['DATE OCC', 'Crm Cd Desc'], dtype=str, chunksize=500000, low_memory=False):\n    years = chunk['DATE OCC'].astype(str).str.contains('2020', na=False)\n    descs = chunk['Crm Cd Desc'].astype(str).str.strip().eq(node_4_answer)\n    count += int((years & descs).sum())\n\nanswer = str(count)\n",
+      "subquestion": "In 2020 crime entries, how many incidents had crime description <node_4 answer>?",
+      "answer": "29141"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Rampart Division corresponds to area name Rampart.",
+    "Node 2 depends on node 1: Rampart maps to Area ID 2 in LAPD stop-incident data.",
+    "Node 3 depends on node 2: In 2020 Area 2, the most common crime code is 510.",
+    "Node 4 depends on node 3: Code 510 maps to VEHICLE - STOLEN.",
+    "Node 5 depends on node 4: In 2020, VEHICLE - STOLEN incidents total 29,141.",
+    "Final answer: 29141"
+  ],
+  "datasets_used": [
+    "Rampart_Division",
+    "crime-data-from-2010-to-2019",
+    "crime-data-from-2020-to-present",
+    "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Rampart Division corresponds to area name Rampart.",
+      "answer": "Rampart"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Rampart maps to Area ID 2 in LAPD stop-incident data.",
+      "answer": "2"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: In 2020 Area 2, the most common crime code is 510.",
+      "answer": "510"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on node 3: Code 510 maps to VEHICLE - STOLEN.",
+      "answer": "VEHICLE - STOLEN"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on node 4: In 2020, VEHICLE - STOLEN incidents total 29,141.",
+      "answer": "29141"
+    }
+  ]
+}

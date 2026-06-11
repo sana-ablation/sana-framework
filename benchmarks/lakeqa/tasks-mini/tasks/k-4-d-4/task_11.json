@@ -1,0 +1,130 @@
+{
+  "question": "Using the school district office listings for CITY='Princeton' and NMCNTY='Mercer County', determine the two-digit state FIPS code. In that state, find the counties that rank in the top three for public schools, private schools, and school district offices; among their intersection, select the county with the most postsecondary institutions. For that county, compute the total number of public schools, private schools, district offices, and postsecondary institutions. Only report the integer total. Your response should be in the format [Answer].",
+  "answer": "476",
+  "nodes": {
+    "1": {
+      "source": "datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\nanswer = df.loc[(df[\"CITY\"] == \"Princeton\") & (df[\"NMCNTY\"] == \"Mercer County\"), \"STFIP\"].dropna().drop_duplicates().iloc[0]\n",
+      "subquestion": "In the school district office listings, entries with CITY='Princeton' and NMCNTY='Mercer County' share what two-digit state FIPS code (STFIP)?",
+      "answer": "34"
+    },
+    "2": {
+      "source": "datagov/public-school-locations-2021-22-5a116/files/data.txt",
+      "fact": "import io\nimport xml.etree.ElementTree as ET\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/public-school-locations-2021-22-5a116/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\nroot = ET.parse(io.BytesIO(obj[\"Body\"].read())).getroot()\nns = {\"k\": \"http://www.opengis.net/kml/2.2\"}\nrows = []\nfor placemark in root.findall('.//k:Placemark', ns):\n    row = {}\n    for simple_data in placemark.findall('.//k:SimpleData', ns):\n        row[simple_data.attrib[\"name\"]] = simple_data.text\n    rows.append(row)\ndf = pd.DataFrame(rows)\ncounts = (\n    df[df[\"STFIP\"] == \"34\"]\n    .groupby(\"NMCNTY\")\n    .size()\n    .sort_values(ascending=False)\n    .head(3)\n    .index.tolist()\n)\nanswer = \"; \".join(counts)\n",
+      "subquestion": "For STFIP='<node_1 answer>', which 3 county names have the most public schools? Return the county names separated by '; '.",
+      "answer": "Bergen County; Essex County; Middlesex County"
+    },
+    "3": {
+      "source": "datagov/private-school-locations-2019-20-ee873/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/private-school-locations-2019-20-ee873/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\ncounts = (\n    df[df[\"STFIP\"] == \"34\"]\n    .groupby(\"NMCNTY\")\n    .size()\n    .sort_values(ascending=False)\n    .head(3)\n    .index.tolist()\n)\nanswer = \"; \".join(counts)\n",
+      "subquestion": "For STFIP='<node_1 answer>', which 3 county names have the most private schools? Return the county names separated by '; '.",
+      "answer": "Bergen County; Middlesex County; Essex County"
+    },
+    "4": {
+      "source": "datagov/school-district-office-locations-2021-22-d5dd7/files/data-TEK2ZS.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-district-office-locations-2021-22-d5dd7/files/data-TEK2ZS.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\ncounts = (\n    df[df[\"STFIP\"] == \"34\"]\n    .groupby(\"NMCNTY\")\n    .size()\n    .sort_values(ascending=False)\n    .head(3)\n    .index.tolist()\n)\nanswer = \"; \".join(counts)\n",
+      "subquestion": "For STFIP='<node_1 answer>', which 3 county names have the most school district offices? Return the county names separated by '; '.",
+      "answer": "Bergen County; Monmouth County; Camden County"
+    },
+    "5": {
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\nA = {\"Bergen County\", \"Essex County\", \"Middlesex County\"}\nB = {\"Bergen County\", \"Middlesex County\", \"Essex County\"}\nC = {\"Bergen County\", \"Monmouth County\", \"Camden County\"}\ncandidates = A & B & C\nanswer = (\n    df[(df[\"STFIP\"] == \"34\") & (df[\"NMCNTY\"].isin(candidates))]\n    .groupby(\"NMCNTY\")\n    .size()\n    .sort_values(ascending=False)\n    .index[0]\n)\n",
+      "subquestion": "Let A be the set of counties in <node_2 answer>, B be the set of counties in <node_3 answer>, and C be the set of counties in <node_4 answer>. Consider the intersection of A, B, and C. Among those counties, which single county has the most postsecondary institutions in STFIP='<node_1 answer>'? Answer with the county name including the word 'County'.",
+      "answer": "Bergen County"
+    },
+    "6": {
+      "source": "datagov/public-school-locations-2021-22-5a116/files/data.txt",
+      "fact": "import io\nimport xml.etree.ElementTree as ET\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/public-school-locations-2021-22-5a116/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\nroot = ET.parse(io.BytesIO(obj[\"Body\"].read())).getroot()\nns = {\"k\": \"http://www.opengis.net/kml/2.2\"}\nrows = []\nfor placemark in root.findall('.//k:Placemark', ns):\n    row = {}\n    for simple_data in placemark.findall('.//k:SimpleData', ns):\n        row[simple_data.attrib[\"name\"]] = simple_data.text\n    rows.append(row)\ndf = pd.DataFrame(rows)\nanswer = df[(df[\"STFIP\"] == \"34\") & (df[\"NMCNTY\"] == \"Bergen County\")].shape[0]\nanswer = str(answer)\n",
+      "subquestion": "How many public schools have NMCNTY='<node_5 answer>' and STFIP='<node_1 answer>'?",
+      "answer": "288"
+    },
+    "7": {
+      "source": "datagov/private-school-locations-2019-20-ee873/files/data.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/private-school-locations-2019-20-ee873/files/data.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\nanswer = df[(df[\"STFIP\"] == \"34\") & (df[\"NMCNTY\"] == \"Bergen County\")].shape[0]\nanswer = str(answer)\n",
+      "subquestion": "How many private schools have NMCNTY='<node_5 answer>' and STFIP='<node_1 answer>'?",
+      "answer": "91"
+    },
+    "8": {
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\nanswer = df[(df[\"STFIP\"] == \"34\") & (df[\"NMCNTY\"] == \"Bergen County\")].shape[0]\nanswer = str(answer)\n",
+      "subquestion": "How many school district offices have NMCNTY='<node_5 answer>' and STFIP='<node_1 answer>'?",
+      "answer": "81"
+    },
+    "9": {
+      "source": "datagov/postsecondary-school-locations-2022-23/files/data-sh56Ar.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/postsecondary-school-locations-2022-23/files/data-sh56Ar.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [c.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for c in df.columns]\nanswer = df[(df[\"STFIP\"] == \"34\") & (df[\"NMCNTY\"] == \"Bergen County\")].shape[0]\nanswer = str(answer)\n",
+      "subquestion": "How many postsecondary institutions have NMCNTY='<node_5 answer>' and STFIP='<node_1 answer>'?",
+      "answer": "16"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=1, State FIPS lookup - node 1):",
+    "  Node 1: CITY='Princeton' and NMCNTY='Mercer County' share STFIP 34.",
+    "",
+    "HOP 2 (d=3, County top counts - nodes 2-4):",
+    "  Node 2: For STFIP=34, the top 3 counties by public schools are Bergen, Essex, and Middlesex.",
+    "  Node 3: For STFIP=34, the top 3 counties by private schools are Bergen, Middlesex, and Essex.",
+    "  Node 4: For STFIP=34, the top 3 counties by school district offices are Bergen, Monmouth, and Camden.",
+    "",
+    "HOP 3 (d=4, Postsecondary selection - node 5):",
+    "  Node 5: The intersection yields Bergen County; Bergen has the most postsecondary institutions (16).",
+    "",
+    "HOP 4 (d=4, County counts and arithmetic - nodes 6-9):",
+    "  Node 6: Bergen County public schools = 288.",
+    "  Node 7: Bergen County private schools = 91.",
+    "  Node 8: Bergen County school district offices = 81.",
+    "  Node 9: Bergen County postsecondary institutions = 16.",
+    "  Computation: 288 + 91 + 81 + 16 = 476.",
+    "",
+    "Final answer: 476"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "school-district-office-locations-current-d848f",
+    "public-school-locations-2021-22-5a116",
+    "private-school-locations-2019-20-ee873",
+    "school-district-office-locations-2021-22-d5dd7",
+    "postsecondary-school-locations-current-5a74c",
+    "school-district-office-locations-current-c8f9d",
+    "postsecondary-school-locations-2022-23"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: CITY='Princeton' and NMCNTY='Mercer County' share STFIP 34.",
+      "answer": "34"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 2: For STFIP=34, the top 3 counties by public schools are Bergen, Essex, and Middlesex. Node 3: For STFIP=34, the top 3 counties by private schools are Bergen, Middlesex, and Essex. Node 4: For STFIP=34, the top 3 counties by school district offices are Bergen, Monmouth, and Camden.",
+      "answer": "node 2: Bergen County; Essex County; Middlesex County; node 3: Bergen County; Middlesex County; Essex County; node 4: Bergen County; Monmouth County; Camden County"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: The intersection yields Bergen County; Bergen has the most postsecondary institutions (16).",
+      "answer": "Bergen County"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Node 6: Bergen County public schools = 288. Node 7: Bergen County private schools = 91. Node 8: Bergen County school district offices = 81. Node 9: Bergen County postsecondary institutions = 16. Computation: 288 + 91 + 81 + 16 = 476.",
+      "answer": "476"
+    }
+  ]
+}

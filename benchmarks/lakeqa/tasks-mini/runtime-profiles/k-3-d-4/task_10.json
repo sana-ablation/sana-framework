@@ -1,0 +1,122 @@
+{
+  "dataset_sequence": [
+    "fy-2020-pension-recipients-by-state",
+    "fy-2021-pension-recipients-by-state-1266e",
+    "fy-2023-pension-recipients-by-state",
+    "New_England",
+    "Vermont",
+    "Montpelier,_Vermont"
+  ],
+  "source_sequence": [
+    "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+    "datagov/fy-2021-pension-recipients-by-state-1266e/files/rows.txt",
+    "datagov/fy-2023-pension-recipients-by-state/files/rows.txt",
+    "wikipedia/New_England/content.txt",
+    "wikipedia/Vermont/content.txt",
+    "wikipedia/Montpelier,_Vermont/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify states with 200 to 400 veteran pension recipients in 2020.",
+    "2. From the states retained in step 1, keep states with 200 to 400 veteran pension recipients in 2021.",
+    "3. From the states retained in step 2, keep states with 150 to 300 veteran pension recipients in 2023.",
+    "4. From the states retained in step 3, keep the state located in New England.",
+    "5. Determine that state's capital city, then determine the year the capital city was chartered and return the year."
+  ],
+  "original_final_question": "Find the New England state had between 200 and 400 veteran pension recipients in both 2020 and 2021, and between 150 and 300 in 2023. What year was its capital city chartered? Only report the year in your answer. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Find states with 200-400 VA pension recipients in FY 2020 → {Alaska (278), Delaware (375), North Dakota (400), Vermont (321), Wyoming (304)}",
+    "Node 2: Find states with 200-400 VA pension recipients in FY 2021 → {Alaska (249), Delaware (331), North Dakota (367), Vermont (280), Wyoming (277)}",
+    "Node 3: Find states with 150-300 VA pension recipients in FY 2023 → {Alaska (182), Delaware (251), Vermont (215), Wyoming (238)}",
+    "Node 4: Find states located in New England → {Connecticut, Maine, Massachusetts, New Hampshire, Rhode Island, Vermont}",
+    "Intersection of <node_1>, <node_2>, <node_3>, <node_4>: Only state meeting all criteria → Vermont (Alaska, Delaware, Wyoming are not in New England; North Dakota dropped out in FY 2023)",
+    "Node 5 depends on intersection: Find Vermont's capital → Montpelier",
+    "Node 6 depends on node 5: Find when Montpelier was chartered → 1781",
+    "Final answer: 1781"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "fy-2020-pension-recipients-by-state",
+      "source": "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+      "intent": "Which U.S. states had between 200 and 400 VA pension recipients in FY 2020?",
+      "code": "import pandas as pd\n\nsource = 'datagov/fy-2020-pension-recipients-by-state/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Pension Recipients'] = pd.to_numeric(df['Total: Pension Recipients'], errors='coerce')\nfiltered = df[df['Total: Pension Recipients'].between(200, 400, inclusive='both')].copy()\nresult = filtered.sort_values('State')['State'].tolist()",
+      "answer": [
+        "Alaska",
+        "Delaware",
+        "North Dakota",
+        "Vermont",
+        "Wyoming"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2021-pension-recipients-by-state-1266e",
+      "source": "datagov/fy-2021-pension-recipients-by-state-1266e/files/rows.txt",
+      "intent": "Which U.S. states had between 200 and 400 VA pension recipients in FY 2021?",
+      "code": "import pandas as pd\n\nsource = 'datagov/fy-2021-pension-recipients-by-state-1266e/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Pension Recipients'] = pd.to_numeric(df['Total: Pension Recipients'], errors='coerce')\nnon_state_rows = ['Other Foreign Countries']\nfiltered = df[df['Total: Pension Recipients'].between(200, 400, inclusive='both') & (~df['State'].isin(non_state_rows))].copy()\nresult = filtered.sort_values('State')['State'].tolist()",
+      "answer": [
+        "Alaska",
+        "Delaware",
+        "North Dakota",
+        "Vermont",
+        "Wyoming"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "fy-2023-pension-recipients-by-state",
+      "source": "datagov/fy-2023-pension-recipients-by-state/files/rows.txt",
+      "intent": "Which U.S. states had between 150 and 300 VA pension recipients in FY 2023?",
+      "code": "import pandas as pd\n\nsource = 'datagov/fy-2023-pension-recipients-by-state/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Pension Recipients'] = pd.to_numeric(df['Total: Pension Recipients'], errors='coerce')\nfiltered = df[df['Total: Pension Recipients'].between(150, 300, inclusive='both')].copy()\nresult = filtered.sort_values('State')['State'].tolist()",
+      "answer": [
+        "Alaska",
+        "Delaware",
+        "Vermont",
+        "Wyoming"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "fy-2020-pension-recipients-by-state",
+      "source": "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+      "intent": "Which U.S. states had between 200 and 400 VA pension recipients in FY 2020?",
+      "sql": "SELECT State AS answer\nFROM t\nWHERE TRY_CAST(\"Total: Pension Recipients\" AS INTEGER) BETWEEN 200 AND 400\nORDER BY State ASC",
+      "answer": [
+        "Alaska",
+        "Delaware",
+        "North Dakota",
+        "Vermont",
+        "Wyoming"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2021-pension-recipients-by-state-1266e",
+      "source": "datagov/fy-2021-pension-recipients-by-state-1266e/files/rows.txt",
+      "intent": "Which U.S. states had between 200 and 400 VA pension recipients in FY 2021?",
+      "sql": "SELECT State AS answer\nFROM t\nWHERE TRY_CAST(\"Total: Pension Recipients\" AS INTEGER) BETWEEN 200 AND 400\n  AND State NOT IN ('Other Foreign Countries')\nORDER BY State ASC",
+      "answer": [
+        "Alaska",
+        "Delaware",
+        "North Dakota",
+        "Vermont",
+        "Wyoming"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "fy-2023-pension-recipients-by-state",
+      "source": "datagov/fy-2023-pension-recipients-by-state/files/rows.txt",
+      "intent": "Which U.S. states had between 150 and 300 VA pension recipients in FY 2023?",
+      "sql": "SELECT State AS answer\nFROM t\nWHERE TRY_CAST(\"Total: Pension Recipients\" AS INTEGER) BETWEEN 150 AND 300\nORDER BY State ASC",
+      "answer": [
+        "Alaska",
+        "Delaware",
+        "Vermont",
+        "Wyoming"
+      ]
+    }
+  ]
+}

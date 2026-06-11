@@ -1,0 +1,53 @@
+{
+  "dataset_sequence": [
+    "kramabench-biomedical-hard-3"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc7.xlsx",
+    "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc1.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. Read patient APP-Z scores from the APM subtype table.",
+    "2. Use the clinical metadata to restrict to non-excluded endometrioid or serous patients, select the restricted patient with the lowest APP-Z score, and return that patient's age."
+  ],
+  "original_final_question": "What is the age of the non-excluded endometrioid or serous patient whose APP-Z score is the lowest? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: The APM subtype table shows patient identifier S019 has the lowest APP-Z score.",
+    "Node 2 depends on node 1: The clinical metadata lists non-excluded endometrioid patient S019 with age 60.",
+    "Final answer: 60"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-hard-3",
+      "source": "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc7.xlsx",
+      "intent": "In the APM subtype table, which patient identifier has the lowest APP-Z score?",
+      "code": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc7.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc7.xlsx'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    xlsx_path = local_path\nelif os.path.exists(local_authoring_path):\n    xlsx_path = local_authoring_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    xlsx_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(xlsx_path, sheet_name='B-APM subtypes', usecols=['idx', 'APP_Z_score'])\nscores = pd.to_numeric(df['APP_Z_score'], errors='coerce')\nanswer = str(df.loc[scores.idxmin(), 'idx']).strip()\nresult = answer\nprint(answer)\n",
+      "answer": "S019"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-hard-3",
+      "source": "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "In the clinical metadata, what is the age of non-excluded endometrioid or serous patient <node_1 answer>?",
+      "code": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc1.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    xlsx_path = local_path\nelif os.path.exists(local_authoring_path):\n    xlsx_path = local_authoring_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    xlsx_path = io.BytesIO(obj['Body'].read())\n\nnode_1_answer = 'S019'\ndf = pd.read_excel(xlsx_path, usecols=['idx', 'Case_excluded', 'Histologic_type', 'Age'])\nfiltered = df[\n    df['idx'].astype(str).str.strip().eq(node_1_answer)\n    & df['Case_excluded'].astype(str).str.strip().eq('No')\n    & df['Histologic_type'].astype(str).str.strip().isin(['Endometrioid', 'Serous'])\n]\nage = pd.to_numeric(filtered['Age'], errors='coerce').dropna().iloc[0]\nanswer = str(int(age))\nresult = answer\nprint(answer)\n",
+      "answer": "60"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-hard-3",
+      "source": "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc7.xlsx",
+      "intent": "In the APM subtype table, which patient identifier has the lowest APP-Z score?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-hard-3",
+      "source": "datagov/kramabench-biomedical-hard-3/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "intent": "In the clinical metadata, what is the age of non-excluded endometrioid or serous patient <node_1 answer>?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

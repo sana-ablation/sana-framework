@@ -1,0 +1,55 @@
+{
+  "question": "Who was born first, British novelist Doris Lessing or American writer Philip K. Dick? Write your answer as [ANSWER].",
+  "answer": "Doris May Lessing",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/Doris_Lessing.txt",
+      "fact": "Doris May Lessing, CH (\"née\" Tayler; 22 October 1919  – 17 November 2013) was a British novelist, poet, playwright, librettist, biographer and short story writer.",
+      "subquestion": "What evidence from supporting page 1 is needed for the comparison?",
+      "answer": "<text evidence>"
+    },
+    "2": {
+      "source": "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/Philip_K_Dick.txt",
+      "fact": "Philip Kindred Dick (December 16, 1928 – March 2, 1982) was an American writer notable for publishing works of science fiction.",
+      "subquestion": "What evidence from supporting page 2 is needed for the comparison?",
+      "answer": "Doris May Lessing"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "datasets_used": [
+    "wikipedia/hotpotqa__5a7385c45542992d56e7e359",
+    "wikipedia/hotpotqa__5a7385c45542992d56e7e359"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Compare the two supporting evidence items and answer the question.",
+      "answer": "Doris May Lessing"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "hotpotqa",
+    "split": "dev_distractor",
+    "source_id": "5a7385c45542992d56e7e359",
+    "type": "comparison",
+    "level": "hard",
+    "promoted_from": "other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_3.json",
+    "raw_source": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json",
+    "source_mode": "raw_context_supporting_facts",
+    "s3_mirror_prefix": "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a7385c45542992d56e7e359:Doris Lessing:0",
+      "2": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a7385c45542992d56e7e359:Philip K. Dick:0"
+    },
+    "promotion_status": "smoke_converted",
+    "promotion_rule": "generated_hotpotqa_lakeqa_transform_five_import_smoke_v1"
+  }
+}

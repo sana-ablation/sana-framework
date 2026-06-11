@@ -1,0 +1,36 @@
+{
+  "dataset_sequence": [
+    "vsrr-provisional-drug-overdose-death-counts"
+  ],
+  "source_sequence": [
+    "datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter to December 12-month-ending drug overdose death counts across U.S. states, excluding the national aggregate, sum annual totals needed for year-over-year growth, compute each 2016 through 2023 growth-amplified overdose burden score, and return the year with the highest score."
+  ],
+  "original_final_question": "For each year from 2016 through 2023, compute a growth-amplified overdose burden score as annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate). Which year has the highest score? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Sum the December rolling 12-month overdose death totals across all U.S. states for each year, compute year-over-year growth in that total, then score each year from 2016-2023 as total x (1 + max(growth, 0)). The highest growth-amplified score occurs in 2021.",
+    "Final answer: 2021"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "vsrr-provisional-drug-overdose-death-counts",
+      "source": "datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt",
+      "intent": "For each year from 2016 through 2023, compute a growth-amplified overdose burden score: annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate).",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt', low_memory=False)\ndf['Year'] = pd.to_numeric(df['Year'], errors='coerce')\ndf['Data Value'] = pd.to_numeric(df['Data Value'], errors='coerce')\n\nfiltered = df[\n    (df['Indicator'] == 'Number of Drug Overdose Deaths')\n    & (df['Period'] == '12 month-ending')\n    & (df['Month'] == 'December')\n    & (df['State'] != 'US')\n    & (df['Year'].between(2015, 2023, inclusive='both'))\n]\n\nannual = filtered.groupby('Year', as_index=False)['Data Value'].sum().rename(columns={'Data Value': 'total'})\nannual = annual.sort_values('Year')\nannual['growth'] = annual['total'].pct_change()\nannual['score'] = annual['total'] * (1 + annual['growth'].clip(lower=0))\nranked = annual[annual['Year'].between(2016, 2023, inclusive='both')].sort_values(['score', 'Year'], ascending=[False, True])\nresult = str(int(ranked.iloc[0]['Year']))",
+      "answer": "2021"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "vsrr-provisional-drug-overdose-death-counts",
+      "source": "datagov/vsrr-provisional-drug-overdose-death-counts/files/rows.txt",
+      "intent": "For each year from 2016 through 2023, compute a growth-amplified overdose burden score: annual drug overdose deaths across all U.S. states multiplied by (1 + year-over-year growth rate).",
+      "sql": "WITH annual AS (\n  SELECT CAST(\"Year\" AS INTEGER) AS year,\n         SUM(TRY_CAST(\"Data Value\" AS DOUBLE)) AS total\n  FROM t\n  WHERE \"Indicator\" = 'Number of Drug Overdose Deaths'\n    AND \"Period\" = '12 month-ending'\n    AND \"Month\" = 'December'\n    AND \"State\" <> 'US'\n    AND CAST(\"Year\" AS INTEGER) BETWEEN 2015 AND 2023\n  GROUP BY year\n), scored AS (\n  SELECT year,\n         total,\n         LAG(total) OVER (ORDER BY year) AS prev_total\n  FROM annual\n)\nSELECT CAST(year AS VARCHAR) AS answer\nFROM scored\nWHERE year BETWEEN 2016 AND 2023\nORDER BY total * (1 + GREATEST((total - prev_total) / prev_total, 0)) DESC,\n         year ASC\nLIMIT 1",
+      "answer": "2021"
+    }
+  ]
+}

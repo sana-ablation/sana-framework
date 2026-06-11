@@ -1,0 +1,89 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-hard-5"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+    "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+    "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+    "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter the radiocarbon table to Homo sapiens Neolithic samples.",
+    "2. Select the northernmost Neolithic sample, breaking latitude ties by the later calendar year.",
+    "3. Convert climate ages to calendar years and identify the climate year or years closest to the selected sample year.",
+    "4. Among climate rows in the closest year or years, take the maximum aluminum value and round to four decimals."
+  ],
+  "original_final_question": "In the Maltese dataset, find the year of the most northern Neolithic sample, breaking ties by considering the later year. What is the maximum aluminum value recorded in the climate dataset in the closest year to that year? If there are multiple closest years, take the max aluminum value measured across all of them. Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter the radiocarbon table to Homo sapiens samples and then to Neolithic samples.",
+    "Node 2 depends on node 1: Select the northernmost Neolithic sample, breaking latitude ties by the later calendar year.",
+    "Node 3 depends on node 2: Convert climate ages to calendar years and identify the climate year closest to the selected sample year.",
+    "Node 4 depends on node 3: Among climate rows in the closest year, take the maximum aluminum value.",
+    "Final answer: 66158.3691"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+      "intent": "How many Homo sapiens samples and Neolithic Homo sapiens samples are in the radiocarbon table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\ncarbon = pd.read_excel(path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nresult = f\"{len(homo)}|{len(neolithic)}\"\nprint(result)\n",
+      "answer": "97|70"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+      "intent": "For Neolithic Homo sapiens samples, what is the northernmost latitude and later-year tie-broken sample year?",
+      "code": "import pandas as pd\nimport numpy as np\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens'].copy()\nhomo['year'] = 1950 - homo['date']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nmost_northern = neolithic[neolithic['Latitude'] == neolithic['Latitude'].max()]\nmost_northern = most_northern[most_northern['year'] == most_northern['year'].max()]\ntarget_year = most_northern['year'].iloc[0]\nresult = f\"{most_northern['Latitude'].iloc[0]:.5f}|{int(target_year)}\"\nprint(result)\n",
+      "answer": "17.94668|-4460"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+      "intent": "Which climate measurement year is closest to the selected Neolithic sample year, and how many rows have that year?",
+      "code": "import pandas as pd\nimport numpy as np\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens'].copy()\nhomo['year'] = 1950 - homo['date']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nmost_northern = neolithic[neolithic['Latitude'] == neolithic['Latitude'].max()]\nmost_northern = most_northern[most_northern['year'] == most_northern['year'].max()]\ntarget_year = most_northern['year'].iloc[0]\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nclosest_year = climate['year'].iloc[(np.abs(climate['year'] - target_year)).argmin()]\nresult = f\"{int(closest_year)}|{int((climate['year'] == closest_year).sum())}\"\nprint(result)\n",
+      "answer": "-4050|13"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+      "intent": "For all climate rows in the closest year, what is the maximum aluminum value rounded to four decimals?",
+      "code": "import pandas as pd\nimport numpy as np\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens'].copy()\nhomo['year'] = 1950 - homo['date']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nmost_northern = neolithic[neolithic['Latitude'] == neolithic['Latitude'].max()]\nmost_northern = most_northern[most_northern['year'] == most_northern['year'].max()]\ntarget_year = most_northern['year'].iloc[0]\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nclosest_year = climate['year'].iloc[(np.abs(climate['year'] - target_year)).argmin()]\nclosest_rows = climate[climate['year'] == closest_year]\nresult = f\"{closest_rows['Al'].max():.4f}\"\nprint(result)\n",
+      "answer": "66158.3691"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+      "intent": "How many Homo sapiens samples and Neolithic Homo sapiens samples are in the radiocarbon table?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+      "intent": "For Neolithic Homo sapiens samples, what is the northernmost latitude and later-year tie-broken sample year?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+      "intent": "Which climate measurement year is closest to the selected Neolithic sample year, and how many rows have that year?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-archeology-hard-5",
+      "source": "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+      "intent": "For all climate rows in the closest year, what is the maximum aluminum value rounded to four decimals?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "question": "What percentage of samples to two decimal places that failed to meet the swimming standard at Boston Harbor beaches had rainfall within 24 hours prior to sampling, where a sample meets the standard if it contains fewer than or equal to 104 counts of Enterococcus per 100 milliliters of water?. Write your answer as [ANSWER].",
+  "answer": 54.03,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-8/files/boston-harbor-beaches.txt",
+      "fact": "path = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nwith open(path, encoding='utf-8') as f:\n    beaches = [line.strip() for line in f if line.strip()]\nprint('|'.join(beaches))\n",
+      "subquestion": "Which beaches are listed as Boston Harbor beaches?",
+      "answer": "Constitution Beach|Castle Island Beach|Pleasure Bay Beach|City Point Beach|M Street Beach|Carson Beach|Malibu Beach|Tenean Beach|Wollaston Beach"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-8/files/constitution_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For Constitution Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "288/428"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-8/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For Pleasure Bay Beach|Castle Island Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "15/26"
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-8/files/city_point_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/city_point_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For City Point Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "15/30"
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-hard-8/files/m_street_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/m_street_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For M Street Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "19/34"
+    },
+    "6": {
+      "source": "datagov/kramabench-environment-hard-8/files/carson_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/carson_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For Carson Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "79/147"
+    },
+    "7": {
+      "source": "datagov/kramabench-environment-hard-8/files/malibu_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/malibu_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For Malibu Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "67/149"
+    },
+    "8": {
+      "source": "datagov/kramabench-environment-hard-8/files/tenean_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/tenean_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For Tenean Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "160/345"
+    },
+    "9": {
+      "source": "datagov/kramabench-environment-hard-8/files/wollaston_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv'\ndf = prepare_beach_datasheet(path)\nfailed = df[df['Enterococcus'] > 104]\nrain_failed = int((failed['1-Day Rain'] > 0).sum())\ntotal_failed = int(len(failed))\nprint(f'{rain_failed}/{total_failed}')\n",
+      "subquestion": "For Wollaston Beach, among samples exceeding 104 Enterococcus counts per 100 mL, how many had 1-Day Rain greater than zero and how many failed in total?",
+      "answer": "476/912"
+    },
+    "10": {
+      "source": "datagov/kramabench-environment-hard-8/files/boston-harbor-beaches.txt",
+      "fact": "source_path = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nstats = ['288/428', '15/26', '15/30', '19/34', '79/147', '67/149', '160/345', '476/912']\nrain_failed = 0\ntotal_failed = 0\nfor item in stats:\n    rain, total = item.split('/')\n    rain_failed += int(rain)\n    total_failed += int(total)\npercentage = rain_failed / total_failed * 100\nprint(f'{percentage:.2f}')\n",
+      "subquestion": "Using the per-datasheet counts from <node_2 answer> through <node_9 answer>, what percentage of failed Boston Harbor samples had rain within 24 hours?",
+      "answer": 54.03
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 reads the Boston Harbor beach list.",
+    "Nodes 2-9 compute, for each Boston Harbor datasheet, the number of failed samples and the number of failed samples with positive 1-Day Rain.",
+    "Node 10 depends on nodes 2-9 and aggregates the counts into a percentage.",
+    "Final answer: 54.03"
+  ],
+  "datasets_used": [
+    "kramabench-environment-hard-8"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Read the Boston Harbor beach list and compute failed/rain-failed counts from each datasheet.",
+      "answer": "per-beach failed and rain-failed counts"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Aggregate the per-datasheet counts and calculate the percentage.",
+      "answer": "54.03"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-8",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-hard-8.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/environment.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/environment/environment-hard-8.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-8",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-8/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt",
+      "2": "other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/city_point_beach_datasheet.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/m_street_beach_datasheet.csv",
+      "6": "other-benchmarks/Kramabench/data/environment/input/carson_beach_datasheet.csv",
+      "7": "other-benchmarks/Kramabench/data/environment/input/malibu_beach_datasheet.csv",
+      "8": "other-benchmarks/Kramabench/data/environment/input/tenean_beach_datasheet.csv",
+      "9": "other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv",
+      "10": "other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

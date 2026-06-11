@@ -1,0 +1,83 @@
+{
+  "question": "What is the amount of calcium in ppm when the dust proxy was the smallest, breaking ties by the minimum wet-dry index? Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "answer": "207878.8774",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ndf = pd.read_excel(path, sheet_name=0, header=0, skiprows=5)\nempty_indices = [i for i, col in enumerate(df.columns) if df[col].isna().all()]\nresult = str(empty_indices).replace(\"'\", '\"')\nprint(result)\n",
+      "subquestion": "After reading the climate workbook with the metadata rows skipped, which column indices are completely empty?",
+      "answer": "[20, 24, 27]"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ndf = pd.read_excel(path, sheet_name=0, header=0, skiprows=5).dropna(axis=1, how='all')\nmin_dust = df['ODP 967 Dust proxy'].min()\nsubset = df[df['ODP 967 Dust proxy'] == min_dust]\nwet_dry = subset['ODP 967 wet-dry index'].min()\nresult = f\"{min_dust:.3f}|{wet_dry:.15f}\"\nprint(result)\n",
+      "subquestion": "What are the minimum dust proxy and the tie-breaking minimum wet-dry index?",
+      "answer": "0.001|0.059866313428369"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ndf = pd.read_excel(path, sheet_name=0, header=0, skiprows=5).dropna(axis=1, how='all')\nmin_dust = df['ODP 967 Dust proxy'].min()\nsubset = df[df['ODP 967 Dust proxy'] == min_dust]\nrow = subset[subset['ODP 967 wet-dry index'] == subset['ODP 967 wet-dry index'].min()]\nresult = f\"{float(row['Ca'].iloc[0]):.4f}\"\nprint(result)\n",
+      "subquestion": "For the row with the smallest dust proxy and lowest wet-dry index tie breaker, what is the calcium amount rounded to four decimals?",
+      "answer": "207878.8774"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the climate measurements sheet after skipping metadata rows and identify fully empty columns to drop.",
+    "Node 2 depends on node 1: Drop empty columns, find the minimum dust proxy, and find the smallest wet-dry index among tied rows.",
+    "Node 3 depends on node 2: Select the tied row by dust proxy and wet-dry index and read the calcium value rounded to four decimals.",
+    "Final answer: 207878.8774"
+  ],
+  "datasets_used": [
+    "kramabench-archeology-easy-4"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the climate measurements sheet after skipping metadata rows and identify fully empty columns to drop.",
+      "answer": "[20, 24, 27]"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Drop empty columns, find the minimum dust proxy, and find the smallest wet-dry index among tied rows.",
+      "answer": "0.001|0.059866313428369"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Select the tied row by dust proxy and wet-dry index and read the calcium value rounded to four decimals.",
+      "answer": "207878.8774"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-easy-4",
+    "domain": "archeology",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-easy-4.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-4",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-easy-4/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

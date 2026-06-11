@@ -1,0 +1,62 @@
+{
+  "question": "Which group of people in West Africa with significant populations in Ghana, Ivory Coast, Liberia and Sierra Leone use the Ida? Write your answer as [ANSWER].",
+  "answer": "The Yoruba",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/hotpotqa__5a70eee85542994082a3e3f0/files/Ida_sword.txt",
+      "fact": " It is a long sword with a narrow to wide blade and sheathe.",
+      "subquestion": "What intermediate evidence is needed from the first supporting page?",
+      "answer": "<text evidence>"
+    },
+    "2": {
+      "source": "wikipedia/hotpotqa__5a70eee85542994082a3e3f0/files/Yoruba_people.txt",
+      "fact": "The Yoruba share borders with the Bariba to the northwest in Benin, the Nupe to the north and the Ebira to the northeast in central Nigeria.",
+      "subquestion": "Using the intermediate evidence, what supporting evidence answers the question?",
+      "answer": "The Yoruba"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "datasets_used": [
+    "wikipedia/hotpotqa__5a70eee85542994082a3e3f0",
+    "wikipedia/hotpotqa__5a70eee85542994082a3e3f0"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Use the first supporting page to identify the intermediate evidence needed for the second lookup.",
+      "answer": "<text evidence>"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Use the second supporting page with the intermediate evidence to answer the question.",
+      "answer": "The Yoruba"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "hotpotqa",
+    "split": "dev_distractor",
+    "source_id": "5a70eee85542994082a3e3f0",
+    "type": "bridge",
+    "level": "hard",
+    "promoted_from": "other-benchmarks/tasks-hotpotqa-mini/k-2-d-2/task_1.json",
+    "raw_source": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json",
+    "source_mode": "raw_context_supporting_facts",
+    "s3_mirror_prefix": "wikipedia/hotpotqa__5a70eee85542994082a3e3f0/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a70eee85542994082a3e3f0:Ida (sword):1",
+      "2": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a70eee85542994082a3e3f0:Yoruba people:0"
+    },
+    "promotion_status": "smoke_converted",
+    "promotion_rule": "generated_hotpotqa_lakeqa_transform_five_import_smoke_v1"
+  }
+}

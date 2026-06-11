@@ -1,0 +1,99 @@
+{
+  "dataset_sequence": [
+    "Austin_City_Council",
+    "city-of-austin-council-voting-record",
+    "apd-searches-by-type",
+    "apd-computer-aided-dispatch-incidents",
+    "public-school-locations-current-23297"
+  ],
+  "source_sequence": [
+    "wikipedia/Austin_City_Council/content.txt",
+    "datagov/city-of-austin-council-voting-record/files/rows.txt",
+    "datagov/apd-searches-by-type/files/rows.txt",
+    "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+    "datagov/public-school-locations-current-23297/files/data.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine which Austin City Council district is represented by Zohaib \"Zo\" Qadri.",
+    "2. For that council district, determine the year of its earliest recorded council meeting.",
+    "3. In that district and year, identify the police sector with the highest number of searches.",
+    "4. Count dispatch incidents in the sector from step 3 during that same year.",
+    "5. Count public schools in Austin, then return the rounded ratio of dispatch incidents from step 4 to the school count."
+  ],
+  "original_final_question": "I’m analyzing data for the Austin City Council district represented by Zohaib 'Zo' Qadri. Starting from the year of the earliest recorded council meeting for this district, identify which police sector had the highest number of searches that year. Then, what is the ratio of the total number of dispatch incidents in that sector compared to the number of public schools in Austin? Round that to the nearest integer. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Zohaib \"Zo\" Qadri represents Austin City Council District 9.",
+    "Node 2 depends on node 1: In the council voting record, the earliest meeting date listed for District 9 -> 2023-01-26.",
+    "Node 3 depends on nodes 1-2: In 2023, within District 9, the sector with the most searches -> George.",
+    "Node 4 depends on nodes 2-3: In 2023, dispatch incidents with Sector = George -> 31,517.",
+    "Node 5: Public schools in Austin, TX -> 279.",
+    "Compute round(31517 / 279) = 113.",
+    "Final answer: 113"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "city-of-austin-council-voting-record",
+      "source": "datagov/city-of-austin-council-voting-record/files/rows.txt",
+      "intent": "In the Austin City Council voting record, what is the earliest meeting date listed for council district <node_1 answer>?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/city-of-austin-council-voting-record/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), sep=\"\\t\", header=None, names=[\"value\"], low_memory=False)\n\nlines = df[\"value\"].astype(str).tolist()\nstart_mask = pd.Series(lines).str.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\")\nstart_idx = start_mask[start_mask].index.tolist()\nrecords = []\nfor i, start in enumerate(start_idx):\n    end = start_idx[i + 1] if i + 1 < len(start_idx) else len(lines)\n    chunk = lines[start:end]\n    if len(chunk) < 10:\n        continue\n    records.append({\n        \"meeting_date\": chunk[0],\n        \"meeting_type\": chunk[1],\n        \"item_number\": chunk[2],\n        \"item_text\": \"\\n\".join(chunk[3:-7]).strip(),\n        \"voter_title\": chunk[-7],\n        \"member_name\": chunk[-6],\n        \"council_district\": chunk[-5],\n        \"vote\": chunk[-4],\n        \"notes\": chunk[-3],\n        \"agenda_item_id\": chunk[-2],\n        \"vote_record_id\": chunk[-1],\n    })\n\nrecords = pd.DataFrame(records)\nrecords[\"meeting_date\"] = pd.to_datetime(records[\"meeting_date\"])\nfiltered = records[records[\"council_district\"].astype(str).str.strip() == \"9\"]\nanswer = filtered[\"meeting_date\"].min().isoformat()",
+      "answer": "2023-01-06T00:00:00"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "apd-searches-by-type",
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "intent": "In the year of <node_2 answer>, within council district <node_1 answer>, which sector has the most searches?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-searches-by-type/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"Occurred Year\"] == 2023) & (df[\"Council District\"] == 9)]\nanswer = filtered.groupby(\"Sector\").size().sort_values(ascending=False).index[0]\nprint(answer)",
+      "answer": "George"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "apd-computer-aided-dispatch-incidents",
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "intent": "In the year of <node_2 answer> (Response Year), how many dispatch incidents occurred in sector <node_3 answer>?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-computer-aided-dispatch-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"Response Year\"] == 2023) & (df[\"Sector\"] == \"George\")]\nanswer = len(filtered)\nprint(answer)\nanswer = str(answer)",
+      "answer": "31517"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "Within city AUSTIN and state TX, how many public schools are listed?",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/public-school-locations-current-23297/files/data-oyCYxF.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.DataFrame(json.load(io.BytesIO(obj[\"Body\"].read()))[\"features\"])\nproperties = pd.json_normalize(df[\"properties\"])\n\nanswer = len(properties[(properties[\"STATE\"] == \"TX\") & (properties[\"CITY\"] == \"AUSTIN\")])\nprint(answer)\nanswer = str(answer)",
+      "answer": "279"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "city-of-austin-council-voting-record",
+      "source": "datagov/city-of-austin-council-voting-record/files/rows.txt",
+      "intent": "In the Austin City Council voting record, what is the earliest meeting date listed for council district <node_1 answer>?",
+      "answer": "Cannot execute SQL: file contents are plain text; query_file only handles CSV and JSON."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "apd-searches-by-type",
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "intent": "In the year of <node_2 answer>, within council district <node_1 answer>, which sector has the most searches?",
+      "sql": "SELECT Sector AS answer\nFROM t\nWHERE \"Occurred Year\" = 2023\n  AND \"Council District\" = 9\nGROUP BY Sector\nORDER BY count(*) DESC\nLIMIT 1",
+      "answer": "George"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "apd-computer-aided-dispatch-incidents",
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "intent": "In the year of <node_2 answer> (Response Year), how many dispatch incidents occurred in sector <node_3 answer>?",
+      "answer": "Cannot execute SQL: file is too big (1377.46 MB >= 500 MB limit)."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "Within city AUSTIN and state TX, how many public schools are listed?",
+      "sql": "SELECT count(*) AS answer\nFROM t, UNNEST(features) AS u(feature)\nWHERE u.feature.properties.STATE = 'TX'\n  AND u.feature.properties.CITY = 'AUSTIN'",
+      "answer": "279"
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+{
+  "dataset_sequence": [
+    "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016",
+    "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017",
+    "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018",
+    "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019",
+    "ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022",
+    "ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022",
+    "nchs-drug-poisoning-mortality-by-county-united-states",
+    "nchs-drug-poisoning-mortality-by-county-united-states-20278",
+    "Victoria_County,_Texas",
+    "Victoria,_Texas"
+  ],
+  "source_sequence": [
+    "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt",
+    "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt",
+    "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt",
+    "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt",
+    "datagov/ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022/files/rows.txt",
+    "datagov/ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022/files/rows.txt",
+    "datagov/nchs-drug-poisoning-mortality-by-county-united-states/files/rows.txt",
+    "datagov/nchs-drug-poisoning-mortality-by-county-united-states-20278/files/rows.txt",
+    "wikipedia/Victoria_County,_Texas/content.txt",
+    "wikipedia/Victoria,_Texas/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Texas counties across 2016-17, 2017-18, 2018-19, and 2019-20, compute adult day care meal reimbursements, keep counties averaging at least $50,000, and identify the five counties with the largest percentage drops over that span.",
+    "2. From those five counties, keep only counties with at least one abuse- or neglect-related child fatality between 2018 and 2022.",
+    "3. From the counties kept in step 2, keep only counties with at least three non-abuse or non-neglect child fatality investigations between 2018 and 2022.",
+    "4. Among the counties kept in step 3, identify the counties in the top two for 2021 model-based drug poisoning death rates.",
+    "5. Among the counties kept in step 3, identify the counties in the bottom two for 2016 age-adjusted rate categories and keep the county that also appeared in step 4.",
+    "6. Using the county identified in step 5, determine its county seat.",
+    "7. Using that county seat, determine the river it lies along."
+  ],
+  "original_final_question": "Across 2016-17 through 2019-20, start with Texas counties that averaged at least $50,000 in adult day care meal reimbursements and had the five largest percentage drops over that span. From those five, keep only counties with at least one abuse/neglect-related child fatality and at least three non-abuse/neglect child fatality investigations between 2018 and 2022. Among the remaining counties, find the one that is both in the top two for 2021 model-based drug poisoning death rates and in the bottom two for 2016 age-adjusted rate categories. What river does the county seat of that county lie along? Return the river name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4, adult day care reimbursements 2016-2019 - nodes 1-4):",
+    "  Node 1: 2016 totals -> Brooks 60,454.65; Willacy 158,153.77; Comal 112,322.52; Atascosa 141,083.37; Victoria 95,559.47",
+    "  Node 2: 2017 totals -> Brooks 66,250.97; Willacy 160,898.5925; Comal 88,868.98; Atascosa 142,115.25; Victoria 89,291.24",
+    "  Node 3: 2018 totals -> Brooks 78,426.43; Willacy 143,725.8525; Comal 78,748.11; Atascosa 139,933.33; Victoria 88,676.32",
+    "  Node 4: 2019 totals -> Brooks 0; Willacy 5,005.3; Comal 37,371.2; Atascosa 52,913.23; Victoria 40,390.435",
+    "  Percent decrease from 2016 to 2019: Brooks -100.00%, Willacy -96.84%, Comal -66.73%, Atascosa -62.50%, Victoria -57.73%.",
+    "  Result (top 5 decreases): {Brooks, Willacy, Comal, Atascosa, Victoria}",
+    "",
+    "HOP 2 (d=2, Texas child fatality datasets - nodes 5-6):",
+    "  Node 5: Abuse/neglect fatalities 2018-2022 -> >=1: {Brooks, Willacy, Comal, Victoria}",
+    "  Node 6: Non-abuse/neglect investigations 2018-2022 -> >=3: {Willacy, Comal, Atascosa, Victoria}",
+    "  Intersection -> {Willacy, Comal, Victoria}",
+    "",
+    "HOP 3 (d=2, drug poisoning mortality - nodes 7-8):",
+    "  Node 7: 2021 model-based death rates -> highest two {Victoria, Comal}",
+    "  Node 8: 2016 age-adjusted categories -> lowest two {Willacy, Victoria}",
+    "  Intersection -> {Victoria}",
+    "",
+    "HOP 4 (d=1, Victoria County Wikipedia - node 9):",
+    "  Node 9: Victoria County seat -> Victoria",
+    "",
+    "HOP 5 (d=1, Victoria Wikipedia - node 10):",
+    "  Node 10: Victoria lies along the Guadalupe River",
+    "  Final answer: Guadalupe River"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2016-2017; group by SiteCounty; sum TotalReimbursement.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt'\ncurrent_program_year = '2016-2017'\nbucket = 'lakeqa-yc4103-datalake'\nclient = boto3.client('s3', config=Config(signature_version=UNSIGNED))\nsources = {'2016-2017': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt', '2017-2018': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt', '2018-2019': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt', '2019-2020': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt'}\ntotals_by_year = {}\nfor program_year, key in sources.items():\n    obj = client.get_object(Bucket=bucket, Key=key)\n    frame = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n    county = frame['SiteCounty'].astype(str).str.strip().str.title()\n    reimbursement = pd.to_numeric(frame['TotalReimbursement'], errors='coerce')\n    yearly = pd.DataFrame({'SiteCounty': county, 'TotalReimbursement': reimbursement})[frame['ProgramYear'].astype(str).str.strip().eq(program_year)].copy()\n    totals_by_year[program_year] = yearly.groupby('SiteCounty')['TotalReimbursement'].sum()\ncounties = sorted(set().union(*[set(series.index) for series in totals_by_year.values()]))\nsummary = pd.DataFrame({'SiteCounty': counties})\nfor program_year, series in totals_by_year.items():\n    summary[program_year] = summary['SiteCounty'].map(series).fillna(0.0)\nsummary = summary[summary[list(sources)].mean(axis=1).ge(50000) & summary['2016-2017'].gt(0)].copy()\nsummary['PercentDecrease'] = (summary['2016-2017'] - summary['2019-2020']) / summary['2016-2017']\nordered_targets = summary.sort_values(['PercentDecrease', 'SiteCounty'], ascending=[False, True])['SiteCounty'].head(5).tolist()\ncurrent_totals = totals_by_year[current_program_year]\nanswer = {f'{name} County': round(float(current_totals.get(name, 0.0)), 4) for name in ordered_targets}",
+      "answer": {
+        "Brooks County": 60454.65,
+        "Willacy County": 158153.77,
+        "Comal County": 112322.52,
+        "Atascosa County": 141083.37,
+        "Victoria County": 95559.47
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2017-2018; group by SiteCounty; sum TotalReimbursement.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt'\ncurrent_program_year = '2017-2018'\nbucket = 'lakeqa-yc4103-datalake'\nclient = boto3.client('s3', config=Config(signature_version=UNSIGNED))\nsources = {'2016-2017': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt', '2017-2018': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt', '2018-2019': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt', '2019-2020': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt'}\ntotals_by_year = {}\nfor program_year, key in sources.items():\n    obj = client.get_object(Bucket=bucket, Key=key)\n    frame = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n    county = frame['SiteCounty'].astype(str).str.strip().str.title()\n    reimbursement = pd.to_numeric(frame['TotalReimbursement'], errors='coerce')\n    yearly = pd.DataFrame({'SiteCounty': county, 'TotalReimbursement': reimbursement})[frame['ProgramYear'].astype(str).str.strip().eq(program_year)].copy()\n    totals_by_year[program_year] = yearly.groupby('SiteCounty')['TotalReimbursement'].sum()\ncounties = sorted(set().union(*[set(series.index) for series in totals_by_year.values()]))\nsummary = pd.DataFrame({'SiteCounty': counties})\nfor program_year, series in totals_by_year.items():\n    summary[program_year] = summary['SiteCounty'].map(series).fillna(0.0)\nsummary = summary[summary[list(sources)].mean(axis=1).ge(50000) & summary['2016-2017'].gt(0)].copy()\nsummary['PercentDecrease'] = (summary['2016-2017'] - summary['2019-2020']) / summary['2016-2017']\nordered_targets = summary.sort_values(['PercentDecrease', 'SiteCounty'], ascending=[False, True])['SiteCounty'].head(5).tolist()\ncurrent_totals = totals_by_year[current_program_year]\nanswer = {f'{name} County': round(float(current_totals.get(name, 0.0)), 4) for name in ordered_targets}",
+      "answer": {
+        "Brooks County": 66250.97,
+        "Willacy County": 160898.5925,
+        "Comal County": 88868.98,
+        "Atascosa County": 142115.25,
+        "Victoria County": 89291.24
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum TotalReimbursement.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt'\ncurrent_program_year = '2018-2019'\nbucket = 'lakeqa-yc4103-datalake'\nclient = boto3.client('s3', config=Config(signature_version=UNSIGNED))\nsources = {'2016-2017': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt', '2017-2018': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt', '2018-2019': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt', '2019-2020': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt'}\ntotals_by_year = {}\nfor program_year, key in sources.items():\n    obj = client.get_object(Bucket=bucket, Key=key)\n    frame = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n    county = frame['SiteCounty'].astype(str).str.strip().str.title()\n    reimbursement = pd.to_numeric(frame['TotalReimbursement'], errors='coerce')\n    yearly = pd.DataFrame({'SiteCounty': county, 'TotalReimbursement': reimbursement})[frame['ProgramYear'].astype(str).str.strip().eq(program_year)].copy()\n    totals_by_year[program_year] = yearly.groupby('SiteCounty')['TotalReimbursement'].sum()\ncounties = sorted(set().union(*[set(series.index) for series in totals_by_year.values()]))\nsummary = pd.DataFrame({'SiteCounty': counties})\nfor program_year, series in totals_by_year.items():\n    summary[program_year] = summary['SiteCounty'].map(series).fillna(0.0)\nsummary = summary[summary[list(sources)].mean(axis=1).ge(50000) & summary['2016-2017'].gt(0)].copy()\nsummary['PercentDecrease'] = (summary['2016-2017'] - summary['2019-2020']) / summary['2016-2017']\nordered_targets = summary.sort_values(['PercentDecrease', 'SiteCounty'], ascending=[False, True])['SiteCounty'].head(5).tolist()\ncurrent_totals = totals_by_year[current_program_year]\nanswer = {f'{name} County': round(float(current_totals.get(name, 0.0)), 4) for name in ordered_targets}",
+      "answer": {
+        "Brooks County": 78426.43,
+        "Willacy County": 143725.8525,
+        "Comal County": 78748.11,
+        "Atascosa County": 139933.33,
+        "Victoria County": 88676.32
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2019-2020; group by SiteCounty; sum TotalReimbursement; treat missing counties as 0.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt'\ncurrent_program_year = '2019-2020'\nbucket = 'lakeqa-yc4103-datalake'\nclient = boto3.client('s3', config=Config(signature_version=UNSIGNED))\nsources = {'2016-2017': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt', '2017-2018': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt', '2018-2019': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt', '2019-2020': 'datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt'}\ntotals_by_year = {}\nfor program_year, key in sources.items():\n    obj = client.get_object(Bucket=bucket, Key=key)\n    frame = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n    county = frame['SiteCounty'].astype(str).str.strip().str.title()\n    reimbursement = pd.to_numeric(frame['TotalReimbursement'], errors='coerce')\n    yearly = pd.DataFrame({'SiteCounty': county, 'TotalReimbursement': reimbursement})[frame['ProgramYear'].astype(str).str.strip().eq(program_year)].copy()\n    totals_by_year[program_year] = yearly.groupby('SiteCounty')['TotalReimbursement'].sum()\ncounties = sorted(set().union(*[set(series.index) for series in totals_by_year.values()]))\nsummary = pd.DataFrame({'SiteCounty': counties})\nfor program_year, series in totals_by_year.items():\n    summary[program_year] = summary['SiteCounty'].map(series).fillna(0.0)\nsummary = summary[summary[list(sources)].mean(axis=1).ge(50000) & summary['2016-2017'].gt(0)].copy()\nsummary['PercentDecrease'] = (summary['2016-2017'] - summary['2019-2020']) / summary['2016-2017']\nordered_targets = summary.sort_values(['PercentDecrease', 'SiteCounty'], ascending=[False, True])['SiteCounty'].head(5).tolist()\ncurrent_totals = totals_by_year[current_program_year]\nanswer = {f'{name} County': round(float(current_totals.get(name, 0.0)), 4) for name in ordered_targets}",
+      "answer": {
+        "Brooks County": 0,
+        "Willacy County": 5005.3,
+        "Comal County": 37371.2,
+        "Atascosa County": 52913.23,
+        "Victoria County": 40390.435
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022",
+      "source": "datagov/ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022/files/rows.txt",
+      "intent": "Among the counties from hop 1, which had at least 1 abuse/neglect-related child fatality (2018-2022)? (Filter for this node: Fiscal Year in 2018-2022; group by County; sum Abuse Neglect Fatalities.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\ncandidate_counties = ['Brooks', 'Willacy', 'Comal', 'Atascosa', 'Victoria']\nfiscal_year = pd.to_numeric(df['Fiscal Year'], errors='coerce')\ncounty = df['County'].astype(str).str.strip().str.title()\nvalue = pd.to_numeric(df['Abuse Neglect Fatalities'], errors='coerce')\nfiltered = pd.DataFrame({'County': county, 'Value': value})[fiscal_year.between(2018, 2022) & county.isin(candidate_counties)].copy()\ntotals = filtered.groupby('County')['Value'].sum()\nanswer = [f'{name} County' for name in candidate_counties if totals.get(name, 0) >= 1]",
+      "answer": [
+        "Brooks County",
+        "Willacy County",
+        "Comal County",
+        "Victoria County"
+      ]
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022",
+      "source": "datagov/ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022/files/rows.txt",
+      "intent": "Among the counties from hop 1, which had at least 3 non-abuse/neglect child fatality investigations (2018-2022)? (Filter for this node: Fiscal Year in 2018-2022; group by County; sum Non-Abuse/Neglect Fatalities Investigated.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\ncandidate_counties = ['Brooks', 'Willacy', 'Comal', 'Atascosa', 'Victoria']\nfiscal_year = pd.to_numeric(df['Fiscal Year'], errors='coerce')\ncounty = df['County'].astype(str).str.strip().str.title()\nvalue = pd.to_numeric(df['Non-Abuse/Neglect Fatalities Investigated'], errors='coerce')\nfiltered = pd.DataFrame({'County': county, 'Value': value})[fiscal_year.between(2018, 2022) & county.isin(candidate_counties)].copy()\ntotals = filtered.groupby('County')['Value'].sum()\nanswer = [f'{name} County' for name in candidate_counties if totals.get(name, 0) >= 3]",
+      "answer": [
+        "Willacy County",
+        "Comal County",
+        "Atascosa County",
+        "Victoria County"
+      ]
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "nchs-drug-poisoning-mortality-by-county-united-states",
+      "source": "datagov/nchs-drug-poisoning-mortality-by-county-united-states/files/rows.txt",
+      "intent": "Among the counties from hop 2, which two had the highest model-based drug poisoning death rates in 2021? (Filter for this node: Year == 2021; State == Texas; County in {Comal County, TX, Victoria County, TX, Willacy County, TX}; use Model-based Death Rate.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/nchs-drug-poisoning-mortality-by-county-united-states/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\ncandidate_counties = ['Willacy County', 'Comal County', 'Victoria County']\nyear = pd.to_numeric(df['Year'], errors='coerce')\nstate = df['State'].astype(str).str.strip()\ncounty = df['County'].astype(str).str.strip()\nrate = pd.to_numeric(df['Model-based Death Rate'], errors='coerce')\ntargets = [f'{name}, TX' for name in candidate_counties]\nfiltered = pd.DataFrame({'County': county, 'Rate': rate})[year.eq(2021) & state.eq('Texas') & county.isin(targets)].copy()\nfiltered['County'] = filtered['County'].str.replace(', TX', '', regex=False)\nanswer = filtered.sort_values(['Rate', 'County'], ascending=[False, True])['County'].head(2).tolist()",
+      "answer": [
+        "Victoria County",
+        "Comal County"
+      ]
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "nchs-drug-poisoning-mortality-by-county-united-states-20278",
+      "source": "datagov/nchs-drug-poisoning-mortality-by-county-united-states-20278/files/rows.txt",
+      "intent": "Among the counties from hop 2, which two had the lowest age-adjusted drug poisoning death rate categories in 2016? (Filter for this node: Year == 2016; State == Texas; County in {Comal County, TX, Victoria County, TX, Willacy County, TX}; use Estimated Age-adjusted Death Rate, 16 Categories (in ranges).)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/nchs-drug-poisoning-mortality-by-county-united-states-20278/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\ncandidate_counties = ['Willacy County', 'Comal County', 'Victoria County']\ncategory_col = 'Estimated Age-adjusted Death Rate, 16 Categories (in ranges)'\nyear = pd.to_numeric(df['Year'], errors='coerce')\nstate = df['State'].astype(str).str.strip()\ncounty = df['County'].astype(str).str.strip()\nlower_bound = pd.to_numeric(df[category_col].astype(str).str.extract(r'([0-9]+(?:\\.[0-9]+)?)', expand=False), errors='coerce')\ntargets = [f'{name}, TX' for name in candidate_counties]\nfiltered = pd.DataFrame({'County': county, 'LowerBound': lower_bound})[year.eq(2016) & state.eq('Texas') & county.isin(targets)].copy()\nfiltered['County'] = filtered['County'].str.replace(', TX', '', regex=False)\nanswer = filtered.sort_values(['LowerBound', 'County'], ascending=[True, True])['County'].head(2).tolist()",
+      "answer": [
+        "Willacy County",
+        "Victoria County"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2016/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2016-2017; group by SiteCounty; sum TotalReimbursement.)",
+      "sql": "WITH targets(name, upper_name, ord) AS (VALUES ('Brooks', 'BROOKS', 0), ('Willacy', 'WILLACY', 1), ('Comal', 'COMAL', 2), ('Atascosa', 'ATASCOSA', 3), ('Victoria', 'VICTORIA', 4)), totals AS (\n  SELECT upper(trim(\"SiteCounty\")) AS county, SUM(TRY_CAST(\"TotalReimbursement\" AS DOUBLE)) AS total\n  FROM t\n  WHERE trim(\"ProgramYear\") = '2016-2017'\n    AND upper(trim(\"SiteCounty\")) IN (SELECT upper_name FROM targets)\n  GROUP BY county\n)\nSELECT json_group_object(targets.name || ' County', round(COALESCE(total, 0.0), 4)) AS answer\nFROM targets\nLEFT JOIN totals ON totals.county = targets.upper_name",
+      "answer": {
+        "Brooks County": 60454.65,
+        "Willacy County": 158153.77,
+        "Comal County": 112322.52,
+        "Atascosa County": 141083.37,
+        "Victoria County": 95559.47
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2017/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2017-2018; group by SiteCounty; sum TotalReimbursement.)",
+      "sql": "WITH targets(name, upper_name, ord) AS (VALUES ('Brooks', 'BROOKS', 0), ('Willacy', 'WILLACY', 1), ('Comal', 'COMAL', 2), ('Atascosa', 'ATASCOSA', 3), ('Victoria', 'VICTORIA', 4)), totals AS (\n  SELECT upper(trim(\"SiteCounty\")) AS county, SUM(TRY_CAST(\"TotalReimbursement\" AS DOUBLE)) AS total\n  FROM t\n  WHERE trim(\"ProgramYear\") = '2017-2018'\n    AND upper(trim(\"SiteCounty\")) IN (SELECT upper_name FROM targets)\n  GROUP BY county\n)\nSELECT json_group_object(targets.name || ' County', round(COALESCE(total, 0.0), 4)) AS answer\nFROM targets\nLEFT JOIN totals ON totals.county = targets.upper_name",
+      "answer": {
+        "Brooks County": 66250.97,
+        "Willacy County": 160898.5925,
+        "Comal County": 88868.98,
+        "Atascosa County": 142115.25,
+        "Victoria County": 89291.24
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2018/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum TotalReimbursement.)",
+      "sql": "WITH targets(name, upper_name, ord) AS (VALUES ('Brooks', 'BROOKS', 0), ('Willacy', 'WILLACY', 1), ('Comal', 'COMAL', 2), ('Atascosa', 'ATASCOSA', 3), ('Victoria', 'VICTORIA', 4)), totals AS (\n  SELECT upper(trim(\"SiteCounty\")) AS county, SUM(TRY_CAST(\"TotalReimbursement\" AS DOUBLE)) AS total\n  FROM t\n  WHERE trim(\"ProgramYear\") = '2018-2019'\n    AND upper(trim(\"SiteCounty\")) IN (SELECT upper_name FROM targets)\n  GROUP BY county\n)\nSELECT json_group_object(targets.name || ' County', round(COALESCE(total, 0.0), 4)) AS answer\nFROM targets\nLEFT JOIN totals ON totals.county = targets.upper_name",
+      "answer": {
+        "Brooks County": 78426.43,
+        "Willacy County": 143725.8525,
+        "Comal County": 78748.11,
+        "Atascosa County": 139933.33,
+        "Victoria County": 88676.32
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-adult-day-care-centers-meal-reimbursement-pr-2019/files/rows.txt",
+      "intent": "Which Texas counties had the five largest percent decreases in total adult day care meal reimbursements from 2016-2019 among counties averaging at least $50,000 across 2016-2019? (Filter for this node: ProgramYear == 2019-2020; group by SiteCounty; sum TotalReimbursement; treat missing counties as 0.)",
+      "sql": "WITH targets(name, upper_name, ord) AS (VALUES ('Brooks', 'BROOKS', 0), ('Willacy', 'WILLACY', 1), ('Comal', 'COMAL', 2), ('Atascosa', 'ATASCOSA', 3), ('Victoria', 'VICTORIA', 4)), totals AS (\n  SELECT upper(trim(\"SiteCounty\")) AS county, SUM(TRY_CAST(\"TotalReimbursement\" AS DOUBLE)) AS total\n  FROM t\n  WHERE trim(\"ProgramYear\") = '2019-2020'\n    AND upper(trim(\"SiteCounty\")) IN (SELECT upper_name FROM targets)\n  GROUP BY county\n)\nSELECT json_group_object(targets.name || ' County', round(COALESCE(total, 0.0), 4)) AS answer\nFROM targets\nLEFT JOIN totals ON totals.county = targets.upper_name",
+      "answer": {
+        "Brooks County": 0,
+        "Willacy County": 5005.3,
+        "Comal County": 37371.2,
+        "Atascosa County": 52913.23,
+        "Victoria County": 40390.435
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022",
+      "source": "datagov/ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022/files/rows.txt",
+      "intent": "Among the counties from hop 1, which had at least 1 abuse/neglect-related child fatality (2018-2022)? (Filter for this node: Fiscal Year in 2018-2022; group by County; sum Abuse Neglect Fatalities.)",
+      "sql": "WITH targets(name, upper_name, ord) AS (VALUES ('Brooks', 'BROOKS', 0), ('Willacy', 'WILLACY', 1), ('Comal', 'COMAL', 2), ('Atascosa', 'ATASCOSA', 3), ('Victoria', 'VICTORIA', 4)), totals AS (\n  SELECT upper(trim(\"County\")) AS county, SUM(TRY_CAST(\"Abuse Neglect Fatalities\" AS DOUBLE)) AS total\n  FROM t\n  WHERE TRY_CAST(\"Fiscal Year\" AS DOUBLE) BETWEEN 2018 AND 2022\n    AND upper(trim(\"County\")) IN (SELECT upper_name FROM targets)\n  GROUP BY county\n)\nSELECT targets.name || ' County' AS answer\nFROM targets\nLEFT JOIN totals ON totals.county = targets.upper_name\nWHERE COALESCE(totals.total, 0) >= 1\nORDER BY targets.ord",
+      "answer": [
+        "Brooks County",
+        "Willacy County",
+        "Comal County",
+        "Victoria County"
+      ]
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022",
+      "source": "datagov/ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022/files/rows.txt",
+      "intent": "Among the counties from hop 1, which had at least 3 non-abuse/neglect child fatality investigations (2018-2022)? (Filter for this node: Fiscal Year in 2018-2022; group by County; sum Non-Abuse/Neglect Fatalities Investigated.)",
+      "sql": "WITH targets(name, upper_name, ord) AS (VALUES ('Brooks', 'BROOKS', 0), ('Willacy', 'WILLACY', 1), ('Comal', 'COMAL', 2), ('Atascosa', 'ATASCOSA', 3), ('Victoria', 'VICTORIA', 4)), totals AS (\n  SELECT upper(trim(\"County\")) AS county, SUM(TRY_CAST(\"Non-Abuse/Neglect Fatalities Investigated\" AS DOUBLE)) AS total\n  FROM t\n  WHERE TRY_CAST(\"Fiscal Year\" AS DOUBLE) BETWEEN 2018 AND 2022\n    AND upper(trim(\"County\")) IN (SELECT upper_name FROM targets)\n  GROUP BY county\n)\nSELECT targets.name || ' County' AS answer\nFROM targets\nLEFT JOIN totals ON totals.county = targets.upper_name\nWHERE COALESCE(totals.total, 0) >= 3\nORDER BY targets.ord",
+      "answer": [
+        "Willacy County",
+        "Comal County",
+        "Atascosa County",
+        "Victoria County"
+      ]
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "nchs-drug-poisoning-mortality-by-county-united-states",
+      "source": "datagov/nchs-drug-poisoning-mortality-by-county-united-states/files/rows.txt",
+      "intent": "Among the counties from hop 2, which two had the highest model-based drug poisoning death rates in 2021? (Filter for this node: Year == 2021; State == Texas; County in {Comal County, TX, Victoria County, TX, Willacy County, TX}; use Model-based Death Rate.)",
+      "sql": "WITH ranked AS (\n  SELECT replace(trim(\"County\"), ', TX', '') AS county, TRY_CAST(\"Model-based Death Rate\" AS DOUBLE) AS rate\n  FROM t\n  WHERE TRY_CAST(\"Year\" AS DOUBLE) = 2021\n    AND trim(\"State\") = 'Texas'\n    AND trim(\"County\") IN ('Willacy County, TX', 'Comal County, TX', 'Victoria County, TX')\n  ORDER BY rate DESC, county ASC\n  LIMIT 2\n)\nSELECT county AS answer FROM ranked",
+      "answer": [
+        "Victoria County",
+        "Comal County"
+      ]
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "nchs-drug-poisoning-mortality-by-county-united-states-20278",
+      "source": "datagov/nchs-drug-poisoning-mortality-by-county-united-states-20278/files/rows.txt",
+      "intent": "Among the counties from hop 2, which two had the lowest age-adjusted drug poisoning death rate categories in 2016? (Filter for this node: Year == 2016; State == Texas; County in {Comal County, TX, Victoria County, TX, Willacy County, TX}; use Estimated Age-adjusted Death Rate, 16 Categories (in ranges).)",
+      "sql": "WITH ranked AS (\n  SELECT\n    replace(trim(\"County\"), ', TX', '') AS county,\n    TRY_CAST(regexp_extract(CAST(\"Estimated Age-adjusted Death Rate, 16 Categories (in ranges)\" AS VARCHAR), '([0-9]+(\\.[0-9]+)?)', 1) AS DOUBLE) AS lower_bound\n  FROM t\n  WHERE TRY_CAST(\"Year\" AS DOUBLE) = 2016\n    AND trim(\"State\") = 'Texas'\n    AND trim(\"County\") IN ('Willacy County, TX', 'Comal County, TX', 'Victoria County, TX')\n  ORDER BY lower_bound ASC, county ASC\n  LIMIT 2\n)\nSELECT county AS answer FROM ranked",
+      "answer": [
+        "Willacy County",
+        "Victoria County"
+      ]
+    }
+  ]
+}

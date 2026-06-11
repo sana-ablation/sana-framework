@@ -1,0 +1,161 @@
+{
+  "dataset_sequence": [
+    "accidental-drug-related-deaths-2012-2018",
+    "connecticut-covid-19-community-levels-by-county-as-originally-posted",
+    "New_Haven_County,_Connecticut",
+    "Fairfield_County,_Connecticut",
+    "500-cities-city-level-data-gis-friendly-format-2018-release",
+    "500-cities-city-level-data-gis-friendly-format-2019-release",
+    "New_Haven,_Connecticut",
+    "Yale_University"
+  ],
+  "source_sequence": [
+    "datagov/accidental-drug-related-deaths-2012-2018/files/rows.txt",
+    "datagov/connecticut-covid-19-community-levels-by-county-as-originally-posted/files/rows.txt",
+    "wikipedia/New_Haven_County,_Connecticut/content.txt",
+    "wikipedia/Fairfield_County,_Connecticut/content.txt",
+    "datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt",
+    "datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt",
+    "wikipedia/New_Haven,_Connecticut/content.txt",
+    "wikipedia/Yale_University/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify Connecticut counties with over 200 accidental drug deaths in 2020.",
+    "2. Identify Connecticut counties with a COVID-19 health service area number above the requested threshold, then keep counties also found in step 1.",
+    "3. Among the counties remaining after step 2, compare their accidental drug death counts.",
+    "4. Using the higher- and lower-count counties from step 3, apply the requested city-size ranking criteria to identify the comparison cities.",
+    "5. For those two cities, compute the average lack-of-health-insurance rate across 2018 and 2019 and keep the city with the lower average.",
+    "6. Determine the largest employer in that city.",
+    "7. Return the person after whom that employer is named."
+  ],
+  "original_final_question": "Two Connecticut counties satisfy both criteria: (1) over 200 accidental drug deaths in 2020, and (2) a COVID-19 health service area number above 80. Find the city in the County with higher accidental drug deaths in 2020 ranking 3rd among Connecticut's largest cities, and the city in the County with lower accidental drug deaths in 2020 ranking first among the state's largest cities. According to report by centers for disease control and prevention, find which of these two cities had the lower average lack-of-health-insurance rate across 2018 and 2019. Then find largest employer in that city. Just tell me after whom is that employer named?. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2, data.gov INTERSECTION - nodes 1-2):",
+    "  Node 1: CT Drug Deaths 2020, counties with >200 deaths -> {New Haven (383), Hartford (335), Fairfield (208)}",
+    "  Node 2: CT COVID data, counties with HSA number >80 -> {Fairfield (121), New Haven (85), Middlesex (85), Litchfield (85)}",
+    "  Intersection(1,2) -> {New Haven County, Fairfield County} = <hop 1 answer>",
+    "  Note: Hartford excluded (HSA=4, not >80); Middlesex and Litchfield excluded (<200 drug deaths)",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 3-4 identifying top-ranked cities within those counties):",
+    "  Node 3: New Haven County Wikipedia -> New Haven (3rd) is one of the state's five largest cities in the county",
+    "  Node 4: Fairfield County Wikipedia -> Bridgeport (first) is one of the state's seven largest cities in the county",
+    "  Result: {New Haven, Bridgeport} = <hop 2 answer>",
+    "",
+    "HOP 3 (d=2, data.gov AGGREGATION - nodes 5-6 comparing cities' health metrics):",
+    "  Node 5: 500 Cities 2018 -> New Haven ACCESS2=13.9%, Bridgeport ACCESS2=16.9%",
+    "  Node 6: 500 Cities 2019 -> New Haven ACCESS2=15.4%, Bridgeport ACCESS2=19.3%",
+    "  Aggregation: Average(2018, 2019)",
+    "    New Haven: (13.9 + 15.4) / 2 = 14.65%",
+    "    Bridgeport: (16.9 + 19.3) / 2 = 18.1%",
+    "  Result: New Haven has lower average (14.65% < 18.1%) -> New Haven wins = <hop 3 answer>",
+    "  Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 7 identifies largest employer in winning city):",
+    "  Node 7: New Haven Wikipedia -> Yale is the city's largest employer",
+    "  Result: Yale University = <hop 4 answer>",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 8 depends on node 7):",
+    "  Node 8: Yale University Wikipedia -> named after Elihu Yale (colonial-era benefactor)",
+    "  Result: Elihu Yale = <hop 5 answer>",
+    "",
+    "Final answer: Elihu Yale"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "accidental-drug-related-deaths-2012-2018",
+      "source": "datagov/accidental-drug-related-deaths-2012-2018/files/rows.txt",
+      "intent": "Which Connecticut counties had over 200 accidental drug deaths in 2020?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/accidental-drug-related-deaths-2012-2018/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Date\"] = pd.to_datetime(df[\"Date\"], errors=\"coerce\")\ndf_2020 = df[df[\"Date\"].dt.year == 2020].copy()\ndf_2020[\"Residence County\"] = df_2020[\"Residence County\"].fillna(\"\").astype(str).str.strip()\ncounty_counts = df_2020.loc[df_2020[\"Residence County\"] != \"\", \"Residence County\"].value_counts().rename_axis(\"county\").reset_index(name=\"count\")\ncounty_counts[\"county\"] = county_counts[\"county\"].str.title() + \" County\"\nanswer = county_counts.loc[county_counts[\"count\"] > 200, \"county\"].tolist()",
+      "answer": [
+        "New Haven County",
+        "Hartford County",
+        "Fairfield County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "connecticut-covid-19-community-levels-by-county-as-originally-posted",
+      "source": "datagov/connecticut-covid-19-community-levels-by-county-as-originally-posted/files/rows.txt",
+      "intent": "Which Connecticut counties have a COVID-19 health service area number above 80?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/connecticut-covid-19-community-levels-by-county-as-originally-posted/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nfiltered = df[(df[\"state\"] == \"Connecticut\") & (df[\"health_service_area_number\"] > 80)].copy()\nanswer = filtered[\"county_name\"].drop_duplicates().tolist()",
+      "answer": [
+        "Fairfield County",
+        "New Haven County",
+        "Middlesex County",
+        "Litchfield County"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2018-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt",
+      "intent": "What was the ACCESS2 (lack of health insurance) rate for <hop 2 answer: New Haven and Bridgeport> in 2018?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncities = [\"New Haven\", \"Bridgeport\"]\nfiltered = df[(df[\"StateAbbr\"] == \"CT\") & (df[\"PlaceName\"].isin(cities))].copy()\nfiltered[\"ACCESS2_CrudePrev\"] = pd.to_numeric(filtered[\"ACCESS2_CrudePrev\"], errors=\"coerce\")\nvalues = filtered.set_index(\"PlaceName\")[\"ACCESS2_CrudePrev\"].to_dict()\nanswer = {city: f\"{values[city]:.1f}%\" for city in cities}",
+      "answer": {
+        "New Haven": "13.9%",
+        "Bridgeport": "16.9%"
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2019-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt",
+      "intent": "What was the ACCESS2 (lack of health insurance) rate for <hop 2 answer: New Haven and Bridgeport> in 2019?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncities = [\"New Haven\", \"Bridgeport\"]\nfiltered = df[(df[\"StateAbbr\"] == \"CT\") & (df[\"PlaceName\"].isin(cities))].copy()\nfiltered[\"ACCESS2_CrudePrev\"] = pd.to_numeric(filtered[\"ACCESS2_CrudePrev\"], errors=\"coerce\")\nvalues = filtered.set_index(\"PlaceName\")[\"ACCESS2_CrudePrev\"].to_dict()\nanswer = {city: f\"{values[city]:.1f}%\" for city in cities}",
+      "answer": {
+        "New Haven": "15.4%",
+        "Bridgeport": "19.3%"
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "accidental-drug-related-deaths-2012-2018",
+      "source": "datagov/accidental-drug-related-deaths-2012-2018/files/rows.txt",
+      "intent": "Which Connecticut counties had over 200 accidental drug deaths in 2020?",
+      "sql": "WITH mapped AS (\n  SELECT CASE upper(trim(\"Residence County\"))\n           WHEN 'NEW HAVEN' THEN 'New Haven County'\n           WHEN 'HARTFORD' THEN 'Hartford County'\n           WHEN 'FAIRFIELD' THEN 'Fairfield County'\n           WHEN 'NEW LONDON' THEN 'New London County'\n           WHEN 'LITCHFIELD' THEN 'Litchfield County'\n           WHEN 'MIDDLESEX' THEN 'Middlesex County'\n           WHEN 'WINDHAM' THEN 'Windham County'\n           WHEN 'TOLLAND' THEN 'Tolland County'\n         END AS county\n  FROM t\n  WHERE EXTRACT(year FROM TRY_CAST(\"Date\" AS DATE)) = 2020\n    AND coalesce(trim(\"Residence County\"), '') <> ''\n), counts AS (\n  SELECT county, COUNT(*) AS deaths\n  FROM mapped\n  WHERE county IS NOT NULL\n  GROUP BY county\n)\nSELECT county AS answer\nFROM counts\nWHERE deaths > 200\nORDER BY deaths DESC",
+      "answer": [
+        "New Haven County",
+        "Hartford County",
+        "Fairfield County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "connecticut-covid-19-community-levels-by-county-as-originally-posted",
+      "source": "datagov/connecticut-covid-19-community-levels-by-county-as-originally-posted/files/rows.txt",
+      "intent": "Which Connecticut counties have a COVID-19 health service area number above 80?",
+      "sql": "SELECT DISTINCT \"county_name\" AS answer\nFROM t\nWHERE \"state\" = 'Connecticut'\n  AND TRY_CAST(\"health_service_area_number\" AS DOUBLE) > 80\nORDER BY CASE \"county_name\"\n  WHEN 'Fairfield County' THEN 1\n  WHEN 'New Haven County' THEN 2\n  WHEN 'Middlesex County' THEN 3\n  WHEN 'Litchfield County' THEN 4\n  ELSE 99 END",
+      "answer": [
+        "Fairfield County",
+        "New Haven County",
+        "Middlesex County",
+        "Litchfield County"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2018-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2018-release/files/rows.txt",
+      "intent": "What was the ACCESS2 (lack of health insurance) rate for <hop 2 answer: New Haven and Bridgeport> in 2018?",
+      "sql": "WITH vals AS (\n  SELECT \"PlaceName\" AS city, printf('%.1f%%', TRY_CAST(\"ACCESS2_CrudePrev\" AS DOUBLE)) AS value\n  FROM t\n  WHERE \"StateAbbr\" = 'CT'\n    AND \"PlaceName\" IN ('New Haven', 'Bridgeport')\n)\nSELECT json_group_object(city, value) AS answer FROM vals",
+      "answer": {
+        "New Haven": "13.9%",
+        "Bridgeport": "16.9%"
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "500-cities-city-level-data-gis-friendly-format-2019-release",
+      "source": "datagov/500-cities-city-level-data-gis-friendly-format-2019-release/files/rows.txt",
+      "intent": "What was the ACCESS2 (lack of health insurance) rate for <hop 2 answer: New Haven and Bridgeport> in 2019?",
+      "sql": "WITH vals AS (\n  SELECT \"PlaceName\" AS city, printf('%.1f%%', TRY_CAST(\"ACCESS2_CrudePrev\" AS DOUBLE)) AS value\n  FROM t\n  WHERE \"StateAbbr\" = 'CT'\n    AND \"PlaceName\" IN ('New Haven', 'Bridgeport')\n)\nSELECT json_group_object(city, value) AS answer FROM vals",
+      "answer": {
+        "New Haven": "15.4%",
+        "Bridgeport": "19.3%"
+      }
+    }
+  ]
+}

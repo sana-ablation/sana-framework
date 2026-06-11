@@ -1,0 +1,100 @@
+{
+  "dataset_sequence": [
+    "311-city-service-requests-in-2019",
+    "311-city-service-requests-in-2020",
+    "Neighborhoods_in_Washington,_D.C.",
+    "Wendell_Felder",
+    "Georgetown_University",
+    "John_Carroll_(archbishop_of_Baltimore)",
+    "Patrick_Francis_Healy"
+  ],
+  "source_sequence": [
+    "datagov/311-city-service-requests-in-2019/files/data.txt",
+    "datagov/311-city-service-requests-in-2020/files/data.txt",
+    "wikipedia/Neighborhoods_in_Washington,_D.C./content.txt",
+    "wikipedia/Wendell_Felder/content.txt",
+    "wikipedia/Georgetown_University/content.txt",
+    "wikipedia/Georgetown_University/content.txt",
+    "wikipedia/John_Carroll_(archbishop_of_Baltimore)/content.txt",
+    "wikipedia/Patrick_Francis_Healy/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For DC wards 7 and 8, count 311 service requests in 2019 and 2020, compute the two-year average for each ward, and keep the ward with the higher average.",
+    "2. Determine who represents that ward on the DC Council.",
+    "3. Determine which university awarded that council member a graduate degree.",
+    "4. Identify the founder of that university and the person after whom its flagship National Historic Landmark building is named.",
+    "5. Compare those two people's birth years and return the earlier birth year."
+  ],
+  "original_final_question": "Among DC wards 7 and 8, identify which ward had the higher average 311 service requests from 2019 through 2020. Who represents that ward on the DC Council? This council member earned a graduate degree from a university whose flagship building is a National Historic Landmark. Among the founder of the university and the person the flagship building is named after, in what year was the earlier-born individual born? Please return the year only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2): Between DC wards 7 and 8, which had higher average 311 service requests (2019-2020)?",
+    "  Node 1: DC 311 2019 - Ward 7: 42,226, Ward 8: 34,959",
+    "  Node 2: DC 311 2020 - Ward 7: 36,113, Ward 8: 37,124",
+    "  Aggregation: Average 311 requests 2019-2020",
+    "    Ward 7: (42,226 + 36,113) / 2 = 39,170 avg",
+    "    Ward 8: (34,959 + 37,124) / 2 = 36,042 avg",
+    "  Comparison: Ward 7 (39,170) > Ward 8 (36,042)",
+    "  Result: Ward 7 selected",
+    "",
+    "HOP 2 (d=1): Who represents the selected ward on the DC Council?",
+    "  Node 3: Neighborhoods in Washington, D.C. article lists \"Ward 7 Councilmember: Wendell Felder\"",
+    "  Result: Wendell Felder",
+    "",
+    "HOP 3 (d=1): Which university did the council member attend for graduate studies?",
+    "  Node 4: Wendell Felder article states he earned a M.A. from Georgetown University",
+    "  Result: Georgetown University",
+    "",
+    "HOP 4 (d=2): Who founded the university, and who is its flagship building (a National Historic Landmark) named after?",
+    "  Node 5: Georgetown University article -> founded by John Carroll in 1789",
+    "  Node 6: Healy Hall article -> the flagship building is named after Patrick Francis Healy",
+    "  Result: John Carroll (founder) and Patrick Francis Healy (flagship building namesake)",
+    "",
+    "HOP 5 (d=2): In what year was the earlier-born of the two figures (from hop 4) born?",
+    "  Node 7: John Carroll -> born January 8, 1735",
+    "  Node 8: Patrick Francis Healy -> born February 27, 1834",
+    "  Comparison: 1735 < 1834 -> John Carroll was born earlier",
+    "  Result: 1735",
+    "",
+    "Final answer: 1735"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "311-city-service-requests-in-2019",
+      "source": "datagov/311-city-service-requests-in-2019/files/data.txt",
+      "intent": "Between DC wards 7 and 8, which had higher average 311 service requests (2019-2020)? (Filter for this node: WARD in {7, 8}; group by WARD; count records.)",
+      "code": "import json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-incidents-in-2019/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ngeo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\n\ndf = pd.DataFrame([feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])])\nviolent_offenses = {\"HOMICIDE\", \"ASSAULT W/DANGEROUS WEAPON\", \"ROBBERY\", \"SEX ABUSE\"}\nfiltered = df[df[\"OFFENSE\"].astype(str).str.strip().isin(violent_offenses)]\ncounts = filtered[\"WARD\"].astype(str).str.strip()\ncounts = counts[counts.ne(\"\") & counts.ne(\"nan\")].value_counts().to_dict()\nanswer = {f\"Ward {ward}\": int(counts[ward]) for ward in sorted(counts, key=int)}\n",
+      "answer": [
+        "Ward 7 (42,226)",
+        "Ward 8 (34,959)"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "311-city-service-requests-in-2020",
+      "source": "datagov/311-city-service-requests-in-2020/files/data.txt",
+      "intent": "Between DC wards 7 and 8, which had higher average 311 service requests (2019-2020)? (Filter for this node: WARD in {7, 8}; group by WARD; count records.)",
+      "code": "import json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-incidents-in-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ngeo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\n\ndf = pd.DataFrame([feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])])\nviolent_offenses = {\"HOMICIDE\", \"ASSAULT W/DANGEROUS WEAPON\", \"ROBBERY\", \"SEX ABUSE\"}\nfiltered = df[df[\"OFFENSE\"].astype(str).str.strip().isin(violent_offenses)]\ncounts = filtered[\"WARD\"].astype(str).str.strip()\ncounts = counts[counts.ne(\"\") & counts.ne(\"nan\")].value_counts().to_dict()\nanswer = {f\"Ward {ward}\": int(counts[ward]) for ward in sorted(counts, key=int)}\n",
+      "answer": [
+        "Ward 7 (36,113)",
+        "Ward 8 (37,124)"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "311-city-service-requests-in-2019",
+      "source": "datagov/311-city-service-requests-in-2019/files/data.txt",
+      "intent": "Between DC wards 7 and 8, which had higher average 311 service requests (2019-2020)? (Filter for this node: WARD in {7, 8}; group by WARD; count records.)",
+      "answer": "Cannot execute SQL: query_file does not complete within practical preflight time for this GeoJSON source."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "311-city-service-requests-in-2020",
+      "source": "datagov/311-city-service-requests-in-2020/files/data.txt",
+      "intent": "Between DC wards 7 and 8, which had higher average 311 service requests (2019-2020)? (Filter for this node: WARD in {7, 8}; group by WARD; count records.)",
+      "answer": "Cannot execute SQL: query_file does not complete within practical preflight time for this GeoJSON source."
+    }
+  ]
+}

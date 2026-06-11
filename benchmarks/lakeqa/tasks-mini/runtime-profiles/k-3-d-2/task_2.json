@@ -1,0 +1,80 @@
+{
+  "dataset_sequence": [
+    "Brightwood_(Washington,_D.C.)",
+    "crime-incidents-in-2020",
+    "crime-incidents-in-2021"
+  ],
+  "source_sequence": [
+    "wikipedia/Brightwood_(Washington,_D.C.)/content.txt",
+    "datagov/crime-incidents-in-2020/files/data.txt",
+    "datagov/crime-incidents-in-2021/files/data.txt",
+    "datagov/crime-incidents-in-2020/files/data.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine which Washington, D.C. ward contains Brightwood.",
+    "2. In 2020 crime incidents for that ward, identify the most common offense and establish the 2020 incident-count baseline for that offense.",
+    "3. In 2021 crime incidents for the same ward and offense, count incidents, compare that count to the 2020 count from step 2 as a percentage, and return the rounded integer."
+  ],
+  "original_final_question": "I'm considering living in Brightwood, Washington, D.C. Identify the ward Brightwood belongs to, find the most common offense in that ward in 2020, and report the percentage of incidents for that same offense from 2020 to that of the next year. Rounded to the nearest integer. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Brightwood is in Washington, D.C. Ward 4.",
+    "Node 2 depends on node 1: In 2020 within Ward 4, the most common offense is THEFT F/AUTO.",
+    "Node 3 depends on node 2: 2021 Ward 4 incidents for THEFT F/AUTO = 996.",
+    "Node 4 depends on node 1: In 2020 within Ward 4, the incident count of the most common offense = 1,070.",
+    "Compute percent of 2020 level in 2021: 996 / 1070 * 100 \u2248 93.08%.",
+    "Round to nearest whole percent: 93.",
+    "Final answer: 93"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "crime-incidents-in-2020",
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "intent": "In 2020 Washington, D.C. crime-incidents data, within Ward <node_1 answer>, which offense is most common?",
+      "code": "import json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-incidents-in-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ngeo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\nrows = [feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])]\ndf = pd.DataFrame(rows)\nnode_1_answer = \"4\"\n\nfiltered = df[df[\"WARD\"].astype(str).str.strip().eq(str(node_1_answer).strip())]\nanswer = str(filtered[\"OFFENSE\"].astype(str).str.strip().value_counts().index[0])",
+      "answer": "THEFT F/AUTO"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "crime-incidents-in-2021",
+      "source": "datagov/crime-incidents-in-2021/files/data.txt",
+      "intent": "In 2021 Washington, D.C. crime-incidents data, how many incidents with offense <node_2 answer> occurred in Ward <node_1 answer>?",
+      "code": "import json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-incidents-in-2021/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ngeo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\nrows = [feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])]\ndf = pd.DataFrame(rows)\nnode_1_answer = \"4\"\nnode_2_answer = \"THEFT F/AUTO\"\n\nfiltered = df[\n    df[\"WARD\"].astype(str).str.strip().eq(str(node_1_answer).strip())\n    & df[\"OFFENSE\"].astype(str).str.strip().eq(str(node_2_answer).strip())\n]\nanswer = str(int(len(filtered)))",
+      "answer": "996"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-incidents-in-2020",
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "intent": "In 2020 Washington, D.C. crime-incidents data, within Ward <node_1 answer>, what is the incident count of the most common offense?",
+      "code": "import json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-incidents-in-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ngeo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\nrows = [feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])]\ndf = pd.DataFrame(rows)\nnode_1_answer = \"4\"\nnode_2_answer = \"THEFT F/AUTO\"\n\nfiltered = df[\n    df[\"WARD\"].astype(str).str.strip().eq(str(node_1_answer).strip())\n    & df[\"OFFENSE\"].astype(str).str.strip().eq(str(node_2_answer).strip())\n]\nanswer = str(int(len(filtered)))",
+      "answer": "1070"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "crime-incidents-in-2020",
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "intent": "In 2020 Washington, D.C. crime-incidents data, within Ward <node_1 answer>, which offense is most common?",
+      "sql": "SELECT trim(f.properties.OFFENSE) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.WARD) = '4'\n  AND trim(f.properties.OFFENSE) <> ''\nGROUP BY answer\nORDER BY COUNT(*) DESC, answer ASC\nLIMIT 1",
+      "answer": "THEFT F/AUTO"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "crime-incidents-in-2021",
+      "source": "datagov/crime-incidents-in-2021/files/data.txt",
+      "intent": "In 2021 Washington, D.C. crime-incidents data, how many incidents with offense <node_2 answer> occurred in Ward <node_1 answer>?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.WARD) = '4'\n  AND trim(f.properties.OFFENSE) = 'THEFT F/AUTO' ",
+      "answer": "996"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-incidents-in-2020",
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "intent": "In 2020 Washington, D.C. crime-incidents data, within Ward <node_1 answer>, what is the incident count of the most common offense?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.WARD) = '4'\n  AND trim(f.properties.OFFENSE) = 'THEFT F/AUTO' ",
+      "answer": "1070"
+    }
+  ]
+}

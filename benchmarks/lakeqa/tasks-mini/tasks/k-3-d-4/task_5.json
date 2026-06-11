@@ -1,0 +1,126 @@
+{
+  "question": "Can you tell me which high school had a consistently top 3 number of violent/disruptive incident reported between 2010 and 2014? The borough containing that high school also has a suspension bridge that connects to NYC, what is the name of that suspension bridge?. Your response should be in the format [Answer].",
+  "answer": "Verrazzano-Narrows Bridge",
+  "nodes": {
+    "1": {
+      "source": "datagov/2010-2011-vadir-incidents/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2010-2011-vadir-incidents/files/rows.txt'\ndf = pd.read_csv(source)\nincident_columns = ['Homicide With Weapon(s)', 'Homicide Without Weapon(s)', 'Forcible Sex Offenses With Weapon(s)', 'Forcible Sex Offenses Without Weapon(s)', 'Other Sex Offenses With Weapon(s)', 'Other Sex Offenses Without Weapon(s)', 'Robbery With Weapon(s)', 'Robbery Without Weapon(s)', 'Assault With Serious Physical Injury With Weapon(s)', 'Assault With Serious Physical Injury Without Weapon(s)', 'Arson With Weapon(s)', 'Kidnapping With Weapon(s)', 'Kidnapping Without Weapon(s)', 'Assault with Physical Injury With Weapon(s)', 'Assault with Physical Injury Without Weapon(s)', 'Reckless Endangerment With Weapon(s)', 'Reckless Endangerment Without Weapon(s)', 'Minor Altercations With Weapon(s)', 'Minor Altercations Without Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying With Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying Without Weapon(s)', 'Burglary With Weapon(s)', 'Burglary Without Weapon(s)', 'Criminal Mischief With Weapon(s)', 'Criminal Mischief Without Weapon(s)', 'Larceny, or Other Theft With Weapon(s)', 'Larceny, or Other Theft Without Weapon(s)', 'Bomb Threat', 'False Alarm', 'Riot With Weapon(s)', 'Riot Without Weapon(s)', 'Weapon PossessionThrough Screening', 'Weapon Possession Under Other Circumstances', 'Drug Possession', 'Alcohol Possession', 'Other Disruptive']\nfor column in incident_columns:\n    df[column] = pd.to_numeric(df[column], errors='coerce').fillna(0)\ndf['total_incidents'] = df[incident_columns].sum(axis=1)\ndf['school_key'] = df['School Name'].astype(str).str.strip().str.upper()\nfiltered = df[(df['Need/Resource Category'] == 'New York City') & (df['school_key'].str.contains('HIGH SCHOOL|^JHS |SECONDARY|^ACAD', regex=True, na=False) & ~df['school_key'].str.startswith('IS '))].copy()\nname_map = {\n    'HERBERT H LEHMAN HIGH SCHOOL': 'Herbert H Lehman High School',\n    'JHS 13 JACKIE ROBINSON': 'Jhs 13 Jackie Robinson',\n    'SUSAN E WAGNER HIGH SCHOOL': 'Susan E. Wagner High School',\n    'JOHN ADAMS HIGH SCHOOL': 'John Adams High School',\n    'BROOKLYN SECONDARY SCHOOL FOR COLLABORATIVE STUDIES': 'Brooklyn Secondary School for Collaborative Studies',\n    'RICHMOND HILL HIGH SCHOOL': 'Richmond Hill High School',\n    'ACAD FOR COLLEGE PREP & CAREER EXPLORATION: A COLLEGE BOARD SCH': 'Acad For College Prep & Career Exploration',\n}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['School Name'].astype(str).str.strip())\nranked = filtered.sort_values(['total_incidents', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC high schools were in the top 3 by total VADIR incidents in 2010-11?",
+      "answer": [
+        "Herbert H Lehman High School",
+        "Jhs 13 Jackie Robinson",
+        "Susan E. Wagner High School"
+      ]
+    },
+    "2": {
+      "source": "datagov/2011-2012-vadir-incidents/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2011-2012-vadir-incidents/files/rows.txt'\ndf = pd.read_csv(source)\nincident_columns = ['Homicide With Weapon(s)', 'Homicide Without Weapon(s)', 'Forcible Sex Offenses With Weapon(s)', 'Forcible Sex Offenses Without Weapon(s)', 'Other Sex Offenses With Weapon(s)', 'Other Sex Offenses Without Weapon(s)', 'Robbery With Weapon(s)', 'Robbery Without Weapon(s)', 'Assault With Serious Physical Injury With Weapon(s)', 'Assault With Serious Physical Injury Without Weapon(s)', 'Arson With Weapon(s)', 'Kidnapping With Weapon(s)', 'Kidnapping Without Weapon(s)', 'Assault with Physical Injury With Weapon(s)', 'Assault with Physical Injury Without Weapon(s)', 'Reckless Endangerment With Weapon(s)', 'Reckless Endangerment Without Weapon(s)', 'Minor Altercations With Weapon(s)', 'Minor Altercations Without Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying With Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying Without Weapon(s)', 'Burglary With Weapon(s)', 'Burglary Without Weapon(s)', 'Criminal Mischief With Weapon(s)', 'Criminal Mischief Without Weapon(s)', 'Larceny, or Other Theft With Weapon(s)', 'Larceny, or Other Theft Without Weapon(s)', 'Bomb Threat', 'False Alarm', 'Riot With Weapon(s)', 'Riot Without Weapon(s)', 'Weapon PossessionThrough Screening', 'Weapon Possession Under Other Circumstances', 'Drug Possession', 'Alcohol Possession', 'Other Disruptive']\nfor column in incident_columns:\n    df[column] = pd.to_numeric(df[column], errors='coerce').fillna(0)\ndf['total_incidents'] = df[incident_columns].sum(axis=1)\ndf['school_key'] = df['School Name'].astype(str).str.strip().str.upper()\nfiltered = df[(df['Need/Resource Category'] == 'New York City') & (df['Grade Organization'].astype(str).str.upper().isin(['SENIOR HIGH', 'JUNIOR SENIOR SCHOOL']))].copy()\nname_map = {\n    'HERBERT H LEHMAN HIGH SCHOOL': 'Herbert H Lehman High School',\n    'JHS 13 JACKIE ROBINSON': 'Jhs 13 Jackie Robinson',\n    'SUSAN E WAGNER HIGH SCHOOL': 'Susan E. Wagner High School',\n    'JOHN ADAMS HIGH SCHOOL': 'John Adams High School',\n    'BROOKLYN SECONDARY SCHOOL FOR COLLABORATIVE STUDIES': 'Brooklyn Secondary School for Collaborative Studies',\n    'RICHMOND HILL HIGH SCHOOL': 'Richmond Hill High School',\n    'ACAD FOR COLLEGE PREP & CAREER EXPLORATION: A COLLEGE BOARD SCH': 'Acad For College Prep & Career Exploration',\n}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['School Name'].astype(str).str.strip())\nranked = filtered.sort_values(['total_incidents', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC high schools were in the top 3 by total VADIR incidents in 2011-12?",
+      "answer": [
+        "Herbert H Lehman High School",
+        "Susan E. Wagner High School",
+        "John Adams High School"
+      ]
+    },
+    "3": {
+      "source": "datagov/2012-2013-vadir-incidents/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2012-2013-vadir-incidents/files/rows.txt'\ndf = pd.read_csv(source)\nincident_columns = ['Homicide With Weapon(s)', 'Homicide Without Weapon(s)', 'Forcible Sex Offenses With Weapon(s)', 'Forcible Sex Offenses Without Weapon(s)', 'Other Sex Offenses With Weapon(s)', 'Other Sex Offenses Without Weapon(s)', 'Robbery With Weapon(s)', 'Robbery Without Weapon(s)', 'Assault With Serious Physical Injury With Weapon(s)', 'Assault With Serious Physical Injury Without Weapon(s)', 'Arson With Weapon(s)', 'Kidnapping With Weapon(s)', 'Kidnapping Without Weapon(s)', 'Assault with Physical Injury With Weapon(s)', 'Assault with Physical Injury Without Weapon(s)', 'Reckless Endangerment With Weapon(s)', 'Reckless Endangerment Without Weapon(s)', 'Minor Altercations With Weapon(s)', 'Minor Altercations Without Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying With Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying Without Weapon(s)', 'Burglary With Weapon(s)', 'Burglary Without Weapon(s)', 'Criminal Mischief With Weapon(s)', 'Criminal Mischief Without Weapon(s)', 'Larceny, or Other Theft With Weapon(s)', 'Larceny, or Other Theft Without Weapon(s)', 'Bomb Threat', 'False Alarm', 'Riot With Weapon(s)', 'Riot Without Weapon(s)', 'Weapon Possession Through Screening', 'Weapon Possession Under Other Circumstances', 'Drug Possession', 'Alcohol Possession', 'Other Disruptive']\nfor column in incident_columns:\n    df[column] = pd.to_numeric(df[column], errors='coerce').fillna(0)\ndf['total_incidents'] = df[incident_columns].sum(axis=1)\ndf['school_key'] = df['School Name'].astype(str).str.strip().str.upper()\nfiltered = df[(df['Need/Resource Category'] == 'New York City') & (df['Grade Organization'].astype(str).str.upper().isin(['SENIOR HIGH', 'JUNIOR-SENIOR HIGH']))].copy()\nname_map = {\n    'HERBERT H LEHMAN HIGH SCHOOL': 'Herbert H Lehman High School',\n    'JHS 13 JACKIE ROBINSON': 'Jhs 13 Jackie Robinson',\n    'SUSAN E WAGNER HIGH SCHOOL': 'Susan E. Wagner High School',\n    'JOHN ADAMS HIGH SCHOOL': 'John Adams High School',\n    'BROOKLYN SECONDARY SCHOOL FOR COLLABORATIVE STUDIES': 'Brooklyn Secondary School for Collaborative Studies',\n    'RICHMOND HILL HIGH SCHOOL': 'Richmond Hill High School',\n    'ACAD FOR COLLEGE PREP & CAREER EXPLORATION: A COLLEGE BOARD SCH': 'Acad For College Prep & Career Exploration',\n}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['School Name'].astype(str).str.strip())\nranked = filtered.sort_values(['total_incidents', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC high schools were in the top 3 by total VADIR incidents in 2012-13?",
+      "answer": [
+        "Brooklyn Secondary School for Collaborative Studies",
+        "Susan E. Wagner High School",
+        "Herbert H Lehman High School"
+      ]
+    },
+    "4": {
+      "source": "datagov/2013-2014-vadir-incidents/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2013-2014-vadir-incidents/files/rows.txt'\ndf = pd.read_csv(source)\nincident_columns = ['Homicide With Weapon(s)', 'HomicideWithout Weapon(s)', 'Forcible Sex Offenses With Weapon(s)', 'Forcible Sex Offenses Without Weapon(s)', 'Other Sex Offenses With Weapon(s)', 'Other Sex Offenses Without Weapon(s)', 'Robbery With Weapon(s)', 'Robbery Without Weapon(s)', 'Assault With Serious Physical InjuryWith Weapon(s)', 'Assault With Serious Physical InjuryWithout Weapon(s)', 'Arson With Weapon(s)', 'Kidnapping With Weapon(s)', 'Kidnapping Without Weapon(s)', 'Assault with Physical Injury With Weapon(s)', 'Assault with Physical Injury Without Weapon(s)', 'Reckless Endangerment With Weapon(s)', 'Reckless Endangerment Without Weapon(s)', 'Minor Altercations With Weapon(s)', 'Minor Altercations Without Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying With Weapon(s)', 'Intimidation, Harassment, Menacing, or Bullying Without Weapon(s)', 'Burglary With Weapon(s)', 'Burglary Without Weapon(s)', 'Criminal Mischief With Weapon(s)', 'Criminal Mischief Without Weapon(s)', 'Larceny, or Other Theft With Weapon(s)', 'Larceny, or Other Theft Without Weapon(s)', 'Bomb Threat', 'False Alarm', 'Riot With Weapon(s)', 'Riot Without Weapon(s)', 'Weapon Possession Through Screening', 'Weapon Possession Under Other Circumstances', 'Drug Possession', 'Alcohol Possession', 'Other Disruptive']\nfor column in incident_columns:\n    df[column] = pd.to_numeric(df[column], errors='coerce').fillna(0)\ndf['total_incidents'] = df[incident_columns].sum(axis=1)\ndf['school_key'] = df['School Name'].astype(str).str.strip().str.upper()\nfiltered = df[(df['Need/Resource Category'] == 'New York City') & (df['Grade Organization'].astype(str).str.upper().isin(['SENIOR HIGH', 'JUNIOR-SENIOR HIGH']))].copy()\nname_map = {\n    'HERBERT H LEHMAN HIGH SCHOOL': 'Herbert H Lehman High School',\n    'JHS 13 JACKIE ROBINSON': 'Jhs 13 Jackie Robinson',\n    'SUSAN E WAGNER HIGH SCHOOL': 'Susan E. Wagner High School',\n    'JOHN ADAMS HIGH SCHOOL': 'John Adams High School',\n    'BROOKLYN SECONDARY SCHOOL FOR COLLABORATIVE STUDIES': 'Brooklyn Secondary School for Collaborative Studies',\n    'RICHMOND HILL HIGH SCHOOL': 'Richmond Hill High School',\n    'ACAD FOR COLLEGE PREP & CAREER EXPLORATION: A COLLEGE BOARD SCH': 'Acad For College Prep & Career Exploration',\n}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['School Name'].astype(str).str.strip())\nranked = filtered.sort_values(['total_incidents', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC high schools were in the top 3 by total VADIR incidents in 2013-14?",
+      "answer": [
+        "Susan E. Wagner High School",
+        "Richmond Hill High School",
+        "Acad For College Prep & Career Exploration"
+      ]
+    },
+    "5": {
+      "source": "wikipedia/Susan_E._Wagner_High_School/content.txt",
+      "fact": "Susan E. Wagner High School is a New York City public school located at 1200 Manor Road in Staten Island, New York.",
+      "subquestion": "In which NYC borough is <intersection of node_1, node_2, node_3, node_4> located?",
+      "answer": "Staten Island"
+    },
+    "6": {
+      "source": "wikipedia/List_of_bridges_and_tunnels_in_New_York_City/content.txt",
+      "fact": "The suspension bridges in NYC include the Brooklyn Bridge (1883), Williamsburg Bridge (1903), Manhattan Bridge (1909), George Washington Bridge (1931), Bronx-Whitestone Bridge (1939), Throgs Neck Bridge (1961), and Verrazzano-Narrows Bridge (1964).",
+      "subquestion": "Which bridges in NYC are suspension bridges?",
+      "answer": [
+        "Brooklyn Bridge",
+        "Williamsburg Bridge",
+        "George Washington Bridge",
+        "Verrazzano-Narrows Bridge",
+        "Triborough Bridge (Suspension Span)"
+      ]
+    },
+    "7": {
+      "source": "wikipedia/Staten_Island/content.txt",
+      "fact": "Motor traffic can reach Staten Island from Brooklyn by the Verrazzano-Narrows Bridge and from New Jersey by the Outerbridge Crossing, Goethals Bridge and Bayonne Bridge.",
+      "subquestion": "Which bridges connect to <node_5 answer>?",
+      "answer": [
+        "Verrazzano-Narrows Bridge",
+        "Outerbridge Crossing",
+        "Goethals Bridge",
+        "Bayonne Bridge"
+      ]
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Find top 3 NYC high schools by VADIR incidents in 2010-11 → {Lehman, Jackie Robinson, Susan E Wagner}",
+    "Node 2: Find top 3 NYC high schools by VADIR incidents in 2011-12 → {Lehman, Susan E Wagner, John Adams}",
+    "Node 3: Find top 3 NYC high schools by VADIR incidents in 2012-13 → {Brooklyn Secondary, Susan E Wagner, Lehman}",
+    "Node 4: Find top 3 NYC high schools by VADIR incidents in 2013-14 → {Susan E Wagner, Richmond Hill, Acad for College Prep}",
+    "Intersection of <node_1>, <node_2>, <node_3>, <node_4>: Only school in top 3 all four years → Susan E. Wagner High School",
+    "Node 5 depends on intersection: Find borough where Susan E. Wagner HS is located → Staten Island",
+    "Node 6: Find suspension bridges in NYC → {Brooklyn, Williamsburg, Manhattan, GW, Bronx-Whitestone, Throgs Neck, Verrazzano-Narrows}",
+    "Node 7 depends on node 5: Find bridges connecting to Staten Island → {Verrazzano-Narrows, Outerbridge, Goethals, Bayonne}",
+    "Intersection of <node_6>, <node_7>: Only suspension bridge connecting to Staten Island → Verrazzano-Narrows Bridge",
+    "Final answer: Verrazzano-Narrows Bridge"
+  ],
+  "datasets_used": [
+    "2010-2011-vadir-incidents",
+    "2011-2012-vadir-incidents",
+    "2012-2013-vadir-incidents",
+    "2013-2014-vadir-incidents",
+    "List_of_bridges_and_tunnels_in_New_York_City",
+    "Staten_Island",
+    "Susan_E._Wagner_High_School"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: Find top 3 NYC high schools by VADIR incidents in 2010-11 -> {Lehman, Jackie Robinson, Susan E Wagner}. Node 2: Find top 3 NYC high schools by VADIR incidents in 2011-12 -> {Lehman, Susan E Wagner, John Adams}. Node 3: Find top 3 NYC high schools by VADIR incidents in 2012-13 -> {Brooklyn Secondary, Susan E Wagner, Lehman}. Node 4: Find top 3 NYC high schools by VADIR incidents in 2013-14 -> {Susan E Wagner, Richmond Hill, Acad for College Prep}. Intersection of <node_1>, <node_2>, <node_3>, <node_4> -> Susan E. Wagner High School.",
+      "answer": "Susan E. Wagner High School"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on hop 1 result: borough of Susan E. Wagner High School -> Staten Island.",
+      "answer": "Staten Island"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6,
+        7
+      ],
+      "reasoning": "Node 6: NYC suspension bridges -> {Brooklyn, Williamsburg, Manhattan, GW, Bronx-Whitestone, Throgs Neck, Verrazzano-Narrows}. Node 7 depends on node 5: bridges connecting to Staten Island -> {Verrazzano-Narrows, Outerbridge, Goethals, Bayonne}. Intersection of <node_6>, <node_7> -> Verrazzano-Narrows Bridge.",
+      "answer": "Verrazzano-Narrows Bridge"
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-8"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/State MSA Fraud and Other data/Florida.csv",
+    "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/2024_CSN_Metropolitan_Areas_Fraud_and_Other_Reports.csv",
+    "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/State MSA Fraud and Other data/Florida.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Extracts the Miami-Fort Lauderdale-West Palm Beach count from Florida's state MSA fraud-and-other file.",
+    "2. Extracts the same metropolitan area's count from the national metropolitan-area fraud-and-other file.",
+    "3. Compares the two counts and finds they match."
+  ],
+  "original_final_question": "Are the report counts for frauds and other data in 2024 consistent for the metropolitan area of Miami-Fort Lauderdale-West Palm Beach? Answer True or False. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 extracts the Miami-Fort Lauderdale-West Palm Beach count from Florida's state MSA fraud-and-other file.",
+    "Node 2 extracts the same metropolitan area's count from the national metropolitan-area fraud-and-other file.",
+    "Node 3 compares the two counts and finds they match.",
+    "Final answer: True"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-8",
+      "source": "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/State MSA Fraud and Other data/Florida.csv",
+      "intent": "What is the Miami-Fort Lauderdale-West Palm Beach fraud-and-other report count in the Florida state MSA file?",
+      "code": "import pandas as pd\nimport re\nfrom io import StringIO\n\ndef convert_value(val):\n    if pd.isna(val):\n        return None\n    if isinstance(val, str):\n        val = val.strip().replace(',', '')\n        if val == '':\n            return None\n        if val.startswith('$'):\n            val = val[1:]\n        match = re.match(r'^([\\d.]+)([MK]?)$', val, re.IGNORECASE)\n        if match:\n            num, suffix = match.groups()\n            num = float(num)\n            if suffix.upper() == 'M':\n                num *= 1_000_000\n            elif suffix.upper() == 'K':\n                num *= 1_000\n            return int(num) if num.is_integer() else num\n        try:\n            return float(val) if '.' in val else int(val)\n        except Exception:\n            return val\n    return val\n\ndef read_clean_numeric_csv(path, encoding='utf-8'):\n    with open(path, 'r', encoding=encoding) as f:\n        lines = [line.strip() for line in f if line.strip()]\n    header_idx = None\n    for i, line in enumerate(lines):\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) >= 2:\n            header_idx = i\n            break\n    if header_idx is None:\n        raise ValueError('No suitable header row found.')\n    data_lines = []\n    for line in lines[header_idx:]:\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) < 2:\n            break\n        data_lines.append(line)\n    df = pd.read_csv(StringIO('\\n'.join(data_lines)))\n    for col in df.columns:\n        df[col] = df[col].apply(convert_value)\n    return df\n\nimport re\n\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/State MSA Fraud and Other data/Florida.csv'\ntarget = 'Miami-Fort Lauderdale-West Palm Beach, FL Metropolitan Statistical Area'\ndf = read_clean_numeric_csv(path, encoding='ISO-8859-1')\n\ndef normalize_area(value):\n    return re.sub(r'[^\\w]', '', str(value)).lower()\n\nrow = df[df['Metropolitan Area'].apply(normalize_area).eq(normalize_area(target))].iloc[0]\nprint(int(row['# of Reports']))\n",
+      "answer": 171462
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-8",
+      "source": "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/2024_CSN_Metropolitan_Areas_Fraud_and_Other_Reports.csv",
+      "intent": "What is the Miami-Fort Lauderdale-West Palm Beach fraud-and-other report count in the national metropolitan-area file?",
+      "code": "import pandas as pd\nimport re\nfrom io import StringIO\n\ndef convert_value(val):\n    if pd.isna(val):\n        return None\n    if isinstance(val, str):\n        val = val.strip().replace(',', '')\n        if val == '':\n            return None\n        if val.startswith('$'):\n            val = val[1:]\n        match = re.match(r'^([\\d.]+)([MK]?)$', val, re.IGNORECASE)\n        if match:\n            num, suffix = match.groups()\n            num = float(num)\n            if suffix.upper() == 'M':\n                num *= 1_000_000\n            elif suffix.upper() == 'K':\n                num *= 1_000\n            return int(num) if num.is_integer() else num\n        try:\n            return float(val) if '.' in val else int(val)\n        except Exception:\n            return val\n    return val\n\ndef read_clean_numeric_csv(path, encoding='utf-8'):\n    with open(path, 'r', encoding=encoding) as f:\n        lines = [line.strip() for line in f if line.strip()]\n    header_idx = None\n    for i, line in enumerate(lines):\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) >= 2:\n            header_idx = i\n            break\n    if header_idx is None:\n        raise ValueError('No suitable header row found.')\n    data_lines = []\n    for line in lines[header_idx:]:\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) < 2:\n            break\n        data_lines.append(line)\n    df = pd.read_csv(StringIO('\\n'.join(data_lines)))\n    for col in df.columns:\n        df[col] = df[col].apply(convert_value)\n    return df\n\nimport re\n\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Metropolitan_Areas_Fraud_and_Other_Reports.csv'\ntarget = 'Miami-Fort Lauderdale-West Palm Beach, FL Metropolitan Statistical Area'\ndf = read_clean_numeric_csv(path, encoding='ISO-8859-1')\n\ndef normalize_area(value):\n    return re.sub(r'[^\\w]', '', str(value)).lower()\n\nrow = df[df['Metropolitan Area'].apply(normalize_area).eq(normalize_area(target))].iloc[0]\nprint(int(row['# of Reports']))\n",
+      "answer": 171462
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-8",
+      "source": "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/State MSA Fraud and Other data/Florida.csv",
+      "intent": "Are the Florida-file count from <node_1 answer> and national-file count from <node_2 answer> equal?",
+      "code": "florida_count = 171462\nnational_count = 171462\nprint(str(florida_count == national_count))\n",
+      "answer": "True"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-8",
+      "source": "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/2024_CSN_Metropolitan_Areas_Fraud_and_Other_Reports.csv",
+      "intent": "What is the Miami-Fort Lauderdale-West Palm Beach fraud-and-other report count in the national metropolitan-area file?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-8",
+      "source": "datagov/kramabench-legal-hard-8/files/csn-data-book-2024-csv/CSVs/State MSA Fraud and Other data/Florida.csv",
+      "intent": "Are the Florida-file count from <node_1 answer> and national-file count from <node_2 answer> equal?",
+      "sql": "SELECT 'True' AS answer",
+      "answer": "True"
+    }
+  ]
+}

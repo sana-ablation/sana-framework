@@ -1,0 +1,55 @@
+{
+  "question": "Which composer was born later, Gaetano Donizetti or William Walton? Write your answer as [ANSWER].",
+  "answer": "William Turner Walton",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/Gaetano_Donizetti.txt",
+      "fact": "Domenico Gaetano Maria Donizetti (] ; 29 November 1797 – 8 April 1848) was an Italian composer.",
+      "subquestion": "What evidence from supporting page 1 is needed for the comparison?",
+      "answer": "<text evidence>"
+    },
+    "2": {
+      "source": "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/William_Walton.txt",
+      "fact": "Sir William Turner Walton, OM (29 March 19028 March 1983) was an English composer.",
+      "subquestion": "What evidence from supporting page 2 is needed for the comparison?",
+      "answer": "William Turner Walton"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "datasets_used": [
+    "wikipedia/hotpotqa__5a714bb35542994082a3e78f",
+    "wikipedia/hotpotqa__5a714bb35542994082a3e78f"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Compare the two supporting evidence items and answer the question.",
+      "answer": "William Turner Walton"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "hotpotqa",
+    "split": "dev_distractor",
+    "source_id": "5a714bb35542994082a3e78f",
+    "type": "comparison",
+    "level": "hard",
+    "promoted_from": "other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_1.json",
+    "raw_source": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json",
+    "source_mode": "raw_context_supporting_facts",
+    "s3_mirror_prefix": "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a714bb35542994082a3e78f:Gaetano Donizetti:0",
+      "2": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a714bb35542994082a3e78f:William Walton:0"
+    },
+    "promotion_status": "smoke_converted",
+    "promotion_rule": "generated_hotpotqa_lakeqa_transform_five_import_smoke_v1"
+  }
+}

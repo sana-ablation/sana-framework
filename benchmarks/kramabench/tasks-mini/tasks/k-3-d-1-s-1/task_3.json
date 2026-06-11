@@ -1,0 +1,83 @@
+{
+  "question": "What city contained in both the southern and western hemispheres has the highest population? Write your answer as [ANSWER].",
+  "answer": "São Paulo",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nresult = str(int((df['lng'] < 0).sum()))\nprint(result)\n",
+      "subquestion": "How many city rows are in the Western Hemisphere?",
+      "answer": "16412"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nsouthwest = df[(df['lng'] < 0) & (df['lat'] < 0)]\nresult = str(len(southwest))\nprint(result)\n",
+      "subquestion": "How many city rows are in both the Western and Southern Hemispheres?",
+      "answer": "4095"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-easy-6/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nsouthwest = df[(df['lng'] < 0) & (df['lat'] < 0)]\nrow = southwest.loc[southwest['population'].idxmax()]\nresult = row['city']\nprint(result)\n",
+      "subquestion": "Among city rows in both the Western and Southern Hemispheres, which city has the largest population?",
+      "answer": "São Paulo"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Filter world city rows to the Western Hemisphere using negative longitude.",
+    "Node 2 depends on node 1: Further filter to the Southern Hemisphere using negative latitude.",
+    "Node 3 depends on node 2: Choose the remaining city row with the maximum population.",
+    "Final answer: São Paulo"
+  ],
+  "datasets_used": [
+    "kramabench-archeology-easy-6"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Filter world city rows to the Western Hemisphere using negative longitude.",
+      "answer": "16412"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Further filter to the Southern Hemisphere using negative latitude.",
+      "answer": "4095"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Choose the remaining city row with the maximum population.",
+      "answer": "São Paulo"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-easy-6",
+    "domain": "archeology",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-easy-6.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-6",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-easy-6/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

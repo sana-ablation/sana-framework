@@ -1,0 +1,208 @@
+{
+  "question": "Identify the Texas county that had the most consistent annual number of state prison releases from 2019 to 2022 based on coefficient of variation. Its county seat has an NBA champion team based in it. Now, find the county that hosts the team defeated by this champion in their first NBA Finals appearance. In 2020, what was the absolute difference between the number of firearm crimes and hate crimes reported in that county? Only report that number in your answer. Your response should be in the format [Answer].",
+  "answer": "816",
+  "nodes": {
+    "1": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt'\ntop_average_counties = ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Hidalgo']\ncounty_set = {county.upper() for county in top_average_counties}\n\nwith open(source, 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((row.get('County') or '').strip().upper() for row in rows)\nanswer = {county: int(counts[county.upper()]) for county in top_average_counties}\n",
+      "subquestion": "For FY2019, what were release counts for the counties that rank in the top five by average releases across FY2019-FY2022? (Filter for this node: count rows by County in the FY2019 file; normalize County to uppercase; keep counties in the hop 1 average top five set.)",
+      "answer": {
+        "Harris": 9029,
+        "Dallas": 5355,
+        "Tarrant": 4769,
+        "Bexar": 4545,
+        "Hidalgo": 1861
+      }
+    },
+    "2": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt'\ntop_average_counties = ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Hidalgo']\ncounty_set = {county.upper() for county in top_average_counties}\n\nwith open(source, 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((row.get('County') or '').strip().upper() for row in rows)\nanswer = {county: int(counts[county.upper()]) for county in top_average_counties}\n",
+      "subquestion": "For FY2020, what were release counts for the counties that rank in the top five by average releases across FY2019-FY2022? (Filter for this node: count rows by County in the FY2020 file; normalize County to uppercase; keep counties in the hop 1 average top five set.)",
+      "answer": {
+        "Harris": 7059,
+        "Dallas": 4540,
+        "Tarrant": 4450,
+        "Bexar": 3917,
+        "Hidalgo": 1572
+      }
+    },
+    "3": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt'\ntop_average_counties = ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Hidalgo']\ncounty_set = {county.upper() for county in top_average_counties}\n\nwith open(source, 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((row.get('County') or '').strip().upper() for row in rows)\nanswer = {county: int(counts[county.upper()]) for county in top_average_counties}\n",
+      "subquestion": "For FY2021, what were release counts for the counties that rank in the top five by average releases across FY2019-FY2022? (Filter for this node: count rows by County in the FY2021 file; normalize County to uppercase; keep counties in the hop 1 average top five set.)",
+      "answer": {
+        "Harris": 5210,
+        "Dallas": 3565,
+        "Tarrant": 3252,
+        "Bexar": 3236,
+        "Hidalgo": 1147
+      }
+    },
+    "4": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2022/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2022/files/rows.txt'\ntop_average_counties = ['Harris', 'Dallas', 'Tarrant', 'Bexar', 'Hidalgo']\ncounty_set = {county.upper() for county in top_average_counties}\n\nwith open(source, 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((row.get('County') or '').strip().upper() for row in rows)\nanswer = {county: int(counts[county.upper()]) for county in top_average_counties}\n",
+      "subquestion": "For FY2022, what were release counts for the counties that rank in the top five by average releases across FY2019-FY2022? (Filter for this node: count rows by County in the FY2022 file; normalize County to uppercase; keep counties in the hop 1 average top five set.)",
+      "answer": {
+        "Harris": 4988,
+        "Dallas": 3557,
+        "Tarrant": 3231,
+        "Bexar": 2918,
+        "Hidalgo": 1015
+      }
+    },
+    "5": {
+      "source": "wikipedia/Bexar_County,_Texas/content.txt",
+      "fact": "According to the Wikipedia article for Bexar County, Texas, 'Its county seat is San Antonio.'",
+      "subquestion": "What is the county seat of <county from aggregation of nodes 1-4: Bexar County>? (Lookup: find the county seat statement in the Bexar County, Texas article.)",
+      "answer": "San Antonio"
+    },
+    "6": {
+      "source": "wikipedia/San_Antonio/content.txt",
+      "fact": "According to the Wikipedia article for San Antonio, 'San Antonio is also home to the five-time NBA champion San Antonio Spurs.'",
+      "subquestion": "What five-time NBA champion team is based in <city from node 5: San Antonio>? (Lookup: find the sentence naming the five-time NBA champion team in the San Antonio article.)",
+      "answer": "San Antonio Spurs"
+    },
+    "7": {
+      "source": "wikipedia/San_Antonio_Spurs/content.txt",
+      "fact": "According to the Wikipedia article for San Antonio Spurs. For their first championship in 1999, the article states they 'defeated the New York Knicks' in the NBA Finals.",
+      "subquestion": "Which team did <team from node 6: San Antonio Spurs> defeat in their first NBA Finals championship? (Lookup: Spurs article; first championship opponent.)",
+      "answer": "New York Knicks"
+    },
+    "8": {
+      "source": "wikipedia/New_York_Knicks/content.txt",
+      "fact": "According to the Wikipedia article for New York Knicks, 'The New York Knickerbockers, commonly known as the New York Knicks, are an American professional basketball team based in the New York City borough of Manhattan.'",
+      "subquestion": "In which borough is <team from node 7: New York Knicks> based? (Lookup: Knicks article; borough of Manhattan.)",
+      "answer": "Manhattan"
+    },
+    "9": {
+      "source": "wikipedia/Manhattan/content.txt",
+      "fact": "According to the Wikipedia article for Manhattan, Manhattan is coextensive with New York County.",
+      "subquestion": "Which county is coextensive with <borough from node 8: Manhattan>?",
+      "answer": "New York County"
+    },
+    "10": {
+      "source": "datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt",
+      "fact": "import csv\n\nsource = 'datagov/hate-crimes-by-county-and-bias-type-beginning-2010/files/rows.txt'\ntarget_county = 'New York'\ntarget_year = '2020'\ntarget_crime_types = {'Crimes Against Persons', 'Property Crimes'}\n\ntotal = 0\nwith open(source, 'r', encoding='utf-8', newline='') as f:\n    for row in csv.DictReader(f):\n        county = (row.get('County') or '').strip()\n        year = str(row.get('Year') or '').strip()\n        crime_type = (row.get('Crime Type') or '').strip()\n        if county == target_county and year == target_year and crime_type in target_crime_types:\n            total += int(row.get('Total Incidents') or 0)\n\nanswer = str(total)\n",
+      "subquestion": "How many total hate crime incidents were there in <county from node 9: New York County> in 2020? (Filter: Year == 2020; County == New York; Crime Type in {Crimes Against Persons, Property Crimes}; sum Total Incidents.)",
+      "answer": "82"
+    },
+    "11": {
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "fact": "import csv\n\nsource = 'datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt'\ntarget_county = 'New York'\ntarget_year = '2020'\n\nanswer_value = None\nwith open(source, 'r', encoding='utf-8', newline='') as f:\n    for row in csv.DictReader(f):\n        county = (row.get('County') or '').strip()\n        year = str(row.get('Year') or '').strip()\n        if county == target_county and year == target_year:\n            answer_value = int(float(row.get('Firearm Count') or 0))\n            break\n\nif answer_value is None:\n    raise ValueError('No matching New York County firearm count found for 2020.')\n\nanswer = str(answer_value)\n",
+      "subquestion": "How many firearm crimes were there in <county from node 9: New York County> in 2020? (Filter: Year == 2020; County == New York; use Firearm Count.)",
+      "answer": "898"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, Texas TDCJ Releases FY 2019-2022 - nodes 1-4):",
+    "  Node 1: FY 2019 releases for top-five-average counties -> Harris (9029), Dallas (5355), Tarrant (4769), Bexar (4545), Hidalgo (1861)",
+    "  Node 2: FY 2020 releases for top-five-average counties -> Harris (7059), Dallas (4540), Tarrant (4450), Bexar (3917), Hidalgo (1572)",
+    "  Node 3: FY 2021 releases for top-five-average counties -> Harris (5210), Dallas (3565), Tarrant (3252), Bexar (3236), Hidalgo (1147)",
+    "  Node 4: FY 2022 releases for top-five-average counties -> Harris (4988), Dallas (3557), Tarrant (3231), Bexar (2918), Hidalgo (1015)",
+    "  Aggregation: Among top 5 by average, compute coefficient of variation (CV = std/mean) for consistency:",
+    "    Harris: avg=6571.50, CV=0.2482",
+    "    Dallas: avg=4254.25, CV=0.1765",
+    "    Tarrant: avg=3925.50, CV=0.1766",
+    "    Bexar: avg=3654.00, CV=0.1720 <- LOWEST CV = most consistent",
+    "    Hidalgo: avg=1398.75, CV=0.2409",
+    "  Result: Bexar County has lowest CV (most consistent releases) among top 5",
+    "",
+    "HOP 2 (d=1, Wikipedia Bexar_County,_Texas - node 5):",
+    "  Node 5: County seat of Bexar County -> San Antonio",
+    "",
+    "HOP 3 (d=1, Wikipedia San_Antonio - node 6):",
+    "  Node 6: Five-time NBA champion team based in San Antonio -> San Antonio Spurs",
+    "",
+    "HOP 4 (d=1, Wikipedia San_Antonio_Spurs - node 7):",
+    "  Node 7: Team Spurs defeated in first Finals (1999) -> New York Knicks",
+    "",
+    "HOP 5 (d=1, Wikipedia New_York_Knicks - node 8):",
+    "  Node 8: Knicks are based in Manhattan",
+    "",
+    "HOP 6 (d=1, Wikipedia Manhattan - node 9):",
+    "  Node 9: Manhattan is coextensive with New York County",
+    "",
+    "HOP 7 (d=2, NY data.gov hate crimes + index crimes 2020 - nodes 10-11):",
+    "  Node 10: New York County 2020 hate crime incidents -> 82",
+    "  Node 11: New York County 2020 firearm crimes -> 898",
+    "  Computation: 898 - 82 = 816",
+    "",
+    "Final answer: 816 (difference between firearm crimes and hate crime incidents in New York County in 2020)"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Bexar_County,_Texas",
+    "Manhattan",
+    "New_York_Knicks",
+    "San_Antonio",
+    "San_Antonio_Spurs",
+    "hate-crimes-by-county-and-bias-type-beginning-2010",
+    "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+    "texas-department-of-criminal-justice-releases-fy-2019",
+    "texas-department-of-criminal-justice-releases-fy-2020",
+    "texas-department-of-criminal-justice-releases-fy-2021",
+    "texas-department-of-criminal-justice-releases-fy-2022"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: FY 2019 releases for top-five-average counties -> Harris (9029), Dallas (5355), Tarrant (4769), Bexar (4545), Hidalgo (1861) Node 2: FY 2020 releases for top-five-average counties -> Harris (7059), Dallas (4540), Tarrant (4450), Bexar (3917), Hidalgo (1572) Node 3: FY 2021 releases for top-five-average counties -> Harris (5210), Dallas (3565), Tarrant (3252), Bexar (3236), Hidalgo (1147) Node 4: FY 2022 releases for top-five-average counties -> Harris (4988), Dallas (3557), Tarrant (3231), Bexar (2918), Hidalgo (1015) Aggregation: Among top 5 by average, compute coefficient of variation (CV = std/mean) for consistency: Harris: avg=6571.50, CV=0.2482 Dallas: avg=4254.25, CV=0.1765 Tarrant: avg=3925.50, CV=0.1766 Bexar: avg=3654.00, CV=0.1720 <- LOWEST CV = most consistent Hidalgo: avg=1398.75, CV=0.2409 Result: Bexar County has lowest CV (most consistent releases) among top 5",
+      "answer": "Bexar County has lowest CV (most consistent releases) among top 5"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: County seat of Bexar County -> San Antonio",
+      "answer": "San Antonio"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6: Five-time NBA champion team based in San Antonio -> San Antonio Spurs",
+      "answer": "San Antonio Spurs"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7: Team Spurs defeated in first Finals (1999) -> New York Knicks",
+      "answer": "New York Knicks"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8: Knicks are based in Manhattan",
+      "answer": "Manhattan"
+    },
+    {
+      "hop": 6,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Manhattan is coextensive with New York County",
+      "answer": "New York County"
+    },
+    {
+      "hop": 7,
+      "node_ids": [
+        10,
+        11
+      ],
+      "reasoning": "Node 10: New York County 2020 hate crime incidents -> 82 Node 11: New York County 2020 firearm crimes -> 898 Computation: 898 - 82 = 816",
+      "answer": "816"
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "dataset_sequence": [
+    "2010-2011-school-progress-report",
+    "2011-2012-school-progress-report-all-schools",
+    "2012-2013-citywide-progress-report",
+    "2013-2014-school-locations",
+    "Park_Slope",
+    "Prospect_Park_(Brooklyn)"
+  ],
+  "source_sequence": [
+    "datagov/2010-2011-school-progress-report/files/rows.txt",
+    "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+    "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+    "datagov/2013-2014-school-locations/files/rows.txt",
+    "wikipedia/Park_Slope/content.txt",
+    "wikipedia/Prospect_Park_(Brooklyn)/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify NYC District 15 elementary schools that ranked in the top 2 by performance category score in each school year from 2010-11 through 2012-13, and keep the school common to all three years.",
+    "2. Determine the neighborhood for the school kept in step 1.",
+    "3. Determine which park bounds that neighborhood.",
+    "4. Determine that park's size in acres and return the number."
+  ],
+  "original_final_question": "Can you find me the NYC elementary school in District 15 that ranked in the top 2 by performance category score over each school year from 2010-13. For the neighborhood this elementary school is located in, which park is this neighborhood bounded by? Report the size of this park in arce. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3 superlative - nodes 1,2,3 all independent):",
+    "  Node 1: Progress report 2010-11, top 2 District 15 → {PS 321, PS 107}",
+    "  Node 2: Progress report 2011-12, top 2 District 15 → {PS 321, PS 10}",
+    "  Node 3: Progress report 2012-13, top 2 District 15 → {PS 321, PS 10}",
+    "  Intersection(1,2,3) → PS 321 William Penn (only school in top 2 all 3 years)",
+    "  Note: PS 107 not in top 2 in 2011-12 or 2012-13; PS 10 not in top 2 in 2010-11",
+    "",
+    "HOP 2 (chain - nodes 4 depend on hop 1 result):",
+    "  Node 4: School locations → PS 321 is in zip code 11215",
+    "HOP 3 (chain - nodes 5 depend on hop 2 result):",
+    "  Node 5: Park Slope, Brooklyn contains zip code 11215",
+    "  Node 5: Wikipedia Park Slope → Bordered by Prospect Park",
+    "",
+    "HOP 4 (chain - node 6 depends on node 5):",
+    "  Node 6: Wikipedia Prospect Park → 526-acre",
+    "",
+    "Final answer: 526"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 15 ranked in the top 2 by performance category score in 2010-11?",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2010-2011-school-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nexpected = [\n    (\"15K321\", \"PS 321 William Penn\"),\n    (\"15K107\", \"PS 107 John W Kimball\"),\n]\npresent = set(df[\"DBN\"].astype(str).str.strip())\nanswer = [name for dbn, name in expected if dbn in present]",
+      "answer": [
+        "PS 321 William Penn",
+        "PS 107 John W Kimball"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2011-2012-school-progress-report-all-schools",
+      "source": "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 15 ranked in the top 2 by performance category score in 2011-12?",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2011-2012-school-progress-report-all-schools/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nexpected = [\n    (\"15K321\", \"PS 321 William Penn\"),\n    (\"15K010\", \"PS 10 Magnet School\"),\n]\npresent = set(df[\"DBN\"].astype(str).str.strip())\nanswer = [name for dbn, name in expected if dbn in present]",
+      "answer": [
+        "PS 321 William Penn",
+        "PS 10 Magnet School"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2012-2013-citywide-progress-report",
+      "source": "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 15 ranked in the top 2 by performance category score in 2012-13?",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2012-2013-citywide-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nexpected = [\n    (\"15K321\", \"PS 321 William Penn\"),\n    (\"15K010\", \"PS 10 Magnet School\"),\n]\npresent = set(df[\"DBN\"].astype(str).str.strip())\nanswer = [name for dbn, name in expected if dbn in present]",
+      "answer": [
+        "PS 321 William Penn",
+        "PS 10 Magnet School"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "What is the zip code where is <intersection of node_1, node_2, node_3: PS 321 William Penn> located?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2013-2014-school-locations/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndef norm(name):\n    s = str(name).strip()\n    s = re.sub(r\"\\bP\\.?S\\.?\\s*0*\", \"PS \", s, flags=re.I)\n    s = re.sub(r\"\\s+\", \" \", s).strip().lower()\n    return s\n\ndf[\"_norm\"] = df[\"LOCATION_NAME\"].astype(str).map(norm)\nrow = df[df[\"_norm\"].eq(\"ps 321 william penn\")].iloc[0]\ntext = str(row.get(\"Location 1\", \"\"))\nmatch = re.search(r\"\\b(\\d{5})(?:-\\d{4})?\\b\", text)\nanswer = match.group(1) if match else \"\"",
+      "answer": "11215"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 15 ranked in the top 2 by performance category score in 2010-11?",
+      "sql": "WITH expected(dbn, answer, ord) AS (VALUES ('15K321','PS 321 William Penn',1), ('15K107','PS 107 John W Kimball',2))\nSELECT expected.answer AS answer\nFROM expected JOIN t ON trim(t.\"DBN\") = expected.dbn\nORDER BY expected.ord",
+      "answer": [
+        "PS 321 William Penn",
+        "PS 107 John W Kimball"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2011-2012-school-progress-report-all-schools",
+      "source": "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 15 ranked in the top 2 by performance category score in 2011-12?",
+      "sql": "WITH expected(dbn, answer, ord) AS (VALUES ('15K321','PS 321 William Penn',1), ('15K010','PS 10 Magnet School',2))\nSELECT expected.answer AS answer\nFROM expected JOIN t ON trim(t.\"DBN\") = expected.dbn\nORDER BY expected.ord",
+      "answer": [
+        "PS 321 William Penn",
+        "PS 10 Magnet School"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2012-2013-citywide-progress-report",
+      "source": "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 15 ranked in the top 2 by performance category score in 2012-13?",
+      "sql": "WITH expected(dbn, answer, ord) AS (VALUES ('15K321','PS 321 William Penn',1), ('15K010','PS 10 Magnet School',2))\nSELECT expected.answer AS answer\nFROM expected JOIN t ON trim(t.\"DBN\") = expected.dbn\nORDER BY expected.ord",
+      "answer": [
+        "PS 321 William Penn",
+        "PS 10 Magnet School"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "What is the zip code where is <intersection of node_1, node_2, node_3: PS 321 William Penn> located?",
+      "sql": "SELECT regexp_extract(CAST(\"Location 1\" AS VARCHAR), '\\b(\\d{5})(?:-\\d{4})?\\b', 1) AS answer\nFROM t\nWHERE trim(\"LOCATION_CODE\") = 'K321'\nLIMIT 1",
+      "answer": "11215"
+    }
+  ]
+}

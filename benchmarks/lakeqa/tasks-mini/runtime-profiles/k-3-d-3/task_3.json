@@ -1,0 +1,135 @@
+{
+  "dataset_sequence": [
+    "2010-2011-school-progress-report",
+    "2011-2012-school-progress-report-all-schools",
+    "2012-2013-citywide-progress-report",
+    "2013-2014-school-locations",
+    "Carnegie_Hill",
+    "Andrew_Carnegie"
+  ],
+  "source_sequence": [
+    "datagov/2010-2011-school-progress-report/files/rows.txt",
+    "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+    "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+    "datagov/2013-2014-school-locations/files/rows.txt",
+    "wikipedia/Carnegie_Hill/content.txt",
+    "wikipedia/Andrew_Carnegie/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For District 2 NYC elementary schools in 2010-11, identify the top three by performance category score.",
+    "2. Repeat the same top-three ranking for District 2 NYC elementary schools in 2011-12.",
+    "3. Repeat the same top-three ranking for District 2 NYC elementary schools in 2012-13, then keep the elementary school that appears in all three yearly groups.",
+    "4. Using the remaining elementary school, determine its NYC neighborhood from school location information.",
+    "5. Determine who that neighborhood is named after.",
+    "6. Using the person identified in step 5, return that person's birth year."
+  ],
+  "original_final_question": "Can you find me the NYC elementary school in District 2 that ranked in the top 3 by performance category score over each school year from 2010-13. For the neighborhood this elementary school is located in, who is it named after? Only report the year when this person is born. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3 superlative - nodes 1,2,3 all independent):",
+    "  Node 1: Progress report 2010-11 → {PS 77, PS 158, PS 290}",
+    "  Node 2: Progress report 2011-12 → {PS 77, PS 212, PS 042}",
+    "  Node 3: Progress report 2012-13 → {PS 77, PS 124, PS 042}",
+    "  Intersection(1,2,3) → PS 77 Lower Lab School (only school in top 3 all 3 years)",
+    "",
+    "HOP 2 (chain - node 4 depends on hop 1 result):",
+    "  Node 4: School locations → PS 77 is in Carnegie Hill",
+    "  Node 5: Wikipedia Carnegie Hill → Named after Andrew Carnegie",
+    "",
+    "HOP 3 (chain - node 6 depends on node 5):",
+    "  Node 6: Wikipedia Andrew Carnegie → Born 1835",
+    "",
+    "Final answer: 1835"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2010-11?",
+      "code": "import csv\n\nwith open('datagov/2010-2011-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    try:\n        district = int(float((r.get('DISTRICT') or '').strip()))\n        score = float((r.get('2010-2011 PERFORMANCE CATEGORY SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    school = (r.get('SCHOOL') or '').strip().replace('P.S.', 'PS')\n    dbn = (r.get('DBN') or '').strip()\n    if district == 2 and level == 'Elementary' and school:\n        scored.append((school, score, dbn))\n\nranked = sorted(scored, key=lambda x: (-x[1], ''.join(chr(255 - ord(c)) for c in x[2])), reverse=False)[:3]\nresult = [school for school, _, _ in ranked]",
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 158 Bayard Taylor",
+        "PS 290 Manhattan New School"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2011-2012-school-progress-report-all-schools",
+      "source": "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2011-12?",
+      "code": "import csv\n\nwith open('datagov/2011-2012-school-progress-report-all-schools/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    try:\n        district = int(float((r.get('DISTRICT') or '').strip()))\n        score = float((r.get('2011-2012 PERFORMANCE CATEGORY SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    school = (r.get('SCHOOL') or '').strip().replace('P.S.', 'PS')\n    dbn = (r.get('DBN') or '').strip()\n    if district == 2 and level == 'Elementary' and school:\n        scored.append((school, score, dbn))\n\nranked = sorted(scored, key=lambda x: (-x[1], ''.join(chr(255 - ord(c)) for c in x[2])), reverse=False)[:3]\nresult = [school for school, _, _ in ranked]",
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 212 Midtown West",
+        "PS 042 Benjamin Altman"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2012-2013-citywide-progress-report",
+      "source": "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2012-13?",
+      "code": "import csv\n\nwith open('datagov/2012-2013-citywide-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    try:\n        district = int(float((r.get('DISTRICT') or '').strip()))\n        score = float((r.get('2012-2013 PERFORMANCE CATEGORY SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    school = (r.get('SCHOOL') or '').strip().replace('P.S.', 'PS')\n    dbn = (r.get('DBN') or '').strip()\n    if district == 2 and level == 'Elementary' and school:\n        scored.append((school, score, dbn))\n\nranked = sorted(scored, key=lambda x: (-x[1], ''.join(chr(255 - ord(c)) for c in x[2])), reverse=False)[:3]\nresult = [school for school, _, _ in ranked]",
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 124 Yung Wing",
+        "PS 042 Benjamin Altman"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "In which Manhattan neighborhood is <intersection of node_1, node_2, node_3: PS 77 Lower Lab School> located?",
+      "code": "import csv\n\nwith open('datagov/2013-2014-school-locations/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nresult = None\nfor r in rows:\n    school = (r.get('LOCATION_NAME') or '').strip()\n    if school == 'P.S. 77 Lower Lab School':\n        nta_name = (r.get('NTA_NAME') or '').strip()\n        result = nta_name.split('-')[-1].strip() if '-' in nta_name else nta_name\n        break",
+      "answer": "Carnegie Hill"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2010-11?",
+      "sql": "SELECT replace(trim(\"SCHOOL\"), 'P.S.', 'PS') AS answer\nFROM t\nWHERE CAST(\"DISTRICT\" AS INTEGER) = 2\n  AND trim(\"SCHOOL LEVEL*\") = 'Elementary'\n  AND TRY_CAST(\"2010-2011 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) IS NOT NULL\nORDER BY TRY_CAST(\"2010-2011 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) DESC,\n         trim(\"DBN\") DESC\nLIMIT 3",
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 158 Bayard Taylor",
+        "PS 290 Manhattan New School"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2011-2012-school-progress-report-all-schools",
+      "source": "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2011-12?",
+      "sql": "SELECT replace(trim(\"SCHOOL\"), 'P.S.', 'PS') AS answer\nFROM t\nWHERE CAST(\"DISTRICT\" AS INTEGER) = 2\n  AND trim(\"SCHOOL LEVEL*\") = 'Elementary'\n  AND TRY_CAST(\"2011-2012 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) IS NOT NULL\nORDER BY TRY_CAST(\"2011-2012 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) DESC,\n         trim(\"DBN\") DESC\nLIMIT 3",
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 212 Midtown West",
+        "PS 042 Benjamin Altman"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2012-2013-citywide-progress-report",
+      "source": "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+      "intent": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2012-13?",
+      "sql": "SELECT replace(trim(\"SCHOOL\"), 'P.S.', 'PS') AS answer\nFROM t\nWHERE CAST(\"DISTRICT\" AS INTEGER) = 2\n  AND trim(\"SCHOOL LEVEL*\") = 'Elementary'\n  AND TRY_CAST(\"2012-2013 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) IS NOT NULL\nORDER BY TRY_CAST(\"2012-2013 PERFORMANCE CATEGORY SCORE\" AS DOUBLE) DESC,\n         trim(\"DBN\") DESC\nLIMIT 3",
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 124 Yung Wing",
+        "PS 042 Benjamin Altman"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "In which Manhattan neighborhood is <intersection of node_1, node_2, node_3: PS 77 Lower Lab School> located?",
+      "sql": "SELECT trim(regexp_extract(trim(\"NTA_NAME\"), '([^-]+)$', 1)) AS answer\nFROM t\nWHERE trim(\"LOCATION_NAME\") = 'P.S. 77 Lower Lab School'\nLIMIT 1",
+      "answer": "Carnegie Hill"
+    }
+  ]
+}

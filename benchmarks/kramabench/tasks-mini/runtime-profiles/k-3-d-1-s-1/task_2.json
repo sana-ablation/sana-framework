@@ -1,0 +1,71 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-easy-4"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+    "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+    "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the climate measurements sheet after skipping metadata rows and identify fully empty columns to drop.",
+    "2. Drop empty columns, find the minimum dust proxy, and find the smallest wet-dry index among tied rows.",
+    "3. Select the tied row by dust proxy and wet-dry index and read the calcium value rounded to four decimals."
+  ],
+  "original_final_question": "What is the amount of calcium in ppm when the dust proxy was the smallest, breaking ties by the minimum wet-dry index? Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the climate measurements sheet after skipping metadata rows and identify fully empty columns to drop.",
+    "Node 2 depends on node 1: Drop empty columns, find the minimum dust proxy, and find the smallest wet-dry index among tied rows.",
+    "Node 3 depends on node 2: Select the tied row by dust proxy and wet-dry index and read the calcium value rounded to four decimals.",
+    "Final answer: 207878.8774"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-4",
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "intent": "After reading the climate workbook with the metadata rows skipped, which column indices are completely empty?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ndf = pd.read_excel(path, sheet_name=0, header=0, skiprows=5)\nempty_indices = [i for i, col in enumerate(df.columns) if df[col].isna().all()]\nresult = str(empty_indices).replace(\"'\", '\"')\nprint(result)\n",
+      "answer": "[20, 24, 27]"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-4",
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "intent": "What are the minimum dust proxy and the tie-breaking minimum wet-dry index?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ndf = pd.read_excel(path, sheet_name=0, header=0, skiprows=5).dropna(axis=1, how='all')\nmin_dust = df['ODP 967 Dust proxy'].min()\nsubset = df[df['ODP 967 Dust proxy'] == min_dust]\nwet_dry = subset['ODP 967 wet-dry index'].min()\nresult = f\"{min_dust:.3f}|{wet_dry:.15f}\"\nprint(result)\n",
+      "answer": "0.001|0.059866313428369"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-easy-4",
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "intent": "For the row with the smallest dust proxy and lowest wet-dry index tie breaker, what is the calcium amount rounded to four decimals?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ndf = pd.read_excel(path, sheet_name=0, header=0, skiprows=5).dropna(axis=1, how='all')\nmin_dust = df['ODP 967 Dust proxy'].min()\nsubset = df[df['ODP 967 Dust proxy'] == min_dust]\nrow = subset[subset['ODP 967 wet-dry index'] == subset['ODP 967 wet-dry index'].min()]\nresult = f\"{float(row['Ca'].iloc[0]):.4f}\"\nprint(result)\n",
+      "answer": "207878.8774"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-4",
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "intent": "After reading the climate workbook with the metadata rows skipped, which column indices are completely empty?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-4",
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "intent": "What are the minimum dust proxy and the tie-breaking minimum wet-dry index?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-easy-4",
+      "source": "datagov/kramabench-archeology-easy-4/files/climateMeasurements.xlsx",
+      "intent": "For the row with the smallest dust proxy and lowest wet-dry index tie breaker, what is the calcium amount rounded to four decimals?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

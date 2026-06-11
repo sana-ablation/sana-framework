@@ -1,0 +1,107 @@
+{
+  "dataset_sequence": [
+    "moving-violations-issued-in-january-2019",
+    "moving-violations-issued-in-january-2020",
+    "moving-violations-issued-in-january-2021",
+    "United_States_Park_Police",
+    "National_Park_Service",
+    "United_States_Department_of_the_Interior"
+  ],
+  "source_sequence": [
+    "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+    "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+    "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+    "wikipedia/United_States_Park_Police/content.txt",
+    "wikipedia/National_Park_Service/content.txt",
+    "wikipedia/United_States_Department_of_the_Interior/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, compare January moving-violation counts in 2019, 2020, and 2021, compute each agency's average, and keep the agency with the highest average.",
+    "2. Determine the federal agency that operates the agency kept in step 1.",
+    "3. Determine the U.S. department containing that federal agency.",
+    "4. Determine the head of that department and return the name."
+  ],
+  "original_final_question": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019 to 2021? That agency is operated by which federal agency, and that agency sits within which U.S. department? Who is the head of that department? Return the name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3): Compare January moving-violation counts for the three agencies in 2019-2021",
+    "  Node 1: 2019 moving violations",
+    "  Node 2: 2020 moving violations",
+    "  Node 3: 2021 moving violations; average is highest for UNITED STATES PARK POLICE",
+    "  Result: UNITED STATES PARK POLICE",
+    "HOP 2 (d=1): Identify the federal agency that operates the United States Park Police",
+    "  Node 4: Operated by the National Park Service",
+    "HOP 3 (d=1): Identify the U.S. department that contains the National Park Service",
+    "  Node 5: National Park Service is within the United States Department of the Interior",
+    "HOP 4 (d=1): Identify the head of the United States Department of the Interior",
+    "  Node 6: The current interior secretary is Doug Burgum",
+    "Final answer: Doug Burgum"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "moving-violations-issued-in-january-2019",
+      "source": "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "code": "import os\nimport io\nimport json\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/moving-violations-issued-in-january-2019/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    with open(local_path, \"r\", encoding=\"utf-8\", errors=\"replace\") as f:\n        geo = json.load(f)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    geo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\n\ndf = pd.DataFrame([feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])])\nnode_1_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'D.C. HOUSING AUTHORITY', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'UNITED STATES CAPITOL POLICE', 'METRO POLICE', 'DDOT', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'SPECIAL INSPECTION DIVISION', 'MPD RESERVE CORPS', 'UNVRSTY OF THE D.C. SECURITY POLICE', 'TAXI COMMISSION', 'US. SECRET SERVICE UNIFORM DIVISION', 'UNITED STATES PARK POLICE']\nnode_2_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'D.C. HOUSING AUTHORITY', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'DDOT', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'METRO POLICE', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'UNITED STATES PARK POLICE', 'UNITED STATES CAPITOL POLICE', 'TAXI COMMISSION', 'SPECIAL INSPECTION DIVISION', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'US. SECRET SERVICE UNIFORM DIVISION', 'BOLLING AFB', 'US. GOVERNMENT PRINTING OFFICE']\nnode_3_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'D.C. HOUSING AUTHORITY', 'UNITED STATES PARK POLICE', 'METRO POLICE', 'TAXI COMMISSION', 'UNITED STATES CAPITOL POLICE', 'MPD RESERVE CORPS', 'US. SECRET SERVICE UNIFORM DIVISION', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'DPT. OF GENERAL SERVICES GUARDS', 'US. GOVERNMENT PRINTING OFFICE', 'OTHER']\n\nexpected_is_dict = True\nimport re\n\ntarget_order = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\n\ndef norm_agency(s):\n    s = str(s).upper()\n    s = re.sub(r\"[^A-Z0-9 ]\", \"\", s)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s\n\ntarget_norm = {name: norm_agency(name) for name in target_order}\nagency_norm = df[\"ISSUING_AGENCY_NAME\"].astype(str).map(norm_agency)\ncounts = agency_norm.value_counts()\n\nif expected_is_dict:\n    answer = {name: int(counts.get(target_norm[name], 0)) for name in target_order}\nelse:\n    answer = sorted(target_order, key=lambda name: (-int(counts.get(target_norm[name], 0)), name))[0]\n",
+      "answer": {
+        "UNITED STATES PARK POLICE": 103,
+        "UNITED STATES CAPITOL POLICE": 176,
+        "US. SECRET SERVICE UNIFORM DIVISION": 145
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "moving-violations-issued-in-january-2020",
+      "source": "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "code": "import os\nimport io\nimport json\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/moving-violations-issued-in-january-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    with open(local_path, \"r\", encoding=\"utf-8\", errors=\"replace\") as f:\n        geo = json.load(f)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    geo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\n\ndf = pd.DataFrame([feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])])\nnode_1_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'D.C. HOUSING AUTHORITY', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'UNITED STATES CAPITOL POLICE', 'METRO POLICE', 'DDOT', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'SPECIAL INSPECTION DIVISION', 'MPD RESERVE CORPS', 'UNVRSTY OF THE D.C. SECURITY POLICE', 'TAXI COMMISSION', 'US. SECRET SERVICE UNIFORM DIVISION', 'UNITED STATES PARK POLICE']\nnode_2_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'D.C. HOUSING AUTHORITY', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'DDOT', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'METRO POLICE', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'UNITED STATES PARK POLICE', 'UNITED STATES CAPITOL POLICE', 'TAXI COMMISSION', 'SPECIAL INSPECTION DIVISION', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'US. SECRET SERVICE UNIFORM DIVISION', 'BOLLING AFB', 'US. GOVERNMENT PRINTING OFFICE']\nnode_3_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'D.C. HOUSING AUTHORITY', 'UNITED STATES PARK POLICE', 'METRO POLICE', 'TAXI COMMISSION', 'UNITED STATES CAPITOL POLICE', 'MPD RESERVE CORPS', 'US. SECRET SERVICE UNIFORM DIVISION', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'DPT. OF GENERAL SERVICES GUARDS', 'US. GOVERNMENT PRINTING OFFICE', 'OTHER']\n\nexpected_is_dict = True\nimport re\n\ntarget_order = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\n\ndef norm_agency(s):\n    s = str(s).upper()\n    s = re.sub(r\"[^A-Z0-9 ]\", \"\", s)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s\n\ntarget_norm = {name: norm_agency(name) for name in target_order}\nagency_norm = df[\"ISSUING_AGENCY_NAME\"].astype(str).map(norm_agency)\ncounts = agency_norm.value_counts()\n\nif expected_is_dict:\n    answer = {name: int(counts.get(target_norm[name], 0)) for name in target_order}\nelse:\n    answer = sorted(target_order, key=lambda name: (-int(counts.get(target_norm[name], 0)), name))[0]\n",
+      "answer": {
+        "UNITED STATES PARK POLICE": 204,
+        "UNITED STATES CAPITOL POLICE": 139,
+        "US. SECRET SERVICE UNIFORM DIVISION": 118
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "moving-violations-issued-in-january-2021",
+      "source": "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "code": "import os\nimport io\nimport json\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/moving-violations-issued-in-january-2021/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    with open(local_path, \"r\", encoding=\"utf-8\", errors=\"replace\") as f:\n        geo = json.load(f)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    geo = json.loads(obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\"))\n\ndf = pd.DataFrame([feat.get(\"properties\", {}) for feat in geo.get(\"features\", [])])\nnode_1_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'D.C. HOUSING AUTHORITY', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'UNITED STATES CAPITOL POLICE', 'METRO POLICE', 'DDOT', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'SPECIAL INSPECTION DIVISION', 'MPD RESERVE CORPS', 'UNVRSTY OF THE D.C. SECURITY POLICE', 'TAXI COMMISSION', 'US. SECRET SERVICE UNIFORM DIVISION', 'UNITED STATES PARK POLICE']\nnode_2_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'D.C. HOUSING AUTHORITY', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'DDOT', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'METRO POLICE', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'UNITED STATES PARK POLICE', 'UNITED STATES CAPITOL POLICE', 'TAXI COMMISSION', 'SPECIAL INSPECTION DIVISION', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'US. SECRET SERVICE UNIFORM DIVISION', 'BOLLING AFB', 'US. GOVERNMENT PRINTING OFFICE']\nnode_3_answer = ['DEPARTMENT OF PUBLIC WORKS', 'METROPOLITAN POLICE DPT-DISTRICT 7', 'METROPOLITAN POLICE DPT-DISTRICT 3', 'METROPOLITAN POLICE DPT-DISTRICT 6', 'METROPOLITAN POLICE DPT-DISTRICT 1', 'METROPOLITAN POLICE DPT-DISTRICT 2', 'METROPOLITAN POLICE DPT-DISTRICT 4', 'METROPOLITAN POLICE DPT-DISTRICT 5', 'SPECIAL OPERATION DIV & TRAFFIC DIV', 'D.C. HOUSING AUTHORITY', 'UNITED STATES PARK POLICE', 'METRO POLICE', 'TAXI COMMISSION', 'UNITED STATES CAPITOL POLICE', 'MPD RESERVE CORPS', 'US. SECRET SERVICE UNIFORM DIVISION', 'PROTECTIVE SERVICES DEPT (DC GOVT)', 'DPT. OF GENERAL SERVICES GUARDS', 'US. GOVERNMENT PRINTING OFFICE', 'OTHER']\n\nexpected_is_dict = False\nimport re\n\ntarget_order = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\n\ndef norm_agency(s):\n    s = str(s).upper()\n    s = re.sub(r\"[^A-Z0-9 ]\", \"\", s)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s\n\ntarget_norm = {name: norm_agency(name) for name in target_order}\nagency_norm = df[\"ISSUING_AGENCY_NAME\"].astype(str).map(norm_agency)\ncounts = agency_norm.value_counts()\n\nif expected_is_dict:\n    answer = {name: int(counts.get(target_norm[name], 0)) for name in target_order}\nelse:\n    answer = sorted(target_order, key=lambda name: (-int(counts.get(target_norm[name], 0)), name))[0]\n",
+      "answer": "UNITED STATES PARK POLICE"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "moving-violations-issued-in-january-2019",
+      "source": "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "sql": "WITH agencies(agency) AS (\n  VALUES ('UNITED STATES PARK POLICE'),\n         ('UNITED STATES CAPITOL POLICE'),\n         ('US. SECRET SERVICE UNIFORM DIVISION')\n), counts AS (\n  SELECT trim(feature.properties.ISSUING_AGENCY_NAME) AS agency,\n         COUNT(*) AS violation_count\n  FROM t, UNNEST(features) AS u(feature)\n  WHERE trim(feature.properties.ISSUING_AGENCY_NAME) IN (SELECT agency FROM agencies)\n  GROUP BY agency\n)\nSELECT json_group_object(agencies.agency, COALESCE(counts.violation_count, 0)) AS answer\nFROM agencies\nLEFT JOIN counts ON agencies.agency = counts.agency",
+      "answer": {
+        "UNITED STATES PARK POLICE": 103,
+        "UNITED STATES CAPITOL POLICE": 176,
+        "US. SECRET SERVICE UNIFORM DIVISION": 145
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "moving-violations-issued-in-january-2020",
+      "source": "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "sql": "WITH agencies(agency) AS (\n  VALUES ('UNITED STATES PARK POLICE'),\n         ('UNITED STATES CAPITOL POLICE'),\n         ('US. SECRET SERVICE UNIFORM DIVISION')\n), counts AS (\n  SELECT trim(feature.properties.ISSUING_AGENCY_NAME) AS agency,\n         COUNT(*) AS violation_count\n  FROM t, UNNEST(features) AS u(feature)\n  WHERE trim(feature.properties.ISSUING_AGENCY_NAME) IN (SELECT agency FROM agencies)\n  GROUP BY agency\n)\nSELECT json_group_object(agencies.agency, COALESCE(counts.violation_count, 0)) AS answer\nFROM agencies\nLEFT JOIN counts ON agencies.agency = counts.agency",
+      "answer": {
+        "UNITED STATES PARK POLICE": 204,
+        "UNITED STATES CAPITOL POLICE": 139,
+        "US. SECRET SERVICE UNIFORM DIVISION": 118
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "moving-violations-issued-in-january-2021",
+      "source": "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "sql": "WITH agencies(agency, count_2019, count_2020) AS (\n  VALUES ('UNITED STATES PARK POLICE', 103, 204),\n         ('UNITED STATES CAPITOL POLICE', 176, 139),\n         ('US. SECRET SERVICE UNIFORM DIVISION', 145, 118)\n), counts_2021 AS (\n  SELECT trim(feature.properties.ISSUING_AGENCY_NAME) AS agency,\n         COUNT(*) AS count_2021\n  FROM t, UNNEST(features) AS u(feature)\n  WHERE trim(feature.properties.ISSUING_AGENCY_NAME) IN (SELECT agency FROM agencies)\n  GROUP BY agency\n), averages AS (\n  SELECT agencies.agency,\n         (agencies.count_2019 + agencies.count_2020 + COALESCE(counts_2021.count_2021, 0)) / 3.0 AS avg_count\n  FROM agencies\n  LEFT JOIN counts_2021 ON agencies.agency = counts_2021.agency\n)\nSELECT agency AS answer\nFROM averages\nORDER BY avg_count DESC, agency ASC\nLIMIT 1",
+      "answer": "UNITED STATES PARK POLICE"
+    }
+  ]
+}

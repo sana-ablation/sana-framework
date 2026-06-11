@@ -1,0 +1,156 @@
+{
+  "dataset_sequence": [
+    "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+    "annual-youth-detention-admissions-by-county-beginning-2006",
+    "nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998",
+    "jail-population-by-county-beginning-1997",
+    "Erie_County,_New_York",
+    "Buffalo,_New_York"
+  ],
+  "source_sequence": [
+    "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+    "datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt",
+    "datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt",
+    "datagov/jail-population-by-county-beginning-1997/files/rows.txt",
+    "wikipedia/Erie_County,_New_York/content.txt",
+    "wikipedia/Buffalo,_New_York/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify New York counties with violent crime rates over 300 per 100,000 in 2020.",
+    "2. From those counties, keep the ones with more than 100 admissions in the secure or mixed juvenile detention categories in 2015.",
+    "3. From the remaining counties, keep those with School Tax Relief reimbursement between $60 million and $90 million in 2023.",
+    "4. From the remaining counties, keep those with total jail census above 800 in 2019.",
+    "5. For the remaining county, determine its county seat.",
+    "6. Using the city identified in step 5, determine the year it was incorporated as a city."
+  ],
+  "original_final_question": "Among New York counties with violent crime rates over 300 per 100,000 in 2020 and more than 100 secure juvenile detention admissions in 2015, find the county that also had School Tax Relief (STAR) reimbursement between $60M and $90M in 2023 and a jail population above 800. The county seat is a major upstate industrial city and the former western terminus of the Erie Canal. What year was that city incorporated? Please return the year only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Find NY counties with violent crime rate > 300 in 2020 → {Albany, Bronx, Broome, Chautauqua, Erie, Greene, Kings, Monroe, New York, Niagara, Onondaga, Queens, Schenectady}",
+    "Node 2: Find NY counties with secure/mixed juvenile detention admissions > 100 in 2015 → {Erie, Monroe, Onondaga, Westchester}",
+    "Intersection of <node_1>, <node_2>: Counties in both sets → {Erie, Monroe, Onondaga}",
+    "Node 3: From candidates, find counties with STAR reimbursement $60M-$90M in 2023 → {Erie, Onondaga}",
+    "Node 4: From candidates, find counties with jail census > 800 in 2019 → {Erie, Monroe}",
+    "Intersection of <node_3>, <node_4>: Counties in both sets → {Erie}",
+    "Node 5: Find county seat of Erie County → Buffalo",
+    "Node 6: Find when Buffalo was incorporated → 1832",
+    "Final answer: 1832"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "Which New York counties had a violent crime rate exceeding 300 per 100,000 population in 2020?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Year\"] = pd.to_numeric(df[\"Year\"], errors=\"coerce\")\ndf[\"Violent Rate\"] = pd.to_numeric(df[\"Violent Rate\"], errors=\"coerce\")\n\nanswer = (\n    df.loc[(df[\"Year\"] == 2020) & (df[\"Violent Rate\"] > 300), \"County\"]\n    .tolist()\n)",
+      "answer": [
+        "Albany",
+        "Bronx",
+        "Broome",
+        "Chautauqua",
+        "Erie",
+        "Greene",
+        "Kings",
+        "Monroe",
+        "New York",
+        "Niagara",
+        "Onondaga",
+        "Queens",
+        "Schenectady"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "annual-youth-detention-admissions-by-county-beginning-2006",
+      "source": "datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt",
+      "intent": "Which New York counties had more than 100 secure or mixed juvenile detention admissions in 2015?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Year\"] = pd.to_numeric(df[\"Year\"], errors=\"coerce\")\ndf[\"Secure/Mixed Admissions\"] = pd.to_numeric(df[\"Secure/Mixed Admissions\"], errors=\"coerce\")\n\nanswer = (\n    df.loc[\n        (df[\"Year\"] == 2015)\n        & (df[\"County\"] != \"New York City\")\n        & (df[\"Secure/Mixed Admissions\"] > 100),\n        \"County\"\n    ]\n    .tolist()\n)",
+      "answer": [
+        "Erie",
+        "Monroe",
+        "Onondaga",
+        "Westchester"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998",
+      "source": "datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt",
+      "intent": "From <intersection of node_1, node_2>, which counties received between $60 million and $90 million in total STAR tax relief reimbursement in 2023?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Levy Year\"] = pd.to_numeric(df[\"Levy Year\"], errors=\"coerce\")\ndf[\"Total Amount of Reimbursement\"] = pd.to_numeric(df[\"Total Amount of Reimbursement\"], errors=\"coerce\")\n\nanswer = (\n    df.loc[\n        (df[\"Levy Year\"] == 2023)\n        & (df[\"Total Amount of Reimbursement\"] >= 60000000)\n        & (df[\"Total Amount of Reimbursement\"] <= 90000000),\n        \"County\"\n    ]\n    .tolist()\n)",
+      "answer": [
+        "Erie",
+        "Onondaga"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "jail-population-by-county-beginning-1997",
+      "source": "datagov/jail-population-by-county-beginning-1997/files/rows.txt",
+      "intent": "From <intersection of node_1, node_2>, which counties had a total jail census exceeding 800 in 2019?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/jail-population-by-county-beginning-1997/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Year\"] = pd.to_numeric(df[\"Year\"], errors=\"coerce\")\ndf[\"Census\"] = pd.to_numeric(df[\"Census\"], errors=\"coerce\")\ndf = df[df[\"Facility Name (ORI)\"].str.contains(\" County \", na=False)].copy()\ndf[\"County\"] = df[\"Facility Name (ORI)\"].str.extract(r\"^(.*?) County\")\n\ncandidate_counties = [\"Erie\", \"Monroe\", \"Onondaga\"]\ncounty_totals = (\n    df.loc[(df[\"Year\"] == 2019) & (df[\"County\"].isin(candidate_counties))]\n    .groupby(\"County\", as_index=False)[\"Census\"]\n    .sum()\n)\n\nanswer = county_totals.loc[county_totals[\"Census\"] > 800, \"County\"].tolist()",
+      "answer": [
+        "Erie",
+        "Monroe"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "Which New York counties had a violent crime rate exceeding 300 per 100,000 population in 2020?",
+      "sql": "WITH src AS (\n  SELECT row_number() OVER () AS rn, \"County\"\n  FROM t\n  WHERE TRY_CAST(\"Year\" AS INTEGER) = 2020\n    AND TRY_CAST(\"Violent Rate\" AS DOUBLE) > 300\n)\nSELECT \"County\" AS answer FROM src ORDER BY rn",
+      "answer": [
+        "Albany",
+        "Bronx",
+        "Broome",
+        "Chautauqua",
+        "Erie",
+        "Greene",
+        "Kings",
+        "Monroe",
+        "New York",
+        "Niagara",
+        "Onondaga",
+        "Queens",
+        "Schenectady"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "annual-youth-detention-admissions-by-county-beginning-2006",
+      "source": "datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt",
+      "intent": "Which New York counties had more than 100 secure or mixed juvenile detention admissions in 2015?",
+      "sql": "WITH src AS (\n  SELECT row_number() OVER () AS rn, \"County\"\n  FROM t\n  WHERE TRY_CAST(\"Year\" AS INTEGER) = 2015\n    AND \"County\" <> 'New York City'\n    AND TRY_CAST(\"Secure/Mixed Admissions\" AS DOUBLE) > 100\n)\nSELECT \"County\" AS answer FROM src ORDER BY rn",
+      "answer": [
+        "Erie",
+        "Monroe",
+        "Onondaga",
+        "Westchester"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998",
+      "source": "datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt",
+      "intent": "From <intersection of node_1, node_2>, which counties received between $60 million and $90 million in total STAR tax relief reimbursement in 2023?",
+      "sql": "WITH src AS (\n  SELECT row_number() OVER () AS rn, \"County\"\n  FROM t\n  WHERE TRY_CAST(\"Levy Year\" AS INTEGER) = 2023\n    AND TRY_CAST(\"Total Amount of Reimbursement\" AS DOUBLE) >= 60000000\n    AND TRY_CAST(\"Total Amount of Reimbursement\" AS DOUBLE) <= 90000000\n)\nSELECT \"County\" AS answer FROM src ORDER BY rn",
+      "answer": [
+        "Erie",
+        "Onondaga"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "jail-population-by-county-beginning-1997",
+      "source": "datagov/jail-population-by-county-beginning-1997/files/rows.txt",
+      "intent": "From <intersection of node_1, node_2>, which counties had a total jail census exceeding 800 in 2019?",
+      "sql": "WITH county_rows AS (\n  SELECT regexp_extract(CAST(\"Facility Name (ORI)\" AS VARCHAR), '^(.*?) County', 1) AS county,\n         TRY_CAST(\"Census\" AS DOUBLE) AS census\n  FROM t\n  WHERE TRY_CAST(\"Year\" AS INTEGER) = 2019\n    AND contains(CAST(\"Facility Name (ORI)\" AS VARCHAR), ' County ')\n), totals AS (\n  SELECT county, SUM(census) AS total_census\n  FROM county_rows\n  WHERE county IN ('Erie', 'Monroe', 'Onondaga')\n  GROUP BY county\n)\nSELECT county AS answer\nFROM totals\nWHERE total_census > 800\nORDER BY county",
+      "answer": [
+        "Erie",
+        "Monroe"
+      ]
+    }
+  ]
+}

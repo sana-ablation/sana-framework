@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-astronomy-easy-2"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+    "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv",
+    "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the March 2014 Swarm A density file and find its maximum orbit mean density.",
+    "2. Read the July 2018 Swarm A density file and find its maximum orbit mean density.",
+    "3. Divide the 2014 peak by the 2018 peak and round to two decimals."
+  ],
+  "original_final_question": "Calculate the ratio of peak atmospheric mass density experienced by Swarm A satellite during March 14th-17th 2014 vs July 18th-21st 2018. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the March 2014 Swarm A density file and find its maximum orbit mean density.",
+    "Node 2: Read the July 2018 Swarm A density file and find its maximum orbit mean density.",
+    "Node 3 depends on nodes 1 and 2: Divide the 2014 peak by the 2018 peak and round to two decimals.",
+    "Final answer: 7.52"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-easy-2",
+      "source": "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+      "intent": "What is the peak Swarm A atmospheric mass density during March 14-17, 2014?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv'\ndf = pd.read_csv(path)\nresult = f\"{df['Orbit Mean Density (kg/m^3)'].max():.16e}\"\nprint(result)\n",
+      "answer": "1.3285239839593709e-12"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-easy-2",
+      "source": "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv",
+      "intent": "What is the peak Swarm A atmospheric mass density during July 18-21, 2018?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv'\ndf = pd.read_csv(path)\nresult = f\"{df['Orbit Mean Density (kg/m^3)'].max():.16e}\"\nprint(result)\n",
+      "answer": "1.7666467344237410e-13"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-easy-2",
+      "source": "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+      "intent": "What is the ratio of the 2014 peak density to the 2018 peak density rounded to two decimals?",
+      "code": "import pandas as pd\nfirst_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv'\nsecond_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv'\nfirst = pd.read_csv(first_path)['Orbit Mean Density (kg/m^3)'].max()\nsecond = pd.read_csv(second_path)['Orbit Mean Density (kg/m^3)'].max()\nresult = f\"{first / second:.2f}\"\nprint(result)\n",
+      "answer": "7.52"
+    }
+  ]
+}

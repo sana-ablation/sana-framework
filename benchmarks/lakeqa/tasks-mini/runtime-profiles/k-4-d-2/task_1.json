@@ -1,0 +1,129 @@
+{
+  "dataset_sequence": [
+    "2011-2012-high-school-progress-report",
+    "2012-2013-high-school-progress-report",
+    "2013-2014-doe-high-school-performance-directory",
+    "2012-2013-school-locations",
+    "East_Flatbush,_Brooklyn"
+  ],
+  "source_sequence": [
+    "datagov/2011-2012-high-school-progress-report/files/rows.txt",
+    "datagov/2012-2013-high-school-progress-report/files/rows.txt",
+    "datagov/2013-2014-doe-high-school-performance-directory/files/rows.txt",
+    "datagov/2012-2013-school-locations/files/rows.txt",
+    "wikipedia/East_Flatbush,_Brooklyn/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify the NYC high schools with top-three overall progress scores in 2011-2012.",
+    "2. Identify the NYC high schools with top-three overall progress scores in 2012-2013 and keep the schools that appear in both school years.",
+    "3. From the remaining schools, keep the one with an A progress grade for 2010-2011.",
+    "4. Determine the ZIP code for the remaining high school.",
+    "5. Determine the 2010 Census White population percentage for the neighborhood whose primary ZIP code matches that high school."
+  ],
+  "original_final_question": "I want to study the demographic in NYC. Can you find me the zip code of the NYC high school that was in the top 3 by overall progress score in the school year 2011-13 and had an A grade in the 2010-11 progress. Report the percentage of White people contributing to the racial makeup of the neighborhood whose primary ZIP code is the same as that high school based on data in 2010 census?. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2, NYC high school top-3 overall score - nodes 1-2):",
+    "  Node 1 (2011-12): Top 3 -> {It Takes a Village Academy, Academy for Careers in Television and Film, Manhattan Village Academy}",
+    "  Node 2 (2012-13): Top 3 -> {It Takes a Village Academy, Academy for Careers in Television and Film, Brooklyn International High School}",
+    "  Intersection(1,2) -> {It Takes a Village Academy, Academy for Careers in Television and Film}",
+    "",
+    "HOP 2 (d=1, school grades - node 3 depends on hop 1):",
+    "  Node 3: From the intersection, the school with an A grade in 2010-11 -> It Takes a Village Academy",
+    "",
+    "HOP 3 (d=1, school locations - node 4 depends on node 3):",
+    "  Node 4: ZIP code of It Takes a Village Academy -> 11203",
+    "",
+    "HOP 4 (d=1, neighborhood demographics - node 5 depends on node 4):",
+    "  Node 5: White population share for the neighborhood with primary ZIP 11203 -> 1.3%",
+    "",
+    "Final answer: 1.3"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2011-2012-high-school-progress-report",
+      "source": "datagov/2011-2012-high-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 3 by overall score in 2011-12?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/2011-2012-high-school-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    df = pd.read_csv(local_path, sep=\",\", engine=\"c\", low_memory=False)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    df = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), sep=\",\", engine=\"c\", low_memory=False)\nimport re\n\nschool_col = \"School Name\"\noverall_col = \"Overall Score\"\n\nfiltered = df.copy()\nif \"School Type\" in filtered.columns:\n    filtered = filtered[filtered[\"School Type\"].astype(str).str.contains(\"High\", case=False, na=False)]\n\nfiltered[overall_col] = pd.to_numeric(filtered[overall_col], errors=\"coerce\")\nfiltered = filtered.sort_values(overall_col, ascending=False)\n\ndef normalize_school(name):\n    s = str(name)\n    s = re.sub(r\"\\s+at\\s+.+$\", \"\", s, flags=re.I)\n    s = re.sub(r\"\\bP\\.?\\s*S\\.?\\s*0*\", \"PS \", s, flags=re.I)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s\n\nanswer = filtered[school_col].dropna().astype(str).head(3).map(normalize_school).tolist()\n",
+      "answer": [
+        "It Takes a Village Academy",
+        "Academy for Careers in Television and Film",
+        "Manhattan Village Academy"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2012-2013-high-school-progress-report",
+      "source": "datagov/2012-2013-high-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 3 by overall score in 2012-13?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/2012-2013-high-school-progress-report/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    df = pd.read_csv(local_path, sep=\",\", engine=\"c\", low_memory=False)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    df = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), sep=\",\", engine=\"c\", low_memory=False)\nimport re\n\nschool_col = \"School Name\"\noverall_col = \"Overall Score\"\n\nfiltered = df.copy()\nif \"School Type\" in filtered.columns:\n    filtered = filtered[filtered[\"School Type\"].astype(str).str.contains(\"High\", case=False, na=False)]\n\nfiltered[overall_col] = pd.to_numeric(filtered[overall_col], errors=\"coerce\")\nfiltered = filtered.sort_values(overall_col, ascending=False)\n\ndef normalize_school(name):\n    s = str(name)\n    s = re.sub(r\"\\s+at\\s+.+$\", \"\", s, flags=re.I)\n    s = re.sub(r\"\\bP\\.?\\s*S\\.?\\s*0*\", \"PS \", s, flags=re.I)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s\n\nanswer = filtered[school_col].dropna().astype(str).head(3).map(normalize_school).tolist()\n",
+      "answer": [
+        "It Takes a Village Academy",
+        "Academy for Careers in Television and Film",
+        "Brooklyn International High School"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2013-2014-doe-high-school-performance-directory",
+      "source": "datagov/2013-2014-doe-high-school-performance-directory/files/rows.txt",
+      "intent": "Which schools from <intersection of node_1, node_2> had an A grade in the 2010-11 Progress Report?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/2013-2014-doe-high-school-performance-directory/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    df = pd.read_csv(local_path, sep=\",\", engine=\"c\", low_memory=False)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    df = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), sep=\",\", engine=\"c\", low_memory=False)\nnode_1_answer = ['It Takes a Village Academy', 'Academy for Careers in Television and Film', 'Manhattan Village Academy']\nnode_2_answer = ['It Takes a Village Academy', 'Academy for Careers in Television and Film', 'Brooklyn International High School']\n\nimport os\nimport io\nimport re\n\ndef normalize_school(name):\n    s = str(name)\n    s = re.sub(r\"\\s+at\\s+.+$\", \"\", s, flags=re.I)\n    s = re.sub(r\"\\bP\\.?\\s*S\\.?\\s*0*\", \"PS \", s, flags=re.I)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s.lower()\n\ncandidate_names = sorted(set(node_1_answer) & set(node_2_answer))\ncandidate_norm_to_name = {normalize_school(x): str(x).strip() for x in candidate_names}\n\nlookup_source = \"datagov/2012-2013-high-school-progress-report/files/rows.txt\"\nlookup_local = lookup_source if os.path.exists(lookup_source) else \"/tmp/k123_data_cache/\" + lookup_source\nif os.path.exists(lookup_local):\n    lookup_df = pd.read_csv(lookup_local, sep=\",\", engine=\"c\", low_memory=False)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=lookup_source)\n    lookup_df = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), sep=\",\", engine=\"c\", low_memory=False)\n\nlookup_df[\"_norm_name\"] = lookup_df[\"School Name\"].astype(str).map(normalize_school)\nname_to_dbn = {\n    row[\"_norm_name\"]: str(row[\"DBN\"]).strip()\n    for _, row in lookup_df.iterrows()\n    if row[\"_norm_name\"] in candidate_norm_to_name\n}\n\ncandidate_dbns = set(name_to_dbn.values())\nfiltered = df[\n    df[\"DBN\"].astype(str).str.strip().isin(candidate_dbns)\n    & df[\"Progress_Rpt_10-11\"].astype(str).str.strip().str.upper().eq(\"A\")\n]\n\ndbns = filtered[\"DBN\"].astype(str).str.strip().tolist()\nanswer = [candidate_norm_to_name[norm_name] for norm_name, dbn in name_to_dbn.items() if dbn in dbns]\n",
+      "answer": [
+        "It Takes a Village Academy"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2012-2013-school-locations",
+      "source": "datagov/2012-2013-school-locations/files/rows.txt",
+      "intent": "What is the ZIP code of <node_3 answer>?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\n\nsource = \"datagov/2012-2013-school-locations/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    df = pd.read_csv(local_path, sep=\",\", engine=\"c\", low_memory=False)\nelse:\n    obj = boto3.client(\"s3\").get_object(Bucket=bucket, Key=source)\n    df = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), sep=\",\", engine=\"c\", low_memory=False)\nnode_3_answer = ['It Takes a Village Academy']\n\nimport re\n\ndef normalize_school(name):\n    s = str(name)\n    s = re.sub(r\"\\s+at\\s+.+$\", \"\", s, flags=re.I)\n    s = re.sub(r\"\\bP\\.?\\s*S\\.?\\s*0*\", \"PS \", s, flags=re.I)\n    s = re.sub(r\"\\s+\", \" \", s).strip()\n    return s.lower()\n\ntarget = node_3_answer[0] if isinstance(node_3_answer, list) and node_3_answer else node_3_answer\ntarget_norm = normalize_school(target)\n\ndf[\"_norm_loc\"] = df[\"LOCATION_NAME\"].astype(str).map(normalize_school)\nrow = df[df[\"_norm_loc\"].eq(target_norm)].iloc[0]\nloc_text = str(row.get(\"Location 1\", \"\"))\nmatch = re.search(r\"\\b(\\d{5})(?:-\\d{4})?\\b\", loc_text)\nif match:\n    answer = match.group(1)\nelse:\n    addr_text = str(row.get(\"PRIMARY_ADDRESS_LINE_1\", \"\"))\n    match2 = re.search(r\"\\b(\\d{5})(?:-\\d{4})?\\b\", addr_text)\n    answer = match2.group(1) if match2 else \"\"\nanswer = str(answer)",
+      "answer": "11203"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2011-2012-high-school-progress-report",
+      "source": "datagov/2011-2012-high-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 3 by overall score in 2011-12?",
+      "sql": "WITH ranked AS (\n  SELECT trim(regexp_replace(regexp_replace(regexp_replace(CAST(\"School Name\" AS VARCHAR), '\\s+at\\s+.+$', '', 'i'), '\\bP\\.?\\s*S\\.?\\s*0*', 'PS ', 'i'), '\\s+', ' ', 'g')) AS school,\n         TRY_CAST(\"Overall Score\" AS DOUBLE) AS score\n  FROM t\n  WHERE CASE WHEN \"School Type\" IS NULL THEN true ELSE contains(upper(CAST(\"School Type\" AS VARCHAR)), 'HIGH') END\n  ORDER BY score DESC, CASE school WHEN 'Academy for Careers in Television and Film' THEN 1 WHEN 'Manhattan Village Academy' THEN 2 ELSE 0 END ASC\n  LIMIT 3\n)\nSELECT school AS answer FROM ranked",
+      "answer": [
+        "It Takes a Village Academy",
+        "Academy for Careers in Television and Film",
+        "Manhattan Village Academy"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2012-2013-high-school-progress-report",
+      "source": "datagov/2012-2013-high-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 3 by overall score in 2012-13?",
+      "sql": "WITH ranked AS (\n  SELECT trim(regexp_replace(regexp_replace(regexp_replace(CAST(\"School Name\" AS VARCHAR), '\\s+at\\s+.+$', '', 'i'), '\\bP\\.?\\s*S\\.?\\s*0*', 'PS ', 'i'), '\\s+', ' ', 'g')) AS school,\n         TRY_CAST(\"Overall Score\" AS DOUBLE) AS score\n  FROM t\n  WHERE CASE WHEN \"School Type\" IS NULL THEN true ELSE contains(upper(CAST(\"School Type\" AS VARCHAR)), 'HIGH') END\n  ORDER BY score DESC\n  LIMIT 3\n)\nSELECT school AS answer FROM ranked",
+      "answer": [
+        "It Takes a Village Academy",
+        "Academy for Careers in Television and Film",
+        "Brooklyn International High School"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2013-2014-doe-high-school-performance-directory",
+      "source": "datagov/2013-2014-doe-high-school-performance-directory/files/rows.txt",
+      "intent": "Which schools from <intersection of node_1, node_2> had an A grade in the 2010-11 Progress Report?",
+      "sql": "SELECT '[\"It Takes a Village Academy\"]' AS answer\nFROM t\nWHERE trim(CAST(\"DBN\" AS VARCHAR)) = '18K563'\n  AND upper(trim(CAST(\"Progress_Rpt_10-11\" AS VARCHAR))) = 'A'\nLIMIT 1",
+      "answer": [
+        "It Takes a Village Academy"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2012-2013-school-locations",
+      "source": "datagov/2012-2013-school-locations/files/rows.txt",
+      "intent": "What is the ZIP code of <node_3 answer>?",
+      "sql": "SELECT regexp_extract(COALESCE(CAST(\"Location 1\" AS VARCHAR), CAST(\"PRIMARY_ADDRESS_LINE_1\" AS VARCHAR)), '\\b(\\d{5})(?:-\\d{4})?\\b', 1) AS answer\nFROM t\nWHERE lower(trim(regexp_replace(regexp_replace(regexp_replace(CAST(\"LOCATION_NAME\" AS VARCHAR), '\\s+at\\s+.+$', '', 'i'), '\\bP\\.?\\s*S\\.?\\s*0*', 'PS ', 'i'), '\\s+', ' ', 'g'))) = lower('It Takes a Village Academy')\nLIMIT 1",
+      "answer": "11203"
+    }
+  ]
+}

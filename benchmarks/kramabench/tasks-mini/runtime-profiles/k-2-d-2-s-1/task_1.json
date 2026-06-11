@@ -1,0 +1,71 @@
+{
+  "dataset_sequence": [
+    "kramabench-biomedical-easy-9"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+    "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+    "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. In the phospho significance sheet, calculate the mean FDR for rows where the gene is CBX3.",
+    "2. In the same sheet, calculate the mean FDR for all other gene rows.",
+    "3. Subtract the non-CBX3 mean from the CBX3 mean and return the difference."
+  ],
+  "original_final_question": "What is the difference between the average false discovery rate (FDR) for CBX3 rows and the average FDR for all other genes in the phospho significance sheet? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: In the F-SS-phospho sheet, the mean FDR.phos for CBX3 rows is 0.016840668972299789.",
+    "Node 2: In the same sheet, the mean FDR.phos for non-CBX3 rows is 0.024844644346166109.",
+    "Node 3 depends on nodes 1 and 2: subtracting the non-CBX3 mean from the CBX3 mean gives -0.0080039753738663198.",
+    "Final answer: -0.0080039753738663198"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-easy-9",
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "intent": "In the F-SS-phospho sheet, what is the average FDR.phos value for rows where Gene is CBX3?",
+      "code": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_authoring_path):\n    excel_path = local_authoring_path\nelif os.path.exists(source):\n    excel_path = source\nelif os.path.exists(cache_path):\n    excel_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    excel_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(excel_path, sheet_name='F-SS-phospho', usecols=['Gene', 'FDR.phos'])\ngenes = df['Gene'].astype(str).str.strip()\nfdr = pd.to_numeric(df['FDR.phos'], errors='coerce')\ncbx3_mean = fdr[genes.eq('CBX3')].mean()\nresult = format(float(cbx3_mean), '.17g')\nprint(result)\n",
+      "answer": "0.016840668972299789"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-easy-9",
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "intent": "In the F-SS-phospho sheet, what is the average FDR.phos value for rows where Gene is not CBX3?",
+      "code": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_authoring_path):\n    excel_path = local_authoring_path\nelif os.path.exists(source):\n    excel_path = source\nelif os.path.exists(cache_path):\n    excel_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    excel_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(excel_path, sheet_name='F-SS-phospho', usecols=['Gene', 'FDR.phos'])\ngenes = df['Gene'].astype(str).str.strip()\nfdr = pd.to_numeric(df['FDR.phos'], errors='coerce')\nother_mean = fdr[~genes.eq('CBX3')].mean()\nresult = format(float(other_mean), '.17g')\nprint(result)\n",
+      "answer": "0.024844644346166109"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-biomedical-easy-9",
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "intent": "Using the CBX3 average FDR from node 1 and the non-CBX3 average FDR from node 2, what is the CBX3 average minus the non-CBX3 average?",
+      "code": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_authoring_path):\n    excel_path = local_authoring_path\nelif os.path.exists(source):\n    excel_path = source\nelif os.path.exists(cache_path):\n    excel_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    excel_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_excel(excel_path, sheet_name='F-SS-phospho', usecols=['Gene', 'FDR.phos'])\ngenes = df['Gene'].astype(str).str.strip()\nfdr = pd.to_numeric(df['FDR.phos'], errors='coerce')\ncbx3_mean = fdr[genes.eq('CBX3')].mean()\nother_mean = fdr[~genes.eq('CBX3')].mean()\nresult = format(float(cbx3_mean - other_mean), '.17g')\nprint(result)\n",
+      "answer": "-0.0080039753738663198"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-biomedical-easy-9",
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "intent": "In the F-SS-phospho sheet, what is the average FDR.phos value for rows where Gene is CBX3?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-biomedical-easy-9",
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "intent": "In the F-SS-phospho sheet, what is the average FDR.phos value for rows where Gene is not CBX3?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-biomedical-easy-9",
+      "source": "datagov/kramabench-biomedical-easy-9/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "intent": "Using the CBX3 average FDR from node 1 and the non-CBX3 average FDR from node 2, what is the CBX3 average minus the non-CBX3 average?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

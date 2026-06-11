@@ -1,0 +1,81 @@
+{
+  "question": "What is the correlation between the proportion of generally unsafe air quality days according to the EPA and the amount of land affected by fires in 2024? Round to 2 decimal places. Write your answer as [ANSWER].",
+  "answer": "0.65",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-wildfire-hard-14/files/annual_aqi_by_county_2024.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/annual_aqi_by_county_2024.csv'\ndf = pd.read_csv(path)\ndf['bad days'] = df['Unhealthy Days'] + df['Very Unhealthy Days'] + df['Hazardous Days']\ndf['bad days proportion'] = df['bad days'] / df['Days with AQI']\nstate_df = df.groupby(['State']).mean(numeric_only=True).reset_index()\nprint(str(len(state_df)))\n",
+      "subquestion": "How many state-level AQI averages are computed after deriving unsafe-day proportions?",
+      "answer": "54"
+    },
+    "2": {
+      "source": "datagov/kramabench-wildfire-hard-14/files/Wildfire_Acres_by_State.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\ndf = pd.read_csv(path)\nprint(str(len(df)))\n",
+      "subquestion": "How many state rows are in the wildfire acres table?",
+      "answer": "52"
+    },
+    "3": {
+      "source": "datagov/kramabench-wildfire-hard-14/files/annual_aqi_by_county_2024.csv",
+      "fact": "import pandas as pd\naqi_path = 'other-benchmarks/Kramabench/data/wildfire/input/annual_aqi_by_county_2024.csv'\nacres_path = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\naqi = pd.read_csv(aqi_path)\naqi['bad days'] = aqi['Unhealthy Days'] + aqi['Very Unhealthy Days'] + aqi['Hazardous Days']\naqi['bad days proportion'] = aqi['bad days'] / aqi['Days with AQI']\naqi_state = aqi.groupby(['State']).mean(numeric_only=True).reset_index()\nacres = pd.read_csv(acres_path)\naugmented = aqi_state.merge(acres[['State', 'Total Acres Burned', 'Population']], on='State', how='left')\ncorrelation = augmented[['bad days proportion', 'Total Acres Burned']].corr().iloc[0, 1]\nprint('{:.2f}'.format(correlation))\n",
+      "subquestion": "What is the correlation between state unsafe-air-day proportion and total acres burned, rounded to two decimals?",
+      "answer": "0.65"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 computes state-level proportions of generally unsafe AQI days.",
+    "Node 2 reads state wildfire acres.",
+    "Node 3 depends on nodes 1-2 and computes the requested correlation rounded to two decimals.",
+    "Final answer: 0.65"
+  ],
+  "datasets_used": [
+    "kramabench-wildfire-hard-14"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Prepare state-level AQI unsafe-day proportions and wildfire acres totals.",
+      "answer": "54 AQI state rows; 52 wildfire state rows"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Merge the state tables and compute the rounded correlation.",
+      "answer": "0.65"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "wildfire-hard-14",
+    "domain": "wildfire",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/wildfire-hard-14.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {
+        "domain": "wildfire"
+      }
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-hard-14.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-14/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/wildfire/input/annual_aqi_by_county_2024.csv",
+      "2": "other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv",
+      "3": "other-benchmarks/Kramabench/data/wildfire/input/annual_aqi_by_county_2024.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_execution": "Bundled Python source script ran from Kramabench root and printed correlation 0.6468807635488278, rounded to 0.65."
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "question": "What is the seasonal exceedance rate (in percentage, to 2 decimal places) of Chatham's Bucks Creek Beach in the summer (June, July, August) with the most rainfall in its area? Impute missing values with median of the month in non-missing years. Write your answer as [ANSWER].",
+  "answer": "47.37",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-17/files/monthly_precipitations_chatham.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv'\nmonths = ['Jun', 'Jul', 'Aug']\nvalid_years = set(range(2002, 2021))\ndf = pd.read_csv(path)\ndf['Year'] = pd.to_numeric(df['Year'], errors='coerce')\ndf = df[df['Year'].isin(valid_years)].copy()\nfor month in months:\n    values = pd.to_numeric(df[month], errors='coerce')\n    df[month] = values.fillna(values.median())\ndf['summer_rainfall'] = df[months].sum(axis=1)\nanswer = str(int(df.sort_values(['summer_rainfall', 'Year'], ascending=[False, True]).iloc[0]['Year']))\nprint(answer)\n",
+      "subquestion": "After keeping yearly records from 2002 through 2020, imputing missing June, July, and August precipitation values with the month median, and summing those summer months, which year has the highest summer rainfall for Chatham?",
+      "answer": "2006"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-17/files/water-body-testing-2006.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2006.csv'\nnode_1_answer = '2006'\ndf = pd.read_csv(path)\nyears = pd.to_numeric(df['Year'], errors='coerce').eq(int(node_1_answer))\nbeach = df['Beach Name'].astype(str).str.strip().eq('Bucks Creek')\nfiltered = df[years & beach]\nyes_count = int(filtered['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(filtered))\nanswer = f'{yes_count}/{total_count}'\nprint(answer)\n",
+      "subquestion": "For Bucks Creek Beach in the wettest summer year from <node_1 answer>, how many testing records had a yes violation out of the total number of testing records?",
+      "answer": "9/19"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-17/files/water-body-testing-2006.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2006.csv'\nnode_1_answer = '2006'\nnode_2_answer = '9/19'\ndf = pd.read_csv(path)\nyears = pd.to_numeric(df['Year'], errors='coerce').eq(int(node_1_answer))\nbeach = df['Beach Name'].astype(str).str.strip().eq('Bucks Creek')\nfiltered = df[years & beach]\nyes_count = int(filtered['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(filtered))\nexpected_counts = f'{yes_count}/{total_count}'\nif expected_counts != node_2_answer:\n    raise ValueError(f'count mismatch: {expected_counts} != {node_2_answer}')\nanswer = f'{yes_count / total_count * 100:.2f}'\nprint(answer)\n",
+      "subquestion": "Using the yes violation count and total count from <node_2 answer>, what is the Bucks Creek Beach exceedance rate as a percentage rounded to two decimal places?",
+      "answer": "47.37"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Chatham's wettest summer from 2002 through 2020 is 2006 after median imputation and summing June, July, and August precipitation.",
+    "Node 2 depends on node 1: In the 2006 beach testing records, Bucks Creek Beach has 9 yes violations among 19 total samples.",
+    "Node 3 depends on node 2: The exceedance percentage is 9 divided by 19 times 100, rounded to 47.37.",
+    "Final answer: 47.37"
+  ],
+  "datasets_used": [
+    "kramabench-environment-hard-17"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1 identifies the wettest summer year from the Chatham monthly precipitation data.",
+      "answer": "2006"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 uses the wettest year to count yes violations and total Bucks Creek Beach samples in that year's water-body testing records.",
+      "answer": "9/19"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 converts the yes-over-total count to a percentage rounded to two decimal places.",
+      "answer": "47.37"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-17",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "./tasks-mini-kramabench/candidates/environment-hard-17.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/environment.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/environment/environment-hard-17.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-17",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-17/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2006.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2006.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

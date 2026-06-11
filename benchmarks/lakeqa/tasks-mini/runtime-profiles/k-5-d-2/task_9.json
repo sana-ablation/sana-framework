@@ -1,0 +1,150 @@
+{
+  "dataset_sequence": [
+    "county-mental-health-profiles-phase-2-beginning-2014",
+    "utility-energy-registry-monthly-county-energy-use-beginning-2016",
+    "Suffolk_County,_New_York",
+    "Ipswich"
+  ],
+  "source_sequence": [
+    "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+    "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+    "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+    "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+    "wikipedia/Suffolk_County,_New_York/content.txt",
+    "wikipedia/Ipswich/content.txt",
+    "wikipedia/Ipswich/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For 2017 and 2018, compute each non-NYC New York county's average adult mental health Medicaid paid claims and keep counties whose average is between $75 million and $95 million.",
+    "2. For the counties from step 1, compute average total natural gas consumption across 2017 and 2018, then keep the county with the lower average.",
+    "3. Determine the English county namesake of the county from step 2 and identify that English county's county town.",
+    "4. Determine the medieval name of the county town from step 3 and return it."
+  ],
+  "original_final_question": "Find the New York counties (excluding NYC boroughs) having average adult mental health Medicaid paid claims between $75 million and $95 million across 2017 and 2018. According to the NY Utility Energy Registry, which of these counties had the lower average total natural gas consumption across 2017 and 2018. That county was named after an English county. Tell me what was the medieval name of the county town of that English county? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2, data.gov AGGREGATION - nodes 1-2):",
+    "  Node 1: County Mental Health Profiles 2017, Adult paid claims -> {Suffolk: $92.4M, Erie: $70.5M, ...}",
+    "  Node 2: County Mental Health Profiles 2018, Adult paid claims -> {Suffolk: $87.2M, Erie: $81.1M, ...}",
+    "  Aggregation: Average(2017, 2018) for each county",
+    "    Suffolk: ($92.4M + $87.2M) / 2 = $89.8M",
+    "    Erie: ($70.5M + $81.1M) / 2 = $75.8M",
+    "  Filter: Counties with avg $75M-$95M (excluding NYC) -> {Erie, Suffolk}",
+    "  Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+    "",
+    "HOP 2 (d=2, data.gov AGGREGATION - nodes 3-4 comparing counties' natural gas consumption):",
+    "  Node 3: Utility Energy Registry 2017 (Total Consumption (T), Therms; data_class=natural_gas) -> Erie: 621,451,910.24, Suffolk: 537,382,172",
+    "  Node 4: Utility Energy Registry 2018 (Total Consumption (T), Therms; data_class=natural_gas) -> Erie: 712,460,330.24, Suffolk: 556,444,750",
+    "  Aggregation: Average(2017, 2018)",
+    "    Erie: (621,451,910.24 + 712,460,330.24) / 2 = 666,956,120.24",
+    "    Suffolk: (537,382,172 + 556,444,750) / 2 = 546,913,461",
+    "  Result: Suffolk has lower average (546,913,461 < 666,956,120.24) -> Suffolk wins",
+    "  Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+    "",
+    "HOP 3 (d=1, Wikipedia - node 5 identifies English namesake):",
+    "  Node 5: Suffolk County, NY Wikipedia -> named after Suffolk, England",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 6 depends on node 5):",
+    "  Node 6: Ipswich Wikipedia -> Ipswich is the county town of Suffolk, England",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 7 depends on node 6):",
+    "  Node 7: Ipswich Wikipedia -> medieval name was Gippeswic",
+    "",
+    "Final answer: Gippeswic"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "county-mental-health-profiles-phase-2-beginning-2014",
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "intent": "What were the adult mental health Medicaid paid claims for New York counties in 2017?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounties = [\"Suffolk\", \"Erie\", \"Westchester\"]\nresult = df[(df[\"Service Year\"] == 2017) & (df[\"Age Group\"] == \"Adult\") & (df[\"County Label\"].isin(counties))].groupby(\"County Label\", as_index=False)[\"Paid Claim Total\"].sum()\nclaims = result.set_index(\"County Label\")[\"Paid Claim Total\"].to_dict()\nanswer = {county: f\"${int(claims[county]):,}\" for county in counties}",
+      "answer": {
+        "Suffolk": "$92,420,995",
+        "Erie": "$70,519,223",
+        "Westchester": "$66,346,132"
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "county-mental-health-profiles-phase-2-beginning-2014",
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "intent": "What were the adult mental health Medicaid paid claims for New York counties in 2018?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounties = [\"Suffolk\", \"Erie\", \"Westchester\"]\nresult = df[(df[\"Service Year\"] == 2018) & (df[\"Age Group\"] == \"Adult\") & (df[\"County Label\"].isin(counties))].groupby(\"County Label\", as_index=False)[\"Paid Claim Total\"].sum()\nclaims = result.set_index(\"County Label\")[\"Paid Claim Total\"].to_dict()\nanswer = {county: f\"${int(claims[county]):,}\" for county in counties}",
+      "answer": {
+        "Suffolk": "$87,249,830",
+        "Erie": "$81,139,374",
+        "Westchester": "$67,149,496"
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "utility-energy-registry-monthly-county-energy-use-beginning-2016",
+      "source": "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+      "intent": "What was the total natural gas consumption (Total Consumption (T), Therms; data_class=natural_gas) for Erie and Suffolk counties (from <aggregation of nodes 1-2: counties with avg $75M-$95M>) in 2017?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty_map = {\n    36029: \"Erie\",\n    36103: \"Suffolk\",\n}\n\nresult = (\n    df[\n        (df[\"year\"] == 2017)\n        & (df[\"state_2\"] == \"NY\")\n        & (df[\"data_class\"] == \"natural_gas\")\n        & (df[\"data_field_display_name\"] == \"Total Consumption (T)\")\n        & (df[\"full_fips\"].isin(county_map))\n    ]\n    .groupby(\"full_fips\", as_index=False)[\"value\"]\n    .sum()\n)\nresult[\"County\"] = result[\"full_fips\"].map(county_map)\nresult = result.sort_values(\"value\", ascending=False).reset_index(drop=True)\n\nanswer = {\n    row[\"County\"]: f\"{row['value']:,.2f}\".rstrip(\"0\").rstrip(\".\")\n    for _, row in result.iterrows()\n}",
+      "answer": {
+        "Erie": "621,451,910.24",
+        "Suffolk": "537,382,172"
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "utility-energy-registry-monthly-county-energy-use-beginning-2016",
+      "source": "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+      "intent": "What was the total natural gas consumption (Total Consumption (T), Therms; data_class=natural_gas) for Erie and Suffolk counties (from <aggregation of nodes 1-2: counties with avg $75M-$95M>) in 2018?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty_map = {\n    36029: \"Erie\",\n    36103: \"Suffolk\",\n}\n\nresult = (\n    df[\n        (df[\"year\"] == 2018)\n        & (df[\"state_2\"] == \"NY\")\n        & (df[\"data_class\"] == \"natural_gas\")\n        & (df[\"data_field_display_name\"] == \"Total Consumption (T)\")\n        & (df[\"full_fips\"].isin(county_map))\n    ]\n    .groupby(\"full_fips\", as_index=False)[\"value\"]\n    .sum()\n)\nresult[\"County\"] = result[\"full_fips\"].map(county_map)\nresult = result.sort_values(\"value\", ascending=False).reset_index(drop=True)\n\nanswer = {\n    row[\"County\"]: f\"{row['value']:,.2f}\".rstrip(\"0\").rstrip(\".\")\n    for _, row in result.iterrows()\n}",
+      "answer": {
+        "Erie": "712,460,330.24",
+        "Suffolk": "556,444,750"
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "county-mental-health-profiles-phase-2-beginning-2014",
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "intent": "What were the adult mental health Medicaid paid claims for New York counties in 2017?",
+      "sql": "WITH counties(ord, county) AS (VALUES (1, 'Suffolk'), (2, 'Erie'), (3, 'Westchester')),\ntotals AS (\n  SELECT \"County Label\" AS county, SUM(TRY_CAST(\"Paid Claim Total\" AS BIGINT)) AS paid\n  FROM t\n  WHERE TRY_CAST(\"Service Year\" AS INTEGER) = 2017\n    AND \"Age Group\" = 'Adult'\n    AND \"County Label\" IN ('Suffolk', 'Erie', 'Westchester')\n  GROUP BY \"County Label\"\n), formatted AS (\n  SELECT counties.county, '$' || regexp_replace(printf('%,d', CAST(totals.paid AS BIGINT)), '^ ', '') AS amount\n  FROM counties JOIN totals ON totals.county = counties.county\n  ORDER BY counties.ord\n)\nSELECT json_group_object(county, amount) AS answer FROM formatted",
+      "answer": {
+        "Suffolk": "$92,420,995",
+        "Erie": "$70,519,223",
+        "Westchester": "$66,346,132"
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "county-mental-health-profiles-phase-2-beginning-2014",
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "intent": "What were the adult mental health Medicaid paid claims for New York counties in 2018?",
+      "sql": "WITH counties(ord, county) AS (VALUES (1, 'Suffolk'), (2, 'Erie'), (3, 'Westchester')),\ntotals AS (\n  SELECT \"County Label\" AS county, SUM(TRY_CAST(\"Paid Claim Total\" AS BIGINT)) AS paid\n  FROM t\n  WHERE TRY_CAST(\"Service Year\" AS INTEGER) = 2018\n    AND \"Age Group\" = 'Adult'\n    AND \"County Label\" IN ('Suffolk', 'Erie', 'Westchester')\n  GROUP BY \"County Label\"\n), formatted AS (\n  SELECT counties.county, '$' || regexp_replace(printf('%,d', CAST(totals.paid AS BIGINT)), '^ ', '') AS amount\n  FROM counties JOIN totals ON totals.county = counties.county\n  ORDER BY counties.ord\n)\nSELECT json_group_object(county, amount) AS answer FROM formatted",
+      "answer": {
+        "Suffolk": "$87,249,830",
+        "Erie": "$81,139,374",
+        "Westchester": "$67,149,496"
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "utility-energy-registry-monthly-county-energy-use-beginning-2016",
+      "source": "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+      "intent": "What was the total natural gas consumption (Total Consumption (T), Therms; data_class=natural_gas) for Erie and Suffolk counties (from <aggregation of nodes 1-2: counties with avg $75M-$95M>) in 2017?",
+      "sql": "WITH county_map(full_fips, county) AS (VALUES (36029, 'Erie'), (36103, 'Suffolk')),\ntotals AS (\n  SELECT county_map.county, SUM(TRY_CAST(t.\"value\" AS DOUBLE)) AS total\n  FROM t\n  JOIN county_map ON TRY_CAST(t.\"full_fips\" AS INTEGER) = county_map.full_fips\n  WHERE TRY_CAST(t.\"year\" AS INTEGER) = 2017\n    AND t.\"state_2\" = 'NY'\n    AND t.\"data_class\" = 'natural_gas'\n    AND t.\"data_field_display_name\" = 'Total Consumption (T)'\n  GROUP BY county_map.county\n), formatted AS (\n  SELECT county, regexp_replace(regexp_replace(printf('%,.2f', total), '0+$', ''), '\\.$', '') AS amount\n  FROM totals\n  ORDER BY total DESC\n)\nSELECT json_group_object(county, amount) AS answer FROM formatted",
+      "answer": {
+        "Erie": "621,451,910.24",
+        "Suffolk": "537,382,172"
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "utility-energy-registry-monthly-county-energy-use-beginning-2016",
+      "source": "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+      "intent": "What was the total natural gas consumption (Total Consumption (T), Therms; data_class=natural_gas) for Erie and Suffolk counties (from <aggregation of nodes 1-2: counties with avg $75M-$95M>) in 2018?",
+      "sql": "WITH county_map(full_fips, county) AS (VALUES (36029, 'Erie'), (36103, 'Suffolk')),\ntotals AS (\n  SELECT county_map.county, SUM(TRY_CAST(t.\"value\" AS DOUBLE)) AS total\n  FROM t\n  JOIN county_map ON TRY_CAST(t.\"full_fips\" AS INTEGER) = county_map.full_fips\n  WHERE TRY_CAST(t.\"year\" AS INTEGER) = 2018\n    AND t.\"state_2\" = 'NY'\n    AND t.\"data_class\" = 'natural_gas'\n    AND t.\"data_field_display_name\" = 'Total Consumption (T)'\n  GROUP BY county_map.county\n), formatted AS (\n  SELECT county, regexp_replace(regexp_replace(printf('%,.2f', total), '0+$', ''), '\\.$', '') AS amount\n  FROM totals\n  ORDER BY total DESC\n)\nSELECT json_group_object(county, amount) AS answer FROM formatted",
+      "answer": {
+        "Erie": "712,460,330.24",
+        "Suffolk": "556,444,750"
+      }
+    }
+  ]
+}

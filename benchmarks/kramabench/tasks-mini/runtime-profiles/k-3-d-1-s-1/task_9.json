@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-9"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+    "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+    "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the annual report-count table and confirm the year range.",
+    "2. Compute year-over-year relative increases and find the largest.",
+    "3. Return the year associated with the largest relative increase."
+  ],
+  "original_final_question": "Between 2002 and 2024 inclusive, which year saw the greatest relative increase in total reports compared to the previous year? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the annual report-count table and confirm the year range.",
+    "Node 2 depends on node 1: Compute year-over-year relative increases and find the largest.",
+    "Node 3 depends on node 2: Return the year associated with the largest relative increase.",
+    "Final answer: 2002"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-9",
+      "source": "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "What year range and row count are present in the report-count table?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nseries = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and reports:\n        series.append((int(year), int(reports.replace(',', ''))))\nchanges = []\nfor (prev_year, prev_reports), (year, reports) in zip(series, series[1:]):\n    changes.append((year, (reports - prev_reports) / prev_reports))\nmax_year, max_change = max(changes, key=lambda item: item[1])\nresult = f'{series[0][0]}|{series[-1][0]}|{len(series)}'\nprint(result)\n",
+      "answer": "2001|2024|24"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-9",
+      "source": "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "Which year has the largest year-over-year relative increase, and what is that increase?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nseries = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and reports:\n        series.append((int(year), int(reports.replace(',', ''))))\nchanges = []\nfor (prev_year, prev_reports), (year, reports) in zip(series, series[1:]):\n    changes.append((year, (reports - prev_reports) / prev_reports))\nmax_year, max_change = max(changes, key=lambda item: item[1])\nresult = f'{max_year}|{max_change:.12f}'\nprint(result)\n",
+      "answer": "2002|0.694592327944"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-easy-9",
+      "source": "datagov/kramabench-legal-easy-9/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "What year corresponds to the greatest relative increase in total reports?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\nseries = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and reports:\n        series.append((int(year), int(reports.replace(',', ''))))\nchanges = []\nfor (prev_year, prev_reports), (year, reports) in zip(series, series[1:]):\n    changes.append((year, (reports - prev_reports) / prev_reports))\nmax_year, max_change = max(changes, key=lambda item: item[1])\nprint(max_year)\n",
+      "answer": 2002
+    }
+  ]
+}

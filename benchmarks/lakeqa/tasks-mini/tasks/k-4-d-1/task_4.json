@@ -1,0 +1,77 @@
+{
+  "question": "Can you first idenity the system that was used to survey Assateague Island National Seashore in the 2010 USGS survey. Then, find out which facility this system was developed and which county this facility is located in. Finally, report the largest town in that county. Only report the town. Your response should be in the format [Answer].",
+  "answer": "Chincoteague",
+  "nodes": {
+    "1": {
+      "source": "datagov/eaarl-coastal-topography-assateague-island-national-seashore-maryland-and-virginia-2010/files/USGS.b40f54c8-02fd-4152-8883-b7131059f8af.txt",
+      "fact": "import os\nimport re\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\ntry:\n    from dotenv import load_dotenv\n    load_dotenv()\nexcept Exception:\n    pass\n\nsource = \"datagov/eaarl-coastal-topography-assateague-island-national-seashore-maryland-and-virginia-2010/files/USGS.b40f54c8-02fd-4152-8883-b7131059f8af.txt\"\nbucket = os.environ.get(\"LAKEQA_BUCKET\", \"lakeqa-yc4103-datalake\")\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    with open(local_path, \"rb\") as f:\n        raw_bytes = f.read()\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw_bytes = obj[\"Body\"].read()\n\ntext = raw_bytes.decode(\"utf-8-sig\", errors=\"replace\")\nlines = [re.sub(r\"\\s+\", \" \", line).strip() for line in text.splitlines()]\nlines = [line for line in lines if line]\nframe = pd.DataFrame({\"line\": lines})\nline_series = frame[\"line\"].astype(str)\n\nfull_name = None\npatterns = [\n    r\"\\bEAARL\\b\\s*\\((Experimental Advanced Airborne Research Lidar)\\)\",\n    r\"(Experimental Advanced Airborne Research Lidar)\\s*\\(\\s*EAARL\\s*\\)\",\n    r\"\\[?EAARL\\]?\\s*[:=-]\\s*(Experimental Advanced Airborne Research Lidar)\",\n]\n\nfor line in line_series:\n    for pattern in patterns:\n        match = re.search(pattern, line, flags=re.I)\n        if match:\n            full_name = match.group(1)\n            break\n    if full_name is not None:\n        break\n\nif full_name is None:\n    has_title = line_series.str.contains(r\"Assateague Island National Seashore.*2010\", case=False, regex=True, na=False).any()\n    has_acronym = line_series.str.contains(r\"\\bEAARL\\b\", case=False, regex=True, na=False).any()\n    full_text_match = re.search(r\"Experimental Advanced Airborne Research Lidar\", \"\\n\".join(lines), flags=re.I)\n    if has_title and has_acronym and full_text_match:\n        full_name = full_text_match.group(0)\n    else:\n        raise ValueError(\"Could not extract the survey system name from the full source text.\")\n\nanswer = f\"EAARL ({full_name})\"\n",
+      "subquestion": "What system was used to survey Assateague Island National Seashore in the 2010 USGS survey?",
+      "answer": "EAARL (Experimental Advanced Airborne Research Lidar)"
+    },
+    "2": {
+      "source": "datagov/eaarl-coastal-topography-assateague-island-national-seashore-maryland-and-virginia-2010/files/USGS.b40f54c8-02fd-4152-8883-b7131059f8af.txt",
+      "fact": "import os\nimport re\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\ntry:\n    from dotenv import load_dotenv\n    load_dotenv()\nexcept Exception:\n    pass\n\nsource = \"datagov/eaarl-coastal-topography-assateague-island-national-seashore-maryland-and-virginia-2010/files/USGS.b40f54c8-02fd-4152-8883-b7131059f8af.txt\"\nbucket = os.environ.get(\"LAKEQA_BUCKET\", \"lakeqa-yc4103-datalake\")\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\nnode_1_answer = \"EAARL (Experimental Advanced Airborne Research Lidar)\"\n\nif os.path.exists(local_path):\n    with open(local_path, \"rb\") as f:\n        raw_bytes = f.read()\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw_bytes = obj[\"Body\"].read()\n\ntext = raw_bytes.decode(\"utf-8-sig\", errors=\"replace\")\nlines = [re.sub(r\"\\s+\", \" \", line).strip() for line in text.splitlines()]\nlines = [line for line in lines if line]\nframe = pd.DataFrame({\"line\": lines})\nline_series = frame[\"line\"].astype(str)\n\nif line_series.empty:\n    raise ValueError(\"Source text is empty.\")\n\nsystem_cues = [part.strip() for part in re.split(r\"[()]\", node_1_answer) if part.strip()]\nsystem_re = \"|\".join(re.escape(cue) for cue in system_cues)\nnormalized_text = \" \".join(lines)\n\nspans = []\nfor window in range(1, min(4, len(lines)) + 1):\n    for start in range(0, len(lines) - window + 1):\n        spans.append(\" \".join(lines[start:start + window]))\n\nfor match in re.finditer(r\"Wallops\", normalized_text, flags=re.I):\n    start = max(0, match.start() - 250)\n    end = min(len(normalized_text), match.end() + 250)\n    spans.append(normalized_text[start:end])\n\nrelation_patterns = [\n    rf\"(?:{system_re})[^.;:]{{0,250}}develop(?:ed|ment|ing)?(?: originally)?[^.;:]{{0,120}}NASA(?:'s)?(?: at)?[^.;:]{{0,80}}(Wallops Flight Facility)\",\n    rf\"(?:{system_re})[^.;:]{{0,250}}NASA(?:'s)?[^.;:]{{0,120}}(Wallops Flight Facility)\",\n    rf\"(Wallops Flight Facility)[^.;:]{{0,200}}(?:{system_re})[^.;:]{{0,120}}develop|develop[^.;:]{{0,120}}(Wallops Flight Facility)[^.;:]{{0,200}}(?:{system_re})\",\n]\n\nanswer = None\nfor span in spans:\n    clean_span = re.sub(r\"\\s+\", \" \", span).strip()\n    for pattern in relation_patterns:\n        if re.search(pattern, clean_span, flags=re.I):\n            answer = \"Wallops Flight Facility\"\n            break\n    if answer is not None:\n        break\n\nif answer is None:\n    for span in spans:\n        lower = span.lower()\n        has_system = any(cue.lower() in lower for cue in system_cues)\n        has_facility = \"wallops flight facility\" in lower\n        has_relation = (\"develop\" in lower) or (\"nasa\" in lower) or (\"original\" in lower)\n        if has_system and has_facility and has_relation:\n            answer = \"Wallops Flight Facility\"\n            break\n\nif answer is None:\n    raise ValueError(\"Could not find a local text span tying the EAARL system to Wallops Flight Facility.\")\n",
+      "subquestion": "At which NASA facility was <node_1 answer> developed?",
+      "answer": "Wallops Flight Facility"
+    },
+    "3": {
+      "source": "wikipedia/Wallops_Flight_Facility/content.txt",
+      "fact": "Wallops Flight Facility is a NASA rocket launch site on Wallops Island on the Eastern Shore of Virginia, located in Accomack County.",
+      "subquestion": "In which Virginia county is <node_2 answer> located?",
+      "answer": "Accomack County"
+    },
+    "4": {
+      "source": "wikipedia/Accomack_County,_Virginia/content.txt",
+      "fact": "Accomack County is a county on the Eastern Shore of Virginia. The town of Accomac serves as the county seat, while Chincoteague is the largest town in the county.",
+      "subquestion": "What is the largest town in <node_3 answer>?",
+      "answer": "Chincoteague"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Identify the system used to survey Assateague Island National Seashore in 2010 -> EAARL",
+    "Node 2 depends on node 1: Find NASA facility where EAARL was developed -> Wallops Flight Facility",
+    "Node 3 depends on node 2: Find Virginia county -> Accomack County",
+    "Node 4 depends on node 3: Find largest town in Accomack County -> Chincoteague",
+    "Final answer: Chincoteague"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "eaarl-coastal-topography-assateague-island-national-seashore-maryland-and-virginia-2010",
+    "Wallops_Flight_Facility",
+    "Accomack_County,_Virginia"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Identify the system used to survey Assateague Island National Seashore in 2010 -> EAARL",
+      "answer": "EAARL"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Find NASA facility where EAARL was developed -> Wallops Flight Facility",
+      "answer": "Wallops Flight Facility"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Find Virginia county -> Accomack County",
+      "answer": "Accomack County"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on node 3: Find largest town in Accomack County -> Chincoteague",
+      "answer": "Chincoteague"
+    }
+  ]
+}

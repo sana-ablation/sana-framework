@@ -1,0 +1,139 @@
+{
+  "question": "Among Brooks, Willacy, Comal, Atascosa, and Victoria counties in Texas, keep those with at least one abuse/neglect-related child fatality and at least three non-abuse/neglect child fatality investigations between 2018 and 2022. From the remaining counties, find the one that is both in the top two for 2021 model-based drug poisoning death rates and in the bottom two for 2016 age-adjusted rate categories. Identify that county's seat, then the river it lies along, and finally the bay the river flows into. What is the bay's name? Your response should be in the format [Answer].",
+  "answer": "San Antonio Bay",
+  "nodes": {
+    "1": {
+      "source": "datagov/ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_counties = [\"Brooks\", \"Willacy\", \"Comal\", \"Atascosa\", \"Victoria\"]\n\ncounty_totals = (\n    df[df[\"Fiscal Year\"].between(2018, 2022) & df[\"County\"].isin(target_counties)]\n    .groupby(\"County\", as_index=False)[\"Abuse Neglect Fatalities\"].sum()\n)\n\nqualifying = county_totals.loc[county_totals[\"Abuse Neglect Fatalities\"] >= 1, \"County\"].tolist()\nanswer = [f\"{county} County\" for county in target_counties if county in qualifying]",
+      "subquestion": "Among Brooks, Willacy, Comal, Atascosa, and Victoria counties, which had at least 1 abuse/neglect-related child fatality (2018-2022)? (Filter for this node: Fiscal Year in 2018-2022; group by County; sum Abuse Neglect Fatalities.)",
+      "answer": [
+        "Brooks County",
+        "Willacy County",
+        "Comal County",
+        "Victoria County"
+      ]
+    },
+    "2": {
+      "source": "datagov/ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_counties = [\"Brooks\", \"Willacy\", \"Comal\", \"Atascosa\", \"Victoria\"]\n\ncounty_totals = (\n    df[df[\"Fiscal Year\"].between(2018, 2022) & df[\"County\"].isin(target_counties)]\n    .groupby(\"County\", as_index=False)[\"Non-Abuse/Neglect Fatalities Investigated\"].sum()\n)\n\nqualifying = county_totals.loc[county_totals[\"Non-Abuse/Neglect Fatalities Investigated\"] >= 3, \"County\"].tolist()\nanswer = [f\"{county} County\" for county in target_counties if county in qualifying]",
+      "subquestion": "Among Brooks, Willacy, Comal, Atascosa, and Victoria counties, which had at least 3 non-abuse/neglect child fatality investigations (2018-2022)? (Filter for this node: Fiscal Year in 2018-2022; group by County; sum Non-Abuse/Neglect Fatalities Investigated.)",
+      "answer": [
+        "Willacy County",
+        "Comal County",
+        "Atascosa County",
+        "Victoria County"
+      ]
+    },
+    "3": {
+      "source": "datagov/nchs-drug-poisoning-mortality-by-county-united-states/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/nchs-drug-poisoning-mortality-by-county-united-states/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_counties = [\"Comal County, TX\", \"Victoria County, TX\", \"Willacy County, TX\"]\n\ncounty_rates = (\n    df[(df[\"Year\"] == 2021) & (df[\"State\"] == \"Texas\") & df[\"County\"].isin(target_counties)]\n    [[\"County\", \"Model-based Death Rate\"]]\n    .sort_values([\"Model-based Death Rate\", \"County\"], ascending=[False, True])\n    .reset_index(drop=True)\n)\n\nanswer = county_rates.head(2)[\"County\"].str.replace(\", TX\", \"\", regex=False).tolist()",
+      "subquestion": "Among the counties from hop 1, which two had the highest model-based drug poisoning death rates in 2021? (Filter for this node: Year == 2021; State == Texas; County in {Comal County, TX, Victoria County, TX, Willacy County, TX}; use Model-based Death Rate.)",
+      "answer": [
+        "Victoria County",
+        "Comal County"
+      ]
+    },
+    "4": {
+      "source": "datagov/nchs-drug-poisoning-mortality-by-county-united-states-20278/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/nchs-drug-poisoning-mortality-by-county-united-states-20278/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_counties = [\"Comal County, TX\", \"Victoria County, TX\", \"Willacy County, TX\"]\ncategory_col = \"Estimated Age-adjusted Death Rate, 16 Categories (in ranges)\"\n\ncounty_categories = (\n    df[(df[\"Year\"] == 2016) & (df[\"State\"] == \"Texas\") & df[\"County\"].isin(target_counties)]\n    [[\"County\", category_col]]\n    .copy()\n)\n\ncounty_categories[\"category_lower_bound\"] = county_categories[category_col].str.split(\"-\").str[0].astype(float)\ncounty_categories = county_categories.sort_values([\"category_lower_bound\", \"County\"], ascending=[True, True]).reset_index(drop=True)\nanswer = county_categories.head(2)[\"County\"].str.replace(\", TX\", \"\", regex=False).tolist()",
+      "subquestion": "Among the counties from hop 1, which two had the lowest age-adjusted drug poisoning death rate categories in 2016? (Filter for this node: Year == 2016; State == Texas; County in {Comal County, TX, Victoria County, TX, Willacy County, TX}; use Estimated Age-adjusted Death Rate, 16 Categories (in ranges).)",
+      "answer": [
+        "Willacy County",
+        "Victoria County"
+      ]
+    },
+    "5": {
+      "source": "wikipedia/Victoria_County,_Texas/content.txt",
+      "fact": "Victoria County's county seat is Victoria.",
+      "subquestion": "What is the county seat of the county identified in hop 2? (Lookup: county seat statement in the Victoria County, Texas article.)",
+      "answer": "Victoria"
+    },
+    "6": {
+      "source": "wikipedia/Victoria,_Texas/content.txt",
+      "fact": "Victoria lies along and just to the east of the Guadalupe River.",
+      "subquestion": "What river does the city from hop 3 lie along and just to the east of? (Lookup: Victoria, Texas article location description.)",
+      "answer": "Guadalupe River"
+    },
+    "7": {
+      "source": "wikipedia/Guadalupe_River_(Texas)/content.txt",
+      "fact": "The Guadalupe River runs from Kerr County, Texas, to San Antonio Bay on the Gulf Coast.",
+      "subquestion": "What bay on the Gulf Coast does the river from hop 4 run to? (Lookup: Guadalupe River (Texas) article statement about San Antonio Bay.)",
+      "answer": "San Antonio Bay"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=2, Texas child fatality datasets - nodes 1-2):",
+    "  Node 1: Abuse/neglect fatalities 2018-2022 -> >=1: {Brooks, Willacy, Comal, Victoria}",
+    "  Node 2: Non-abuse/neglect investigations 2018-2022 -> >=3: {Willacy, Comal, Atascosa, Victoria}",
+    "  Intersection -> {Willacy, Comal, Victoria}",
+    "",
+    "HOP 2 (d=2, drug poisoning mortality - nodes 3-4):",
+    "  Node 3: 2021 model-based death rates -> highest two {Victoria, Comal}",
+    "  Node 4: 2016 age-adjusted categories -> lowest two {Willacy, Victoria}",
+    "  Intersection -> {Victoria}",
+    "",
+    "HOP 3 (d=1, Victoria County Wikipedia - node 5):",
+    "  Node 5: Victoria County seat -> Victoria",
+    "",
+    "HOP 4 (d=1, Victoria Wikipedia - node 6):",
+    "  Node 6: Victoria lies along the Guadalupe River",
+    "",
+    "HOP 5 (d=1, Guadalupe River Wikipedia - node 7):",
+    "  Node 7: Guadalupe River runs to San Antonio Bay",
+    "  Final answer: San Antonio Bay"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Guadalupe_River_(Texas)",
+    "Victoria_County,_Texas",
+    "Victoria,_Texas",
+    "ocs-1-1-abuse-neglect-related-texas-child-fatalities-fy2013-fy2022",
+    "ocs-1-2-non-abuse-neglect-related-texas-child-fatality-investigations-fy2013-fy2022",
+    "nchs-drug-poisoning-mortality-by-county-united-states",
+    "nchs-drug-poisoning-mortality-by-county-united-states-20278"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Node 1: Abuse/neglect fatalities 2018-2022 -> >=1: {Brooks, Willacy, Comal, Victoria} Node 2: Non-abuse/neglect investigations 2018-2022 -> >=3: {Willacy, Comal, Atascosa, Victoria} Intersection -> {Willacy, Comal, Victoria}",
+      "answer": "{Willacy, Comal, Victoria}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3,
+        4
+      ],
+      "reasoning": "Node 3: 2021 model-based death rates -> highest two {Victoria, Comal} Node 4: 2016 age-adjusted categories -> lowest two {Willacy, Victoria} Intersection -> {Victoria}",
+      "answer": "{Victoria}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: Victoria County seat -> Victoria",
+      "answer": "Victoria"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6: Victoria lies along the Guadalupe River",
+      "answer": "Guadalupe River"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7: Guadalupe River runs to San Antonio Bay",
+      "answer": "San Antonio Bay"
+    }
+  ]
+}

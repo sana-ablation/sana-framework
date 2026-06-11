@@ -1,0 +1,70 @@
+{
+  "question": "Give the ratio of identity theft reports in 2024 versus 2001, rounded to 4 decimal places. Write your answer as [ANSWER].",
+  "answer": "13.1628",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\ndata_rows = [row for row in rows[3:] if row and row[0].isdigit()]\nidentity_by_year = {int(row[0]): int(row[2].replace(',', '').strip()) for row in data_rows}\nvalue_2001 = identity_by_year[2001]\nvalue_2024 = identity_by_year[2024]\nratio = value_2024 / value_2001\nresult = f'{value_2001}|{value_2024}'\nprint(result)\n",
+      "subquestion": "What are the identity theft report counts for 2001 and 2024?",
+      "answer": "86250|1135291"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\ndata_rows = [row for row in rows[3:] if row and row[0].isdigit()]\nidentity_by_year = {int(row[0]): int(row[2].replace(',', '').strip()) for row in data_rows}\nvalue_2001 = identity_by_year[2001]\nvalue_2024 = identity_by_year[2024]\nratio = value_2024 / value_2001\nresult = f'{ratio:.4f}'\nprint(result)\n",
+      "subquestion": "What is the 2024-to-2001 identity theft report ratio rounded to four decimals?",
+      "answer": "13.1628"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the reports-by-type table and extract identity theft counts for 2001 and 2024.",
+    "Node 2 depends on node 1: Divide the 2024 count by the 2001 count and round to four decimal places.",
+    "Final answer: 13.1628"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the reports-by-type table and extract identity theft counts for 2001 and 2024.",
+      "answer": "86250|1135291"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Divide the 2024 count by the 2001 count and round to four decimal places.",
+      "answer": "13.1628"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-3",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-3.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-3",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-3/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_raw_answer": "13.162794202898551",
+    "answer_rounding_note": "The checked-in source script prints the raw ratio; the workload question asks to round to four decimal places.",
+    "source_script_execution_note": "The bundled runtime lacks bs4, an unused import in the checked-in script; system Python executed the exact script."
+  }
+}

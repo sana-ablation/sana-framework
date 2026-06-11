@@ -1,0 +1,122 @@
+{
+  "question": "Which protein sites are found to be hyperactivated in CNV-high endometrioid samples and are targeted by FDA-approved drugs? Write your answer as [ANSWER].",
+  "answer": [
+    "CDK12",
+    "SMARCA4"
+  ],
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-biomedical-hard-8/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "from pathlib import Path\nfrom zipfile import ZipFile\nfrom xml.etree import ElementTree as ET\n\npath = Path('other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx')\nns = {'a': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}\npkg = 'http://schemas.openxmlformats.org/package/2006/relationships'\n\ndef col_index(ref):\n    letters = ''.join(ch for ch in ref if ch.isalpha())\n    n = 0\n    for ch in letters:\n        n = n * 26 + ord(ch.upper()) - 64\n    return n - 1\n\ndef read_xlsx_sheet(xlsx_path, sheet_name=None):\n    with ZipFile(xlsx_path) as z:\n        shared = []\n        if 'xl/sharedStrings.xml' in z.namelist():\n            root = ET.fromstring(z.read('xl/sharedStrings.xml'))\n            for item in root.findall('a:si', ns):\n                shared.append(''.join(t.text or '' for t in item.findall('.//a:t', ns)))\n        workbook = ET.fromstring(z.read('xl/workbook.xml'))\n        rels = ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))\n        relmap = {rel.attrib['Id']: rel.attrib['Target'] for rel in rels.findall(f'{{{pkg}}}Relationship')}\n        chosen = None\n        for sheet in workbook.find('a:sheets', ns):\n            if sheet_name is None or sheet.attrib['name'] == sheet_name:\n                chosen = sheet\n                break\n        rid = chosen.attrib[f'{{{ns[\"r\"]}}}id']\n        target = relmap[rid]\n        sheet_path = 'xl/' + target.lstrip('/') if not target.startswith('xl/') else target\n        tree = ET.fromstring(z.read(sheet_path))\n        rows = []\n        for row in tree.findall('.//a:sheetData/a:row', ns):\n            cells = {}\n            for cell in row.findall('a:c', ns):\n                value = cell.find('a:v', ns)\n                text = '' if value is None else value.text or ''\n                if cell.attrib.get('t') == 's' and text:\n                    text = shared[int(text)]\n                cells[col_index(cell.attrib.get('r', 'A1'))] = text\n            if cells:\n                rows.append([cells.get(i, '') for i in range(max(cells) + 1)])\n        header = rows[0]\n        return [dict(zip(header, row + [''] * (len(header) - len(row)))) for row in rows[1:]]\n\nrecords = read_xlsx_sheet(path)\nresult = [row['idx'] for row in records if row.get('CNV_class') == 'CNV_HIGH' and row.get('Histologic_type') == 'Endometrioid' and row.get('Case_excluded') == 'No']\nprint(result)\n",
+      "subquestion": "Which study sample IDs are endometrioid, classified as CNV-high, and not excluded?",
+      "answer": [
+        "S018",
+        "S031",
+        "S054",
+        "S070",
+        "S082",
+        "S090",
+        "S100",
+        "S101"
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-biomedical-hard-8/files/hyperactivated.csv",
+      "fact": "import csv\nfrom pathlib import Path\n\npath = Path('other-benchmarks/Kramabench/data/biomedical/input/hyperactivated.csv')\nnode_1_answer = ['S018', 'S031', 'S054', 'S070', 'S082', 'S090', 'S100', 'S101']\nselected_samples = set(node_1_answer)\nresult = []\nwith path.open(newline='') as handle:\n    for row in csv.DictReader(handle):\n        protein = row['protein'].strip()\n        if row['sample_id'] in selected_samples and protein not in result:\n            result.append(protein)\nprint(result)\n",
+      "subquestion": "Which proteins are hyperactivated in the selected <node_1 answer> samples?",
+      "answer": [
+        "CDK12",
+        "CHMP1B",
+        "SMARCA4",
+        "OLFM4",
+        "TMCO4"
+      ]
+    },
+    "3": {
+      "source": "datagov/kramabench-biomedical-hard-8/files/1-s2.0-S0092867420301070-mmc6.xlsx",
+      "fact": "from pathlib import Path\nfrom zipfile import ZipFile\nfrom xml.etree import ElementTree as ET\n\npath = Path('other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc6.xlsx')\nnode_2_answer = ['CDK12', 'CHMP1B', 'SMARCA4', 'OLFM4', 'TMCO4']\nns = {'a': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main', 'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'}\npkg = 'http://schemas.openxmlformats.org/package/2006/relationships'\n\ndef col_index(ref):\n    letters = ''.join(ch for ch in ref if ch.isalpha())\n    n = 0\n    for ch in letters:\n        n = n * 26 + ord(ch.upper()) - 64\n    return n - 1\n\ndef read_xlsx_sheet(xlsx_path, sheet_name=None):\n    with ZipFile(xlsx_path) as z:\n        shared = []\n        if 'xl/sharedStrings.xml' in z.namelist():\n            root = ET.fromstring(z.read('xl/sharedStrings.xml'))\n            for item in root.findall('a:si', ns):\n                shared.append(''.join(t.text or '' for t in item.findall('.//a:t', ns)))\n        workbook = ET.fromstring(z.read('xl/workbook.xml'))\n        rels = ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))\n        relmap = {rel.attrib['Id']: rel.attrib['Target'] for rel in rels.findall(f'{{{pkg}}}Relationship')}\n        chosen = None\n        for sheet in workbook.find('a:sheets', ns):\n            if sheet_name is None or sheet.attrib['name'] == sheet_name:\n                chosen = sheet\n                break\n        rid = chosen.attrib[f'{{{ns[\"r\"]}}}id']\n        target = relmap[rid]\n        sheet_path = 'xl/' + target.lstrip('/') if not target.startswith('xl/') else target\n        tree = ET.fromstring(z.read(sheet_path))\n        rows = []\n        for row in tree.findall('.//a:sheetData/a:row', ns):\n            cells = {}\n            for cell in row.findall('a:c', ns):\n                value = cell.find('a:v', ns)\n                text = '' if value is None else value.text or ''\n                if cell.attrib.get('t') == 's' and text:\n                    text = shared[int(text)]\n                cells[col_index(cell.attrib.get('r', 'A1'))] = text\n            if cells:\n                rows.append([cells.get(i, '') for i in range(max(cells) + 1)])\n        header = rows[0]\n        return [dict(zip(header, row + [''] * (len(header) - len(row)))) for row in rows[1:]]\n\ncandidate_proteins = set(node_2_answer)\nresult = []\nfor row in read_xlsx_sheet(path, sheet_name='G-FDA approved drugs'):\n    gene = row.get('gene_name', '').strip()\n    if gene in candidate_proteins and gene not in result:\n        result.append(gene)\nprint(result)\n",
+      "subquestion": "Which proteins from <node_2 answer> are listed as FDA-approved drug targets?",
+      "answer": [
+        "CDK12",
+        "SMARCA4"
+      ]
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Filter the clinical metadata to included Endometrioid samples whose CNV class is CNV_HIGH.",
+    "Node 2 depends on node 1: Look up the hyperactivated proteins reported for those selected sample IDs.",
+    "Node 3 depends on node 2: Intersect those proteins with the FDA-approved drug target gene names.",
+    "Final answer: ['CDK12', 'SMARCA4']"
+  ],
+  "datasets_used": [
+    "kramabench-biomedical-hard-8"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Filter the clinical metadata to included Endometrioid samples whose CNV class is CNV_HIGH.",
+      "answer": [
+        "S018",
+        "S031",
+        "S054",
+        "S070",
+        "S082",
+        "S090",
+        "S100",
+        "S101"
+      ]
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Look up the hyperactivated proteins reported for those selected sample IDs.",
+      "answer": [
+        "CDK12",
+        "CHMP1B",
+        "SMARCA4",
+        "OLFM4",
+        "TMCO4"
+      ]
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Intersect those proteins with the FDA-approved drug target gene names.",
+      "answer": [
+        "CDK12",
+        "SMARCA4"
+      ]
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "biomedical-hard-8",
+    "domain": "biomedical",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/biomedical-hard-8.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-8/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "2": "other-benchmarks/Kramabench/data/biomedical/input/hyperactivated.csv",
+      "3": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc6.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

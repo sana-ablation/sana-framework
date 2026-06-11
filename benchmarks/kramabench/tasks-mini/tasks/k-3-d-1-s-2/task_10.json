@@ -1,0 +1,83 @@
+{
+  "question": "In 2024, as a percentage of all reports for the same demographic, did military consumers report a higher percentage of Imposter Scams than the general population? Answer Yes or No. Write your answer as [ANSWER].",
+  "answer": "Yes",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv'\ndf = pd.read_csv(path)\ntop = df.iloc[12:23]\ncols = list(top.iloc[0].to_dict().values())\ntop.columns = [col.strip() for col in cols]\ntop = top.iloc[1:]\ntop['# of Reports'] = top['# of Reports'].apply(lambda x: int(x.replace(',', '')))\ntotal = int(top['# of Reports'].sum())\nimposter = int(top.loc[top.Category == 'Imposter Scams']['# of Reports'].iloc[0])\nprint(f'{imposter}|{total}|{imposter / total:.4f}')\n",
+      "subquestion": "Among military consumers, what are the Imposter Scams count, the top-10 fraud-category total, and the resulting share?",
+      "answer": "44587|78426|0.5685"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ndf = pd.read_csv(path, encoding='ISO-8859-1')\ncols = list(df.iloc[1].to_dict().values())\ndf.columns = [col.strip() for col in cols]\ndf = df.iloc[2:-4]\npct = df.loc[df.Category == 'Imposter Scams']['Percentage'].iloc[0]\nprint(f'{float(pct.replace(\"%\", \"\")) / 100:.4f}')\n",
+      "subquestion": "What is the general-population Imposter Scams report share in the report categories table?",
+      "answer": "0.1307"
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv",
+      "fact": "import pandas as pd\nmilitary_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv'\ngeneral_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\nmilitary_df = pd.read_csv(military_path)\ntop = military_df.iloc[12:23]\ncols = list(top.iloc[0].to_dict().values())\ntop.columns = [col.strip() for col in cols]\ntop = top.iloc[1:]\ntop['# of Reports'] = top['# of Reports'].apply(lambda x: int(x.replace(',', '')))\nmilitary_share = top.loc[top.Category == 'Imposter Scams']['# of Reports'].iloc[0] / top['# of Reports'].sum()\ngeneral_df = pd.read_csv(general_path, encoding='ISO-8859-1')\ncols = list(general_df.iloc[1].to_dict().values())\ngeneral_df.columns = [col.strip() for col in cols]\ngeneral_df = general_df.iloc[2:-4]\ngeneral_share = float(general_df.loc[general_df.Category == 'Imposter Scams']['Percentage'].iloc[0].replace('%', '')) / 100\nprint('Yes' if military_share > general_share else 'No')\n",
+      "subquestion": "Is the military-consumer Imposter Scams share higher than the general-population share?",
+      "answer": "Yes"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Extract the military top-10 fraud categories and compute the military Imposter Scams share.",
+    "Node 2: Extract the general population Imposter Scams share from the report categories table.",
+    "Node 3 depends on nodes 1 and 2: Compare the two shares and answer Yes if the military share is higher.",
+    "Final answer: Yes"
+  ],
+  "datasets_used": [
+    "kramabench-legal-hard-28"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Extract the military top-10 fraud categories and compute the military Imposter Scams share.",
+      "answer": "44587|78426|0.5685"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Extract the general population Imposter Scams share from the report categories table.",
+      "answer": "0.1307"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: Compare the two shares and answer Yes if the military share is higher.",
+      "answer": "Yes"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-hard-28",
+    "domain": "legal",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-hard-28.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-28",
+    "s3_mirror_prefix": "datagov/kramabench-legal-hard-28/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

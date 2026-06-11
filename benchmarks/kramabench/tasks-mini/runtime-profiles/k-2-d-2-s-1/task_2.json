@@ -1,0 +1,74 @@
+{
+  "dataset_sequence": [
+    "kramabench-environment-easy-1"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+    "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+    "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Count the total water sample rows in the 2013 Massachusetts beach sampling data.",
+    "2. Count the sample rows in that same data that are marked as bacterial-standard violations.",
+    "3. Divide the violation count by the total sample count, convert to a percentage, and round to three decimal places."
+  ],
+  "original_final_question": "What percentage (to 3 decimal places) of water samples collected from Massachusetts beaches during the 2013 bathing season exceeded bacterial standards, leading to temporary closures? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: The 2013 Massachusetts beach sampling file contains 15,388 total sample rows.",
+    "Node 2: The same file marks 738 sample rows with Violation equal to yes.",
+    "Node 3 depends on nodes 1 and 2: 738 divided by 15,388, multiplied by 100 and rounded to three decimal places, is 4.796.",
+    "Final answer: 4.796"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-easy-1",
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "intent": "How many total water sample rows are recorded in the 2013 Massachusetts beach sampling file?",
+      "code": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\ndf = pd.read_csv(csv_path, usecols=['Violation'])\nanswer = str(len(df))\nprint(answer)",
+      "answer": "15388"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-easy-1",
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "intent": "How many 2013 Massachusetts beach sample rows are marked as bacterial-standard violations?",
+      "code": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\ndf = pd.read_csv(csv_path, usecols=['Violation'])\nviolations = df['Violation'].astype(str).str.strip().str.lower().eq('yes')\nanswer = str(int(violations.sum()))\nprint(answer)",
+      "answer": "738"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-easy-1",
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "intent": "Using <node_1 answer> total samples and <node_2 answer> violating samples, what percentage of samples had violations, rounded to 3 decimal places?",
+      "code": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\nnode_1_answer = '15388'\nnode_2_answer = '738'\ndf = pd.read_csv(csv_path, usecols=['Violation'])\ntotal_samples = len(df)\nviolating_samples = int(df['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\nassert str(total_samples) == node_1_answer\nassert str(violating_samples) == node_2_answer\nanswer = f'{violating_samples / total_samples * 100:.3f}'\nprint(answer)",
+      "answer": "4.796"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-easy-1",
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "intent": "How many total water sample rows are recorded in the 2013 Massachusetts beach sampling file?",
+      "sql": "SELECT COUNT(\"Violation\") AS answer FROM t",
+      "answer": "15388"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-easy-1",
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "intent": "How many 2013 Massachusetts beach sample rows are marked as bacterial-standard violations?",
+      "sql": "SELECT SUM(CASE WHEN lower(trim(CAST(\"Violation\" AS VARCHAR))) IN ('true', 'yes', '1') THEN 1 ELSE 0 END) AS answer FROM t",
+      "answer": "738"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-easy-1",
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "intent": "Using <node_1 answer> total samples and <node_2 answer> violating samples, what percentage of samples had violations, rounded to 3 decimal places?",
+      "sql": "SELECT printf('%.3f',\n  SUM(CASE WHEN lower(trim(CAST(\"Violation\" AS VARCHAR))) IN ('true', 'yes', '1') THEN 1 ELSE 0 END) * 100.0 / COUNT(\"Violation\")\n) AS answer FROM t",
+      "answer": "4.796"
+    }
+  ]
+}

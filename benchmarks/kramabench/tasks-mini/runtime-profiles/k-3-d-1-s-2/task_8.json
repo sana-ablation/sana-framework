@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-environment-hard-17"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-environment-hard-17/files/monthly_precipitations_chatham.csv",
+    "datagov/kramabench-environment-hard-17/files/water-body-testing-2006.csv",
+    "datagov/kramabench-environment-hard-17/files/water-body-testing-2006.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. For Chatham, impute missing monthly precipitation values with month medians and identify the wettest June-through-August summer.",
+    "2. In the water-body testing records for that wettest summer, count Bucks Creek Beach samples and samples marked as violations.",
+    "3. Convert the violation count over the total sample count to a percentage and round to two decimal places."
+  ],
+  "original_final_question": "What is the seasonal exceedance rate (in percentage, to 2 decimal places) of Chatham's Bucks Creek Beach in the summer (June, July, August) with the most rainfall in its area? Impute missing values with median of the month in non-missing years. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Chatham's wettest summer from 2002 through 2020 is 2006 after median imputation and summing June, July, and August precipitation.",
+    "Node 2 depends on node 1: In the 2006 beach testing records, Bucks Creek Beach has 9 yes violations among 19 total samples.",
+    "Node 3 depends on node 2: The exceedance percentage is 9 divided by 19 times 100, rounded to 47.37.",
+    "Final answer: 47.37"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-hard-17",
+      "source": "datagov/kramabench-environment-hard-17/files/monthly_precipitations_chatham.csv",
+      "intent": "After keeping yearly records from 2002 through 2020, imputing missing June, July, and August precipitation values with the month median, and summing those summer months, which year has the highest summer rainfall for Chatham?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv'\nmonths = ['Jun', 'Jul', 'Aug']\nvalid_years = set(range(2002, 2021))\ndf = pd.read_csv(path)\ndf['Year'] = pd.to_numeric(df['Year'], errors='coerce')\ndf = df[df['Year'].isin(valid_years)].copy()\nfor month in months:\n    values = pd.to_numeric(df[month], errors='coerce')\n    df[month] = values.fillna(values.median())\ndf['summer_rainfall'] = df[months].sum(axis=1)\nanswer = str(int(df.sort_values(['summer_rainfall', 'Year'], ascending=[False, True]).iloc[0]['Year']))\nprint(answer)\n",
+      "answer": "2006"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-hard-17",
+      "source": "datagov/kramabench-environment-hard-17/files/water-body-testing-2006.csv",
+      "intent": "For Bucks Creek Beach in the wettest summer year from <node_1 answer>, how many testing records had a yes violation out of the total number of testing records?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2006.csv'\nnode_1_answer = '2006'\ndf = pd.read_csv(path)\nyears = pd.to_numeric(df['Year'], errors='coerce').eq(int(node_1_answer))\nbeach = df['Beach Name'].astype(str).str.strip().eq('Bucks Creek')\nfiltered = df[years & beach]\nyes_count = int(filtered['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(filtered))\nanswer = f'{yes_count}/{total_count}'\nprint(answer)\n",
+      "answer": "9/19"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-hard-17",
+      "source": "datagov/kramabench-environment-hard-17/files/water-body-testing-2006.csv",
+      "intent": "Using the yes violation count and total count from <node_2 answer>, what is the Bucks Creek Beach exceedance rate as a percentage rounded to two decimal places?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2006.csv'\nnode_1_answer = '2006'\nnode_2_answer = '9/19'\ndf = pd.read_csv(path)\nyears = pd.to_numeric(df['Year'], errors='coerce').eq(int(node_1_answer))\nbeach = df['Beach Name'].astype(str).str.strip().eq('Bucks Creek')\nfiltered = df[years & beach]\nyes_count = int(filtered['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(filtered))\nexpected_counts = f'{yes_count}/{total_count}'\nif expected_counts != node_2_answer:\n    raise ValueError(f'count mismatch: {expected_counts} != {node_2_answer}')\nanswer = f'{yes_count / total_count * 100:.2f}'\nprint(answer)\n",
+      "answer": "47.37"
+    }
+  ]
+}

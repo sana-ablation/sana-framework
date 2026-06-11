@@ -1,0 +1,77 @@
+{
+  "updated_at": "2026-05-14T18:43:16Z",
+  "entries": [
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-5.json",
+      "source_id": "astronomy-easy-5",
+      "status": "skipped",
+      "reason": "missing_curated_promoter",
+      "details": "Checked-in solution requires Skyfield EarthSatellite/itrf_xyz propagation, but neither skyfield nor sgp4 is available in the verification runtime; a mean-motion-only rewrite does not reproduce the requested method.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T16:08:02Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-11.json",
+      "source_id": "astronomy-hard-11",
+      "status": "skipped",
+      "reason": "missing_curated_promoter",
+      "details": "Checked-in solution requires the NRLMSISE-00 pyatmos/astropy stack, which is absent from the verification runtime; the raw-data candidate also references omni2_low_res/omni2.txt while the local specification file is named omni2.text.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T16:08:02Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-8.json",
+      "source_id": "astronomy-hard-8",
+      "status": "skipped",
+      "reason": "missing_curated_promoter",
+      "details": "Checked-in solution requires cdflib to read SW_OPER_ACCACAL_2__20240511T000000_20240511T235959_0304.cdf; cdflib/netCDF/h5py are absent from the verification runtime, so the CDF-backed acceleration series cannot be independently verified.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T16:20:40Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-21.json",
+      "source_id": "wildfire-hard-21",
+      "status": "skipped",
+      "reason": "missing_raw_data_file",
+      "details": "Candidate and checked-in solution require ZHVI.csv, but it is absent from other-benchmarks/Kramabench/data/wildfire/input and no matching local Kramabench file was found.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T18:34:16Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-2.json",
+      "source_id": "wildfire-easy-2",
+      "status": "skipped",
+      "reason": "missing_geospatial_runtime",
+      "details": "Checked-in solution requires geopandas/shapely-style GeoPackage polygon intersection. Available verification runtimes lack geopandas, fiona, pyogrio, shapely, ogrinfo, and ogr2ogr, so the spatial join cannot be independently executed from the raw usa.gpkg and nifc_geographic_areas.gpkg files.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T18:41:57Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-3.json",
+      "source_id": "wildfire-easy-3",
+      "status": "skipped",
+      "reason": "missing_geospatial_runtime",
+      "details": "Checked-in solution requires geopandas/shapely-style GeoPackage polygon intersection. Available verification runtimes lack geopandas, fiona, pyogrio, shapely, ogrinfo, and ogr2ogr, so the spatial join cannot be independently executed from the raw usa.gpkg and nifc_geographic_areas.gpkg files.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T18:41:57Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-18.json",
+      "source_id": "wildfire-hard-18",
+      "status": "skipped",
+      "reason": "unfair_or_unsearchable",
+      "details": "The local NOAA regression can be computed, but it does not support the candidate answer: manual OLS with HC3 robust errors on noaa_wildfires.csv gives significant negative duration coefficients and significant positive prim_threatened_aggregate coefficients for Full Suppression indicators, contradicting the provided conclusion.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T18:42:01Z"
+    },
+    {
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-19.json",
+      "source_id": "wildfire-hard-19",
+      "status": "skipped",
+      "reason": "missing_raw_data_file",
+      "details": "Candidate and checked-in solution require WeatherEvents_Jan2016-Dec2022.csv, but no matching WeatherEvents file exists under other-benchmarks/Kramabench/data/wildfire/input or the local Kramabench tree.",
+      "worker": "sequential",
+      "attempted_at": "2026-05-14T18:42:01Z"
+    }
+  ]
+}

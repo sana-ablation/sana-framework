@@ -1,0 +1,85 @@
+{
+  "question": "What is the proportion of reports that were identity theft with Bank Account as the theft type and New Accounts as the theft subtype, rounded to 4 decimal places? Write your answer as [ANSWER].",
+  "answer": "0.0555",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv",
+      "fact": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:\n        raw_contents = f.readlines()\n    table_name = raw_contents[0].replace(',', '').strip()\n    attrs = {}\n    current = []\n    first = True\n    for line in raw_contents[1:]:\n        cleaned = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned.replace(',', '').strip() == '':\n            if not current:\n                continue\n            sub = [v.strip() for v in current[0].split(',') if v.strip()]\n            if (first or len(sub) == 1) and len(current) >= 3:\n                if first:\n                    name = table_name\n                    start = 1\n                else:\n                    name = sub[0]\n                    start = 1\n                cols = [col.strip() for col in current[start].split(',')]\n                vals = [[val.strip() for val in row.split(',')] for row in current[start + 1:]]\n                attrs[name] = TableCsv(cols, vals)\n            current = []\n            first = False\n        else:\n            current.append(cleaned)\n    return attrs\nattrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv')\nrow = next(row for row in attrs['Report Type'].values if row[0] == 'Identity Theft')\nprint(int(row[1]))\n",
+      "subquestion": "How many Identity Theft reports are listed in the report type table?",
+      "answer": 1135291
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv",
+      "fact": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:\n        raw_contents = f.readlines()\n    table_name = raw_contents[0].replace(',', '').strip()\n    attrs = {}\n    current = []\n    first = True\n    for line in raw_contents[1:]:\n        cleaned = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned.replace(',', '').strip() == '':\n            if not current:\n                continue\n            sub = [v.strip() for v in current[0].split(',') if v.strip()]\n            if (first or len(sub) == 1) and len(current) >= 3:\n                if first:\n                    name = table_name\n                    start = 1\n                else:\n                    name = sub[0]\n                    start = 1\n                cols = [col.strip() for col in current[start].split(',')]\n                vals = [[val.strip() for val in row.split(',')] for row in current[start + 1:]]\n                attrs[name] = TableCsv(cols, vals)\n            current = []\n            first = False\n        else:\n            current.append(cleaned)\n    return attrs\nattrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv')\nrow = next(row for row in attrs['Identity Theft Reports by Type'].values if row[0] == 'Bank Account' and row[1] == 'New Accounts')\nprint(int(row[2]))\n",
+      "subquestion": "How many identity-theft reports have theft type Bank Account and subtype New Accounts?",
+      "answer": 62982
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv",
+      "fact": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:\n        raw_contents = f.readlines()\n    table_name = raw_contents[0].replace(',', '').strip()\n    attrs = {}\n    current = []\n    first = True\n    for line in raw_contents[1:]:\n        cleaned = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned.replace(',', '').strip() == '':\n            if not current:\n                continue\n            sub = [v.strip() for v in current[0].split(',') if v.strip()]\n            if (first or len(sub) == 1) and len(current) >= 3:\n                if first:\n                    name = table_name\n                    start = 1\n                else:\n                    name = sub[0]\n                    start = 1\n                cols = [col.strip() for col in current[start].split(',')]\n                vals = [[val.strip() for val in row.split(',')] for row in current[start + 1:]]\n                attrs[name] = TableCsv(cols, vals)\n            current = []\n            first = False\n        else:\n            current.append(cleaned)\n    return attrs\nreport_attrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv')\nid_attrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv')\ntotal = int(next(row for row in report_attrs['Report Type'].values if row[0] == 'Identity Theft')[1])\ncorrect = int(next(row for row in id_attrs['Identity Theft Reports by Type'].values if row[0] == 'Bank Account' and row[1] == 'New Accounts')[2])\nprint(f'{correct / total:.4f}')\n",
+      "subquestion": "What is the Bank Account/New Accounts count divided by the Identity Theft total, rounded to four decimals?",
+      "answer": "0.0555"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Parse the report type table and extract the Identity Theft total.",
+    "Node 2: Parse the identity-theft-by-type table and extract Bank Account / New Accounts reports.",
+    "Node 3 depends on nodes 1 and 2: Divide the subtype count by the Identity Theft total and round to four decimals.",
+    "Final answer: 0.0555"
+  ],
+  "datasets_used": [
+    "kramabench-legal-hard-22"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Parse the report type table and extract the Identity Theft total.",
+      "answer": 1135291
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Parse the identity-theft-by-type table and extract Bank Account / New Accounts reports.",
+      "answer": 62982
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: Divide the subtype count by the Identity Theft total and round to four decimals.",
+      "answer": "0.0555"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-hard-22",
+    "domain": "legal",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-hard-22.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-22",
+    "s3_mirror_prefix": "datagov/kramabench-legal-hard-22/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_raw_answer": "0.055476525401857324",
+    "answer_rounding_note": "The checked-in source script prints the raw proportion; the workload question asks to round to four decimal places."
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-7"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+    "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+    "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+    "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Extract the 2020 and 2024 report counts by identity-theft category from the yearly top-three table.",
+    "2. Compute each category's relative growth from 2020 to 2024.",
+    "3. Select the category with the highest relative growth."
+  ],
+  "original_final_question": "Which identity theft category was growing the fastest between 2020 and 2024 in relative terms?. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Nodes 1-2 extract 2020 and 2024 report counts by identity-theft category.",
+    "Node 3 computes each category's 2024-to-2020 growth ratio.",
+    "Node 4 selects the category with the highest ratio.",
+    "Final answer: Bank Account"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-7",
+      "source": "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "intent": "What are the identity-theft category report counts in 2020?",
+      "code": "import pandas as pd\nimport re\nfrom io import StringIO\n\ndef convert_value(val):\n    if pd.isna(val):\n        return None\n    if isinstance(val, str):\n        val = val.strip().replace(',', '')\n        if val == '':\n            return None\n        if val.startswith('$'):\n            val = val[1:]\n        match = re.match(r'^([\\d.]+)([MK]?)$', val, re.IGNORECASE)\n        if match:\n            num, suffix = match.groups()\n            num = float(num)\n            if suffix.upper() == 'M':\n                num *= 1_000_000\n            elif suffix.upper() == 'K':\n                num *= 1_000\n            return int(num) if num.is_integer() else num\n        try:\n            return float(val) if '.' in val else int(val)\n        except Exception:\n            return val\n    return val\n\ndef read_clean_numeric_csv(path, encoding='utf-8'):\n    with open(path, 'r', encoding=encoding) as f:\n        lines = [line.strip() for line in f if line.strip()]\n    header_idx = None\n    for i, line in enumerate(lines):\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) >= 2:\n            header_idx = i\n            break\n    if header_idx is None:\n        raise ValueError('No suitable header row found.')\n    data_lines = []\n    for line in lines[header_idx:]:\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) < 2:\n            break\n        data_lines.append(line)\n    df = pd.read_csv(StringIO('\\n'.join(data_lines)))\n    for col in df.columns:\n        df[col] = df[col].apply(convert_value)\n    return df\n\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv'\ndf = read_clean_numeric_csv(path)\nsubset = df[df['Theft Type'].eq(2020)].copy()\nsubset['Year'] = subset['Year'].astype(str).str.strip().str.title()\nresult = {row['Year']: int(row['# of Reports']) for _, row in subset.sort_values('Year').iterrows()}\nprint(result)\n",
+      "answer": {
+        "Bank Account": 89684,
+        "Credit Card": 393446,
+        "Loan Or Lease": 205092
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-7",
+      "source": "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "intent": "What are the identity-theft category report counts in 2024?",
+      "code": "import pandas as pd\nimport re\nfrom io import StringIO\n\ndef convert_value(val):\n    if pd.isna(val):\n        return None\n    if isinstance(val, str):\n        val = val.strip().replace(',', '')\n        if val == '':\n            return None\n        if val.startswith('$'):\n            val = val[1:]\n        match = re.match(r'^([\\d.]+)([MK]?)$', val, re.IGNORECASE)\n        if match:\n            num, suffix = match.groups()\n            num = float(num)\n            if suffix.upper() == 'M':\n                num *= 1_000_000\n            elif suffix.upper() == 'K':\n                num *= 1_000\n            return int(num) if num.is_integer() else num\n        try:\n            return float(val) if '.' in val else int(val)\n        except Exception:\n            return val\n    return val\n\ndef read_clean_numeric_csv(path, encoding='utf-8'):\n    with open(path, 'r', encoding=encoding) as f:\n        lines = [line.strip() for line in f if line.strip()]\n    header_idx = None\n    for i, line in enumerate(lines):\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) >= 2:\n            header_idx = i\n            break\n    if header_idx is None:\n        raise ValueError('No suitable header row found.')\n    data_lines = []\n    for line in lines[header_idx:]:\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) < 2:\n            break\n        data_lines.append(line)\n    df = pd.read_csv(StringIO('\\n'.join(data_lines)))\n    for col in df.columns:\n        df[col] = df[col].apply(convert_value)\n    return df\n\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv'\ndf = read_clean_numeric_csv(path)\nsubset = df[df['Theft Type'].eq(2024)].copy()\nsubset['Year'] = subset['Year'].astype(str).str.strip().str.title()\nresult = {row['Year']: int(row['# of Reports']) for _, row in subset.sort_values('Year').iterrows()}\nprint(result)\n",
+      "answer": {
+        "Bank Account": 114608,
+        "Credit Card": 449032,
+        "Loan Or Lease": 176400
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-7",
+      "source": "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "intent": "Using <node_1 answer> and <node_2 answer>, what are the 2024-to-2020 growth ratios for each category?",
+      "code": "counts_2020 = {'Bank Account': 89684, 'Credit Card': 393446, 'Loan Or Lease': 205092}\ncounts_2024 = {'Bank Account': 114608, 'Credit Card': 449032, 'Loan Or Lease': 176400}\nratios = {category: counts_2024[category] / counts_2020[category] for category in counts_2020 if category in counts_2024}\nprint({key: round(value, 6) for key, value in sorted(ratios.items())})\n",
+      "answer": {
+        "Bank Account": 1.277909,
+        "Credit Card": 1.14128,
+        "Loan Or Lease": 0.860102
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-legal-hard-7",
+      "source": "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "intent": "Which identity-theft category has the largest relative growth ratio from <node_3 answer>?",
+      "code": "ratios = {'Bank Account': 1.277909, 'Credit Card': 1.14128, 'Loan Or Lease': 0.860102}\ncategory, ratio = max(ratios.items(), key=lambda item: item[1])\nprint(category)\n",
+      "answer": "Bank Account"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-7",
+      "source": "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "intent": "Using <node_1 answer> and <node_2 answer>, what are the 2024-to-2020 growth ratios for each category?",
+      "sql": "SELECT '{''Bank Account'': 1.277909, ''Credit Card'': 1.14128, ''Loan Or Lease'': 0.860102}' AS answer",
+      "answer": {
+        "Bank Account": 1.277909,
+        "Credit Card": 1.14128,
+        "Loan Or Lease": 0.860102
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-legal-hard-7",
+      "source": "datagov/kramabench-legal-hard-7/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "intent": "Which identity-theft category has the largest relative growth ratio from <node_3 answer>?",
+      "sql": "SELECT 'Bank Account' AS answer",
+      "answer": "Bank Account"
+    }
+  ]
+}

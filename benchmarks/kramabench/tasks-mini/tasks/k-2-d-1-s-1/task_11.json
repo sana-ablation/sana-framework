@@ -1,0 +1,81 @@
+{
+  "question": "Which branch of the U.S. Military had the largest Median Fraud Loss reported by its service members in 2024? Write your answer as [ANSWER].",
+  "answer": "U.S. Space Force",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\nstart = next(i for i, row in enumerate(rows) if row and row[0] == 'Military Branch')\nbranch_rows = []\nfor row in rows[start + 1:]:\n    if not row or not row[0].strip():\n        break\n    median = int(row[5].replace('$', '').replace(',', '').strip())\n    branch_rows.append((row[0].strip(), median))\nmax_branch, max_median = max(branch_rows, key=lambda item: item[1])\nresult = [f'{branch}|{median}' for branch, median in branch_rows]\nprint(result)\n",
+      "subquestion": "What median fraud loss is reported for each military branch?",
+      "answer": [
+        "U.S. Air Force|584",
+        "U.S. Army|731",
+        "U.S. Coast Guard|500",
+        "U.S. Marines|727",
+        "U.S. Navy|569",
+        "U.S. Space Force|1300"
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "fact": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\nstart = next(i for i, row in enumerate(rows) if row and row[0] == 'Military Branch')\nbranch_rows = []\nfor row in rows[start + 1:]:\n    if not row or not row[0].strip():\n        break\n    median = int(row[5].replace('$', '').replace(',', '').strip())\n    branch_rows.append((row[0].strip(), median))\nmax_branch, max_median = max(branch_rows, key=lambda item: item[1])\nprint(max_branch)\n",
+      "subquestion": "Which military branch has the highest median fraud loss?",
+      "answer": "U.S. Space Force"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Extract the military branch table and clean each Median Fraud Loss value.",
+    "Node 2 depends on node 1: Select the branch with the largest cleaned median fraud loss.",
+    "Final answer: U.S. Space Force"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Extract the military branch table and clean each Median Fraud Loss value.",
+      "answer": [
+        "U.S. Air Force|584",
+        "U.S. Army|731",
+        "U.S. Coast Guard|500",
+        "U.S. Marines|727",
+        "U.S. Navy|569",
+        "U.S. Space Force|1300"
+      ]
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Select the branch with the largest cleaned median fraud loss.",
+      "answer": "U.S. Space Force"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-25",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-25.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-25",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-25/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

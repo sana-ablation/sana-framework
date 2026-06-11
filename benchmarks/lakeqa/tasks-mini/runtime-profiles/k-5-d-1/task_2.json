@@ -1,0 +1,99 @@
+{
+  "dataset_sequence": [
+    "Austin,_Texas",
+    "apd-computer-aided-dispatch-incidents",
+    "apd-use-of-force",
+    "apd-searches-by-type",
+    "apd-complaints-by-sector"
+  ],
+  "source_sequence": [
+    "wikipedia/Austin,_Texas/content.txt",
+    "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+    "datagov/apd-use-of-force/files/rows.txt",
+    "datagov/apd-searches-by-type/files/rows.txt",
+    "datagov/apd-complaints-by-sector/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Establish the Austin, Texas context for the police-activity datasets.",
+    "2. For 2023, identify the patrol sector with the highest volume of computer-aided dispatch incidents.",
+    "3. Within the sector from step 2, identify the city council district with the most use-of-force incidents in 2023.",
+    "4. For the council district from step 3, identify the sector that conducted the most searches in 2023.",
+    "5. Determine how many total complaints were filed against the sector from step 4 in 2024 and return that number."
+  ],
+  "original_final_question": "I'm analyzing police activity in Austin, Texas. For 2023, I need to know which patrol sector had the highest volume of computer-aided dispatch incidents. Within that sector, which city council district recorded the most use-of-force incidents? Finally, for that specific council district, which sector conducted the most searches in 2023, and how many total complaints were filed against that sector in 2024? Only report the number of total complaints. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Austin is the capital of Texas.",
+    "Node 2 depends on node 1: In 2023 CAD incidents, the top sector is Edward.",
+    "Node 3 depends on node 2: In 2023 use-of-force within Edward, the top council district is 4.",
+    "Node 4 depends on node 3: In 2023 searches within district 4, the top sector is Edward.",
+    "Node 5 depends on node 4: In 2024 complaints-by-sector, Edward has 52 complaints.",
+    "Final answer: 52"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "apd-computer-aided-dispatch-incidents",
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "intent": "In 2023 CAD incidents in <node_1 answer>, which sector has the most incidents?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/apd-computer-aided-dispatch-incidents/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['Response Year', 'Sector'], dtype=str, chunksize=500000, low_memory=False):\n    filtered = chunk[pd.to_numeric(chunk['Response Year'], errors='coerce').eq(2023)]\n    vc = filtered['Sector'].astype(str).str.strip().replace({'': pd.NA, 'nan': pd.NA}).dropna().value_counts()\n    for sector, count in vc.items():\n        counts[sector] = counts.get(sector, 0) + int(count)\n\nanswer = str(max(counts, key=counts.get))\n",
+      "answer": "Edward"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "apd-use-of-force",
+      "source": "datagov/apd-use-of-force/files/rows.txt",
+      "intent": "In 2023 use-of-force entries within sector <node_2 answer>, which council district has the most incidents?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/apd-use-of-force/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_2_answer = 'Edward'\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['Occurred Date', 'Sector', 'Council District'], dtype=str, chunksize=500000, low_memory=False):\n    years = pd.to_datetime(chunk['Occurred Date'], errors='coerce').dt.year.eq(2023)\n    sectors = chunk['Sector'].astype(str).str.strip().str.lower().eq(node_2_answer.lower())\n    filtered = chunk[years & sectors]\n    districts = pd.to_numeric(filtered['Council District'], errors='coerce').dropna().astype(int)\n    vc = districts.value_counts()\n    for district, count in vc.items():\n        counts[int(district)] = counts.get(int(district), 0) + int(count)\n\nanswer = str(int(max(counts, key=counts.get)))\n",
+      "answer": "4"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "apd-searches-by-type",
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "intent": "In 2023 search entries within council district <node_3 answer>, which sector has the most searches?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/apd-searches-by-type/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_3_answer = '4'\ntarget_district = pd.to_numeric(node_3_answer, errors='coerce')\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['Occurred Year', 'Council District', 'Sector'], dtype=str, chunksize=500000, low_memory=False):\n    years = pd.to_numeric(chunk['Occurred Year'], errors='coerce').eq(2023)\n    districts = pd.to_numeric(chunk['Council District'], errors='coerce').eq(target_district)\n    filtered = chunk[years & districts]\n    vc = filtered['Sector'].astype(str).str.strip().replace({'': pd.NA, 'nan': pd.NA}).dropna().value_counts()\n    for sector, count in vc.items():\n        counts[sector] = counts.get(sector, 0) + int(count)\n\nanswer = str(max(counts, key=counts.get))\n",
+      "answer": "Edward"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "apd-complaints-by-sector",
+      "source": "datagov/apd-complaints-by-sector/files/rows.txt",
+      "intent": "In 2024 complaints-by-sector data, what is the total number of complaints for sector <node_4 answer>?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/apd-complaints-by-sector/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_4_answer = 'Edward'\ndf = pd.read_csv(csv_path, usecols=['Occurred Year', 'Sector', 'Total Complaints'], dtype=str, low_memory=False)\nfiltered = df[\n    pd.to_numeric(df['Occurred Year'], errors='coerce').eq(2024)\n    & df['Sector'].astype(str).str.strip().str.lower().eq(node_4_answer.lower())\n]\nanswer = str(int(pd.to_numeric(filtered['Total Complaints'], errors='coerce').fillna(0).sum()))\n",
+      "answer": "52"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "apd-computer-aided-dispatch-incidents",
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "intent": "In 2023 CAD incidents in <node_1 answer>, which sector has the most incidents?",
+      "answer": "Cannot execute SQL: file is too big (1.35 GB >= 500 MB limit)."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "apd-use-of-force",
+      "source": "datagov/apd-use-of-force/files/rows.txt",
+      "intent": "In 2023 use-of-force entries within sector <node_2 answer>, which council district has the most incidents?",
+      "answer": "4",
+      "sql": "SELECT CAST(CAST(TRY_CAST(\"Council District\" AS DOUBLE) AS BIGINT) AS VARCHAR) AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"Occurred Date\" AS DATE)) = 2023\n  AND lower(trim(CAST(\"Sector\" AS VARCHAR))) = 'edward'\n  AND TRY_CAST(\"Council District\" AS DOUBLE) IS NOT NULL\nGROUP BY answer\nORDER BY COUNT(*) DESC, answer ASC\nLIMIT 1"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "apd-searches-by-type",
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "intent": "In 2023 search entries within council district <node_3 answer>, which sector has the most searches?",
+      "answer": "Edward",
+      "sql": "SELECT trim(CAST(\"Sector\" AS VARCHAR)) AS answer\nFROM t\nWHERE CAST(CAST(TRY_CAST(\"Occurred Year\" AS DOUBLE) AS BIGINT) AS VARCHAR) = '2023'\n  AND TRY_CAST(\"Council District\" AS DOUBLE) = 4\n  AND trim(CAST(\"Sector\" AS VARCHAR)) <> ''\nGROUP BY answer\nORDER BY COUNT(*) DESC, answer ASC\nLIMIT 1"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "apd-complaints-by-sector",
+      "source": "datagov/apd-complaints-by-sector/files/rows.txt",
+      "intent": "In 2024 complaints-by-sector data, what is the total number of complaints for sector <node_4 answer>?",
+      "answer": "52",
+      "sql": "SELECT CAST(CAST(SUM(TRY_CAST(\"Total Complaints\" AS DOUBLE)) AS BIGINT) AS VARCHAR) AS answer\nFROM t\nWHERE CAST(CAST(TRY_CAST(\"Occurred Year\" AS DOUBLE) AS BIGINT) AS VARCHAR) = '2024'\n  AND lower(trim(CAST(\"Sector\" AS VARCHAR))) = 'edward' "
+    }
+  ]
+}

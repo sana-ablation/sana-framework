@@ -1,0 +1,57 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-17"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+    "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+    "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the report-count table and extract total reports for 2007.",
+    "2. Read the 2024 report categories table and extract the Auto Related proportion.",
+    "3. Multiply the 2007 total by the 2024 proportion and round to the nearest integer."
+  ],
+  "original_final_question": "If the 2007 report category distribution were exactly like the 2024 one, how many reports in 2007 would be Auto Related, rounded to the nearest integer? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the report-count table and extract total reports for 2007.",
+    "Node 2: Read the 2024 report categories table and extract the Auto Related proportion.",
+    "Node 3 depends on nodes 1 and 2: Multiply the 2007 total by the 2024 proportion and round to the nearest integer.",
+    "Final answer: 32542"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-17",
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "What is the total number of reports in 2007?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\nprint(int(df[df['Year'] == 2007]['# of Reports'].iloc[0]))\n",
+      "answer": 1070447
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-17",
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the 2024 Auto Related report-category proportion?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat_df = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\npct = cat_df[cat_df['Category'] == 'Auto Related']['Percentage'].iloc[0]\nprint(f'{float(pct.strip(\"%\")) / 100:.4f}')\n",
+      "answer": "0.0304"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-17",
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "Multiplying the 2007 total by the 2024 Auto Related proportion, what rounded count results?",
+      "code": "import numpy as np\nimport pandas as pd\ncount_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ncat_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ndf = pd.read_csv(count_path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\ntotal_2007_reports = df[df['Year'] == 2007]['# of Reports'].iloc[0]\ncat_df = pd.read_csv(cat_path, skiprows=2, encoding='unicode_escape').dropna()\nauto_related_percentage = cat_df[cat_df['Category'] == 'Auto Related']['Percentage'].iloc[0]\nauto_related_percentage = float(auto_related_percentage.strip('%')) / 100\nprint(int(np.round(auto_related_percentage * total_2007_reports)))\n",
+      "answer": 32542
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-17",
+      "source": "datagov/kramabench-legal-hard-17/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the 2024 Auto Related report-category proportion?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

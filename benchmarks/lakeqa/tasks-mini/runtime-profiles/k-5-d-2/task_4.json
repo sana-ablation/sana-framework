@@ -1,0 +1,106 @@
+{
+  "dataset_sequence": [
+    "500-cities-local-data-for-better-health-2016-release",
+    "500-cities-local-data-for-better-health-2018-release",
+    "Gary,_Indiana",
+    "U.S._Steel",
+    "Carnegie_Steel_Company",
+    "Andrew_Carnegie"
+  ],
+  "source_sequence": [
+    "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+    "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+    "wikipedia/Gary,_Indiana/content.txt",
+    "wikipedia/U.S._Steel/content.txt",
+    "wikipedia/Carnegie_Steel_Company/content.txt",
+    "wikipedia/Andrew_Carnegie/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. In the 2016 and 2018 city health records, compute each U.S. city's average age-adjusted adult obesity rate and keep the city with the highest average.",
+    "2. Determine which corporation founded the city from step 1.",
+    "3. Determine which company was sold to J. P. Morgan and became part of the corporation from step 2.",
+    "4. Determine who founded that company.",
+    "5. Determine the city and state where that founder was based, and return that location."
+  ],
+  "original_final_question": "What US city had the highest average age-adjusted adult obesity rate in 2016 and 2018? Then, who founded a company sold to JP Morgan to create the corporation that founded this city? Only report the city and state this person is based in the format of `City, State`. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2): What is the US city with the highest average age-adjusted adult obesity rate (2016-2018)?",
+    "  Node 1: 2016 500 Cities data -> Dayton: 47.2%, Gary: 46.9%, Detroit: 45.2%",
+    "  Node 2: 2018 500 Cities data -> Gary: 49.0%, Detroit: 47.4%, Dayton: 43.5%",
+    "  Calculate averages:",
+    "    Gary: (46.9 + 49.0) / 2 = 47.95%",
+    "    Dayton: (47.2 + 43.5) / 2 = 45.35%",
+    "    Detroit: (45.2 + 47.4) / 2 = 46.30%",
+    "  Result: Gary, Indiana has highest average (47.95%)",
+    "",
+    "HOP 2 (d=1): What corporation founded Gary, Indiana?",
+    "  Node 3: Gary, Indiana Wikipedia -> founded in 1906 by U.S. Steel Corporation",
+    "  Result: U.S. Steel Corporation",
+    "",
+    "HOP 3 (d=1): Which company did J. P. Morgan merge with Federal Steel and National Steel to create U.S. Steel?",
+    "  Node 4: U.S. Steel Wikipedia -> created in 1901 by merging Carnegie Steel, Federal Steel, and National Steel",
+    "  Result: Carnegie Steel Company",
+    "",
+    "HOP 4 (d=1): Who founded Carnegie Steel Company?",
+    "  Node 5: Carnegie Steel Company Wikipedia -> primarily created by Andrew Carnegie",
+    "  Result: Andrew Carnegie",
+    "",
+    "HOP 5 (d=1): Where was Andrew Carnegie based?",
+    "  Node 6: Andrew Carnegie Wikipedia -> immigrated to Pittsburgh, built Carnegie Steel there",
+    "  Result: Pittsburgh, Pennsylvania",
+    "",
+    "Final answer: Pittsburgh, Pennsylvania"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "500-cities-local-data-for-better-health-2016-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+      "intent": "What is the US city with the highest average age-adjusted adult obesity rate (2016-2018)? (Filter for this node: GeographicLevel == City; Measure == \"Obesity among adults aged >=18 Years\"; Data_Value_Type == \"Age-adjusted prevalence\"; rank by Data_Value; keep top 3.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncity_obesity = (\n    df[\n        (df[\"GeographicLevel\"] == \"City\")\n        & (df[\"Measure\"] == \"Obesity among adults aged >=18 Years\")\n        & (df[\"Data_Value_Type\"] == \"Age-adjusted prevalence\")\n    ][[\"CityName\", \"StateDesc\", \"Data_Value\"]]\n    .dropna(subset=[\"Data_Value\"])\n    .sort_values([\"Data_Value\", \"CityName\", \"StateDesc\"], ascending=[False, True, True])\n    .reset_index(drop=True)\n)\n\ntop_ranked = city_obesity.head(3)\nanswer = dict(zip(top_ranked[\"CityName\"], top_ranked[\"Data_Value\"]))",
+      "answer": {
+        "Dayton": 47.2,
+        "Gary": 46.9,
+        "Detroit": 45.2
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "500-cities-local-data-for-better-health-2018-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+      "intent": "What is the US city with the highest average age-adjusted adult obesity rate (2016-2018)? (Filter for this node: GeographicLevel == City; Measure == \"Obesity among adults aged >=18 Years\"; Data_Value_Type == \"Age-adjusted prevalence\"; rank by Data_Value; keep top 3.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncity_obesity = (\n    df[\n        (df[\"GeographicLevel\"] == \"City\")\n        & (df[\"Measure\"] == \"Obesity among adults aged >=18 Years\")\n        & (df[\"Data_Value_Type\"] == \"Age-adjusted prevalence\")\n        & (df[\"CityName\"].isin([\"Gary\", \"Detroit\", \"Dayton\"]))\n    ][[\"CityName\", \"StateDesc\", \"Data_Value\"]]\n    .dropna(subset=[\"Data_Value\"])\n    .sort_values([\"CityName\", \"StateDesc\"])\n    .reset_index(drop=True)\n)\n\nanswer = dict(zip(city_obesity[\"CityName\"], city_obesity[\"Data_Value\"]))",
+      "answer": {
+        "Gary": 49.0,
+        "Detroit": 47.4,
+        "Dayton": 43.5
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "500-cities-local-data-for-better-health-2016-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+      "intent": "What is the US city with the highest average age-adjusted adult obesity rate (2016-2018)? (Filter for this node: GeographicLevel == City; Measure == \"Obesity among adults aged >=18 Years\"; Data_Value_Type == \"Age-adjusted prevalence\"; rank by Data_Value; keep top 3.)",
+      "sql": "WITH ranked AS (\n  SELECT \"CityName\" AS city, TRY_CAST(\"Data_Value\" AS DOUBLE) AS value\n  FROM t\n  WHERE \"GeographicLevel\" = 'City'\n    AND \"Measure\" = 'Obesity among adults aged >=18 Years'\n    AND \"Data_Value_Type\" = 'Age-adjusted prevalence'\n    AND \"Data_Value\" IS NOT NULL\n  ORDER BY value DESC, \"CityName\" ASC, \"StateDesc\" ASC\n  LIMIT 3\n)\nSELECT json_group_object(city, value) AS answer FROM ranked",
+      "answer": {
+        "Dayton": 47.2,
+        "Gary": 46.9,
+        "Detroit": 45.2
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "500-cities-local-data-for-better-health-2018-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+      "intent": "What is the US city with the highest average age-adjusted adult obesity rate (2016-2018)? (Filter for this node: GeographicLevel == City; Measure == \"Obesity among adults aged >=18 Years\"; Data_Value_Type == \"Age-adjusted prevalence\"; rank by Data_Value; keep top 3.)",
+      "sql": "WITH filtered AS (\n  SELECT \"CityName\" AS city, TRY_CAST(\"Data_Value\" AS DOUBLE) AS value\n  FROM t\n  WHERE \"GeographicLevel\" = 'City'\n    AND \"Measure\" = 'Obesity among adults aged >=18 Years'\n    AND \"Data_Value_Type\" = 'Age-adjusted prevalence'\n    AND \"CityName\" IN ('Gary', 'Detroit', 'Dayton')\n    AND \"Data_Value\" IS NOT NULL\n)\nSELECT json_group_object(city, value) AS answer FROM filtered",
+      "answer": {
+        "Gary": 49.0,
+        "Detroit": 47.4,
+        "Dayton": 43.5
+      }
+    }
+  ]
+}

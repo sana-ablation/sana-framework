@@ -1,0 +1,57 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-28"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv",
+    "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+    "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Extract the military top-10 fraud categories and compute the military Imposter Scams share.",
+    "2. Extract the general population Imposter Scams share from the report categories table.",
+    "3. Compare the two shares and answer Yes if the military share is higher."
+  ],
+  "original_final_question": "In 2024, as a percentage of all reports for the same demographic, did military consumers report a higher percentage of Imposter Scams than the general population? Answer Yes or No. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Extract the military top-10 fraud categories and compute the military Imposter Scams share.",
+    "Node 2: Extract the general population Imposter Scams share from the report categories table.",
+    "Node 3 depends on nodes 1 and 2: Compare the two shares and answer Yes if the military share is higher.",
+    "Final answer: Yes"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-28",
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv",
+      "intent": "Among military consumers, what are the Imposter Scams count, the top-10 fraud-category total, and the resulting share?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv'\ndf = pd.read_csv(path)\ntop = df.iloc[12:23]\ncols = list(top.iloc[0].to_dict().values())\ntop.columns = [col.strip() for col in cols]\ntop = top.iloc[1:]\ntop['# of Reports'] = top['# of Reports'].apply(lambda x: int(x.replace(',', '')))\ntotal = int(top['# of Reports'].sum())\nimposter = int(top.loc[top.Category == 'Imposter Scams']['# of Reports'].iloc[0])\nprint(f'{imposter}|{total}|{imposter / total:.4f}')\n",
+      "answer": "44587|78426|0.5685"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-28",
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the general-population Imposter Scams report share in the report categories table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ndf = pd.read_csv(path, encoding='ISO-8859-1')\ncols = list(df.iloc[1].to_dict().values())\ndf.columns = [col.strip() for col in cols]\ndf = df.iloc[2:-4]\npct = df.loc[df.Category == 'Imposter Scams']['Percentage'].iloc[0]\nprint(f'{float(pct.replace(\"%\", \"\")) / 100:.4f}')\n",
+      "answer": "0.1307"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-28",
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv",
+      "intent": "Is the military-consumer Imposter Scams share higher than the general-population share?",
+      "code": "import pandas as pd\nmilitary_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Reports_by_Military_Consumers.csv'\ngeneral_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\nmilitary_df = pd.read_csv(military_path)\ntop = military_df.iloc[12:23]\ncols = list(top.iloc[0].to_dict().values())\ntop.columns = [col.strip() for col in cols]\ntop = top.iloc[1:]\ntop['# of Reports'] = top['# of Reports'].apply(lambda x: int(x.replace(',', '')))\nmilitary_share = top.loc[top.Category == 'Imposter Scams']['# of Reports'].iloc[0] / top['# of Reports'].sum()\ngeneral_df = pd.read_csv(general_path, encoding='ISO-8859-1')\ncols = list(general_df.iloc[1].to_dict().values())\ngeneral_df.columns = [col.strip() for col in cols]\ngeneral_df = general_df.iloc[2:-4]\ngeneral_share = float(general_df.loc[general_df.Category == 'Imposter Scams']['Percentage'].iloc[0].replace('%', '')) / 100\nprint('Yes' if military_share > general_share else 'No')\n",
+      "answer": "Yes"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-28",
+      "source": "datagov/kramabench-legal-hard-28/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the general-population Imposter Scams report share in the report categories table?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

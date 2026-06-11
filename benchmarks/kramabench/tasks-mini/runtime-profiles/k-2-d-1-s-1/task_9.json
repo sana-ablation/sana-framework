@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-20"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-20/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+    "datagov/kramabench-legal-easy-20/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the 2024 row and compute the total across report types.",
+    "2. Divide the Fraud count by the 2024 total and round the percentage to an integer."
+  ],
+  "original_final_question": "What percentage of all 2024 reports were Fraud reports, expressed as an integer? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the 2024 row and compute the total across report types.",
+    "Node 2 depends on node 1: Divide the Fraud count by the 2024 total and round the percentage to an integer.",
+    "Final answer: 40"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-20",
+      "source": "datagov/kramabench-legal-easy-20/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What are the 2024 Fraud, Identity Theft, Other, and total report counts?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\ndata_rows = [row for row in rows[3:] if row and row[0].isdigit()]\ntarget = next(row for row in data_rows if row[0] == '2024')\nfraud, identity_theft, other = [int(value.replace(',', '').strip()) for value in target[1:4]]\ntotal = fraud + identity_theft + other\nresult = f'{fraud}|{identity_theft}|{other}|{total}'\nprint(result)\n",
+      "answer": "2600678|1135291|2759963|6495932"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-20",
+      "source": "datagov/kramabench-legal-easy-20/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What integer percentage of all 2024 reports were Fraud reports?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\ndata_rows = [row for row in rows[3:] if row and row[0].isdigit()]\ntarget = next(row for row in data_rows if row[0] == '2024')\nfraud, identity_theft, other = [int(value.replace(',', '').strip()) for value in target[1:4]]\ntotal = fraud + identity_theft + other\nresult = round((fraud / total) * 100)\nprint(result)\n",
+      "answer": 40
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-20",
+      "source": "datagov/kramabench-legal-easy-20/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What are the 2024 Fraud, Identity Theft, Other, and total report counts?",
+      "sql": "SELECT concat(\n  replace(trim(\"column1\"), ',', ''), '|',\n  replace(trim(\"column2\"), ',', ''), '|',\n  replace(trim(\"column3\"), ',', ''), '|',\n  CAST(\n    CAST(replace(trim(\"column1\"), ',', '') AS BIGINT) +\n    CAST(replace(trim(\"column2\"), ',', '') AS BIGINT) +\n    CAST(replace(trim(\"column3\"), ',', '') AS BIGINT)\n    AS VARCHAR)\n) AS answer\nFROM t\nWHERE trim(\"Number of Reports by Type\") = '2024' ",
+      "answer": "2600678|1135291|2759963|6495932"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-20",
+      "source": "datagov/kramabench-legal-easy-20/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What integer percentage of all 2024 reports were Fraud reports?",
+      "sql": "SELECT CAST(round(\n  CAST(replace(trim(\"column1\"), ',', '') AS DOUBLE) /\n  (\n    CAST(replace(trim(\"column1\"), ',', '') AS DOUBLE) +\n    CAST(replace(trim(\"column2\"), ',', '') AS DOUBLE) +\n    CAST(replace(trim(\"column3\"), ',', '') AS DOUBLE)\n  ) * 100\n) AS BIGINT) AS answer\nFROM t\nWHERE trim(\"Number of Reports by Type\") = '2024' ",
+      "answer": 40
+    }
+  ]
+}

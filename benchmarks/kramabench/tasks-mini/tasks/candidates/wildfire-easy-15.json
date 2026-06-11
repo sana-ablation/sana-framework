@@ -1,0 +1,146 @@
+{
+  "candidate_version": "kramabench_raw_all_v1",
+  "source_id": "wildfire-easy-15",
+  "domain": "wildfire",
+  "difficulty": "easy",
+  "source_mode": "full_domain_data",
+  "question": "According to NOAA, in Julies, are the size of a fire and the median wind speed in the area strongly correlated? The answer should be Yes or No.",
+  "answer": "No",
+  "answer_type": "string_exact",
+  "runtime": 0.1,
+  "subtask_count": 4,
+  "normalized_data_sources": [
+    "noaa_wildfires.csv",
+    "noaa_wildfires_variabledescrip.csv"
+  ],
+  "required_file_refs": [
+    "noaa_wildfires.csv",
+    "noaa_wildfires_variabledescrip.csv"
+  ],
+  "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+  "raw_data_files": [
+    "Fire_Weather_Data_2002-2014_2016.csv",
+    "NST-EST2024-POP.xlsx",
+    "PublicView_RAWS_-3515561676727363726.csv",
+    "Wildfire_Acres_by_State.csv",
+    "Wildfire_Fires_by_State.csv",
+    "annual_aqi_by_county_2024.csv",
+    "cleaned_helicopter_requests_by_region.csv",
+    "democratic_vs_republican_votes_by_usa_state_2020.csv",
+    "load_data.py",
+    "nifc_geographic_areas.gpkg",
+    "nifc_human_caused_acres.csv",
+    "nifc_human_caused_wildfires.csv",
+    "nifc_lightning_caused_acres.csv",
+    "nifc_lightning_caused_wildfires.csv",
+    "nifc_suppression_costs.csv",
+    "nifc_wildfires.csv",
+    "noaa_wildfires.csv",
+    "noaa_wildfires_monthly_stats.csv",
+    "noaa_wildfires_variabledescrip.csv",
+    "state_abbreviation_to_state.json",
+    "usa.gpkg",
+    "wildfire_total_fires_p45_54.csv"
+  ],
+  "raw_data_ref_matches": {
+    "noaa_wildfires.csv": [
+      "noaa_wildfires.csv"
+    ],
+    "noaa_wildfires_variabledescrip.csv": [
+      "noaa_wildfires_variabledescrip.csv"
+    ]
+  },
+  "missing_required_refs": [],
+  "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-easy-15.py",
+  "solution_exists": true,
+  "solution_file_refs": [
+    "noaa_wildfires.csv"
+  ],
+  "solution_ref_matches": {
+    "noaa_wildfires.csv": [
+      "noaa_wildfires.csv"
+    ]
+  },
+  "missing_solution_refs": [],
+  "dr_input_bundle": null,
+  "dr_input_files": [],
+  "dr_input_ref_matches": {},
+  "has_complete_dr_input": false,
+  "source_status": "ready",
+  "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+  "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-15/files/",
+  "task": {
+    "id": "wildfire-easy-15",
+    "query": "According to NOAA, in Julies, are the size of a fire and the median wind speed in the area strongly correlated? The answer should be Yes or No.",
+    "answer": "No",
+    "answer_type": "string_exact",
+    "data_sources": [
+      "noaa_wildfires.csv",
+      "noaa_wildfires_variabledescrip.csv"
+    ],
+    "runtime": 0.1,
+    "subtasks": [
+      {
+        "id": "wildfire-easy-15-1",
+        "step": "Read the NOAA wild-fires dataset from noaa_wildfires.csv.",
+        "query": "Which file(s) are needed to answer this question?",
+        "answer": [
+          "noaa_wildfires.csv",
+          "noaa_wildfires_variabledescrip.csv"
+        ],
+        "answer_type": "list_approximate",
+        "data_sources": [
+          "noaa_wildfires.csv",
+          "noaa_wildfires_variabledescrip.csv"
+        ]
+      },
+      {
+        "id": "wildfire-easy-15-2",
+        "step": "Filter the dataframe to include only fires that started in July by keeping rows whose start_day_of_year is between 181 (inclusive) and 213 (exclusive).",
+        "query": "What are the thresholds of the state date to determine that a fire started in July?",
+        "answer": [
+          181,
+          213
+        ],
+        "answer_type": "list_approximate",
+        "data_sources": [
+          "noaa_wildfires.csv",
+          "noaa_wildfires_variabledescrip.csv"
+        ]
+      },
+      {
+        "id": "wildfire-easy-15-3",
+        "step": "Compute the Pearson correlation coefficient between the fire size (column 'hec') and the median wind speed (column 'wind_med') for the July subset.",
+        "query": "What is the numerical value representing the correlation coefficient between fire size and median wind speed in July?",
+        "answer": "-0.01",
+        "answer_type": "numeric_approximate",
+        "data_sources": [
+          "noaa_wildfires.csv",
+          "noaa_wildfires_variabledescrip.csv"
+        ]
+      },
+      {
+        "id": "wildfire-easy-15-4",
+        "step": "Determine whether the resulting correlation coefficient indicates a strong relationship (the code comments conclude it is not strong, hence the answer would be 'No').",
+        "query": "Is the correlation coefficient between wind speed and fire size in July strong?",
+        "answer": "No",
+        "answer_type": "string_exact",
+        "data_sources": [
+          "noaa_wildfires.csv",
+          "noaa_wildfires_variabledescrip.csv"
+        ]
+      }
+    ],
+    "deepresearch_subset": [
+      "nifc_human_caused_acres.csv",
+      "nifc_suppression_costs.csv",
+      "noaa_wildfires_monthly_stats.csv",
+      "nifc_geographic_areas.gpkg",
+      "usa.gpkg",
+      "noaa_wildfires_variabledescrip.csv",
+      "cleaned_helicopter_requests_by_region.csv",
+      "noaa_wildfires.csv",
+      "state_abbreviation_to_state.json"
+    ]
+  }
+}

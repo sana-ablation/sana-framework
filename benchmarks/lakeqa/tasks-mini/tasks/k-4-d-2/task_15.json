@@ -1,0 +1,99 @@
+{
+  "question": "Consider the counties King, Clark, Pierce, Whitman, Thurston, and Spokane. Among these, identify the Eastern Washington county that borders Idaho and had a 2020 population under 300,000. In the most populous city in that county according to the 2020 census, what was the total school district enrollment for 2017-18? Your response should be in the format [Answer].",
+  "answer": "2941",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Eastern_Washington/content.txt",
+      "fact": "The Eastern Washington article lists Whitman and Spokane among the counties in Eastern Washington.",
+      "subquestion": "Among the counties King, Clark, Pierce, Whitman, Thurston, and Spokane, which are in Eastern Washington?",
+      "answer": "Whitman and Spokane"
+    },
+    "2": {
+      "source": "wikipedia/Whitman_County,_Washington/content.txt",
+      "fact": "According to the Wikipedia article for Whitman County, Washington, 'Adjacent counties' include 'Benewah County, Idaho – northeast', 'Latah County, Idaho – east', and 'Nez Perce County, Idaho – southeast', confirming Whitman County borders Idaho. 'As of the 2020 census, the population was 47,973.'",
+      "subquestion": "Among counties from <hop 1 answer: Whitman, Spokane>, which county borders Idaho AND has 2020 census population under 300,000?",
+      "answer": "Whitman County: borders Idaho (YES, per adjacent counties list), population 47,973 (YES, under 300,000) → MEETS BOTH CRITERIA"
+    },
+    "3": {
+      "source": "wikipedia/Spokane_County,_Washington/content.txt",
+      "fact": "According to the Wikipedia article for Spokane County, Washington, 'Adjacent counties' include 'Bonner County, Idaho – northeast', 'Kootenai County, Idaho – east', and 'Benewah County, Idaho – southeast', confirming Spokane County borders Idaho. The 2020 census population was 539,339.",
+      "subquestion": "Among counties from <hop 1 answer: Whitman, Spokane>, which county borders Idaho AND has 2020 census population under 300,000?",
+      "answer": "Spokane County: borders Idaho (YES, per adjacent counties list), population 539,339 (NO, exceeds 300,000) → DOES NOT MEET BOTH CRITERIA"
+    },
+    "4": {
+      "source": "wikipedia/Pullman,_Washington/content.txt",
+      "fact": "According to the Wikipedia article for Pullman, Washington, Pullman is the most populous city in Whitman County as of the 2020 census and is located in southeastern Washington within the Palouse region of the Pacific Northwest.",
+      "subquestion": "What is the most populous city in <hop 2 answer: Whitman County> according to the 2020 census, located in southeastern Washington within the Palouse region of the Pacific Northwest?",
+      "answer": "Pullman is the most populous city in Whitman County (2020 census), located in southeastern Washington within the Palouse region of the Pacific Northwest"
+    },
+    "5": {
+      "source": "datagov/report-card-enrollment-2017-18-school-year/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/report-card-enrollment-2017-18-school-year/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nresult = df[\n    (df[\"SchoolYear\"] == \"2017-18\")\n    & (df[\"OrganizationLevel\"] == \"District\")\n    & (df[\"DistrictName\"] == \"Pullman School District\")\n    & (df[\"GradeLevel\"] == \"All Grades\")\n]\n\nanswer = result.iloc[0][\"All Students\"]\nanswer = str(answer)",
+      "subquestion": "What is the 2017-18 total student enrollment for the school district in <hop 3 answer: Pullman>? (Filter: OrganizationLevel=District; DistrictName=Pullman School District; GradeLevel=All Grades; column=All Students.)",
+      "answer": "2941"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia Eastern Washington - node 1):",
+    "  Node 1 (Wikipedia Eastern Washington): Whitman and Spokane are Eastern Washington counties",
+    "  Result: Whitman and Spokane are the Eastern Washington counties from the provided list",
+    "",
+    "HOP 2 (d=2, Wikipedia county pages - nodes 2-3):",
+    "  Node 2 (Wikipedia Whitman_County): Borders Idaho (YES), pop 47,973 -> MEETS BOTH CRITERIA",
+    "  Node 3 (Wikipedia Spokane_County): Borders Idaho (YES), pop 539,339 -> DOES NOT MEET (pop > 300k)",
+    "  Result: Whitman County (REQUIRES hop 1 to know which counties to check)",
+    "",
+    "HOP 3 (d=1, Wikipedia Pullman - node 4):",
+    "  Node 4 (Wikipedia Pullman): Pullman is the most populous city in Whitman County (2020 census) and is located in southeastern Washington within the Palouse region of the Pacific Northwest",
+    "  Result: Pullman is the most populous city in Whitman County (2020 census) (REQUIRES hop 2)",
+    "",
+    "HOP 4 (d=1, WA Report Card Enrollment 2017-18 - node 5):",
+    "  Node 5 (WA Report Card Enrollment 2017-18): Pullman School District = 2,941 students",
+    "  Result: 2941 (REQUIRES hop 3 to know the city is Pullman)",
+    "",
+    "Final answer: 2941"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Eastern_Washington",
+    "Pullman,_Washington",
+    "Spokane_County,_Washington",
+    "Whitman_County,_Washington",
+    "report-card-enrollment-2017-18-school-year"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1 (Wikipedia Eastern Washington): Whitman and Spokane are Eastern Washington counties Result: Whitman and Spokane are the Eastern Washington counties from the provided list",
+      "answer": "Whitman and Spokane are the Eastern Washington counties from the provided list"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2,
+        3
+      ],
+      "reasoning": "Node 2 (Wikipedia Whitman_County): Borders Idaho (YES), pop 47,973 -> MEETS BOTH CRITERIA Node 3 (Wikipedia Spokane_County): Borders Idaho (YES), pop 539,339 -> DOES NOT MEET (pop > 300k) Result: Whitman County (REQUIRES hop 1 to know which counties to check)",
+      "answer": "Whitman County (REQUIRES hop 1 to know which counties to check)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 (Wikipedia Pullman): Pullman is the most populous city in Whitman County (2020 census) and is located in southeastern Washington within the Palouse region of the Pacific Northwest Result: Pullman is the most populous city in Whitman County (2020 census) (REQUIRES hop 2)",
+      "answer": "Pullman is the most populous city in Whitman County (2020 census) (REQUIRES hop 2)"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 (WA Report Card Enrollment 2017-18): Pullman School District = 2,941 students Result: 2941 (REQUIRES hop 3 to know the city is Pullman)",
+      "answer": "2941"
+    }
+  ]
+}

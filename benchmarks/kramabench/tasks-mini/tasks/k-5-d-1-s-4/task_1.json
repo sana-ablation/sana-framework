@@ -1,0 +1,118 @@
+{
+  "question": "What is the estimation error, in terms of MAE, of NOAA SWPC's 3-day forecast of AP from March 9, 2025 for the period March 10-12, 2025? Write your answer as [ANSWER].",
+  "answer": "15",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+      "fact": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0309geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Predicted Ap (\\d{2}) Mar-(\\d{2}) Mar\\s+(\\d+)-(\\d+)-(\\d+)', content)\nresult = str(list(map(int, match.groups()[2:]))).replace(\"'\", '\"')\nprint(result)\n",
+      "subquestion": "What AP values did the March 9 forecast predict for March 10 through March 12?",
+      "answer": "[25, 20, 12]"
+    },
+    "2": {
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0311geomag_forecast.txt",
+      "fact": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0311geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\nresult = str(int(match.group(2)))\nprint(result)\n",
+      "subquestion": "What observed AP for March 10 is reported in the March 11 file?",
+      "answer": "10"
+    },
+    "3": {
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0312geomag_forecast.txt",
+      "fact": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0312geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\nresult = str(int(match.group(2)))\nprint(result)\n",
+      "subquestion": "What observed AP for March 11 is reported in the March 12 file?",
+      "answer": "10"
+    },
+    "4": {
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0313geomag_forecast.txt",
+      "fact": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0313geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\nresult = str(int(match.group(2)))\nprint(result)\n",
+      "subquestion": "What observed AP for March 12 is reported in the March 13 file?",
+      "answer": "32"
+    },
+    "5": {
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+      "fact": "import re\nforecast_path = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0309geomag_forecast.txt'\nobs_paths = [\n    'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0311geomag_forecast.txt',\n    'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0312geomag_forecast.txt',\n    'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0313geomag_forecast.txt',\n]\nforecast_content = open(forecast_path).read()\nmatch = re.search(r'Predicted Ap (\\d{2}) Mar-(\\d{2}) Mar\\s+(\\d+)-(\\d+)-(\\d+)', forecast_content)\nforecast = list(map(int, match.groups()[2:]))\nobserved = []\nfor path in obs_paths:\n    content = open(path).read()\n    match = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\n    observed.append(int(match.group(2)))\nresult = str(int(sum(abs(a - b) for a, b in zip(observed, forecast)) / len(forecast)))\nprint(result)\n",
+      "subquestion": "What is the mean absolute error between the three forecasted AP values and the three observed AP values?",
+      "answer": "15"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Extract the March 10-12 predicted AP values from the March 9 forecast file.",
+    "Node 2: Extract the observed AP value for March 10 from the following day report.",
+    "Node 3: Extract the observed AP value for March 11 from the following day report.",
+    "Node 4: Extract the observed AP value for March 12 from the following day report.",
+    "Node 5 depends on nodes 1-4: Compute the mean absolute error between forecast and observed AP values.",
+    "Final answer: 15"
+  ],
+  "datasets_used": [
+    "geomag_forecast/0309geomag_forecast.txt",
+    "geomag_forecast/0311geomag_forecast.txt",
+    "geomag_forecast/0312geomag_forecast.txt",
+    "geomag_forecast/0313geomag_forecast.txt"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Extract the March 10-12 predicted AP values from the March 9 forecast file.",
+      "answer": "[25, 20, 12]"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Extract the observed AP value for March 10 from the following day report.",
+      "answer": "10"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3: Extract the observed AP value for March 11 from the following day report.",
+      "answer": "10"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4: Extract the observed AP value for March 12 from the following day report.",
+      "answer": "32"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on nodes 1-4: Compute the mean absolute error between forecast and observed AP values.",
+      "answer": "15"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "astronomy-easy-1",
+    "domain": "astronomy",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/astronomy-easy-1.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-1",
+    "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-1/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0309geomag_forecast.txt",
+      "2": "other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0311geomag_forecast.txt",
+      "3": "other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0312geomag_forecast.txt",
+      "4": "other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0313geomag_forecast.txt",
+      "5": "other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0309geomag_forecast.txt"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

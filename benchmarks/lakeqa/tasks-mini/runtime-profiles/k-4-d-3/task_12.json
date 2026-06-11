@@ -1,0 +1,111 @@
+{
+  "dataset_sequence": [
+    "2021-state-employee-pay",
+    "2022-state-employee-pay",
+    "2023-state-employee-pay",
+    "Missouri_Department_of_Corrections",
+    "Jefferson_City,_Missouri",
+    "Lincoln_University_(Missouri)"
+  ],
+  "source_sequence": [
+    "datagov/2021-state-employee-pay/files/rows.txt",
+    "datagov/2022-state-employee-pay/files/rows.txt",
+    "datagov/2023-state-employee-pay/files/rows.txt",
+    "wikipedia/Missouri_Department_of_Corrections/content.txt",
+    "wikipedia/Jefferson_City,_Missouri/content.txt",
+    "wikipedia/Lincoln_University_(Missouri)/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For the Missouri Department of Corrections, Missouri Department of Social Services, and Missouri Department of Transportation, count employees in 2021, 2022, and 2023 pay records, compute each agency's average employee count, and keep the agency with the highest average.",
+    "2. Determine the headquarters city of the agency kept in step 1.",
+    "3. In that headquarters city, identify the historically Black university.",
+    "4. Determine who founded that university and return the name."
+  ],
+  "original_final_question": "Among the Missouri Department of Corrections, the Missouri Department of Social Services, and the Missouri Department of Transportation, which had the highest average employee count from 2021 through 2023? In that agency's headquarters city, a historically Black university was founded. Who founded that university? Return the name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3, employee counts 2021-2023 - nodes 1-3):",
+    "  Node 1 (2021): CORRECTIONS=12,530; SOCIAL SERVICES=8,362; TRANSPORTATION=7,170",
+    "  Node 2 (2022): CORRECTIONS=12,380; SOCIAL SERVICES=8,723; TRANSPORTATION=6,917",
+    "  Node 3 (2023): CORRECTIONS=13,107; SOCIAL SERVICES=8,932; TRANSPORTATION=6,956",
+    "  Averages: CORRECTIONS=12,672 > SOCIAL SERVICES=8,672 > TRANSPORTATION=7,014",
+    "  Result: Missouri Department of Corrections",
+    "",
+    "HOP 2 (d=1, Missouri Department of Corrections - node 4):",
+    "  Node 4: Headquarters city -> Jefferson City",
+    "",
+    "HOP 3 (d=1, Jefferson City - node 5):",
+    "  Node 5: Lincoln University is the historically Black university in Jefferson City",
+    "",
+    "HOP 4 (d=1, Lincoln University - node 6):",
+    "  Node 6: Founded by James Milton Turner",
+    "  Final answer: James Milton Turner"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2021-state-employee-pay",
+      "source": "datagov/2021-state-employee-pay/files/rows.txt",
+      "intent": "Among CORRECTIONS, SOCIAL SERVICES, and TRANSPORTATION, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name.)",
+      "code": "import boto3\nimport io\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2021-state-employee-pay/files/rows.txt\"\ntarget_agencies = [\"CORRECTIONS\", \"SOCIAL SERVICES\", \"TRANSPORTATION\"]\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()))\nanswer = (\n    df[df[\"Agency Name\"].isin(target_agencies)]\n    .groupby(\"Agency Name\", dropna=True)\n    .size()\n    .sort_values(ascending=False)\n    .to_dict()\n)",
+      "answer": {
+        "CORRECTIONS": 12530,
+        "SOCIAL SERVICES": 8362,
+        "TRANSPORTATION": 7170
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2022-state-employee-pay",
+      "source": "datagov/2022-state-employee-pay/files/rows.txt",
+      "intent": "Among CORRECTIONS, SOCIAL SERVICES, and TRANSPORTATION, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name.)",
+      "code": "import boto3\nimport io\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2022-state-employee-pay/files/rows.txt\"\ntarget_agencies = [\"CORRECTIONS\", \"SOCIAL SERVICES\", \"TRANSPORTATION\"]\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()))\nanswer = (\n    df[df[\"Agency Name\"].isin(target_agencies)]\n    .groupby(\"Agency Name\", dropna=True)\n    .size()\n    .sort_values(ascending=False)\n    .to_dict()\n)",
+      "answer": {
+        "CORRECTIONS": 12380,
+        "SOCIAL SERVICES": 8723,
+        "TRANSPORTATION": 6917
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2023-state-employee-pay",
+      "source": "datagov/2023-state-employee-pay/files/rows.txt",
+      "intent": "Among CORRECTIONS, SOCIAL SERVICES, and TRANSPORTATION, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name.)",
+      "code": "import boto3\nimport io\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2023-state-employee-pay/files/rows.txt\"\ntarget_agencies = [\"CORRECTIONS\", \"SOCIAL SERVICES\", \"TRANSPORTATION\"]\nprior_counts = {\n    \"CORRECTIONS\": [12530, 12380],\n    \"SOCIAL SERVICES\": [8362, 8723],\n    \"TRANSPORTATION\": [7170, 6917],\n}\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()))\ncounts_2023 = (\n    df[df[\"Agency Name\"].isin(target_agencies)]\n    .groupby(\"Agency Name\", dropna=True)\n    .size()\n    .to_dict()\n)\naverages = {agency: (sum(prior_counts[agency]) + counts_2023.get(agency, 0)) / 3 for agency in target_agencies}\nanswer = sorted(averages.items(), key=lambda x: (-x[1], x[0]))[0][0]",
+      "answer": "CORRECTIONS"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2021-state-employee-pay",
+      "source": "datagov/2021-state-employee-pay/files/rows.txt",
+      "intent": "Among CORRECTIONS, SOCIAL SERVICES, and TRANSPORTATION, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name.)",
+      "sql": "WITH target(agency) AS (VALUES ('CORRECTIONS'),('SOCIAL SERVICES'),('TRANSPORTATION')), counts AS (\n  SELECT \"Agency Name\" AS agency, COUNT(*) AS n\n  FROM t\n  WHERE \"Agency Name\" IN (SELECT agency FROM target)\n  GROUP BY agency\n)\nSELECT json_group_object(target.agency, COALESCE(counts.n, 0)) AS answer\nFROM target LEFT JOIN counts ON target.agency=counts.agency",
+      "answer": {
+        "CORRECTIONS": 12530,
+        "SOCIAL SERVICES": 8362,
+        "TRANSPORTATION": 7170
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2022-state-employee-pay",
+      "source": "datagov/2022-state-employee-pay/files/rows.txt",
+      "intent": "Among CORRECTIONS, SOCIAL SERVICES, and TRANSPORTATION, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name.)",
+      "sql": "WITH target(agency) AS (VALUES ('CORRECTIONS'),('SOCIAL SERVICES'),('TRANSPORTATION')), counts AS (\n  SELECT \"Agency Name\" AS agency, COUNT(*) AS n\n  FROM t\n  WHERE \"Agency Name\" IN (SELECT agency FROM target)\n  GROUP BY agency\n)\nSELECT json_group_object(target.agency, COALESCE(counts.n, 0)) AS answer\nFROM target LEFT JOIN counts ON target.agency=counts.agency",
+      "answer": {
+        "CORRECTIONS": 12380,
+        "SOCIAL SERVICES": 8723,
+        "TRANSPORTATION": 6917
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2023-state-employee-pay",
+      "source": "datagov/2023-state-employee-pay/files/rows.txt",
+      "intent": "Among CORRECTIONS, SOCIAL SERVICES, and TRANSPORTATION, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name.)",
+      "sql": "WITH target(agency, c2021, c2022) AS (\n  VALUES ('CORRECTIONS',12530,12380),('SOCIAL SERVICES',8362,8723),('TRANSPORTATION',7170,6917)\n), counts AS (\n  SELECT \"Agency Name\" AS agency, COUNT(*) AS c2023\n  FROM t\n  WHERE \"Agency Name\" IN (SELECT agency FROM target)\n  GROUP BY agency\n), averages AS (\n  SELECT target.agency, (c2021 + c2022 + COALESCE(c2023,0))/3.0 AS avg_count\n  FROM target LEFT JOIN counts ON target.agency=counts.agency\n)\nSELECT agency AS answer FROM averages ORDER BY avg_count DESC, agency ASC LIMIT 1",
+      "answer": "CORRECTIONS"
+    }
+  ]
+}

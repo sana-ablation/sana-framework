@@ -1,0 +1,190 @@
+{
+  "question": "I am looking for a major Texas county that consistently ranked in the top five for childcare centers participating in food programs between 2018 and 2022. Among these leaders, find the one that reported over 600 child protective service removals in 2022 despite completing fewer than 14,000 abuse investigations. Compare this county's establishment date with Tarrant County's; for the earlier of the two, report the admission order number of the U.S. state admitted to the Union in that same year. Please return the order number only. Your response should be in the format [Answer].",
+  "answer": "25",
+  "practical_motivation": "A child welfare policy researcher is examining the correlation between childcare availability and protective service outcomes across major Texas counties. By identifying counties that have both high childcare infrastructure (CACFP centers) and significant child welfare caseloads, they can study whether greater access to formal childcare affects investigation and removal rates. Understanding when these counties were established relative to major historical events like the Texas Revolution provides context for their distinct institutional development.",
+  "nodes": {
+    "1": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2018/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2018/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\nexpected_keys = ['HARRIS', 'DALLAS', 'HIDALGO', 'BEXAR', 'TARRANT', 'OTHER_COUNTIES']\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[df[\"ProgramYear\"].astype(str).eq('2018-2019')]\ncounts = filtered[\"SiteCounty\"].astype(str).str.strip().value_counts()\nanswer = {county: int(counts[county]) for county in expected_keys if county != \"OTHER_COUNTIES\" and county in counts.index}\nanswer[\"OTHER_COUNTIES\"] = int(len(counts) - len([county for county in expected_keys if county != \"OTHER_COUNTIES\"]))\n",
+      "subquestion": "How many CACFP childcare center sites did each Texas county have in 2018-2019? (Filter: ProgramYear == '2018-2019'; count sites by SiteCounty.)",
+      "answer": {
+        "HARRIS": 1781,
+        "DALLAS": 1207,
+        "HIDALGO": 878,
+        "BEXAR": 622,
+        "TARRANT": 562,
+        "OTHER_COUNTIES": 190
+      }
+    },
+    "2": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2019/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2019/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\nexpected_keys = ['HARRIS', 'DALLAS', 'HIDALGO', 'BEXAR', 'CAMERON', 'OTHER_COUNTIES']\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[df[\"ProgramYear\"].astype(str).eq('2019-2020')]\ncounts = filtered[\"SiteCounty\"].astype(str).str.strip().value_counts()\nanswer = {county: int(counts[county]) for county in expected_keys if county != \"OTHER_COUNTIES\" and county in counts.index}\nanswer[\"OTHER_COUNTIES\"] = int(len(counts) - len([county for county in expected_keys if county != \"OTHER_COUNTIES\"]))\n",
+      "subquestion": "How many CACFP childcare center sites did each Texas county have in 2019-2020? (Filter: ProgramYear == '2019-2020'; count sites by SiteCounty.)",
+      "answer": {
+        "HARRIS": 2179,
+        "DALLAS": 1435,
+        "HIDALGO": 1203,
+        "BEXAR": 888,
+        "CAMERON": 592,
+        "OTHER_COUNTIES": 194
+      }
+    },
+    "3": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2020/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2020/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\nexpected_keys = ['HARRIS', 'DALLAS', 'HIDALGO', 'BEXAR', 'TARRANT', 'OTHER_COUNTIES']\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[df[\"ProgramYear\"].astype(str).eq('2020-2021')]\ncounts = filtered[\"SiteCounty\"].astype(str).str.strip().value_counts()\nanswer = {county: int(counts[county]) for county in expected_keys if county != \"OTHER_COUNTIES\" and county in counts.index}\nanswer[\"OTHER_COUNTIES\"] = int(len(counts) - len([county for county in expected_keys if county != \"OTHER_COUNTIES\"]))\n",
+      "subquestion": "How many CACFP childcare center sites did each Texas county have in 2020-2021? (Filter: ProgramYear == '2020-2021'; count sites by SiteCounty.)",
+      "answer": {
+        "HARRIS": 1709,
+        "DALLAS": 1120,
+        "HIDALGO": 918,
+        "BEXAR": 756,
+        "TARRANT": 592,
+        "OTHER_COUNTIES": 189
+      }
+    },
+    "4": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2021/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2021/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\nexpected_keys = ['HARRIS', 'DALLAS', 'HIDALGO', 'BEXAR', 'TARRANT', 'OTHER_COUNTIES']\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[df[\"ProgramYear\"].astype(str).eq('2021-2022')]\ncounts = filtered[\"SiteCounty\"].astype(str).str.strip().value_counts()\nanswer = {county: int(counts[county]) for county in expected_keys if county != \"OTHER_COUNTIES\" and county in counts.index}\nanswer[\"OTHER_COUNTIES\"] = int(len(counts) - len([county for county in expected_keys if county != \"OTHER_COUNTIES\"]))\n",
+      "subquestion": "How many CACFP childcare center sites did each Texas county have in 2021-2022? (Filter: ProgramYear == '2021-2022'; count sites by SiteCounty.)",
+      "answer": {
+        "HARRIS": 1871,
+        "DALLAS": 1269,
+        "HIDALGO": 924,
+        "BEXAR": 772,
+        "TARRANT": 687,
+        "OTHER_COUNTIES": 188
+      }
+    },
+    "5": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2022/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2022/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\nexpected_keys = ['HARRIS', 'DALLAS', 'HIDALGO', 'BEXAR', 'TARRANT', 'OTHER_COUNTIES']\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[df[\"ProgramYear\"].astype(str).eq('2022-2023')]\ncounts = filtered[\"SiteCounty\"].astype(str).str.strip().value_counts()\nanswer = {county: int(counts[county]) for county in expected_keys if county != \"OTHER_COUNTIES\" and county in counts.index}\nanswer[\"OTHER_COUNTIES\"] = int(len(counts) - len([county for county in expected_keys if county != \"OTHER_COUNTIES\"]))\n",
+      "subquestion": "How many CACFP childcare center sites did each Texas county have in 2022-2023? (Filter: ProgramYear == '2022-2023'; count sites by SiteCounty.)",
+      "answer": {
+        "HARRIS": 2183,
+        "DALLAS": 1352,
+        "HIDALGO": 947,
+        "BEXAR": 743,
+        "TARRANT": 715,
+        "OTHER_COUNTIES": 189
+      }
+    },
+    "6": {
+      "source": "datagov/cpi-3-1-completed-abuse-neglect-investigations-by-county-fy2013-fy2022/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/cpi-3-1-completed-abuse-neglect-investigations-by-county-fy2013-fy2022/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ncandidate_counties = [\"Harris\", \"Dallas\", \"Hidalgo\", \"Bexar\", \"Tarrant\"]\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[\n    pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\").eq(2022)\n    & df[\"County\"].astype(str).str.title().isin(candidate_counties)\n].copy()\nfiltered[\"Completed Investigations\"] = pd.to_numeric(filtered[\"Completed Investigations\"], errors=\"coerce\")\nfiltered = filtered[filtered[\"Completed Investigations\"].lt(14000)]\nfiltered = filtered.sort_values([\"Completed Investigations\", \"County\"], ascending=[False, True], kind=\"mergesort\")\nanswer = filtered[\"County\"].astype(str).str.title().tolist()\n",
+      "subquestion": "Which counties from <nodes 1-5 top 5 by average: Harris, Dallas, Hidalgo, Bexar, Tarrant> had less than 14,000 completed child abuse/neglect investigations in FY2022? (Filter: Fiscal Year == 2022; sum Completed Investigations by County; keep < 14,000.)",
+      "answer": [
+        "Tarrant",
+        "Bexar",
+        "Hidalgo"
+      ]
+    },
+    "7": {
+      "source": "datagov/cps-2-1-removals-by-county-fy2013-2022/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/cps-2-1-removals-by-county-fy2013-2022/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ncandidate_counties = [\"Harris\", \"Dallas\", \"Hidalgo\", \"Bexar\", \"Tarrant\"]\ndf = pd.read_csv(csv_path, low_memory=False)\nfiltered = df[\n    pd.to_numeric(df[\"Fiscal Year\"], errors=\"coerce\").eq(2022)\n    & df[\"County\"].astype(str).str.title().isin(candidate_counties)\n].copy()\nremovals = filtered.groupby(filtered[\"County\"].astype(str).str.title(), dropna=True)[\"Removals\"].sum()\nfiltered = removals[removals.gt(600)].sort_values(ascending=False)\nanswer = filtered.index.tolist()\n",
+      "subquestion": "Which counties from <nodes 1-5 top 5 by average: Harris, Dallas, Hidalgo, Bexar, Tarrant> had more than 600 CPS removals in FY2022? (Filter: Fiscal Year == 2022; sum Removals by County; keep > 600.)",
+      "answer": [
+        "Bexar",
+        "Dallas"
+      ]
+    },
+    "8": {
+      "source": "wikipedia/Bexar_County,_Texas/content.txt",
+      "fact": "According to Wikipedia, Bexar County 'was created on December 20, 1836' as one of the original counties of the Republic of Texas.",
+      "subquestion": "When was <intersection of nodes 6-7: Bexar County> created?",
+      "answer": "1836"
+    },
+    "9": {
+      "source": "wikipedia/Tarrant_County,_Texas/content.txt",
+      "fact": "According to Wikipedia, Tarrant County was established in 1849.",
+      "subquestion": "When was Tarrant County created?",
+      "answer": "1849"
+    },
+    "10": {
+      "source": "wikipedia/Arkansas/content.txt",
+      "fact": "Arkansas was admitted to the Union as the 25th state on June 15, 1836.",
+      "subquestion": "When was the 25th US state admitted to the Union?",
+      "answer": "1836"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=5, data.gov AGGREGATION - nodes 1-5):",
+    "  Node 1: CACFP Centers 2018-2019 -> site counts per county",
+    "  Node 2: CACFP Centers 2019-2020 -> site counts per county",
+    "  Node 3: CACFP Centers 2020-2021 -> site counts per county",
+    "  Node 4: CACFP Centers 2021-2022 -> site counts per county",
+    "  Node 5: CACFP Centers 2022-2023 -> site counts per county",
+    "  AGGREGATION: Compute average across all 5 years -> Top 5 are {Harris: 1944.6, Dallas: 1276.6, Hidalgo: 974.0, Bexar: 756.2, Tarrant: 628.8}",
+    "  Note: All 5 years required because rankings vary year to year (e.g., Tarrant was #6 in 2019-2020)",
+    "",
+    "HOP 2 (d=2, data.gov INTERSECTION - nodes 6-7):",
+    "  Node 6: From top 5, investigations < 14,000 -> {Tarrant, Bexar, Hidalgo}",
+    "  Node 7: From top 5, CPS removals > 600 -> {Bexar, Dallas}",
+    "  INTERSECTION: {Tarrant, Bexar, Hidalgo} ∩ {Bexar, Dallas} = {Bexar}",
+    "  Both criteria necessary: Node 6 alone gives 3 counties, Node 7 alone gives 2 counties",
+    "",
+    "HOP 3 (d=2, Wikipedia AGGREGATION - nodes 8-9):",
+    "  Node 8: Bexar County Wikipedia -> created 1836",
+    "  Node 9: Tarrant County Wikipedia -> created 1849",
+    "  AGGREGATION: Compare years -> earlier is 1836 (Bexar)",
+    "  Both nodes needed: Node 8 provides Bexar creation year, Node 9 provides Tarrant creation year for comparison",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 10):",
+    "  Node 10: Arkansas Wikipedia -> admitted June 15, 1836 as the 25th state",
+    "  Result: 25th state",
+    "",
+    "Final answer: 25"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Arkansas",
+    "Bexar_County,_Texas",
+    "Tarrant_County,_Texas",
+    "child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2018",
+    "child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2019",
+    "child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2020",
+    "child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2021",
+    "child-and-adult-care-food-programs-cacfp-centers-site-level-contact-and-program-parti-2022",
+    "cpi-3-1-completed-abuse-neglect-investigations-by-county-fy2013-fy2022",
+    "cps-2-1-removals-by-county-fy2013-2022"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "reasoning": "Node 1: CACFP Centers 2018-2019 -> site counts per county Node 2: CACFP Centers 2019-2020 -> site counts per county Node 3: CACFP Centers 2020-2021 -> site counts per county Node 4: CACFP Centers 2021-2022 -> site counts per county Node 5: CACFP Centers 2022-2023 -> site counts per county AGGREGATION: Compute average across all 5 years -> Top 5 are {Harris: 1944.6, Dallas: 1276.6, Hidalgo: 974.0, Bexar: 756.2, Tarrant: 628.8} Note: All 5 years required because rankings vary year to year (e.g., Tarrant was #6 in 2019-2020)",
+      "answer": "Top 5 are {Harris: 1944.6, Dallas: 1276.6, Hidalgo: 974.0, Bexar: 756.2, Tarrant: 628.8}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        6,
+        7
+      ],
+      "reasoning": "Node 6: From top 5, investigations < 14,000 -> {Tarrant, Bexar, Hidalgo} Node 7: From top 5, CPS removals > 600 -> {Bexar, Dallas} INTERSECTION: {Tarrant, Bexar, Hidalgo} ∩ {Bexar, Dallas} = {Bexar} Both criteria necessary: Node 6 alone gives 3 counties, Node 7 alone gives 2 counties",
+      "answer": "{Bexar, Dallas}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        8,
+        9
+      ],
+      "reasoning": "Node 8: Bexar County Wikipedia -> created 1836 Node 9: Tarrant County Wikipedia -> created 1849 AGGREGATION: Compare years -> earlier is 1836 (Bexar) Both nodes needed: Node 8 provides Bexar creation year, Node 9 provides Tarrant creation year for comparison",
+      "answer": "earlier is 1836 (Bexar)"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Node 10: Arkansas Wikipedia -> admitted June 15, 1836 as the 25th state Result: 25th state",
+      "answer": "25"
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "question": "What is the average latitude of capital cities? If there're more than one capital in a country, only count the lat of the capital with the largest population. Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "answer": "17.4274",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\ncapitals = df[df['capital'] == 'primary']\nresult = str(len(capitals))\nprint(result)\n",
+      "subquestion": "How many rows are marked as primary capital cities?",
+      "answer": "250"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\ncapitals = df[df['capital'] == 'primary']\nresult = str(capitals['country'].nunique())\nprint(result)\n",
+      "subquestion": "How many countries have at least one primary capital-city row?",
+      "answer": "237"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-easy-11/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\ncapitals = df[df['capital'] == 'primary'].copy()\nselected = capitals.sort_values(['country', 'population'], ascending=[True, False]).drop_duplicates('country')\nresult = f\"{selected['lat'].mean():.4f}\"\nprint(result)\n",
+      "subquestion": "After keeping only the largest-population primary capital per country, what is the average latitude rounded to four decimals?",
+      "answer": "17.4274"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Filter world city records to rows marked as primary capitals.",
+    "Node 2 depends on node 1: Count the distinct countries represented among primary capital rows.",
+    "Node 3 depends on node 2: For countries with multiple primary capitals, retain the one with largest population and average the selected latitudes.",
+    "Final answer: 17.4274"
+  ],
+  "datasets_used": [
+    "kramabench-archeology-easy-11"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Filter world city records to rows marked as primary capitals.",
+      "answer": "250"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Count the distinct countries represented among primary capital rows.",
+      "answer": "237"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: For countries with multiple primary capitals, retain the one with largest population and average the selected latitudes.",
+      "answer": "17.4274"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-easy-11",
+    "domain": "archeology",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-easy-11.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-11",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-easy-11/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-27"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-27/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+    "datagov/kramabench-legal-easy-27/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+    "datagov/kramabench-legal-easy-27/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Clean the state top-ten report categories table and group rows by state.",
+    "2. Identify states whose grouped categories include Prizes, Sweepstakes and Lotteries.",
+    "3. Count those states."
+  ],
+  "original_final_question": "How many states had Prizes, Sweepstakes and Lotteries in their top-10 report categories in 2024? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Clean the state top-ten report categories table and group rows by state.",
+    "Node 2 depends on node 1: Identify states whose grouped categories include Prizes, Sweepstakes and Lotteries.",
+    "Node 3 depends on node 2: Count those states.",
+    "Final answer: 27"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-27",
+      "source": "datagov/kramabench-legal-easy-27/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+      "intent": "How many category rows and state groups are in the state top-ten report categories table?",
+      "code": "import csv\nfrom collections import defaultdict\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\ndata_rows = []\nfor row in rows:\n    state = (row.get('State') or '').strip()\n    category = (row.get('Category') or '').strip()\n    reports = (row.get('# of Reports') or '').strip()\n    if state and category and reports:\n        data_rows.append({'State': state, 'Category': category, '# of Reports': int(reports.replace(',', ''))})\nby_state = defaultdict(list)\nfor row in data_rows:\n    by_state[row['State']].append(row)\nfor state in by_state:\n    by_state[state].sort(key=lambda row: row['# of Reports'], reverse=True)\nresult = f'{len(data_rows)}|{len(by_state)}'\nprint(result)\n",
+      "answer": "520|52"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-27",
+      "source": "datagov/kramabench-legal-easy-27/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+      "intent": "Which states include Prizes, Sweepstakes and Lotteries among their top-ten report categories?",
+      "code": "import csv\nfrom collections import defaultdict\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\ndata_rows = []\nfor row in rows:\n    state = (row.get('State') or '').strip()\n    category = (row.get('Category') or '').strip()\n    reports = (row.get('# of Reports') or '').strip()\n    if state and category and reports:\n        data_rows.append({'State': state, 'Category': category, '# of Reports': int(reports.replace(',', ''))})\nby_state = defaultdict(list)\nfor row in data_rows:\n    by_state[row['State']].append(row)\nfor state in by_state:\n    by_state[state].sort(key=lambda row: row['# of Reports'], reverse=True)\ntarget = 'Prizes, Sweepstakes and Lotteries'\nresult = sorted(state for state, rows in by_state.items() if any(row['Category'] == target for row in rows))\nprint(result)\n",
+      "answer": [
+        "Alabama",
+        "Alaska",
+        "Arkansas",
+        "Hawaii",
+        "Idaho",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "New Mexico",
+        "North Dakota",
+        "Oklahoma",
+        "Oregon",
+        "South Dakota",
+        "Tennessee",
+        "Vermont",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-easy-27",
+      "source": "datagov/kramabench-legal-easy-27/files/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv",
+      "intent": "How many states include Prizes, Sweepstakes and Lotteries among their top-ten report categories?",
+      "code": "import csv\nfrom collections import defaultdict\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_State_Top_Ten_Report_Categories.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[2:]))\ndata_rows = []\nfor row in rows:\n    state = (row.get('State') or '').strip()\n    category = (row.get('Category') or '').strip()\n    reports = (row.get('# of Reports') or '').strip()\n    if state and category and reports:\n        data_rows.append({'State': state, 'Category': category, '# of Reports': int(reports.replace(',', ''))})\nby_state = defaultdict(list)\nfor row in data_rows:\n    by_state[row['State']].append(row)\nfor state in by_state:\n    by_state[state].sort(key=lambda row: row['# of Reports'], reverse=True)\ntarget = 'Prizes, Sweepstakes and Lotteries'\nstates = sorted(state for state, rows in by_state.items() if any(row['Category'] == target for row in rows))\nprint(len(states))\n",
+      "answer": 27
+    }
+  ]
+}

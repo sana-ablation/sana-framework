@@ -1,0 +1,83 @@
+{
+  "question": "How many days in 2024 at Constitution Beach had one sampling point meet the standard while another did not? A sample meets the standard if it contains fewer than 104 counts of Enterococcus per 100 milliliters of water. Write your answer as [ANSWER].",
+  "answer": "11",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-13/files/constitution_beach_datasheet.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-hard-13/files/constitution_beach_datasheet.csv'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(local_authoring_path):\n    csv_path = local_authoring_path\nelif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_csv(csv_path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame(index=False)\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\nflat_columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\npoints = []\nfor col in flat_columns:\n    if col.endswith('_Enterococcus'):\n        points.append(col.rsplit('_', 1)[0])\nanswer = ', '.join(points)\nprint(answer)",
+      "subquestion": "Which Constitution Beach sampling points have Enterococcus measurements in the datasheet?",
+      "answer": "North, Middle, South"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-13/files/constitution_beach_datasheet.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-hard-13/files/constitution_beach_datasheet.csv'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(local_authoring_path):\n    csv_path = local_authoring_path\nelif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_csv(csv_path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame(index=False)\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nmeasurement_cols = [col for col in df.columns if col.endswith('_Tag') or col.endswith('_Enterococcus')]\nid_cols = [col for col in df.columns if col not in measurement_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=measurement_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.rsplit('_', n=1).str[0]\nmelted['Measure'] = melted['Variable'].str.rsplit('_', n=1).str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\ntidy['Year'] = pd.to_datetime(tidy['Date'], format='%B %d, %Y').dt.year\nanswer = str(len(tidy[tidy['Year'].eq(2024)]))\nprint(answer)",
+      "subquestion": "After reshaping the datasheet to one row per date and sampling point, how many 2024 observations are present?",
+      "answer": "252"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-13/files/constitution_beach_datasheet.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-hard-13/files/constitution_beach_datasheet.csv'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\nnode_1_answer = 'North, Middle, South'\nnode_2_answer = '252'\n\nif os.path.exists(local_authoring_path):\n    csv_path = local_authoring_path\nelif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_csv(csv_path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame(index=False)\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nmeasurement_cols = [col for col in df.columns if col.endswith('_Tag') or col.endswith('_Enterococcus')]\nid_cols = [col for col in df.columns if col not in measurement_cols]\npoints = [col.rsplit('_', 1)[0] for col in df.columns if col.endswith('_Enterococcus')]\nassert ', '.join(points) == node_1_answer\nmelted = df.melt(id_vars=id_cols, value_vars=measurement_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].str.rsplit('_', n=1).str[0]\nmelted['Measure'] = melted['Variable'].str.rsplit('_', n=1).str[1]\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\ntidy['Enterococcus'] = pd.to_numeric(tidy['Enterococcus'], errors='coerce')\ntidy['Year'] = pd.to_datetime(tidy['Date'], format='%B %d, %Y').dt.year\nrows_2024 = tidy[tidy['Year'].eq(2024)].copy()\nassert str(len(rows_2024)) == node_2_answer\nmixed_dates = rows_2024.groupby('Date')['Enterococcus'].agg(lambda values: bool((values < 104).any() and (values >= 104).any()))\nanswer = str(int(mixed_dates.sum()))\nprint(answer)",
+      "subquestion": "Among 2024 dates, on how many days did at least one sampling point have Enterococcus below 104 and at least one sampling point have Enterococcus of 104 or higher?",
+      "answer": "11"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Identify the Constitution Beach sampling points with Enterococcus measurements.",
+    "Node 2 depends on node 1: Reshape the datasheet to one row per date and sampling point, then count the 2024 observations.",
+    "Node 3 depends on node 2: For each 2024 date, test whether at least one sampling point met the standard and at least one did not.",
+    "Final answer: 11"
+  ],
+  "datasets_used": [
+    "kramabench-environment-hard-13"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Identify the Constitution Beach sampling points with Enterococcus measurements.",
+      "answer": "North, Middle, South"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Reshape the datasheet to one row per date and sampling point, then count the 2024 observations.",
+      "answer": "252"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: For each 2024 date, test whether at least one sampling point met the standard and at least one did not.",
+      "answer": "11"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-13",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "./tasks-mini-kramabench/candidates/environment-hard-13.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-13",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-13/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

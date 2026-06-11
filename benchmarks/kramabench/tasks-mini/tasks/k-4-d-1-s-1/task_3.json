@@ -1,0 +1,104 @@
+{
+  "question": "Has fire start distribution around the year shifted earlier or later over time? Answer with **only** 'Yes' or 'No'. No explanation needed. Write your answer as [ANSWER].",
+  "answer": "No",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-wildfire-hard-12/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['start_date'] = pd.to_datetime(df['start_date'], errors='coerce')\ndf = df.dropna(subset=['start_date'])\nyears = sorted(df['start_year'].unique().tolist())\nprint(str(len(df)) + '|' + str(years[0]) + '-' + str(years[-1]))\n",
+      "subquestion": "How many valid fire-start-date records are available, and what start-year span do they cover?",
+      "answer": "6658|2002-2016"
+    },
+    "2": {
+      "source": "datagov/kramabench-wildfire-hard-12/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['start_date'] = pd.to_datetime(df['start_date'], errors='coerce')\ndf = df.dropna(subset=['start_date'])\nyears = [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2016]\nparts = []\nfor year in years:\n    months = df[df['start_year'] == year]['start_date'].dt.month.astype(float)\n    parts.append(str(year) + ':' + '{:.3f}'.format(months.mean()))\nprint('; '.join(parts))\n",
+      "subquestion": "For each year used by the source script, what is the fitted normal mean month for fire start dates?",
+      "answer": "2002:6.762; 2003:7.492; 2004:7.048; 2005:7.367; 2006:6.919; 2007:7.152; 2008:6.793; 2009:7.026; 2010:7.327; 2011:7.073; 2012:7.273; 2013:7.030; 2014:6.919; 2016:6.994"
+    },
+    "3": {
+      "source": "datagov/kramabench-wildfire-hard-12/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "fact": "import pandas as pd\nimport numpy as np\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['start_date'] = pd.to_datetime(df['start_date'], errors='coerce')\ndf = df.dropna(subset=['start_date'])\nyears = [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2016]\nmeans = []\nfor year in years:\n    means.append(float(df[df['start_year'] == year]['start_date'].dt.month.mean()))\nslope, intercept = np.polyfit(np.array(years, dtype=float), np.array(means, dtype=float), 1)\ndelta = float(slope * (2016 - 2002))\nprint('{:.3f}'.format(delta))\n",
+      "subquestion": "What fitted change in mean fire-start month occurs over 2002 through 2016?",
+      "answer": "-0.080"
+    },
+    "4": {
+      "source": "datagov/kramabench-wildfire-hard-12/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "fact": "import pandas as pd\nimport numpy as np\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['start_date'] = pd.to_datetime(df['start_date'], errors='coerce')\ndf = df.dropna(subset=['start_date'])\nyears = [2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2016]\nmeans = [float(df[df['start_year'] == year]['start_date'].dt.month.mean()) for year in years]\nslope, intercept = np.polyfit(np.array(years, dtype=float), np.array(means, dtype=float), 1)\ndelta = float(slope * (2016 - 2002))\nprint('Yes' if abs(delta) >= 0.5 else 'No')\n",
+      "subquestion": "Does the fitted change indicate a meaningful earlier-or-later shift around the year?",
+      "answer": "No"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 reads the fire weather table and validates the fire-start-date year span.",
+    "Node 2 fits the source-script normal mean month for each year in the source-script year list.",
+    "Node 3 depends on node 2 and fits a linear trend to the yearly mean fire-start month values.",
+    "Node 4 maps the tiny fitted change over the period to the required Yes/No answer.",
+    "Final answer: No"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-wildfire-hard-12/files/Fire_Weather_Data_2002-2014_2016.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Read and validate the dated wildfire records.",
+      "answer": "6658|2002-2016"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Compute year-wise fitted mean fire-start months using the same year list as the source script.",
+      "answer": "2002:6.762; 2003:7.492; 2004:7.048; 2005:7.367; 2006:6.919; 2007:7.152; 2008:6.793; 2009:7.026; 2010:7.327; 2011:7.073; 2012:7.273; 2013:7.030; 2014:6.919; 2016:6.994"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Fit the trend in mean fire-start month over time.",
+      "answer": "-0.080"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Answer whether the fitted change is a meaningful earlier-or-later shift.",
+      "answer": "No"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "wildfire-hard-12",
+    "domain": "wildfire",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/wildfire-hard-12.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {
+        "domain": "wildfire"
+      }
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-hard-12.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-12/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv",
+      "2": "other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv",
+      "3": "other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv",
+      "4": "other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_execution": "Exact source script ran under system Python with MPLBACKEND=Agg. It printed the 2004 normal-fit mean/sigma and generated plots but no final text answer; promoted facts reproduce the year-wise normal-fit mean calculation and quantify the fitted 2002-2016 mean-month change as -0.080 month, supporting the candidate answer No."
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "question": "Which fresh-water beach is the most polluted since 2020, inclusive? Most polluted means the highest average annual exceedance rate across 2020, 2021, 2022, and 2023, considering only beaches measured in every one of those years. Write your answer as [ANSWER].",
+  "answer": "Damon Pond Beach (DCR)",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-15/files/water-body-testing-2020.csv",
+      "fact": "import pandas as pd\npaths = {\n    2020: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv',\n    2021: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv',\n    2022: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv',\n    2023: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv',\n}\nyears = [2020, 2021, 2022, 2023]\ndef annual_rates(year):\n    path = paths[year]\n    df = pd.read_csv(path)\n    df = df[df['Beach Type Description'].eq('Fresh')].copy()\n    df['Beach Name'] = df['Beach Name'].str.split('@').str[0]\n    samples = df.groupby('Beach Name').size()\n    exceedances = df[df['Violation'].astype(str).str.lower().eq('yes')].groupby('Beach Name').size()\n    rates = (exceedances / samples).fillna(0)\n    return samples, rates\ncommon_names = None\nrates_by_year = {}\nfor year in years:\n    samples, rates = annual_rates(year)\n    rates_by_year[year] = rates\n    names = set(samples.index)\n    common_names = names if common_names is None else common_names & names\nannual = rates_by_year[2020].loc[sorted(common_names)]\nmax_rate = annual.max()\nwinners = sorted(annual[annual.eq(max_rate)].index.tolist())\nanswer = '; '.join(winners) + '|' + str(float(max_rate))\nprint(answer)",
+      "subquestion": "Among freshwater beaches measured in every year from 2020 through 2023, which beach has the highest 2020 exceedance rate, and what is that rate?",
+      "answer": "Damon Pond Beach (DCR)|0.6842105263157895"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-15/files/water-body-testing-2021.csv",
+      "fact": "import pandas as pd\npaths = {\n    2020: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv',\n    2021: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv',\n    2022: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv',\n    2023: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv',\n}\nyears = [2020, 2021, 2022, 2023]\ndef annual_rates(year):\n    path = paths[year]\n    df = pd.read_csv(path)\n    df = df[df['Beach Type Description'].eq('Fresh')].copy()\n    df['Beach Name'] = df['Beach Name'].str.split('@').str[0]\n    samples = df.groupby('Beach Name').size()\n    exceedances = df[df['Violation'].astype(str).str.lower().eq('yes')].groupby('Beach Name').size()\n    rates = (exceedances / samples).fillna(0)\n    return samples, rates\ncommon_names = None\nrates_by_year = {}\nfor year in years:\n    samples, rates = annual_rates(year)\n    rates_by_year[year] = rates\n    names = set(samples.index)\n    common_names = names if common_names is None else common_names & names\nannual = rates_by_year[2021].loc[sorted(common_names)]\nmax_rate = annual.max()\nwinners = sorted(annual[annual.eq(max_rate)].index.tolist())\nanswer = '; '.join(winners) + '|' + str(float(max_rate))\nprint(answer)",
+      "subquestion": "Among freshwater beaches measured in every year from 2020 through 2023, which beach has the highest 2021 exceedance rate, and what is that rate?",
+      "answer": "Waushakum Beach|0.8235294117647058"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-15/files/water-body-testing-2022.csv",
+      "fact": "import pandas as pd\npaths = {\n    2020: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv',\n    2021: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv',\n    2022: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv',\n    2023: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv',\n}\nyears = [2020, 2021, 2022, 2023]\ndef annual_rates(year):\n    path = paths[year]\n    df = pd.read_csv(path)\n    df = df[df['Beach Type Description'].eq('Fresh')].copy()\n    df['Beach Name'] = df['Beach Name'].str.split('@').str[0]\n    samples = df.groupby('Beach Name').size()\n    exceedances = df[df['Violation'].astype(str).str.lower().eq('yes')].groupby('Beach Name').size()\n    rates = (exceedances / samples).fillna(0)\n    return samples, rates\ncommon_names = None\nrates_by_year = {}\nfor year in years:\n    samples, rates = annual_rates(year)\n    rates_by_year[year] = rates\n    names = set(samples.index)\n    common_names = names if common_names is None else common_names & names\nannual = rates_by_year[2022].loc[sorted(common_names)]\nmax_rate = annual.max()\nwinners = sorted(annual[annual.eq(max_rate)].index.tolist())\nanswer = '; '.join(winners) + '|' + str(float(max_rate))\nprint(answer)",
+      "subquestion": "Among freshwater beaches measured in every year from 2020 through 2023, which beach has the highest 2022 exceedance rate, and what is that rate?",
+      "answer": "Robinson Pond Beach (DCR)|0.7272727272727273"
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-15/files/water-body-testing-2023.csv",
+      "fact": "import pandas as pd\npaths = {\n    2020: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv',\n    2021: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv',\n    2022: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv',\n    2023: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv',\n}\nyears = [2020, 2021, 2022, 2023]\ndef annual_rates(year):\n    path = paths[year]\n    df = pd.read_csv(path)\n    df = df[df['Beach Type Description'].eq('Fresh')].copy()\n    df['Beach Name'] = df['Beach Name'].str.split('@').str[0]\n    samples = df.groupby('Beach Name').size()\n    exceedances = df[df['Violation'].astype(str).str.lower().eq('yes')].groupby('Beach Name').size()\n    rates = (exceedances / samples).fillna(0)\n    return samples, rates\ncommon_names = None\nrates_by_year = {}\nfor year in years:\n    samples, rates = annual_rates(year)\n    rates_by_year[year] = rates\n    names = set(samples.index)\n    common_names = names if common_names is None else common_names & names\nannual = rates_by_year[2023].loc[sorted(common_names)]\nmax_rate = annual.max()\nwinners = sorted(annual[annual.eq(max_rate)].index.tolist())\nanswer = '; '.join(winners) + '|' + str(float(max_rate))\nprint(answer)",
+      "subquestion": "Among freshwater beaches measured in every year from 2020 through 2023, which beach or beaches have the highest 2023 exceedance rate, and what is that rate?",
+      "answer": "Beamans Pond - Campground (DCR); Pearl Hill Pond Beach (DCR)|0.75"
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-hard-15/files/water-body-testing-2020.csv",
+      "fact": "import pandas as pd\npaths = {\n    2020: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv',\n    2021: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv',\n    2022: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv',\n    2023: 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv',\n}\nyears = [2020, 2021, 2022, 2023]\ndef annual_rates(year):\n    path = paths[year]\n    df = pd.read_csv(path)\n    df = df[df['Beach Type Description'].eq('Fresh')].copy()\n    df['Beach Name'] = df['Beach Name'].str.split('@').str[0]\n    samples = df.groupby('Beach Name').size()\n    exceedances = df[df['Violation'].astype(str).str.lower().eq('yes')].groupby('Beach Name').size()\n    rates = (exceedances / samples).fillna(0)\n    return samples, rates\ncommon_names = None\nrates_by_year = {}\nfor year in years:\n    samples, rates = annual_rates(year)\n    rates_by_year[year] = rates\n    names = set(samples.index)\n    common_names = names if common_names is None else common_names & names\naverages = {}\nfor beach in common_names:\n    averages[beach] = sum(float(rates_by_year[year].get(beach, 0.0)) for year in years) / len(years)\nmax_average = max(averages.values())\nwinners = sorted(beach for beach, rate in averages.items() if rate == max_average)\nanswer = winners[0] if len(winners) == 1 else '; '.join(winners)\nprint(answer)",
+      "subquestion": "Considering only freshwater beaches measured in every year from 2020 through 2023, which beach has the highest average annual exceedance rate across those four years?",
+      "answer": "Damon Pond Beach (DCR)"
+    }
+  },
+  "reasoning_chain": [
+    "Nodes 1-4: For each year from 2020 through 2023, filter to freshwater beach testing records, normalize beach names by removing sampling-point suffixes after '@', restrict to beaches present in all four years, and identify the highest annual exceedance-rate beach or beaches.",
+    "Node 5 depends on nodes 1-4: Recompute annual exceedance rates for all common freshwater beaches, average each beach's four annual rates, and select the beach with the highest average.",
+    "Final answer: Damon Pond Beach (DCR)"
+  ],
+  "datasets_used": [
+    "kramabench-environment-hard-15"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Nodes 1-4: The annual leaders among common freshwater beaches establish the year-by-year exceedance-rate context for 2020 through 2023.",
+      "answer": {
+        "2020": "Damon Pond Beach (DCR)|0.6842105263157895",
+        "2021": "Waushakum Beach|0.8235294117647058",
+        "2022": "Robinson Pond Beach (DCR)|0.7272727272727273",
+        "2023": "Beamans Pond - Campground (DCR); Pearl Hill Pond Beach (DCR)|0.75"
+      }
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on nodes 1-4: The full common-beach rate table shows Damon Pond Beach (DCR) has the highest four-year average annual exceedance rate.",
+      "answer": "Damon Pond Beach (DCR)"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-15",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-hard-15.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-15",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-15/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "dataset_sequence": [
+    "2001-campaign-expenditures",
+    "2003-campaign-expenditures",
+    "2005-campaign-expenditures",
+    "2009-campaign-expenditures",
+    "2013-campaign-expenditures",
+    "Leroy_Comrie",
+    "Domenic_Recchia",
+    "summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163"
+  ],
+  "source_sequence": [
+    "datagov/2001-campaign-expenditures/files/rows.txt",
+    "datagov/2003-campaign-expenditures/files/rows.txt",
+    "datagov/2005-campaign-expenditures/files/rows.txt",
+    "datagov/2009-campaign-expenditures/files/rows.txt",
+    "datagov/2013-campaign-expenditures/files/rows.txt",
+    "wikipedia/Leroy_Comrie/content.txt",
+    "wikipedia/Domenic_Recchia/content.txt",
+    "datagov/summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163/files/rows.txt",
+    "wikipedia/Domenic_Recchia/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For the 2001, 2003, 2005, 2009, and 2013 NYC municipal election cycles, identify candidates whose campaign expenditures were between $103,000 and $251,000 in each cycle.",
+    "2. Intersect the five candidate sets and keep the candidates who satisfy the expenditure range in all five cycles.",
+    "3. For each candidate from step 2, determine the NYC borough they represented from the candidate biographical sources.",
+    "4. Compare 2019 Summer Youth Employment Program enrollment for NYCHA residents in the boroughs from step 3, and keep the candidate associated with the higher-enrollment borough.",
+    "5. Determine the birth year of the candidate kept in step 4 and return that year."
+  ],
+  "original_final_question": "Among NYC municipal candidates who filed campaign expenditures in all five election cycles (2001, 2003, 2005, 2009, 2013) with between $103,000 and $251,000 in each cycle, two candidates qualify. One of these candidates represents the borough that recorded the higher number of NYCHA residents enrolled in the 2019 Summer Youth Employment Program. In what year was the candidate representing that specific borough born?. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=5, data.gov intersection - nodes 1-5 all independent):",
+    "  Node 1: 2001 expenditures $103K-$251K -> 105 candidates (answer abbreviated: Recchia, Comrie, +103 others)",
+    "  Node 2: 2003 expenditures $103K-$251K -> 47 candidates (answer abbreviated: Recchia, Comrie, +45 others)",
+    "  Node 3: 2005 expenditures $103K-$251K -> 69 candidates (answer abbreviated: Recchia, Comrie, +67 others)",
+    "  Node 4: 2009 expenditures $103K-$251K -> 99 candidates (answer abbreviated: Recchia, Comrie, +97 others)",
+    "  Node 5: 2013 expenditures $103K-$251K -> 93 candidates (answer abbreviated: Recchia, Comrie, +91 others)",
+    "  Intersection(1,2,3,4,5) -> {Leroy Comrie, Domenic Recchia} (only candidates in $103K-$251K range ALL 5 years)",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 6-7 BOTH depend on Hop 1 intersection):",
+    "  Node 6: Leroy Comrie Wikipedia -> represents NY State Senate District 14 within the borough of Queens",
+    "  Node 7: Domenic Recchia Wikipedia -> represented Brooklyn (CC District 47)",
+    "  Result: {Queens, Brooklyn} - the boroughs of the two qualifying candidates",
+    "",
+    "HOP 3 (d=1, data.gov comparative - node 8 compares both boroughs from same dataset):",
+    "  Node 8: NYCHA SYEP 2019 enrollment -> Brooklyn (3,889) vs Queens (1,019)",
+    "  Comparative: 3,889 > 1,019 -> Brooklyn has more -> Domenic Recchia",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 9 depends on Hop 3 result):",
+    "  Node 9: Domenic Recchia Wikipedia -> born July 25, 1959",
+    "",
+    "Final answer: 1959"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2001-campaign-expenditures",
+      "source": "datagov/2001-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2001 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2001-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "103 others"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2003-campaign-expenditures",
+      "source": "datagov/2003-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2003 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2003-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "45 others"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2005-campaign-expenditures",
+      "source": "datagov/2005-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2005 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2005-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "67 others"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-campaign-expenditures",
+      "source": "datagov/2009-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2009 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2009-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "97 others"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2013-campaign-expenditures",
+      "source": "datagov/2013-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2013 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2013-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "91 others"
+      ]
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163",
+      "source": "datagov/summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163/files/rows.txt",
+      "intent": "Which borough had more NYCHA residents enrolled in SYEP in 2019: Queens (<node_6 answer>) or Brooklyn (<node_7 answer>)? (Filter: Year == 2019; compare 'Were accepted and enrolled' for Queens vs Brooklyn.)",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"Year\"] = pd.to_numeric(df[\"Year\"], errors=\"coerce\")\ndf[\"Were accepted and enrolled\"] = pd.to_numeric(\n    df[\"Were accepted and enrolled\"].astype(str).str.replace(\",\", \"\", regex=False),\n    errors=\"coerce\",\n)\nresult = df[\n    df[\"Year\"].eq(2019)\n    & df[\"Borough\"].isin([\"Queens\", \"Brooklyn\"])\n][[\"Borough\", \"Were accepted and enrolled\"]].sort_values(\n    [\"Were accepted and enrolled\", \"Borough\"], ascending=[False, True], kind=\"mergesort\"\n).reset_index(drop=True)\nanswer = str(result.iloc[0][\"Borough\"])\n",
+      "answer": "Brooklyn"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2001-campaign-expenditures",
+      "source": "datagov/2001-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2001 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": "Cannot execute SQL: query_file CSV type inference fails on malformed POSTCODE values before the campaign expenditure aggregation can run."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2003-campaign-expenditures",
+      "source": "datagov/2003-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2003 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": "Cannot execute SQL: query_file CSV type inference fails on malformed POSTCODE values before the campaign expenditure aggregation can run."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2005-campaign-expenditures",
+      "source": "datagov/2005-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2005 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": "Cannot execute SQL: query_file CSV type inference fails on malformed POSTCODE values before the campaign expenditure aggregation can run."
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-campaign-expenditures",
+      "source": "datagov/2009-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2009 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": "Cannot execute SQL: query_file CSV type inference fails on malformed POSTCODE values before the campaign expenditure aggregation can run."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2013-campaign-expenditures",
+      "source": "datagov/2013-campaign-expenditures/files/rows.txt",
+      "intent": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2013 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": "Cannot execute SQL: query_file CSV type inference fails on malformed POSTCODE values before the campaign expenditure aggregation can run."
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163",
+      "source": "datagov/summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163/files/rows.txt",
+      "intent": "Which borough had more NYCHA residents enrolled in SYEP in 2019: Queens (<node_6 answer>) or Brooklyn (<node_7 answer>)? (Filter: Year == 2019; compare 'Were accepted and enrolled' for Queens vs Brooklyn.)",
+      "answer": "Brooklyn",
+      "sql": "SELECT CAST(\"Borough\" AS VARCHAR) AS answer\nFROM t\nWHERE TRY_CAST(\"Year\" AS DOUBLE) = 2019\n  AND CAST(\"Borough\" AS VARCHAR) IN ('Queens', 'Brooklyn')\nORDER BY TRY_CAST(replace(CAST(\"Were accepted and enrolled\" AS VARCHAR), ',', '') AS DOUBLE) DESC, answer ASC\nLIMIT 1"
+    }
+  ]
+}

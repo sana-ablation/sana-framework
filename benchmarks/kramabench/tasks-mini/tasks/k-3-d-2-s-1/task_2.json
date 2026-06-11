@@ -1,0 +1,94 @@
+{
+  "question": "According to NOAA, what fraction to four decimal places of wildfires account for at least 90 percent of residential houses damaged in 2008?. Write your answer as [ANSWER].",
+  "answer": 0.0465,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-wildfire-hard-20/files/noaa_wildfires.csv",
+      "fact": "import json\nimport pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\nsubset = df[df['control_year'].eq(2008)].copy()\nsummary = {\n    'records': int(len(subset)),\n    'total_residential_threatened': int(subset['prim_threatened_aggregate'].sum()),\n    'ninety_percent_threshold': int(subset['prim_threatened_aggregate'].sum() * 0.9),\n}\nprint(json.dumps(summary, sort_keys=True, separators=(',', ':')))\n",
+      "subquestion": "For NOAA fires controlled in 2008, how many records are present, what is total residential threatened aggregate, and what is the 90 percent threshold?",
+      "answer": "{\"ninety_percent_threshold\":334349,\"records\":473,\"total_residential_threatened\":371499}"
+    },
+    "2": {
+      "source": "datagov/kramabench-wildfire-hard-20/files/noaa_wildfires.csv",
+      "fact": "import json\nimport pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\nsubset = df[df['control_year'].eq(2008)].copy()\nsorted_subset = subset.sort_values('prim_threatened_aggregate', ascending=False)\nsummary = {\n    'highest_single_fire': int(sorted_subset.iloc[0]['prim_threatened_aggregate']),\n    'first_five_cumulative': [int(value) for value in sorted_subset['prim_threatened_aggregate'].cumsum().head(5).tolist()],\n}\nprint(json.dumps(summary, sort_keys=True, separators=(',', ':')))\n",
+      "subquestion": "After sorting 2008 fires by residential threatened aggregate, what is the largest single-fire value and the first five cumulative sums?",
+      "answer": "{\"first_five_cumulative\":[63758,111350,143248,173348,198462],\"highest_single_fire\":63758}"
+    },
+    "3": {
+      "source": "datagov/kramabench-wildfire-hard-20/files/noaa_wildfires.csv",
+      "fact": "import json\nimport pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\nsubset = df[df['control_year'].eq(2008)].copy()\nsorted_subset = subset.sort_values('prim_threatened_aggregate', ascending=False)\nthreshold = int(sorted_subset['prim_threatened_aggregate'].sum() * 0.9)\nrunning = 0\ncount = 0\nfor _, row in sorted_subset.iterrows():\n    running += int(row['prim_threatened_aggregate'])\n    count += 1\n    if running >= threshold:\n        break\nsummary = {\n    'fires_needed': count,\n    'total_2008_fires': int(len(subset)),\n    'fraction': round(count / len(subset), 4),\n}\nprint(json.dumps(summary, sort_keys=True, separators=(',', ':')))\n",
+      "subquestion": "How many sorted 2008 fires are needed to reach at least 90 percent of residential threatened aggregate, and what fraction of all 2008 fires is that?",
+      "answer": "{\"fires_needed\":22,\"fraction\":0.0465,\"total_2008_fires\":473}"
+    },
+    "4": {
+      "source": "datagov/kramabench-wildfire-hard-20/files/noaa_wildfires.csv",
+      "fact": "import json\n\nsummary = json.loads('{\"fires_needed\":22,\"fraction\":0.0465,\"total_2008_fires\":473}')\nprint(summary['fraction'])\n",
+      "subquestion": "What fraction from <node_3 answer> answers the question?",
+      "answer": 0.0465
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 filters to 2008 controlled fires and computes the total residential threatened aggregate plus the 90 percent threshold.",
+    "Node 2 sorts the fires by residential threatened aggregate and records the leading cumulative sums.",
+    "Node 3 counts how many sorted fires are needed to reach the threshold and divides by all 2008 fires.",
+    "Node 4 returns the rounded fraction.",
+    "Final answer: 0.0465"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-wildfire-hard-20/files/noaa_wildfires.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Summarize 2008 fires and sorted cumulative residential threatened aggregate.",
+      "answer": "threshold and cumulative damage sequence"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Count fires needed to reach the 90 percent threshold and compute the fraction.",
+      "answer": "0.0465"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Return the rounded fraction.",
+      "answer": "0.0465"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "wildfire-hard-20",
+    "domain": "wildfire",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/wildfire-hard-20.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-hard-20.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-20/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv",
+      "2": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv",
+      "3": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv",
+      "4": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

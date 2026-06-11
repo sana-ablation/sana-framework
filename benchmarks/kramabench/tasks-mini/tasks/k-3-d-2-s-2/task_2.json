@@ -1,0 +1,98 @@
+{
+  "question": "According to NOAA, in Julies, are the size of a fire and the median wind speed in the area strongly correlated? The answer should be Yes or No. Write your answer as [ANSWER].",
+  "answer": "No",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires_variabledescrip.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_variabledescrip.csv'\ndf = pd.read_csv(path, encoding='latin1')\nterms = []\nfor name in ['wind_med', 'hec']:\n    if name in set(df['Variable Name '].astype(str).str.strip()): terms.append(name)\nprint('|'.join(terms))\n",
+      "subquestion": "Which requested NOAA variable names are described in the variable-description file?",
+      "answer": "wind_med|hec"
+    },
+    "2": {
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\njuly = df[(df['start_day_of_year'] >= 181) & (df['start_day_of_year'] < 213)]\nprint(str(len(july)))\n",
+      "subquestion": "How many wildfire incidents fall in the July day-of-year window used by the source script?",
+      "answer": "2049"
+    },
+    "3": {
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\njuly = df[(df['start_day_of_year'] >= 181) & (df['start_day_of_year'] < 213)]\ncorrelation = july['wind_med'].corr(july['hec'])\nprint('{:.6f}'.format(correlation))\n",
+      "subquestion": "What is the July correlation between median wind speed and fire size in hectares?",
+      "answer": "-0.010027"
+    },
+    "4": {
+      "source": "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv'\ndf = pd.read_csv(path)\njuly = df[(df['start_day_of_year'] >= 181) & (df['start_day_of_year'] < 213)]\ncorrelation = july['wind_med'].corr(july['hec'])\nprint('Yes' if abs(correlation) >= 0.5 else 'No')\n",
+      "subquestion": "Is that absolute correlation strong enough to answer Yes?",
+      "answer": "No"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 confirms the wind speed and fire-size columns from the variable-description file.",
+    "Node 2 filters the NOAA wildfire records to the July day-of-year window.",
+    "Node 3 depends on nodes 1-2 and computes the correlation between wind_med and hec.",
+    "Node 4 maps the weak absolute correlation to the required Yes/No answer.",
+    "Final answer: No"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires_variabledescrip.csv",
+    "datagov/kramabench-wildfire-easy-15/files/noaa_wildfires.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Read the metadata and the July wildfire subset needed for the correlation.",
+      "answer": "wind_med|hec; 2049 July rows"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Compute the July correlation between median wind speed and fire size.",
+      "answer": "-0.010027"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Classify the near-zero correlation as not strong.",
+      "answer": "No"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "wildfire-easy-15",
+    "domain": "wildfire",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/wildfire-easy-15.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {
+        "parallel_avoidance": "avoided legal-hard-29, legal-hard-30, legal-hard-6, legal-hard-7, legal-hard-8 because another agent was working them"
+      }
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/wildfire.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/wildfire/wildfire-easy-15.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-15/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires_variabledescrip.csv",
+      "2": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv",
+      "3": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv",
+      "4": "other-benchmarks/Kramabench/data/wildfire/input/noaa_wildfires.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "source_script_execution": "Bundled Python source script ran from Kramabench root and printed correlation -0.010026894689326493; promoted answer applies the source comment that this is not strong."
+  }
+}

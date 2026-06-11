@@ -1,0 +1,143 @@
+{
+  "question": "Find the New York counties (excluding NYC boroughs) having average adult mental health Medicaid paid claims between $75 million and $95 million across 2017 and 2018. According to the NY Utility Energy Registry, which of these counties had the lower average total natural gas consumption across 2017 and 2018. That county was named after an English county. Tell me what was the medieval name of the county town of that English county? Your response should be in the format [Answer].",
+  "answer": "Gippeswic",
+  "practical_motivation": "A regional planning analyst comparing healthcare expenditure and natural gas infrastructure across New York counties wants to identify counties with substantial mental health service investments that also demonstrate lower energy usage in the utility registry. By examining the historical naming origin of the county with lower natural gas consumption, the analyst can understand the cultural and colonial heritage connections between New York counties and their English namesakes, tracing back to medieval origins.",
+  "nodes": {
+    "1": {
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounties = [\"Suffolk\", \"Erie\", \"Westchester\"]\nresult = df[(df[\"Service Year\"] == 2017) & (df[\"Age Group\"] == \"Adult\") & (df[\"County Label\"].isin(counties))].groupby(\"County Label\", as_index=False)[\"Paid Claim Total\"].sum()\nclaims = result.set_index(\"County Label\")[\"Paid Claim Total\"].to_dict()\nanswer = {county: f\"${int(claims[county]):,}\" for county in counties}",
+      "subquestion": "What were the adult mental health Medicaid paid claims for New York counties in 2017?",
+      "answer": {
+        "Suffolk": "$92,420,995",
+        "Erie": "$70,519,223",
+        "Westchester": "$66,346,132"
+      }
+    },
+    "2": {
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounties = [\"Suffolk\", \"Erie\", \"Westchester\"]\nresult = df[(df[\"Service Year\"] == 2018) & (df[\"Age Group\"] == \"Adult\") & (df[\"County Label\"].isin(counties))].groupby(\"County Label\", as_index=False)[\"Paid Claim Total\"].sum()\nclaims = result.set_index(\"County Label\")[\"Paid Claim Total\"].to_dict()\nanswer = {county: f\"${int(claims[county]):,}\" for county in counties}",
+      "subquestion": "What were the adult mental health Medicaid paid claims for New York counties in 2018?",
+      "answer": {
+        "Suffolk": "$87,249,830",
+        "Erie": "$81,139,374",
+        "Westchester": "$67,149,496"
+      }
+    },
+    "3": {
+      "source": "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty_map = {\n    36029: \"Erie\",\n    36103: \"Suffolk\",\n}\n\nresult = (\n    df[\n        (df[\"year\"] == 2017)\n        & (df[\"state_2\"] == \"NY\")\n        & (df[\"data_class\"] == \"natural_gas\")\n        & (df[\"data_field_display_name\"] == \"Total Consumption (T)\")\n        & (df[\"full_fips\"].isin(county_map))\n    ]\n    .groupby(\"full_fips\", as_index=False)[\"value\"]\n    .sum()\n)\nresult[\"County\"] = result[\"full_fips\"].map(county_map)\nresult = result.sort_values(\"value\", ascending=False).reset_index(drop=True)\n\nanswer = {\n    row[\"County\"]: f\"{row['value']:,.2f}\".rstrip(\"0\").rstrip(\".\")\n    for _, row in result.iterrows()\n}",
+      "subquestion": "What was the total natural gas consumption (Total Consumption (T), Therms; data_class=natural_gas) for Erie and Suffolk counties (from <aggregation of nodes 1-2: counties with avg $75M-$95M>) in 2017?",
+      "answer": {
+        "Erie": "621,451,910.24",
+        "Suffolk": "537,382,172"
+      }
+    },
+    "4": {
+      "source": "datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/utility-energy-registry-monthly-county-energy-use-beginning-2016/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty_map = {\n    36029: \"Erie\",\n    36103: \"Suffolk\",\n}\n\nresult = (\n    df[\n        (df[\"year\"] == 2018)\n        & (df[\"state_2\"] == \"NY\")\n        & (df[\"data_class\"] == \"natural_gas\")\n        & (df[\"data_field_display_name\"] == \"Total Consumption (T)\")\n        & (df[\"full_fips\"].isin(county_map))\n    ]\n    .groupby(\"full_fips\", as_index=False)[\"value\"]\n    .sum()\n)\nresult[\"County\"] = result[\"full_fips\"].map(county_map)\nresult = result.sort_values(\"value\", ascending=False).reset_index(drop=True)\n\nanswer = {\n    row[\"County\"]: f\"{row['value']:,.2f}\".rstrip(\"0\").rstrip(\".\")\n    for _, row in result.iterrows()\n}",
+      "subquestion": "What was the total natural gas consumption (Total Consumption (T), Therms; data_class=natural_gas) for Erie and Suffolk counties (from <aggregation of nodes 1-2: counties with avg $75M-$95M>) in 2018?",
+      "answer": {
+        "Erie": "712,460,330.24",
+        "Suffolk": "556,444,750"
+      }
+    },
+    "5": {
+      "source": "wikipedia/Suffolk_County,_New_York/content.txt",
+      "fact": "Suffolk County was named after the county of Suffolk in England, the origin of its earliest European settlers.",
+      "subquestion": "After which English county is <aggregation of nodes 3-4: Suffolk, which has lower average energy (1.42B < 2.14B)> named?",
+      "answer": "Suffolk, England"
+    },
+    "6": {
+      "source": "wikipedia/Ipswich/content.txt",
+      "fact": "Ipswich is a port town and borough in Suffolk, England. It is the county town and largest settlement in Suffolk, followed by Lowestoft and Bury St Edmunds.",
+      "subquestion": "What is the county town of <node 5: Suffolk, England>?",
+      "answer": "Ipswich"
+    },
+    "7": {
+      "source": "wikipedia/Ipswich/content.txt",
+      "fact": "Ipswich was first recorded during the medieval period as Gippeswic. The town has also been recorded as Gyppewicus and Yppswyche.",
+      "subquestion": "What was the medieval name of <node 6: Ipswich>?",
+      "answer": "Gippeswic"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=2, data.gov AGGREGATION - nodes 1-2):",
+    "  Node 1: County Mental Health Profiles 2017, Adult paid claims -> {Suffolk: $92.4M, Erie: $70.5M, ...}",
+    "  Node 2: County Mental Health Profiles 2018, Adult paid claims -> {Suffolk: $87.2M, Erie: $81.1M, ...}",
+    "  Aggregation: Average(2017, 2018) for each county",
+    "    Suffolk: ($92.4M + $87.2M) / 2 = $89.8M",
+    "    Erie: ($70.5M + $81.1M) / 2 = $75.8M",
+    "  Filter: Counties with avg $75M-$95M (excluding NYC) -> {Erie, Suffolk}",
+    "  Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+    "",
+    "HOP 2 (d=2, data.gov AGGREGATION - nodes 3-4 comparing counties' natural gas consumption):",
+    "  Node 3: Utility Energy Registry 2017 (Total Consumption (T), Therms; data_class=natural_gas) -> Erie: 621,451,910.24, Suffolk: 537,382,172",
+    "  Node 4: Utility Energy Registry 2018 (Total Consumption (T), Therms; data_class=natural_gas) -> Erie: 712,460,330.24, Suffolk: 556,444,750",
+    "  Aggregation: Average(2017, 2018)",
+    "    Erie: (621,451,910.24 + 712,460,330.24) / 2 = 666,956,120.24",
+    "    Suffolk: (537,382,172 + 556,444,750) / 2 = 546,913,461",
+    "  Result: Suffolk has lower average (546,913,461 < 666,956,120.24) -> Suffolk wins",
+    "  Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+    "",
+    "HOP 3 (d=1, Wikipedia - node 5 identifies English namesake):",
+    "  Node 5: Suffolk County, NY Wikipedia -> named after Suffolk, England",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 6 depends on node 5):",
+    "  Node 6: Ipswich Wikipedia -> Ipswich is the county town of Suffolk, England",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 7 depends on node 6):",
+    "  Node 7: Ipswich Wikipedia -> medieval name was Gippeswic",
+    "",
+    "Final answer: Gippeswic"
+  ],
+  "datasets_used": [
+    "Ipswich",
+    "Suffolk_County,_New_York",
+    "county-mental-health-profiles-phase-2-beginning-2014",
+    "utility-energy-registry-monthly-county-energy-use-beginning-2016"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Node 1: County Mental Health Profiles 2017, Adult paid claims -> {Suffolk: $92.4M, Erie: $70.5M, ...} Node 2: County Mental Health Profiles 2018, Adult paid claims -> {Suffolk: $87.2M, Erie: $81.1M, ...} Aggregation: Average(2017, 2018) for each county Suffolk: ($92.4M + $87.2M) / 2 = $89.8M Erie: ($70.5M + $81.1M) / 2 = $75.8M Filter: Counties with avg $75M-$95M (excluding NYC) -> {Erie, Suffolk} Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+      "answer": "{Erie, Suffolk}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3,
+        4
+      ],
+      "reasoning": "Node 3: Utility Energy Registry 2017 (Total Consumption (T), Therms; data_class=natural_gas) -> Erie: 621,451,910.24, Suffolk: 537,382,172 Node 4: Utility Energy Registry 2018 (Total Consumption (T), Therms; data_class=natural_gas) -> Erie: 712,460,330.24, Suffolk: 556,444,750 Aggregation: Average(2017, 2018) Erie: (621,451,910.24 + 712,460,330.24) / 2 = 666,956,120.24 Suffolk: (537,382,172 + 556,444,750) / 2 = 546,913,461 Result: Suffolk has lower average (546,913,461 < 666,956,120.24) -> Suffolk wins Note: Both nodes NECESSARY to compute the average; neither alone suffices",
+      "answer": "Suffolk has lower average (546,913,461 < 666,956,120.24) -> Suffolk wins"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: Suffolk County, NY Wikipedia -> named after Suffolk, England",
+      "answer": "named after Suffolk, England"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6: Ipswich Wikipedia -> Ipswich is the county town of Suffolk, England",
+      "answer": "Ipswich is the county town of Suffolk, England"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7: Ipswich Wikipedia -> medieval name was Gippeswic",
+      "answer": "Gippeswic"
+    }
+  ]
+}

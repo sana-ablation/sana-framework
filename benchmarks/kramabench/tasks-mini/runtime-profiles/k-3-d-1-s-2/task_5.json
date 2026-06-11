@@ -1,0 +1,71 @@
+{
+  "dataset_sequence": [
+    "kramabench-astronomy-hard-9"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-astronomy-hard-9/files/TLE/43180.tle",
+    "datagov/kramabench-astronomy-hard-9/files/omni2_low_res/omni2_2024.dat",
+    "datagov/kramabench-astronomy-hard-9/files/TLE/43180.tle"
+  ],
+  "reasoning_chain_text": [
+    "1. Parse SATCAT 43180 TLE records and compute May 2024 semi-major-axis changes rounded to hourly timestamps.",
+    "2. Parse OMNI2 fixed-width data and extract hourly AP measurements for the comparison window.",
+    "3. Shift AP by each candidate lag and choose the lag with maximum r-squared."
+  ],
+  "original_final_question": "Determine the best lag (from 0 to 48 hours) between atmospheric drag--measured as semi-major axis change (in km) from TLE data of SATCAT 43180--and the OMNI AP index, that maximizes the r^2 correlation during May 1--30, 2024. TLE epoch times should be rounded to the nearest hour to align with AP measurements. Use hourly OMNI2 data. omni2 data format specification can be found at omni2.text file Use earth's gravitational paremeter mu = 398600.4418 km^3/s^2. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Parse SATCAT 43180 TLE records and compute May 2024 semi-major-axis changes rounded to hourly timestamps.",
+    "Node 2: Parse OMNI2 fixed-width data and extract hourly AP measurements for the comparison window.",
+    "Node 3 depends on nodes 1 and 2: Shift AP by each candidate lag and choose the lag with maximum r-squared.",
+    "Final answer: 24"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-hard-9",
+      "source": "datagov/kramabench-astronomy-hard-9/files/TLE/43180.tle",
+      "intent": "How many May 2024 TLE delta records and rounded hourly records are available?",
+      "code": "import pandas as pd\nimport math\nfrom datetime import datetime, timedelta, timezone\ntle_path = 'other-benchmarks/Kramabench/data/astronomy/input/TLE/43180.tle'\nomni_path = 'other-benchmarks/Kramabench/data/astronomy/input/omni2_low_res/omni2_2024.dat'\nwidths = [4,4,3,5,3,3,4,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,9,6,6,6,6,6,6,9,6,6,6,6,6,7,7,6,3,4,6,5,10,9,9,9,9,9,3,4,6,6,6,6,5]\ncols = ['year','doy','hour','brn','imf_id','sw_id','n_imf','n_sw','B_mag_avg','B_vec_mag','B_lat','B_long','Bx_GSE','By_GSE','Bz_GSE','By_GSM','Bz_GSM','sigma_B_mag','sigma_B_vec','sigma_Bx','sigma_By','sigma_Bz','proton_temp','proton_density','flow_speed','flow_long','flow_lat','Na_Np','flow_pressure','sigma_T','sigma_N','sigma_V','sigma_phi_V','sigma_theta_V','sigma_Na_Np','electric_field','plasma_beta','alfven_mach','Kp','sunspot','Dst','AE','pf_1MeV','pf_2MeV','pf_4MeV','pf_10MeV','pf_30MeV','pf_60MeV','flag','ap','f10.7','PC_N','AL','AU','mach_number']\ndef parse_tle_epoch(line1):\n    e = line1[18:32].strip(); yy = int(e[:2]); year = 2000 + yy if yy < 57 else 1900 + yy\n    return datetime(year, 1, 1, tzinfo=timezone.utc) + timedelta(days=float(e[2:]) - 1)\ndef semi_major_from_line2(line2):\n    mean_motion = float(line2[52:63]); n = mean_motion * 2 * math.pi / 86400.0\n    return (398600.4418 / (n * n)) ** (1 / 3)\nlines = [line.rstrip('\\n') for line in open(tle_path) if line.strip()]\nrows = []\nfor i in range(0, len(lines), 2):\n    rows.append((parse_tle_epoch(lines[i]), semi_major_from_line2(lines[i + 1])))\ntle = pd.DataFrame(rows, columns=['epoch', 'semi_major_km']).sort_values('epoch')\ntle = tle.loc[(pd.to_datetime(tle['epoch']) >= pd.Timestamp('2024-05-01', tz='UTC')) & (pd.to_datetime(tle['epoch']) < pd.Timestamp('2024-06-01', tz='UTC'))].copy()\ntle['semi_major_change'] = tle['semi_major_km'].diff()\ntle = tle.dropna(subset=['semi_major_change'])\ntle['time_hr'] = pd.to_datetime(tle['epoch']).dt.round('h')\nsemi_major_change = tle.set_index('time_hr')[['semi_major_change']].groupby('time_hr').mean()['semi_major_change']\nomni = pd.read_fwf(omni_path, widths=widths, header=None); omni.columns = cols\nomni['t'] = omni.apply(lambda r: datetime(int(r.year), 1, 1, tzinfo=timezone.utc) + timedelta(days=int(r.doy) - 1, hours=int(r.hour)), axis=1)\nap = omni.set_index('t').sort_index().loc['2024-04-01':'2024-06-30 23:59', 'ap']\nbest_lag = None; best_r2 = -1\nfor lag in range(0, 48):\n    ap_lag = ap.copy(); ap_lag.index = ap_lag.index + pd.Timedelta(hours=lag)\n    joined = semi_major_change.to_frame('semi_major_change').join(ap_lag.rename('ap'), how='inner')\n    if len(joined) < 2: continue\n    r = joined['semi_major_change'].corr(joined['ap']); r2 = r * r\n    if r2 > best_r2: best_r2 = r2; best_lag = lag\nresult = f'{len(tle)}|{len(semi_major_change)}'\nprint(result)\n",
+      "answer": "133|125"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-hard-9",
+      "source": "datagov/kramabench-astronomy-hard-9/files/omni2_low_res/omni2_2024.dat",
+      "intent": "How many hourly AP measurements are available in the April through June OMNI2 window?",
+      "code": "import pandas as pd\nimport math\nfrom datetime import datetime, timedelta, timezone\ntle_path = 'other-benchmarks/Kramabench/data/astronomy/input/TLE/43180.tle'\nomni_path = 'other-benchmarks/Kramabench/data/astronomy/input/omni2_low_res/omni2_2024.dat'\nwidths = [4,4,3,5,3,3,4,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,9,6,6,6,6,6,6,9,6,6,6,6,6,7,7,6,3,4,6,5,10,9,9,9,9,9,3,4,6,6,6,6,5]\ncols = ['year','doy','hour','brn','imf_id','sw_id','n_imf','n_sw','B_mag_avg','B_vec_mag','B_lat','B_long','Bx_GSE','By_GSE','Bz_GSE','By_GSM','Bz_GSM','sigma_B_mag','sigma_B_vec','sigma_Bx','sigma_By','sigma_Bz','proton_temp','proton_density','flow_speed','flow_long','flow_lat','Na_Np','flow_pressure','sigma_T','sigma_N','sigma_V','sigma_phi_V','sigma_theta_V','sigma_Na_Np','electric_field','plasma_beta','alfven_mach','Kp','sunspot','Dst','AE','pf_1MeV','pf_2MeV','pf_4MeV','pf_10MeV','pf_30MeV','pf_60MeV','flag','ap','f10.7','PC_N','AL','AU','mach_number']\ndef parse_tle_epoch(line1):\n    e = line1[18:32].strip(); yy = int(e[:2]); year = 2000 + yy if yy < 57 else 1900 + yy\n    return datetime(year, 1, 1, tzinfo=timezone.utc) + timedelta(days=float(e[2:]) - 1)\ndef semi_major_from_line2(line2):\n    mean_motion = float(line2[52:63]); n = mean_motion * 2 * math.pi / 86400.0\n    return (398600.4418 / (n * n)) ** (1 / 3)\nlines = [line.rstrip('\\n') for line in open(tle_path) if line.strip()]\nrows = []\nfor i in range(0, len(lines), 2):\n    rows.append((parse_tle_epoch(lines[i]), semi_major_from_line2(lines[i + 1])))\ntle = pd.DataFrame(rows, columns=['epoch', 'semi_major_km']).sort_values('epoch')\ntle = tle.loc[(pd.to_datetime(tle['epoch']) >= pd.Timestamp('2024-05-01', tz='UTC')) & (pd.to_datetime(tle['epoch']) < pd.Timestamp('2024-06-01', tz='UTC'))].copy()\ntle['semi_major_change'] = tle['semi_major_km'].diff()\ntle = tle.dropna(subset=['semi_major_change'])\ntle['time_hr'] = pd.to_datetime(tle['epoch']).dt.round('h')\nsemi_major_change = tle.set_index('time_hr')[['semi_major_change']].groupby('time_hr').mean()['semi_major_change']\nomni = pd.read_fwf(omni_path, widths=widths, header=None); omni.columns = cols\nomni['t'] = omni.apply(lambda r: datetime(int(r.year), 1, 1, tzinfo=timezone.utc) + timedelta(days=int(r.doy) - 1, hours=int(r.hour)), axis=1)\nap = omni.set_index('t').sort_index().loc['2024-04-01':'2024-06-30 23:59', 'ap']\nbest_lag = None; best_r2 = -1\nfor lag in range(0, 48):\n    ap_lag = ap.copy(); ap_lag.index = ap_lag.index + pd.Timedelta(hours=lag)\n    joined = semi_major_change.to_frame('semi_major_change').join(ap_lag.rename('ap'), how='inner')\n    if len(joined) < 2: continue\n    r = joined['semi_major_change'].corr(joined['ap']); r2 = r * r\n    if r2 > best_r2: best_r2 = r2; best_lag = lag\nresult = str(len(ap))\nprint(result)\n",
+      "answer": "2184"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-hard-9",
+      "source": "datagov/kramabench-astronomy-hard-9/files/TLE/43180.tle",
+      "intent": "Which AP lag from 0 to 47 hours maximizes the squared correlation with semi-major-axis changes?",
+      "code": "import pandas as pd\nimport math\nfrom datetime import datetime, timedelta, timezone\ntle_path = 'other-benchmarks/Kramabench/data/astronomy/input/TLE/43180.tle'\nomni_path = 'other-benchmarks/Kramabench/data/astronomy/input/omni2_low_res/omni2_2024.dat'\nwidths = [4,4,3,5,3,3,4,4,6,6,6,6,6,6,6,6,6,6,6,6,6,6,9,6,6,6,6,6,6,9,6,6,6,6,6,7,7,6,3,4,6,5,10,9,9,9,9,9,3,4,6,6,6,6,5]\ncols = ['year','doy','hour','brn','imf_id','sw_id','n_imf','n_sw','B_mag_avg','B_vec_mag','B_lat','B_long','Bx_GSE','By_GSE','Bz_GSE','By_GSM','Bz_GSM','sigma_B_mag','sigma_B_vec','sigma_Bx','sigma_By','sigma_Bz','proton_temp','proton_density','flow_speed','flow_long','flow_lat','Na_Np','flow_pressure','sigma_T','sigma_N','sigma_V','sigma_phi_V','sigma_theta_V','sigma_Na_Np','electric_field','plasma_beta','alfven_mach','Kp','sunspot','Dst','AE','pf_1MeV','pf_2MeV','pf_4MeV','pf_10MeV','pf_30MeV','pf_60MeV','flag','ap','f10.7','PC_N','AL','AU','mach_number']\ndef parse_tle_epoch(line1):\n    e = line1[18:32].strip(); yy = int(e[:2]); year = 2000 + yy if yy < 57 else 1900 + yy\n    return datetime(year, 1, 1, tzinfo=timezone.utc) + timedelta(days=float(e[2:]) - 1)\ndef semi_major_from_line2(line2):\n    mean_motion = float(line2[52:63]); n = mean_motion * 2 * math.pi / 86400.0\n    return (398600.4418 / (n * n)) ** (1 / 3)\nlines = [line.rstrip('\\n') for line in open(tle_path) if line.strip()]\nrows = []\nfor i in range(0, len(lines), 2):\n    rows.append((parse_tle_epoch(lines[i]), semi_major_from_line2(lines[i + 1])))\ntle = pd.DataFrame(rows, columns=['epoch', 'semi_major_km']).sort_values('epoch')\ntle = tle.loc[(pd.to_datetime(tle['epoch']) >= pd.Timestamp('2024-05-01', tz='UTC')) & (pd.to_datetime(tle['epoch']) < pd.Timestamp('2024-06-01', tz='UTC'))].copy()\ntle['semi_major_change'] = tle['semi_major_km'].diff()\ntle = tle.dropna(subset=['semi_major_change'])\ntle['time_hr'] = pd.to_datetime(tle['epoch']).dt.round('h')\nsemi_major_change = tle.set_index('time_hr')[['semi_major_change']].groupby('time_hr').mean()['semi_major_change']\nomni = pd.read_fwf(omni_path, widths=widths, header=None); omni.columns = cols\nomni['t'] = omni.apply(lambda r: datetime(int(r.year), 1, 1, tzinfo=timezone.utc) + timedelta(days=int(r.doy) - 1, hours=int(r.hour)), axis=1)\nap = omni.set_index('t').sort_index().loc['2024-04-01':'2024-06-30 23:59', 'ap']\nbest_lag = None; best_r2 = -1\nfor lag in range(0, 48):\n    ap_lag = ap.copy(); ap_lag.index = ap_lag.index + pd.Timedelta(hours=lag)\n    joined = semi_major_change.to_frame('semi_major_change').join(ap_lag.rename('ap'), how='inner')\n    if len(joined) < 2: continue\n    r = joined['semi_major_change'].corr(joined['ap']); r2 = r * r\n    if r2 > best_r2: best_r2 = r2; best_lag = lag\nresult = str(best_lag)\nprint(result)\n",
+      "answer": "24"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-hard-9",
+      "source": "datagov/kramabench-astronomy-hard-9/files/TLE/43180.tle",
+      "intent": "How many May 2024 TLE delta records and rounded hourly records are available?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is TLE/plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-hard-9",
+      "source": "datagov/kramabench-astronomy-hard-9/files/omni2_low_res/omni2_2024.dat",
+      "intent": "How many hourly AP measurements are available in the April through June OMNI2 window?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is DAT/plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-hard-9",
+      "source": "datagov/kramabench-astronomy-hard-9/files/TLE/43180.tle",
+      "intent": "Which AP lag from 0 to 47 hours maximizes the squared correlation with semi-major-axis changes?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is TLE/plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    }
+  ]
+}

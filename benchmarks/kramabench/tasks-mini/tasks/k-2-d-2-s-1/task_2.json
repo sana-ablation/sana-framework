@@ -1,0 +1,76 @@
+{
+  "question": "What percentage (to 3 decimal places) of water samples collected from Massachusetts beaches during the 2013 bathing season exceeded bacterial standards, leading to temporary closures? Write your answer as [ANSWER].",
+  "answer": "4.796",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "fact": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\ndf = pd.read_csv(csv_path, usecols=['Violation'])\nanswer = str(len(df))\nprint(answer)",
+      "subquestion": "How many total water sample rows are recorded in the 2013 Massachusetts beach sampling file?",
+      "answer": "15388"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "fact": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\ndf = pd.read_csv(csv_path, usecols=['Violation'])\nviolations = df['Violation'].astype(str).str.strip().str.lower().eq('yes')\nanswer = str(int(violations.sum()))\nprint(answer)",
+      "subquestion": "How many 2013 Massachusetts beach sample rows are marked as bacterial-standard violations?",
+      "answer": "738"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv",
+      "fact": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-1/files/water-body-testing-2013.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\nnode_1_answer = '15388'\nnode_2_answer = '738'\ndf = pd.read_csv(csv_path, usecols=['Violation'])\ntotal_samples = len(df)\nviolating_samples = int(df['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\nassert str(total_samples) == node_1_answer\nassert str(violating_samples) == node_2_answer\nanswer = f'{violating_samples / total_samples * 100:.3f}'\nprint(answer)",
+      "subquestion": "Using <node_1 answer> total samples and <node_2 answer> violating samples, what percentage of samples had violations, rounded to 3 decimal places?",
+      "answer": "4.796"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: The 2013 Massachusetts beach sampling file contains 15,388 total sample rows.",
+    "Node 2: The same file marks 738 sample rows with Violation equal to yes.",
+    "Node 3 depends on nodes 1 and 2: 738 divided by 15,388, multiplied by 100 and rounded to three decimal places, is 4.796.",
+    "Final answer: 4.796"
+  ],
+  "datasets_used": [
+    "kramabench-environment-easy-1"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Nodes 1 and 2 independently count the total 2013 sample rows and the rows marked as violations from the same beach-testing file.",
+      "answer": "15388 total samples; 738 violating samples"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 uses the total and violation counts to compute the violation percentage rounded to three decimal places.",
+      "answer": "4.796"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-easy-1",
+    "domain": "environment",
+    "difficulty": "easy",
+    "promoted_from": "./tasks-mini-kramabench/candidates/environment-easy-1.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-1",
+    "s3_mirror_prefix": "datagov/kramabench-environment-easy-1/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

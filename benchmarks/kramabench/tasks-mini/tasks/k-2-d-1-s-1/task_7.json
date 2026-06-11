@@ -1,0 +1,67 @@
+{
+  "question": "What is the minimum number of report categories that collectively account for at least 50% of reports in 2024? Write your answer as [ANSWER].",
+  "answer": "3",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\ncat['Percentage'] = cat['Percentage'].astype(str).str.replace('%', '').astype(float) / 100\ncat['Rank'] = cat['Rank'].astype(int)\ncat[' # of Reports '] = cat[' # of Reports '].astype(str).str.replace(',', '').astype(int)\ncat_sorted = cat.sort_values(by='Percentage', ascending=False).copy()\ncat_sorted['Percentage_cumsum'] = cat_sorted['Percentage'].cumsum()\ntop = cat_sorted[['Rank', 'Percentage']].head(3)\nresult = '|'.join([f\"{int(r.Rank)}:{r.Percentage:.3f}\" for r in top.itertuples()])\nprint(result)\n",
+      "subquestion": "What are the three largest report-category percentages by rank?",
+      "answer": "1:0.209|2:0.175|3:0.131"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-12/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\ncat['Percentage'] = cat['Percentage'].astype(str).str.replace('%', '').astype(float) / 100\ncat['Rank'] = cat['Rank'].astype(int)\ncat[' # of Reports '] = cat[' # of Reports '].astype(str).str.replace(',', '').astype(int)\ncat_sorted = cat.sort_values(by='Percentage', ascending=False).copy()\ncat_sorted['Percentage_cumsum'] = cat_sorted['Percentage'].cumsum()\nresult = str(int(cat_sorted.loc[cat_sorted['Percentage_cumsum'] > 0.5, 'Rank'].iloc[0]))\nprint(result)\n",
+      "subquestion": "What is the minimum rank count needed for cumulative category share to exceed one half?",
+      "answer": "3"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the 2024 report-categories table and sort categories by percentage.",
+    "Node 2 depends on node 1: Accumulate category percentages until they pass one half.",
+    "Final answer: 3"
+  ],
+  "datasets_used": [
+    "kramabench-legal-easy-12"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the 2024 report-categories table and sort categories by percentage.",
+      "answer": "1:0.209|2:0.175|3:0.131"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Accumulate category percentages until they pass one half.",
+      "answer": "3"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-12",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-12.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-12",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-12/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

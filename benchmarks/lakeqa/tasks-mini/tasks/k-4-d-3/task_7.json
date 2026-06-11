@@ -1,0 +1,115 @@
+{
+  "question": "Among Washington, DC wards 2 and 5, identify which ward had the more frequent street sweeping schedule from 2022 to 2024. In that ward, find the charter school whose serving spans grades 8 and 9, and is named after a famous person. What county is that person's birthplace located in? Please return the county only, i.e. `XX County`. Your response should be in the format [Answer].",
+  "answer": "Ulster County",
+  "nodes": {
+    "1": {
+      "source": "datagov/street-sweeping-schedule-2022/files/data.txt",
+      "fact": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/street-sweeping-schedule-2022/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ncatalog = json.loads(obj[\"Body\"].read())\n\ntitle = \"Street Sweeping Schedule - 2022\"\nurl = None\nfor dataset in catalog.get(\"dataset\", []):\n    if dataset.get(\"title\") == title:\n        for dist in dataset.get(\"distribution\", []):\n            if dist.get(\"mediaType\") == \"text/csv\":\n                url = dist.get(\"downloadURL\")\n                break\n    if url:\n        break\nif not url:\n    raise ValueError(f\"Could not find CSV distribution for {title}\")\n\ndf = pd.read_csv(url)\ncounts = df[df[\"WARD\"].isin([2, 5])].groupby(\"WARD\").size().to_dict()\nanswer = {\"Ward 2\": int(counts.get(2, 0)), \"Ward 5\": int(counts.get(5, 0))}",
+      "subquestion": "Among the wards 2 and 5, which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2022 file; WARD in {2,5}; count rows by WARD.)",
+      "answer": {
+        "Ward 2": 72,
+        "Ward 5": 80
+      }
+    },
+    "2": {
+      "source": "datagov/street-sweeping-schedule-2023/files/data.txt",
+      "fact": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/street-sweeping-schedule-2023/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ncatalog = json.loads(obj[\"Body\"].read())\n\ntitle = \"Street Sweeping Schedule - 2023\"\nurl = None\nfor dataset in catalog.get(\"dataset\", []):\n    if dataset.get(\"title\") == title:\n        for dist in dataset.get(\"distribution\", []):\n            if dist.get(\"mediaType\") == \"text/csv\":\n                url = dist.get(\"downloadURL\")\n                break\n    if url:\n        break\nif not url:\n    raise ValueError(f\"Could not find CSV distribution for {title}\")\n\ndf = pd.read_csv(url)\ncounts = df[df[\"WARD\"].isin([2, 5])].groupby(\"WARD\").size().to_dict()\nanswer = {\"Ward 2\": int(counts.get(2, 0)), \"Ward 5\": int(counts.get(5, 0))}",
+      "subquestion": "Among the wards 2 and 5, which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2023 file; WARD in {2,5}; count rows by WARD.)",
+      "answer": {
+        "Ward 2": 54,
+        "Ward 5": 83
+      }
+    },
+    "3": {
+      "source": "datagov/street-sweeping-schedule-2024/files/data.txt",
+      "fact": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/street-sweeping-schedule-2024/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ncatalog = json.loads(obj[\"Body\"].read())\n\ntitle = \"Street Sweeping Schedule - 2024\"\nurl = None\nfor dataset in catalog.get(\"dataset\", []):\n    if dataset.get(\"title\") == title:\n        for dist in dataset.get(\"distribution\", []):\n            if dist.get(\"mediaType\") == \"text/csv\":\n                url = dist.get(\"downloadURL\")\n                break\n    if url:\n        break\nif not url:\n    raise ValueError(f\"Could not find CSV distribution for {title}\")\n\ndf = pd.read_csv(url)\ncounts = df[df[\"WARD\"].isin([2, 5])].groupby(\"WARD\").size().to_dict()\nanswer = {\"Ward 2\": int(counts.get(2, 0)), \"Ward 5\": int(counts.get(5, 0))}",
+      "subquestion": "Among the wards 2 and 5, which ward had the higher average number of street-sweeping schedule entries across 2022-2024? (Filter for this node: 2024 file; WARD in {2,5}; count rows by WARD.)",
+      "answer": {
+        "Ward 2": 54,
+        "Ward 5": 87
+      }
+    },
+    "4": {
+      "source": "datagov/dc-charter-schools/files/data.txt",
+      "fact": "import json\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/dc-charter-schools/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read())\nanswer = None\nfor feature in data.get(\"features\", []):\n    props = feature.get(\"properties\") or {}\n    ward = str(props.get(\"WARD\") or props.get(\"Ward\") or \"\").strip()\n    grades = str(props.get(\"GRADES\") or props.get(\"Grades\") or \"\").strip()\n    if ward == \"Ward 5\" and grades == \"6th-9th\":\n        answer = str(props.get(\"NAME\") or props.get(\"School_Name\") or props.get(\"SCHOOL_NAME\") or \"\").strip()\n        break",
+      "subquestion": "Which charter school in the ward (from hop 1) spans grade 8 and grade 9? (Filter for this node: WARD == 5; GRADES include 8 and 9 in the range.)",
+      "answer": "Sojourner Truth PCS"
+    },
+    "5": {
+      "source": "wikipedia/Sojourner_Truth/content.txt",
+      "fact": "Sojourner Truth was born into slavery in Swartekill, New York.",
+      "subquestion": "The charter school identified (from hop 2) includes the name 'Sojourner Truth'. According to her biography, where was she born?",
+      "answer": "Swartekill, New York"
+    },
+    "6": {
+      "source": "wikipedia/Rifton,_New_York/content.txt",
+      "fact": "Rifton is a hamlet (and census-designated place) in Ulster County, New York, and Swartekill was one of the hamlets encompassed in Rifton's former village.",
+      "subquestion": "Swartekill, New York (from hop 3) is described in the Rifton, New York article; what county is Rifton in?",
+      "answer": "Ulster County, New York"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3, street sweeping schedule 2022-2024 - nodes 1-3):",
+    "  Node 1: 2022 schedule rows -> Ward 2 72; Ward 5 80",
+    "  Node 2: 2023 schedule rows -> Ward 2 54; Ward 5 83",
+    "  Node 3: 2024 schedule rows -> Ward 2 54; Ward 5 87",
+    "  Average schedule rows (2022-2024): Ward 5 83.3 > Ward 2 60.0",
+    "  Result: Ward 5",
+    "",
+    "HOP 2 (d=1, DC charter schools - node 4):",
+    "  Node 4: Ward 5 charter school spanning grade 8 and grade 9 -> Sojourner Truth PCS",
+    "",
+    "HOP 3 (d=1, Wikipedia Sojourner Truth - node 5):",
+    "  Node 5: Sojourner Truth born in Swartekill, New York",
+    "",
+    "HOP 4 (d=1, Wikipedia Rifton, New York - node 6):",
+    "  Node 6: Rifton (which includes the former Swartekill hamlet) is in Ulster County, New York",
+    "",
+    "Final answer: Ulster County"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "street-sweeping-schedule-2022",
+    "street-sweeping-schedule-2023",
+    "street-sweeping-schedule-2024",
+    "dc-charter-schools",
+    "Sojourner_Truth",
+    "Rifton,_New_York"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: 2022 schedule rows -> Ward 2 72; Ward 5 80 Node 2: 2023 schedule rows -> Ward 2 54; Ward 5 83 Node 3: 2024 schedule rows -> Ward 2 54; Ward 5 87 Average schedule rows (2022-2024): Ward 5 83.3 > Ward 2 60.0 Result: Ward 5",
+      "answer": "Ward 5"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4: Ward 5 charter school spanning grade 8 and grade 9 -> Sojourner Truth PCS",
+      "answer": "Sojourner Truth PCS"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: Sojourner Truth born in Swartekill, New York",
+      "answer": "Swartekill, New York"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6: Rifton (which includes the former Swartekill hamlet) is in Ulster County, New York",
+      "answer": "Ulster County"
+    }
+  ]
+}

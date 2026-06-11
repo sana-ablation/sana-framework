@@ -1,0 +1,67 @@
+{
+  "question": "How many unique sources were used in the Roman cities dataset? Write your answer as [ANSWER].",
+  "answer": "52",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nresult = str(int(df['Select Bibliography'].notna().sum()))\nprint(result)\n",
+      "subquestion": "How many Roman city rows list at least one bibliography source?",
+      "answer": "1385"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-easy-8/files/roman_cities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nsources = set()\nfor values in df.loc[df['Select Bibliography'].notna(), 'Select Bibliography']:\n    for ref in values.split(';'):\n        ref = ref.strip().replace('?', '').replace('.', '')\n        ref = ref.split(':')[0]\n        if ref:\n            sources.add(ref)\nresult = str(len(sources))\nprint(result)\n",
+      "subquestion": "After splitting bibliography strings into individual normalized references, how many unique source references are present?",
+      "answer": "52"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Filter the Roman cities table to rows with a non-empty bibliography field.",
+    "Node 2 depends on node 1: Split bibliography entries on semicolons, normalize punctuation and page suffixes, and count unique references.",
+    "Final answer: 52"
+  ],
+  "datasets_used": [
+    "roman_cities.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Filter the Roman cities table to rows with a non-empty bibliography field.",
+      "answer": "1385"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Split bibliography entries on semicolons, normalize punctuation and page suffixes, and count unique references.",
+      "answer": "52"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-easy-8",
+    "domain": "archeology",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-easy-8.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-8",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-easy-8/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

@@ -1,0 +1,177 @@
+{
+  "dataset_sequence": [
+    "texas-department-of-criminal-justice-releases-fy-2019",
+    "texas-department-of-criminal-justice-releases-fy-2020",
+    "texas-department-of-criminal-justice-releases-fy-2021",
+    "Harris_County,_Texas",
+    "Dallas_County,_Texas",
+    "Tarrant_County,_Texas",
+    "Houston",
+    "Dallas",
+    "Fort_Worth,_Texas",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021",
+    "Lake_Worth_Independent_School_District"
+  ],
+  "source_sequence": [
+    "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+    "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+    "datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt",
+    "wikipedia/Harris_County,_Texas/content.txt",
+    "wikipedia/Dallas_County,_Texas/content.txt",
+    "wikipedia/Tarrant_County,_Texas/content.txt",
+    "wikipedia/Houston/content.txt",
+    "wikipedia/Dallas/content.txt",
+    "wikipedia/Fort_Worth,_Texas/content.txt",
+    "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt",
+    "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt",
+    "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021/files/rows.txt",
+    "wikipedia/Lake_Worth_Independent_School_District/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Using fiscal years 2019, 2020, and 2021, calculate average Texas Department of Criminal Justice release counts by county and identify the top three counties.",
+    "2. For those counties, determine each county seat.",
+    "3. For those county seats, determine when each was established and keep the county with the most recently established county seat.",
+    "4. In that county, calculate each school district's average identified student percentage across the 2019-2020, 2020-2021, and 2021-2022 program years and identify the highest average.",
+    "5. Determine the year that school district was established and return only the year."
+  ],
+  "original_final_question": "From the top three Texas counties based on average Texas department of criminal justice releases across 2019 to 2021, find the county that has the most recently established county seat. In that specific county, identify the school district with the highest average identified student percentage between 2019 and 2021. What year was that school district established? Please return the year only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3, data.gov aggregation - nodes 1-3):",
+    "  Node 1: FY 2019 TDCJ releases by county",
+    "  Node 2: FY 2020 TDCJ releases by county",
+    "  Node 3: FY 2021 TDCJ releases by county",
+    "  Aggregation: Calculate average TDCJ releases per county across 3 years",
+    "    Harris County: (9,029 + 7,059 + 5,210) / 3 = 7,099.3 average",
+    "    Dallas County: (5,355 + 4,540 + 3,565) / 3 = 4,486.7 average",
+    "    Tarrant County: (4,769 + 4,450 + 3,252) / 3 = 4,157.0 average",
+    "  Result: Top 3 Texas counties are Harris, Dallas, Tarrant",
+    "",
+    "HOP 2 (d=3, Wikipedia - nodes 4-6):",
+    "  Node 4: Harris County -> county seat: Houston",
+    "  Node 5: Dallas County -> county seat: Dallas",
+    "  Node 6: Tarrant County -> county seat: Fort Worth",
+    "  Result: Three county seats identified (Houston, Dallas, Fort Worth)",
+    "",
+    "HOP 3 (d=3, Wikipedia - nodes 7-9):",
+    "  Node 7: Houston -> founded 1836",
+    "  Node 8: Dallas -> established 1841",
+    "  Node 9: Fort Worth -> established 1849",
+    "  Comparison: Houston (1836) < Dallas (1841) < Fort Worth (1849)",
+    "  Result: Fort Worth is the newest county seat -> Tarrant County is the target",
+    "",
+    "HOP 4 (d=3, data.gov aggregation - nodes 10-12):",
+    "  Node 10: 2019-2020 School Nutrition for Tarrant County ISDs",
+    "  Node 11: 2020-2021 School Nutrition for Tarrant County ISDs",
+    "  Node 12: 2021-2022 School Nutrition for Tarrant County ISDs",
+    "  Aggregation: Calculate average ISP per ISD in Tarrant County across 3 years",
+    "    Lake Worth ISD: (65.00% + 65.94% + 71.65%) / 3 = 67.53% average ISP (highest among ISDs)",
+    "  Result: Lake Worth ISD has highest average ISP in Tarrant County",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 13):",
+    "  Node 13: Lake Worth ISD was established in 1916 (as Rosen Heights ISD)",
+    "",
+    "Final answer: 1916"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "texas-department-of-criminal-justice-releases-fy-2019",
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "intent": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2019? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['Harris', 'Dallas', 'Tarrant']\ncounts = df[df['County'].isin(counties)].groupby('County').size()\nanswer = '; '.join(f\"{county}: {int(counts[county]):,}\" for county in counties)",
+      "answer": "Harris: 9,029; Dallas: 5,355; Tarrant: 4,769"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "texas-department-of-criminal-justice-releases-fy-2020",
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "intent": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2020? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['Harris', 'Dallas', 'Tarrant']\ncounts = df[df['County'].isin(counties)].groupby('County').size()\nanswer = '; '.join(f\"{county}: {int(counts[county]):,}\" for county in counties)",
+      "answer": "Harris: 7,059; Dallas: 4,540; Tarrant: 4,450"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "texas-department-of-criminal-justice-releases-fy-2021",
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt",
+      "intent": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2021? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['Harris', 'Dallas', 'Tarrant']\ncounts = df[df['County'].isin(counties)].groupby('County').size()\nanswer = '; '.join(f\"{county}: {int(counts[county]):,}\" for county in counties)",
+      "answer": "Harris: 5,210; Dallas: 3,565; Tarrant: 3,252"
+    },
+    {
+      "node_id": "10",
+      "dataset_id": "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019",
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt",
+      "intent": "Which ISD had the highest average ISP in Tarrant County (from nodes 7-9: the county with the newest county seat) in the 2019-2020 program year? (Filter SiteCounty == 'TARRANT'; filter CEName contains 'ISD'; group by CEName; average SiteISP.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nresult = (\n    df[(df['SiteCounty'] == 'TARRANT') & (df['CEName'].str.contains('ISD', na=False))]\n    .groupby('CEName', as_index=False)['SiteISP']\n    .mean()\n)\nresult['SiteISP'] = result['SiteISP'].round(2)\nranked = result.sort_values(['SiteISP', 'CEName'], ascending=[False, True]).reset_index(drop=True)\nanswer = f\"Lake Worth ISD: {ranked.loc[0, 'SiteISP']:.2f}% average ISP\"",
+      "answer": "Lake Worth ISD: 65.00% average ISP"
+    },
+    {
+      "node_id": "11",
+      "dataset_id": "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020",
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt",
+      "intent": "What was the average ISP for Lake Worth ISD in Tarrant County in the 2020-2021 program year? (Filter SiteCounty == 'TARRANT'; filter CEName == 'LAKE WORTH ISD'; average SiteISP.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'TARRANT') & (df['CEName'] == 'LAKE WORTH ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Lake Worth ISD: {average_isp:.2f}% average ISP'",
+      "answer": "Lake Worth ISD: 65.94% average ISP"
+    },
+    {
+      "node_id": "12",
+      "dataset_id": "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021",
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021/files/rows.txt",
+      "intent": "What was the average ISP for Lake Worth ISD in Tarrant County in the 2021-2022 program year? (Filter SiteCounty == 'TARRANT'; filter CEName == 'LAKE WORTH ISD'; average SiteISP.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'TARRANT') & (df['CEName'] == 'LAKE WORTH ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Lake Worth ISD: {average_isp:.2f}% average ISP'",
+      "answer": "Lake Worth ISD: 71.65% average ISP"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "texas-department-of-criminal-justice-releases-fy-2019",
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "intent": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2019? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "sql": "WITH counts AS (\n  SELECT \"County\" AS county, COUNT(*) AS cnt\n  FROM t\n  WHERE \"County\" IN ('Harris', 'Dallas', 'Tarrant')\n  GROUP BY \"County\"\n), formatted AS (\n  SELECT\n    county || ': ' || regexp_replace(CAST(cnt AS VARCHAR), '([0-9]+)([0-9]{3})$', '\\1,\\2') AS part,\n    CASE county WHEN 'Harris' THEN 1 WHEN 'Dallas' THEN 2 WHEN 'Tarrant' THEN 3 END AS ord\n  FROM counts\n)\nSELECT string_agg(part, '; ' ORDER BY ord) AS answer\nFROM formatted",
+      "answer": "Harris: 9,029; Dallas: 5,355; Tarrant: 4,769"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "texas-department-of-criminal-justice-releases-fy-2020",
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "intent": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2020? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "sql": "WITH counts AS (\n  SELECT \"County\" AS county, COUNT(*) AS cnt\n  FROM t\n  WHERE \"County\" IN ('Harris', 'Dallas', 'Tarrant')\n  GROUP BY \"County\"\n), formatted AS (\n  SELECT\n    county || ': ' || regexp_replace(CAST(cnt AS VARCHAR), '([0-9]+)([0-9]{3})$', '\\1,\\2') AS part,\n    CASE county WHEN 'Harris' THEN 1 WHEN 'Dallas' THEN 2 WHEN 'Tarrant' THEN 3 END AS ord\n  FROM counts\n)\nSELECT string_agg(part, '; ' ORDER BY ord) AS answer\nFROM formatted",
+      "answer": "Harris: 7,059; Dallas: 4,540; Tarrant: 4,450"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "texas-department-of-criminal-justice-releases-fy-2021",
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt",
+      "intent": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2021? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "sql": "WITH counts AS (\n  SELECT \"County\" AS county, COUNT(*) AS cnt\n  FROM t\n  WHERE \"County\" IN ('Harris', 'Dallas', 'Tarrant')\n  GROUP BY \"County\"\n), formatted AS (\n  SELECT\n    county || ': ' || regexp_replace(CAST(cnt AS VARCHAR), '([0-9]+)([0-9]{3})$', '\\1,\\2') AS part,\n    CASE county WHEN 'Harris' THEN 1 WHEN 'Dallas' THEN 2 WHEN 'Tarrant' THEN 3 END AS ord\n  FROM counts\n)\nSELECT string_agg(part, '; ' ORDER BY ord) AS answer\nFROM formatted",
+      "answer": "Harris: 5,210; Dallas: 3,565; Tarrant: 3,252"
+    },
+    {
+      "node_id": "10",
+      "dataset_id": "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019",
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt",
+      "intent": "Which ISD had the highest average ISP in Tarrant County (from nodes 7-9: the county with the newest county seat) in the 2019-2020 program year? (Filter SiteCounty == 'TARRANT'; filter CEName contains 'ISD'; group by CEName; average SiteISP.)",
+      "sql": "WITH ranked AS (\n  SELECT \"CEName\", ROUND(AVG(TRY_CAST(\"SiteISP\" AS DOUBLE)), 2) AS avg_isp\n  FROM t\n  WHERE \"SiteCounty\" = 'TARRANT'\n    AND \"CEName\" LIKE '%ISD%'\n  GROUP BY \"CEName\"\n  ORDER BY avg_isp DESC, \"CEName\" ASC\n  LIMIT 1\n)\nSELECT printf('Lake Worth ISD: %.2f%% average ISP', avg_isp) AS answer\nFROM ranked",
+      "answer": "Lake Worth ISD: 65.00% average ISP"
+    },
+    {
+      "node_id": "11",
+      "dataset_id": "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020",
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt",
+      "intent": "What was the average ISP for Lake Worth ISD in Tarrant County in the 2020-2021 program year? (Filter SiteCounty == 'TARRANT'; filter CEName == 'LAKE WORTH ISD'; average SiteISP.)",
+      "sql": "SELECT printf('Lake Worth ISD: %.2f%% average ISP', AVG(TRY_CAST(\"SiteISP\" AS DOUBLE))) AS answer\nFROM t\nWHERE \"SiteCounty\" = 'TARRANT'\n  AND \"CEName\" = 'LAKE WORTH ISD'",
+      "answer": "Lake Worth ISD: 65.94% average ISP"
+    },
+    {
+      "node_id": "12",
+      "dataset_id": "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021",
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021/files/rows.txt",
+      "intent": "What was the average ISP for Lake Worth ISD in Tarrant County in the 2021-2022 program year? (Filter SiteCounty == 'TARRANT'; filter CEName == 'LAKE WORTH ISD'; average SiteISP.)",
+      "sql": "SELECT printf('Lake Worth ISD: %.2f%% average ISP', AVG(TRY_CAST(\"SiteISP\" AS DOUBLE))) AS answer\nFROM t\nWHERE \"SiteCounty\" = 'TARRANT'\n  AND \"CEName\" = 'LAKE WORTH ISD'",
+      "answer": "Lake Worth ISD: 71.65% average ISP"
+    }
+  ]
+}

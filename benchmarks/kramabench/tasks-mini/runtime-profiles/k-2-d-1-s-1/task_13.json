@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-3"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+    "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the reports-by-type table and extract identity theft counts for 2001 and 2024.",
+    "2. Divide the 2024 count by the 2001 count and round to four decimal places."
+  ],
+  "original_final_question": "Give the ratio of identity theft reports in 2024 versus 2001, rounded to 4 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the reports-by-type table and extract identity theft counts for 2001 and 2024.",
+    "Node 2 depends on node 1: Divide the 2024 count by the 2001 count and round to four decimal places.",
+    "Final answer: 13.1628"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-3",
+      "source": "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What are the identity theft report counts for 2001 and 2024?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\ndata_rows = [row for row in rows[3:] if row and row[0].isdigit()]\nidentity_by_year = {int(row[0]): int(row[2].replace(',', '').strip()) for row in data_rows}\nvalue_2001 = identity_by_year[2001]\nvalue_2024 = identity_by_year[2024]\nratio = value_2024 / value_2001\nresult = f'{value_2001}|{value_2024}'\nprint(result)\n",
+      "answer": "86250|1135291"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-3",
+      "source": "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What is the 2024-to-2001 identity theft report ratio rounded to four decimals?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\ndata_rows = [row for row in rows[3:] if row and row[0].isdigit()]\nidentity_by_year = {int(row[0]): int(row[2].replace(',', '').strip()) for row in data_rows}\nvalue_2001 = identity_by_year[2001]\nvalue_2024 = identity_by_year[2024]\nratio = value_2024 / value_2001\nresult = f'{ratio:.4f}'\nprint(result)\n",
+      "answer": "13.1628"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-3",
+      "source": "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What are the identity theft report counts for 2001 and 2024?",
+      "answer": "86250|1135291",
+      "sql": "WITH rows AS (SELECT CAST(\"Number of Reports by Type\" AS INTEGER) AS year, CAST(REPLACE(column2, ',', '') AS BIGINT) AS identity_reports FROM t WHERE regexp_matches(CAST(\"Number of Reports by Type\" AS VARCHAR), '^[0-9]+$')) SELECT CAST(MAX(CASE WHEN year=2001 THEN identity_reports END) AS VARCHAR) || '|' || CAST(MAX(CASE WHEN year=2024 THEN identity_reports END) AS VARCHAR) AS answer FROM rows"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-3",
+      "source": "datagov/kramabench-legal-easy-3/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What is the 2024-to-2001 identity theft report ratio rounded to four decimals?",
+      "answer": "13.1628",
+      "sql": "WITH rows AS (SELECT CAST(\"Number of Reports by Type\" AS INTEGER) AS year, CAST(REPLACE(column2, ',', '') AS DOUBLE) AS identity_reports FROM t WHERE regexp_matches(CAST(\"Number of Reports by Type\" AS VARCHAR), '^[0-9]+$')), vals AS (SELECT MAX(CASE WHEN year=2001 THEN identity_reports END) AS v2001, MAX(CASE WHEN year=2024 THEN identity_reports END) AS v2024 FROM rows) SELECT printf('%.4f', v2024 / v2001) AS answer FROM vals"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-22"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv",
+    "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv",
+    "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Parse the report type table and extract the Identity Theft total.",
+    "2. Parse the identity-theft-by-type table and extract Bank Account / New Accounts reports.",
+    "3. Divide the subtype count by the Identity Theft total and round to four decimals."
+  ],
+  "original_final_question": "What is the proportion of reports that were identity theft with Bank Account as the theft type and New Accounts as the theft subtype, rounded to 4 decimal places? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Parse the report type table and extract the Identity Theft total.",
+    "Node 2: Parse the identity-theft-by-type table and extract Bank Account / New Accounts reports.",
+    "Node 3 depends on nodes 1 and 2: Divide the subtype count by the Identity Theft total and round to four decimals.",
+    "Final answer: 0.0555"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-22",
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv",
+      "intent": "How many Identity Theft reports are listed in the report type table?",
+      "code": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:\n        raw_contents = f.readlines()\n    table_name = raw_contents[0].replace(',', '').strip()\n    attrs = {}\n    current = []\n    first = True\n    for line in raw_contents[1:]:\n        cleaned = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned.replace(',', '').strip() == '':\n            if not current:\n                continue\n            sub = [v.strip() for v in current[0].split(',') if v.strip()]\n            if (first or len(sub) == 1) and len(current) >= 3:\n                if first:\n                    name = table_name\n                    start = 1\n                else:\n                    name = sub[0]\n                    start = 1\n                cols = [col.strip() for col in current[start].split(',')]\n                vals = [[val.strip() for val in row.split(',')] for row in current[start + 1:]]\n                attrs[name] = TableCsv(cols, vals)\n            current = []\n            first = False\n        else:\n            current.append(cleaned)\n    return attrs\nattrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv')\nrow = next(row for row in attrs['Report Type'].values if row[0] == 'Identity Theft')\nprint(int(row[1]))\n",
+      "answer": 1135291
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-22",
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv",
+      "intent": "How many identity-theft reports have theft type Bank Account and subtype New Accounts?",
+      "code": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:\n        raw_contents = f.readlines()\n    table_name = raw_contents[0].replace(',', '').strip()\n    attrs = {}\n    current = []\n    first = True\n    for line in raw_contents[1:]:\n        cleaned = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned.replace(',', '').strip() == '':\n            if not current:\n                continue\n            sub = [v.strip() for v in current[0].split(',') if v.strip()]\n            if (first or len(sub) == 1) and len(current) >= 3:\n                if first:\n                    name = table_name\n                    start = 1\n                else:\n                    name = sub[0]\n                    start = 1\n                cols = [col.strip() for col in current[start].split(',')]\n                vals = [[val.strip() for val in row.split(',')] for row in current[start + 1:]]\n                attrs[name] = TableCsv(cols, vals)\n            current = []\n            first = False\n        else:\n            current.append(cleaned)\n    return attrs\nattrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv')\nrow = next(row for row in attrs['Identity Theft Reports by Type'].values if row[0] == 'Bank Account' and row[1] == 'New Accounts')\nprint(int(row[2]))\n",
+      "answer": 62982
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-22",
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv",
+      "intent": "What is the Bank Account/New Accounts count divided by the Identity Theft total, rounded to four decimals?",
+      "code": "import re\nclass TableCsv:\n    def __init__(self, columns, values):\n        self.columns = columns\n        self.values = values\ndef remove_commas_in_quotes(line):\n    return re.sub(r'\"[^\"]*\"', lambda m: m.group(0).replace(',', ''), line)\ndef parse_table(csv_path):\n    with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:\n        raw_contents = f.readlines()\n    table_name = raw_contents[0].replace(',', '').strip()\n    attrs = {}\n    current = []\n    first = True\n    for line in raw_contents[1:]:\n        cleaned = remove_commas_in_quotes(line).replace('\"', '').strip()\n        if cleaned.replace(',', '').strip() == '':\n            if not current:\n                continue\n            sub = [v.strip() for v in current[0].split(',') if v.strip()]\n            if (first or len(sub) == 1) and len(current) >= 3:\n                if first:\n                    name = table_name\n                    start = 1\n                else:\n                    name = sub[0]\n                    start = 1\n                cols = [col.strip() for col in current[start].split(',')]\n                vals = [[val.strip() for val in row.split(',')] for row in current[start + 1:]]\n                attrs[name] = TableCsv(cols, vals)\n            current = []\n            first = False\n        else:\n            current.append(cleaned)\n    return attrs\nreport_attrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Type.csv')\nid_attrs = parse_table('other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv')\ntotal = int(next(row for row in report_attrs['Report Type'].values if row[0] == 'Identity Theft')[1])\ncorrect = int(next(row for row in id_attrs['Identity Theft Reports by Type'].values if row[0] == 'Bank Account' and row[1] == 'New Accounts')[2])\nprint(f'{correct / total:.4f}')\n",
+      "answer": "0.0555"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-22",
+      "source": "datagov/kramabench-legal-hard-22/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Type.csv",
+      "intent": "How many identity-theft reports have theft type Bank Account and subtype New Accounts?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "question": "How many significant genes are listed for acetylproteomics? Write your answer as [ANSWER].",
+  "answer": "16",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-biomedical-hard-7/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "fact": "import os\nimport posixpath\nfrom zipfile import ZipFile\nfrom xml.etree import ElementTree as ET\n\nsource = 'datagov/kramabench-biomedical-hard-7/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(local_authoring_path):\n    workbook_path = local_authoring_path\nelif os.path.exists(source):\n    workbook_path = source\nelif os.path.exists(cache_path):\n    workbook_path = cache_path\nelse:\n    import io\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket='lakeqa-yc4103-datalake', Key=source)\n    workbook_path = io.BytesIO(obj['Body'].read())\n\nns = {\n    'a': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',\n    'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'\n}\n\ndef shared_strings(zf):\n    root = ET.fromstring(zf.read('xl/sharedStrings.xml'))\n    return [''.join(t.text or '' for t in item.findall('.//a:t', ns)) for item in root.findall('a:si', ns)]\n\ndef sheet_map(zf):\n    workbook = ET.fromstring(zf.read('xl/workbook.xml'))\n    rels = ET.fromstring(zf.read('xl/_rels/workbook.xml.rels'))\n    rid_to_target = {rel.attrib['Id']: rel.attrib['Target'] for rel in rels}\n    mapping = {}\n    for sheet in workbook.find('a:sheets', ns):\n        rid = sheet.attrib['{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id']\n        mapping[sheet.attrib['name']] = posixpath.normpath(posixpath.join('xl', rid_to_target[rid]))\n    return mapping\n\ndef cell_text(cell, strings):\n    value = cell.find('a:v', ns)\n    if cell.attrib.get('t') == 's' and value is not None:\n        return strings[int(value.text)]\n    if cell.attrib.get('t') == 'inlineStr':\n        return ''.join(t.text or '' for t in cell.findall('.//a:t', ns))\n    return '' if value is None else value.text\n\ndef sheet_rows(zf, sheet_path, strings):\n    root = ET.fromstring(zf.read(sheet_path))\n    rows = []\n    for row in root.findall('.//a:sheetData/a:row', ns):\n        rows.append([cell_text(cell, strings) for cell in row.findall('a:c', ns)])\n    return rows\n\nwith ZipFile(workbook_path) as zf:\n    strings = shared_strings(zf)\n    rows = sheet_rows(zf, sheet_map(zf)['README'], strings)\n\nheader = [value.strip() for value in rows[0]]\nsheet_idx = header.index('Sheet')\ndesc_idx = header.index('Description')\nfor row in rows[1:]:\n    description = row[desc_idx] if desc_idx < len(row) else ''\n    if 'acetylproteomics' in description.lower():\n        answer = row[sheet_idx].strip()\n        break\nelse:\n    raise ValueError('No README row describes acetylproteomics data')\nprint(answer)\n",
+      "subquestion": "Which worksheet in the workbook contains the acetylproteomics significant-gene list?",
+      "answer": "D-SE-acetyl"
+    },
+    "2": {
+      "source": "datagov/kramabench-biomedical-hard-7/files/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "fact": "import os\nimport posixpath\nfrom zipfile import ZipFile\nfrom xml.etree import ElementTree as ET\n\nsource = 'datagov/kramabench-biomedical-hard-7/files/1-s2.0-S0092867420301070-mmc3.xlsx'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(local_authoring_path):\n    workbook_path = local_authoring_path\nelif os.path.exists(source):\n    workbook_path = source\nelif os.path.exists(cache_path):\n    workbook_path = cache_path\nelse:\n    import io\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket='lakeqa-yc4103-datalake', Key=source)\n    workbook_path = io.BytesIO(obj['Body'].read())\n\nnode_1_answer = 'D-SE-acetyl'\nns = {\n    'a': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',\n    'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'\n}\n\ndef shared_strings(zf):\n    root = ET.fromstring(zf.read('xl/sharedStrings.xml'))\n    return [''.join(t.text or '' for t in item.findall('.//a:t', ns)) for item in root.findall('a:si', ns)]\n\ndef sheet_map(zf):\n    workbook = ET.fromstring(zf.read('xl/workbook.xml'))\n    rels = ET.fromstring(zf.read('xl/_rels/workbook.xml.rels'))\n    rid_to_target = {rel.attrib['Id']: rel.attrib['Target'] for rel in rels}\n    mapping = {}\n    for sheet in workbook.find('a:sheets', ns):\n        rid = sheet.attrib['{http://schemas.openxmlformats.org/officeDocument/2006/relationships}id']\n        mapping[sheet.attrib['name']] = posixpath.normpath(posixpath.join('xl', rid_to_target[rid]))\n    return mapping\n\ndef cell_text(cell, strings):\n    value = cell.find('a:v', ns)\n    if cell.attrib.get('t') == 's' and value is not None:\n        return strings[int(value.text)]\n    if cell.attrib.get('t') == 'inlineStr':\n        return ''.join(t.text or '' for t in cell.findall('.//a:t', ns))\n    return '' if value is None else value.text\n\ndef sheet_rows(zf, sheet_path, strings):\n    root = ET.fromstring(zf.read(sheet_path))\n    rows = []\n    for row in root.findall('.//a:sheetData/a:row', ns):\n        rows.append([cell_text(cell, strings) for cell in row.findall('a:c', ns)])\n    return rows\n\nwith ZipFile(workbook_path) as zf:\n    strings = shared_strings(zf)\n    paths = sheet_map(zf)\n    if node_1_answer not in paths:\n        raise ValueError(f'Sheet {node_1_answer!r} is not in the workbook')\n    rows = sheet_rows(zf, paths[node_1_answer], strings)\n\nanswer = str(sum(1 for row in rows if any(str(value).strip() for value in row)))\nprint(answer)\n",
+      "subquestion": "How many non-empty gene rows are in worksheet <node_1 answer>?",
+      "answer": "16"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: The README sheet maps the acetylproteomics description to worksheet D-SE-acetyl.",
+    "Node 2 depends on node 1: Worksheet D-SE-acetyl contains 16 non-empty gene rows.",
+    "Final answer: 16"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-biomedical-hard-7/files/1-s2.0-S0092867420301070-mmc3.xlsx"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: The README sheet maps the acetylproteomics description to worksheet D-SE-acetyl.",
+      "answer": "D-SE-acetyl"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Worksheet D-SE-acetyl contains 16 non-empty gene rows.",
+      "answer": "16"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "biomedical-hard-7",
+    "domain": "biomedical",
+    "difficulty": "hard",
+    "promoted_from": "./tasks-mini-kramabench/candidates/biomedical-hard-7.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-7/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx",
+      "2": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc3.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

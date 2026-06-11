@@ -1,0 +1,63 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-4"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+    "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter the data contributors table to FTC Web Reports (Fraud & Other) for 2022-2024.",
+    "2. Sum the filtered yearly counts."
+  ],
+  "original_final_question": "How many frauds were reported by FTC over the web between 2022 and 2024 in total? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter the data contributors table to FTC Web Reports (Fraud & Other) for 2022-2024.",
+    "Node 2 depends on node 1: Sum the filtered yearly counts.",
+    "Final answer: 2111635"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-4",
+      "source": "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "intent": "What are the FTC Web Reports (Fraud & Other) counts for 2022, 2023, and 2024?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[3:]))\nfiltered = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    contributor = row.get('Data Contributor', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and 2022 <= int(year) <= 2024 and contributor == 'FTC - Web Reports (Fraud & Other)':\n        filtered.append(int(reports.replace(',', '')))\ntotal = sum(filtered)\nprint(filtered)\n",
+      "answer": [
+        693789,
+        702598,
+        715248
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-4",
+      "source": "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "intent": "What is the total FTC Web Reports (Fraud & Other) count from 2022 through 2024?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.DictReader(f.readlines()[3:]))\nfiltered = []\nfor row in rows:\n    year = row.get('Year', '').strip()\n    contributor = row.get('Data Contributor', '').strip()\n    reports = row.get('# of Reports', '').strip()\n    if year.isdigit() and 2022 <= int(year) <= 2024 and contributor == 'FTC - Web Reports (Fraud & Other)':\n        filtered.append(int(reports.replace(',', '')))\ntotal = sum(filtered)\nprint(total)\n",
+      "answer": 2111635
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-4",
+      "source": "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "intent": "What are the FTC Web Reports (Fraud & Other) counts for 2022, 2023, and 2024?",
+      "answer": [
+        693789,
+        702598,
+        715248
+      ],
+      "sql": "SELECT CAST(REPLACE(column2, ',', '') AS BIGINT) AS answer FROM t WHERE \"Data Contributors\" IN ('2022','2023','2024') AND column1 = 'FTC - Web Reports (Fraud & Other)' ORDER BY CAST(\"Data Contributors\" AS INTEGER)"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-4",
+      "source": "datagov/kramabench-legal-easy-4/files/csn-data-book-2024-csv/CSVs/2024_CSN_Data_Contributors.csv",
+      "intent": "What is the total FTC Web Reports (Fraud & Other) count from 2022 through 2024?",
+      "answer": 2111635,
+      "sql": "SELECT SUM(CAST(REPLACE(column2, ',', '') AS BIGINT)) AS answer FROM t WHERE \"Data Contributors\" IN ('2022','2023','2024') AND column1 = 'FTC - Web Reports (Fraud & Other)'"
+    }
+  ]
+}

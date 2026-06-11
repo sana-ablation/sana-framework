@@ -1,0 +1,120 @@
+{
+  "question": "Can you find me the NYC elementary school in District 2 that ranked in the top 3 by performance category score over each school year from 2010-13. For the neighborhood this elementary school is located in, who is it named after? Only report the year when this person is born. Your response should be in the format [Answer].",
+  "answer": "1835",
+  "practical_motivation": "A parent researching consistently high-performing elementary schools in Manhattan wants to learn about the historical significance of the neighborhood where the top school is located.",
+  "nodes": {
+    "1": {
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "fact": "import csv\n\nwith open('datagov/2010-2011-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    try:\n        district = int(float((r.get('DISTRICT') or '').strip()))\n        score = float((r.get('2010-2011 PERFORMANCE CATEGORY SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    school = (r.get('SCHOOL') or '').strip().replace('P.S.', 'PS')\n    dbn = (r.get('DBN') or '').strip()\n    if district == 2 and level == 'Elementary' and school:\n        scored.append((school, score, dbn))\n\nranked = sorted(scored, key=lambda x: (-x[1], ''.join(chr(255 - ord(c)) for c in x[2])), reverse=False)[:3]\nresult = [school for school, _, _ in ranked]",
+      "subquestion": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2010-11?",
+      "depends_on": [],
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 158 Bayard Taylor",
+        "PS 290 Manhattan New School"
+      ]
+    },
+    "2": {
+      "source": "datagov/2011-2012-school-progress-report-all-schools/files/rows.txt",
+      "fact": "import csv\n\nwith open('datagov/2011-2012-school-progress-report-all-schools/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    try:\n        district = int(float((r.get('DISTRICT') or '').strip()))\n        score = float((r.get('2011-2012 PERFORMANCE CATEGORY SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    school = (r.get('SCHOOL') or '').strip().replace('P.S.', 'PS')\n    dbn = (r.get('DBN') or '').strip()\n    if district == 2 and level == 'Elementary' and school:\n        scored.append((school, score, dbn))\n\nranked = sorted(scored, key=lambda x: (-x[1], ''.join(chr(255 - ord(c)) for c in x[2])), reverse=False)[:3]\nresult = [school for school, _, _ in ranked]",
+      "subquestion": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2011-12?",
+      "depends_on": [],
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 212 Midtown West",
+        "PS 042 Benjamin Altman"
+      ]
+    },
+    "3": {
+      "source": "datagov/2012-2013-citywide-progress-report/files/rows.txt",
+      "fact": "import csv\n\nwith open('datagov/2012-2013-citywide-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    try:\n        district = int(float((r.get('DISTRICT') or '').strip()))\n        score = float((r.get('2012-2013 PERFORMANCE CATEGORY SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    school = (r.get('SCHOOL') or '').strip().replace('P.S.', 'PS')\n    dbn = (r.get('DBN') or '').strip()\n    if district == 2 and level == 'Elementary' and school:\n        scored.append((school, score, dbn))\n\nranked = sorted(scored, key=lambda x: (-x[1], ''.join(chr(255 - ord(c)) for c in x[2])), reverse=False)[:3]\nresult = [school for school, _, _ in ranked]",
+      "subquestion": "Which NYC elementary schools in District 2 ranked in the top 3 by performance category score in 2012-13?",
+      "depends_on": [],
+      "answer": [
+        "PS 77 Lower Lab School",
+        "PS 124 Yung Wing",
+        "PS 042 Benjamin Altman"
+      ]
+    },
+    "4": {
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "fact": "import csv\n\nwith open('datagov/2013-2014-school-locations/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nresult = None\nfor r in rows:\n    school = (r.get('LOCATION_NAME') or '').strip()\n    if school == 'P.S. 77 Lower Lab School':\n        nta_name = (r.get('NTA_NAME') or '').strip()\n        result = nta_name.split('-')[-1].strip() if '-' in nta_name else nta_name\n        break",
+      "subquestion": "In which Manhattan neighborhood is <intersection of node_1, node_2, node_3: PS 77 Lower Lab School> located?",
+      "depends_on": [
+        "intersection_of_1_2_3"
+      ],
+      "answer": "Carnegie Hill"
+    },
+    "5": {
+      "source": "wikipedia/Carnegie_Hill/content.txt",
+      "fact": "The neighborhood is named after the mansion that Andrew Carnegie built in 1901 at Fifth Avenue and 91st Street.",
+      "subquestion": "After whom is <node_4 answer> named?",
+      "depends_on": [
+        "node_4"
+      ],
+      "answer": "Andrew Carnegie"
+    },
+    "6": {
+      "source": "wikipedia/Andrew_Carnegie/content.txt",
+      "fact": "Andrew Carnegie (November 25, 1835 - August 11, 1919) was a Scottish-American industrialist and philanthropist.",
+      "subquestion": "In what year was <node_5 answer> born?",
+      "depends_on": [
+        "node_5"
+      ],
+      "answer": "1835"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3 superlative - nodes 1,2,3 all independent):",
+    "  Node 1: Progress report 2010-11 → {PS 77, PS 158, PS 290}",
+    "  Node 2: Progress report 2011-12 → {PS 77, PS 212, PS 042}",
+    "  Node 3: Progress report 2012-13 → {PS 77, PS 124, PS 042}",
+    "  Intersection(1,2,3) → PS 77 Lower Lab School (only school in top 3 all 3 years)",
+    "",
+    "HOP 2 (chain - node 4 depends on hop 1 result):",
+    "  Node 4: School locations → PS 77 is in Carnegie Hill",
+    "  Node 5: Wikipedia Carnegie Hill → Named after Andrew Carnegie",
+    "",
+    "HOP 3 (chain - node 6 depends on node 5):",
+    "  Node 6: Wikipedia Andrew Carnegie → Born 1835",
+    "",
+    "Final answer: 1835"
+  ],
+  "datasets_used": [
+    "2010-2011-school-progress-report",
+    "2011-2012-school-progress-report-all-schools",
+    "2012-2013-citywide-progress-report",
+    "2013-2014-school-locations",
+    "Andrew_Carnegie",
+    "Carnegie_Hill"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: Progress report 2010-11 → {PS 77, PS 158, PS 290} Node 2: Progress report 2011-12 → {PS 77, PS 212, PS 042} Node 3: Progress report 2012-13 → {PS 77, PS 124, PS 042} Intersection(1,2,3) → PS 77 Lower Lab School (only school in top 3 all 3 years)",
+      "answer": "node 1: PS 77 Lower Lab School, PS 158 Bayard Taylor, PS 290 Manhattan New School; node 2: PS 77 Lower Lab School, PS 212 Midtown West, PS 042 Benjamin Altman; node 3: PS 77 Lower Lab School, PS 124 Yung Wing, PS 042 Benjamin Altman"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5
+      ],
+      "reasoning": "Node 4: School locations → PS 77 is in Carnegie Hill Node 5: Wikipedia Carnegie Hill → Named after Andrew Carnegie",
+      "answer": "node 4: Carnegie Hill; node 5: Andrew Carnegie"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6: Wikipedia Andrew Carnegie → Born 1835",
+      "answer": "1835"
+    }
+  ]
+}

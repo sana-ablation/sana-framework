@@ -1,0 +1,67 @@
+{
+  "question": "Was there ever a year between 2001-2024 inclusive where 'Other' reports were more than half of the total reports? Answer Yes or No. No explanation needed. Write your answer as [ANSWER].",
+  "answer": "No",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = f'{df.loc[df['other_pct'].idxmax(), 'Year']}|{df['other_pct'].max():.3f}'\nprint(result)\n",
+      "subquestion": "What year has the highest Other-report share, and what is that share rounded to three decimals?",
+      "answer": "2016|0.469"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = 'Yes' if df['other_pct'].max() > 0.5 else 'No'\nprint(result)\n",
+      "subquestion": "Was Other ever more than half of total reports between 2001 and 2024 inclusive?",
+      "answer": "No"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the reports-by-type table and find the maximum Other share.",
+    "Node 2 depends on node 1: Compare that maximum share with one half and answer yes or no.",
+    "Final answer: No"
+  ],
+  "datasets_used": [
+    "csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the reports-by-type table and find the maximum Other share.",
+      "answer": "2016|0.469"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Compare that maximum share with one half and answer yes or no.",
+      "answer": "No"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-11",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-11.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-11",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-11/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

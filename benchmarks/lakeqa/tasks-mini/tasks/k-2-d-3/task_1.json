@@ -1,0 +1,64 @@
+{
+  "question": "Can you tell me which has the greatest number of incidents in 2022 among (1) the highest number of incidents where an officer applies weapon across NOPD divisions, (2) the count of APD mental-health call-log incidents in the patrol sector with the most searches due to illegal items, and (3) the highest number of incidents where an officer applies weapon across Austin City Council districts? Report the greatest number. Your response should be in the format [Answer].",
+  "answer": "5021",
+  "nodes": {
+    "1": {
+      "source": "datagov/nopd-use-of-force-incidents/files/rows.txt",
+      "subquestion": "In 2022, what is the highest number of incidents where an officer applies weapon across any NOPD divisions?",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/nopd-use-of-force-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nfiltered = df[df[\"Date Occurred\"].astype(str).str.contains(\"2022\", na=False)]\ncounts = filtered[\"Division level\"].astype(str).str.strip().replace(\"\", pd.NA).dropna().value_counts()\nanswer = str(int(counts.iloc[0]))",
+      "answer": "92"
+    },
+    "2": {
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "subquestion": "In 2022, which APD patrol sector had the most searches due to illegal items?",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-searches-by-type/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nyear = pd.to_numeric(df[\"Occurred Year\"], errors=\"coerce\")\nsearch_basis = df[\"TCOLE Search Based On\"].astype(str).str.strip()\nsector = df[\"Sector\"].astype(str).str.strip()\nfiltered = df[\n    year.eq(2022)\n    & search_basis.eq(\"Contraband/evidence In Plain View\")\n    & sector.ne(\"\")\n    & sector.str.lower().ne(\"unknown\")\n]\nanswer = str(filtered[\"Sector\"].astype(str).str.strip().value_counts().idxmax())",
+      "answer": "Edward"
+    },
+    "3": {
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "subquestion": "In 2022, how many APD call logs were labeled as mental health incidents in patrol sector <node_2 answer>?",
+      "fact": "import pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-computer-aided-dispatch-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\nnode_2_answer = \"Edward\"\n\ntotal = 0\nfor chunk in pd.read_csv(\n    obj[\"Body\"],\n    usecols=[\"Response Year\", \"Sector\", \"Mental Health Flag\"],\n    dtype=str,\n    chunksize=500000,\n    low_memory=False,\n):\n    year = pd.to_numeric(chunk[\"Response Year\"], errors=\"coerce\")\n    sector = chunk[\"Sector\"].astype(str).str.strip().str.lower()\n    mental_health = chunk[\"Mental Health Flag\"].astype(str).str.strip()\n    total += int(\n        (\n            year.eq(2022)\n            & sector.eq(node_2_answer.lower())\n            & mental_health.eq(\"Mental Health Incident\")\n        ).sum()\n    )\n\nanswer = str(total)",
+      "answer": "5021"
+    },
+    "4": {
+      "source": "datagov/apd-use-of-force/files/rows.txt",
+      "subquestion": "In 2022, what is the highest number of incidents where an officer applies weapon across any Austin City Council district?",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-use-of-force/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nfiltered = df[df[\"Occurred Date\"].astype(str).str.contains(\"2022\", na=False)]\ncounts = filtered[\"Council District\"].astype(str).str.strip().replace(\"\", pd.NA).dropna().value_counts()\nanswer = str(int(counts.iloc[0]))",
+      "answer": "1790"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: 2022 NOPD maximum division-level incident count = 92.",
+    "Node 2: 2022 APD searches-by-type top sector for contraband/evidence in plain view (excluding Unknown) = Edward.",
+    "Node 3 depends on node 2: 2022 APD CAD mental health incidents in sector Edward = 5021.",
+    "Node 4: 2022 Austin use-of-force maximum council-district incident count = 1790.",
+    "Take the largest of (92, 5021, 1790) = 5021.",
+    "Final answer: 5021"
+  ],
+  "datasets_used": [
+    "apd-computer-aided-dispatch-incidents",
+    "apd-searches-by-type",
+    "apd-use-of-force",
+    "nopd-use-of-force-incidents"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: 2022 APD searches-by-type top sector for contraband/evidence in plain view (excluding Unknown) = Edward.",
+      "answer": "node 2: Edward"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        1,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: 2022 NOPD maximum division-level incident count = 92. Node 3 depends on node 2: 2022 APD CAD mental health incidents in sector Edward = 5021. Node 4: 2022 Austin use-of-force maximum council-district incident count = 1790. Take the largest of (92, 5021, 1790) = 5021. Final answer: 5021",
+      "answer": "node 1: 92; node 3: 5021; node 4: 1790"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-easy-8"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-easy-8/files/Fire_Weather_Data_2002-2014_2016.csv",
+    "datagov/kramabench-wildfire-easy-8/files/Fire_Weather_Data_2002-2014_2016.csv",
+    "datagov/kramabench-wildfire-easy-8/files/Fire_Weather_Data_2002-2014_2016.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filters fire records to those above 100 acres.",
+    "2. Counts human and lightning causes in that filtered set.",
+    "3. And returns the larger cause category using the required label."
+  ],
+  "original_final_question": "Did lighting or humans cause more fires impacting above 100 acres? Answer with **only** 'Lightning' or 'Human'. No explanation needed. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 filters fire records to those above 100 acres.",
+    "Node 2 counts human and lightning causes in that filtered set.",
+    "Node 3 depends on node 2 and returns the larger cause category using the required label.",
+    "Final answer: Lightning"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-8",
+      "source": "datagov/kramabench-wildfire-easy-8/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "intent": "How many fire records exceed 100 acres after converting hectares to acres?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['acres'] = df['hec'] * 2.741\nlarge = df[df['acres'] > 100]\nprint(str(len(large)))\n",
+      "answer": "6658"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-easy-8",
+      "source": "datagov/kramabench-wildfire-easy-8/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "intent": "Among fires above 100 acres, how many are human-caused and lightning-caused?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['acres'] = df['hec'] * 2.741\ncounts = df[df['acres'] > 100].groupby('cause').size().to_dict()\nprint('H=' + str(int(counts.get('H', 0))) + '|L=' + str(int(counts.get('L', 0))))\n",
+      "answer": "H=1691|L=3593"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-easy-8",
+      "source": "datagov/kramabench-wildfire-easy-8/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "intent": "Which cause has more fires above 100 acres, lightning or human?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\ndf['acres'] = df['hec'] * 2.741\ncounts = df[df['acres'] > 100].groupby('cause').size().to_dict()\nprint('Lightning' if counts.get('L', 0) > counts.get('H', 0) else 'Human')\n",
+      "answer": "Lightning"
+    }
+  ]
+}

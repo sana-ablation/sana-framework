@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-environment-hard-11"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+    "datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Reshape the multi-location beach datasheet to isolate Pleasure Bay samples.",
+    "2. From the Pleasure Bay samples, keep the rows whose Enterococcus counts fail the swimming standard.",
+    "3. Average the one-day rainfall values for the failed Pleasure Bay samples and round to two decimal places."
+  ],
+  "original_final_question": "What was the average rainfall (to 2 decimal places) in the one-day period before sampling when water samples from Pleasure Bay Beach failed to meet swimming standards? A sample meets the standard if it contains fewer than or equal to 104 counts of Enterococcus per 100 milliliters of water. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: After reshaping the multi-location datasheet, 1,720 rows are Pleasure Bay samples rather than Castle Island Playground samples.",
+    "Node 2: Of those Pleasure Bay samples, 24 exceeded 104 Enterococcus counts per 100 milliliters and therefore failed the swimming standard.",
+    "Node 3 depends on nodes 1 and 2: The mean of 1-Day Rain for the 24 failed Pleasure Bay samples is 0.37 when rounded to two decimal places.",
+    "Final answer: 0.37"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-hard-11",
+      "source": "datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "intent": "After reshaping the beach datasheet into one row per sample location and date, how many rows are for Pleasure Bay sample locations rather than Castle Island Playground?",
+      "code": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\ndf = pd.read_csv(csv_path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nmeasurement_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in measurement_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=measurement_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].apply(lambda value: value.split('_')[0])\nmelted['Measure'] = melted['Variable'].apply(lambda value: value.split('_')[1])\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\npleasure_bay = tidy[tidy['Location'].ne('Castle Island Playground')]\nanswer = str(len(pleasure_bay))\nprint(answer)",
+      "answer": "1720"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-hard-11",
+      "source": "datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "intent": "Among those Pleasure Bay rows, how many samples exceeded 104 Enterococcus counts per 100 milliliters?",
+      "code": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\ndf = pd.read_csv(csv_path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nmeasurement_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in measurement_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=measurement_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].apply(lambda value: value.split('_')[0])\nmelted['Measure'] = melted['Variable'].apply(lambda value: value.split('_')[1])\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\npleasure_bay = tidy[tidy['Location'].ne('Castle Island Playground')]\nfailures = pleasure_bay[pleasure_bay['Enterococcus'] > 104]\nanswer = str(len(failures))\nprint(answer)",
+      "answer": "24"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-hard-11",
+      "source": "datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "intent": "Using <node_1 answer> Pleasure Bay rows and <node_2 answer> failed-standard samples, what is the mean one-day rainfall for the failed samples, rounded to 2 decimal places?",
+      "code": "import os\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-hard-11/files/pleasure_bay_and_castle_island_beach_datasheet.csv'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    csv_path = local_authoring_path\n\nnode_1_answer = '1720'\nnode_2_answer = '24'\ndf = pd.read_csv(csv_path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nmeasurement_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in measurement_cols]\nmelted = df.melt(id_vars=id_cols, value_vars=measurement_cols, var_name='Variable', value_name='Value')\nmelted['Location'] = melted['Variable'].apply(lambda value: value.split('_')[0])\nmelted['Measure'] = melted['Variable'].apply(lambda value: value.split('_')[1])\ntidy = melted.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\npleasure_bay = tidy[tidy['Location'].ne('Castle Island Playground')]\nfailures = pleasure_bay[pleasure_bay['Enterococcus'] > 104]\nassert str(len(pleasure_bay)) == node_1_answer\nassert str(len(failures)) == node_2_answer\nanswer = f\"{failures['1-Day Rain'].mean():.2f}\"\nprint(answer)",
+      "answer": "0.37"
+    }
+  ]
+}

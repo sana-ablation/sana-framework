@@ -1,0 +1,30 @@
+{
+  "question": "For each year from 2005 through 2010, define Bonus Volatility-Adjusted Level (BVAL) as the draws' average New York Lotto bonus ball number plus half of the standard deviation of bonus ball numbers. Which year has the highest BVAL? If there is a tie, choose the earlier year. Your response should be in the format [Answer].",
+  "answer": "2007",
+  "practical_motivation": "A lottery analyst wants to identify the year when bonus ball values were both high on average and highly dispersed.",
+  "nodes": {
+    "1": {
+      "source": "datagov/lottery-ny-lotto-winning-numbers-beginning-2001/files/rows.txt",
+      "fact": "import pandas as pd\n\ndf = pd.read_csv('datagov/lottery-ny-lotto-winning-numbers-beginning-2001/files/rows.txt')\ndf['Draw Date'] = pd.to_datetime(df['Draw Date'], errors='coerce')\ndf['Bonus #'] = pd.to_numeric(df['Bonus #'], errors='coerce')\ndf['year'] = df['Draw Date'].dt.year\n\nfiltered = df[df['year'].between(2005, 2010, inclusive='both')].copy()\nstats = filtered.groupby('year')['Bonus #'].agg(['mean', 'std']).reset_index()\nstats['bval'] = stats['mean'] + 0.5 * stats['std']\nranked = stats.sort_values(['bval', 'year'], ascending=[False, True])\nresult = str(int(ranked.iloc[0]['year']))",
+      "subquestion": "For each year from 2005 through 2010, compute BVAL (Bonus Volatility-Adjusted Level) as the draws' average bonus ball number plus half of the standard deviation of bonus ball numbers. Which year has the highest BVAL? If there is a tie, choose the earlier year.",
+      "answer": "2007"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: For each year from 2005 through 2010, compute BVAL = average bonus ball number + 0.5 x standard deviation of bonus ball numbers, then rank descending with earlier-year tie break. The highest BVAL is in 2007.",
+    "Final answer: 2007"
+  ],
+  "datasets_used": [
+    "lottery-ny-lotto-winning-numbers-beginning-2001"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: For each year from 2005 through 2010, compute BVAL = average bonus ball number + 0.5 x standard deviation of bonus ball numbers, then rank descending with earlier-year tie break. The highest BVAL is in 2007. Final answer: 2007",
+      "answer": "node 1: 2007"
+    }
+  ]
+}

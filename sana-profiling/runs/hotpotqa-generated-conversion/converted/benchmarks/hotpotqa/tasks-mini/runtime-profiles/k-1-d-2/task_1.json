@@ -1,0 +1,22 @@
+{
+  "dataset_sequence": [
+    "wikipedia/hotpotqa__5a714bb35542994082a3e78f",
+    "wikipedia/hotpotqa__5a714bb35542994082a3e78f"
+  ],
+  "source_sequence": [
+    "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/Gaetano_Donizetti.txt",
+    "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/William_Walton.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Read both supporting pages and determine the relevant evidence from each.",
+    "2. Compare the evidence from the two pages and return the answer requested by the question."
+  ],
+  "original_final_question": "Which composer was born later, Gaetano Donizetti or William Walton? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "ideal_code": [],
+  "ideal_query": []
+}

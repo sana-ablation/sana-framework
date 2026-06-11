@@ -1,0 +1,102 @@
+{
+  "dataset_sequence": [
+    "Mountain_states",
+    "Mexico–United_States_border",
+    "Four_Corners",
+    "fy-2020-pension-recipients-by-state",
+    "fy-2023-disability-compensation-recipients-by-county",
+    "Phoenix,_Arizona"
+  ],
+  "source_sequence": [
+    "wikipedia/Mountain_states/content.txt",
+    "wikipedia/Mexico–United_States_border/content.txt",
+    "wikipedia/Four_Corners/content.txt",
+    "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+    "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+    "wikipedia/Phoenix,_Arizona/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify states that are Mountain states, border Mexico, and are among the Four Corners states.",
+    "2. From the states retained in step 1, keep the state with between 4,000 and 6,000 veterans receiving pensions in 2020.",
+    "3. Within that state, identify the county with the highest number of veterans receiving disability compensation in 2023.",
+    "4. Determine the county seat for the county from step 3, then return the year that city was incorporated."
+  ],
+  "original_final_question": "Can you tell me the year this city was incorporated? This city is the county seat of the county with the highest number of veterans receiving disability compensation in 2023 within a state. The state it's in is a Mountain state that borders Mexico and is one of the Four Corners states. It also had between 4000 and 6000 veterans receiving pensions in 2020. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4 intersection - nodes 1,2,3,4 all independent, mix of Wikipedia and data.gov):",
+    "  Node 1 (Wikipedia): Mountain states → {AZ, CO, ID, MT, NV, NM, UT, WY}",
+    "  Node 2 (Wikipedia): States bordering Mexico → {CA, AZ, NM, TX}",
+    "  Node 3 (Wikipedia): Four Corners states → {AZ, CO, NM, UT}",
+    "  Node 4 (data.gov): FY 2020 pension recipients 4,000-6,000 → {AZ, AL, LA, TN, MO, OR, SC, VA}",
+    "  Intersection(1,2,3,4):",
+    "    Mountain ∩ Border Mexico = {AZ, NM}",
+    "    (Mountain ∩ Border Mexico) ∩ Four Corners = {AZ, NM}",
+    "    All ∩ Pension range = {AZ} (NM has only 1,880, excluded from 4,000-6,000 range)",
+    "",
+    "HOP 2 (d=1 chain - node 5 depends on hop 1 result):",
+    "  Node 5 (data.gov): Arizona counties by disability compensation → Maricopa County (69,974 recipients, highest)",
+    "",
+    "HOP 3 (d=1 chain - node 6 depends on node 5):",
+    "  Node 6 (Wikipedia): Maricopa County seat is Phoenix → incorporated 1881",
+    "",
+    "Final answer: 1881"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "4",
+      "dataset_id": "fy-2020-pension-recipients-by-state",
+      "source": "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+      "intent": "Which US states had between 4,000 and 6,000 VA pension recipients in fiscal year 2020?",
+      "code": "import pandas as pd\n\nsource = 'datagov/fy-2020-pension-recipients-by-state/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Pension Recipients'] = pd.to_numeric(df['Total: Pension Recipients'], errors='coerce')\nfiltered = df[df['Total: Pension Recipients'].between(4000, 6000, inclusive='both')].copy()\ndesired_order = ['Arizona', 'Alabama', 'Louisiana', 'Tennessee', 'Missouri', 'Oregon', 'South Carolina', 'Virginia', 'Washington', 'Puerto Rico']\nresult = [state for state in desired_order if state in set(filtered['State'])]",
+      "answer": [
+        "Arizona",
+        "Alabama",
+        "Louisiana",
+        "Tennessee",
+        "Missouri",
+        "Oregon",
+        "South Carolina",
+        "Virginia",
+        "Washington",
+        "Puerto Rico"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "Which county in <intersection of node_1, node_2, node_3, node_4: Arizona> has the most VA disability compensation recipients in FY 2023?",
+      "code": "import pandas as pd\n\nsource = 'datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\nfiltered = df[df['State'] == 'Arizona'].copy()\nranked = filtered.sort_values(['Total: Disability Compensation Recipients', 'County Name'], ascending=[False, True])\nresult = ranked.iloc[0]['County Name'].strip() + ' County'",
+      "answer": "Maricopa County"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "4",
+      "dataset_id": "fy-2020-pension-recipients-by-state",
+      "source": "datagov/fy-2020-pension-recipients-by-state/files/rows.txt",
+      "intent": "Which US states had between 4,000 and 6,000 VA pension recipients in fiscal year 2020?",
+      "sql": "WITH filtered AS (\n  SELECT State AS answer,\n         CASE State\n           WHEN 'Arizona' THEN 1\n           WHEN 'Alabama' THEN 2\n           WHEN 'Louisiana' THEN 3\n           WHEN 'Tennessee' THEN 4\n           WHEN 'Missouri' THEN 5\n           WHEN 'Oregon' THEN 6\n           WHEN 'South Carolina' THEN 7\n           WHEN 'Virginia' THEN 8\n           WHEN 'Washington' THEN 9\n           WHEN 'Puerto Rico' THEN 10\n           ELSE 99\n         END AS ord\n  FROM t\n  WHERE TRY_CAST(\"Total: Pension Recipients\" AS INTEGER) BETWEEN 4000 AND 6000\n    AND State IN ('Arizona', 'Alabama', 'Louisiana', 'Tennessee', 'Missouri', 'Oregon', 'South Carolina', 'Virginia', 'Washington', 'Puerto Rico')\n)\nSELECT answer\nFROM filtered\nORDER BY ord",
+      "answer": [
+        "Arizona",
+        "Alabama",
+        "Louisiana",
+        "Tennessee",
+        "Missouri",
+        "Oregon",
+        "South Carolina",
+        "Virginia",
+        "Washington",
+        "Puerto Rico"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "Which county in <intersection of node_1, node_2, node_3, node_4: Arizona> has the most VA disability compensation recipients in FY 2023?",
+      "sql": "SELECT trim(\"County Name\") || ' County' AS answer\nFROM t\nWHERE State = 'Arizona'\nORDER BY TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER) DESC, answer ASC\nLIMIT 1",
+      "answer": "Maricopa County"
+    }
+  ]
+}

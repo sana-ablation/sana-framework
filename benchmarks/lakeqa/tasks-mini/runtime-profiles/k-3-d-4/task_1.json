@@ -1,0 +1,189 @@
+{
+  "dataset_sequence": [
+    "crime-incidents-in-2018",
+    "crime-incidents-in-2019",
+    "crime-incidents-in-2020",
+    "crime-incidents-in-2021",
+    "Neighborhoods_in_Washington,_D.C.",
+    "Chevy_Chase,_Maryland",
+    "Montgomery_County,_Maryland"
+  ],
+  "source_sequence": [
+    "datagov/crime-incidents-in-2018/files/data.txt",
+    "datagov/crime-incidents-in-2019/files/data.txt",
+    "datagov/crime-incidents-in-2020/files/data.txt",
+    "datagov/crime-incidents-in-2021/files/data.txt",
+    "wikipedia/Neighborhoods_in_Washington,_D.C./content.txt",
+    "wikipedia/Chevy_Chase,_Maryland/content.txt",
+    "wikipedia/Montgomery_County,_Maryland/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For each DC ward, compute the total crime count in 2018, 2019, 2020, and 2021, then identify the ward with the lowest average across those four years.",
+    "2. List the Washington, D.C. neighborhoods in the ward identified from the four-year crime comparison.",
+    "3. Determine which Maryland area shares a name with one of those neighborhoods and identify the Maryland county containing that area.",
+    "4. For that Maryland county, determine its 2020 average-household-income rank among U.S. counties and return the rank."
+  ],
+  "original_final_question": "I'm analyzing the DC Ward that had the lowest average crime count from 2018 to 2021. Find the county in Maryland containing areas sharing a name with the neighborhoods in this ward. Report the rank of the average household income in U.S. in 2020. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4, data.gov AGGREGATION - nodes 1-4):",
+    "  Node 1: In 2018, DC crime incidents by ward (total crimes): Ward 1 (4,734), Ward 2 (6,634), Ward 3 (1,930), Ward 4 (3,136), Ward 5 (5,191), Ward 6 (4,335), Ward 7 (4,514), Ward 8 (3,372).",
+    "  Node 2: In 2019, DC crime incidents by ward (total crimes): Ward 1 (4,826), Ward 2 (7,478), Ward 3 (1,952), Ward 4 (2,942), Ward 5 (5,256), Ward 6 (4,325), Ward 7 (4,179), Ward 8 (3,011).",
+    "  Node 3: In 2020, DC crime incidents by ward (total crimes): Ward 1 (3,542), Ward 2 (4,685), Ward 3 (1,709), Ward 4 (2,703), Ward 5 (4,394), Ward 6 (3,815), Ward 7 (4,148), Ward 8 (2,935).",
+    "  Node 4: In 2021, DC crime incidents by ward (total crimes): Ward 1 (4,195), Ward 2 (5,360), Ward 3 (1,440), Ward 4 (2,576), Ward 5 (4,415), Ward 6 (3,799), Ward 7 (3,585), Ward 8 (2,926).",
+    "  Aggregation: Average crime count across 2018-2021 for each ward",
+    "    Ward 1: (4734+4826+3542+4195)/4 = 4324.25",
+    "    Ward 2: (6634+7478+4685+5360)/4 = 6039.25",
+    "    Ward 3: (1930+1952+1709+1440)/4 = 1757.75 (LOWEST)",
+    "    Ward 4: (3136+2942+2703+2576)/4 = 2839.25",
+    "  Result: Ward 3 has lowest average (1757.75)",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 5-6):",
+    "  Node 5: In the Neighborhoods in Washington, D.C. list, Ward 3 neighborhoods are: American University Park, Berkley, Cathedral Heights, Chevy Chase, Cleveland Park, Colony Hill, Forest Hills, Foxhall, Friendship Heights, Glover Park, Kent, Massachusetts Heights, McLean Gardens, North Cleveland Park, Observatory Circle, The Palisades, Potomac Heights, Spring Valley, Tenleytown, Wakefield, Wesley Heights, Woodland Normanstone, and Woodley Park.",
+    "  Node 6: Chevy Chase is the colloquial name of an area that includes a town, several incorporated villages, and an unincorporated census-designated place in southern Montgomery County, Maryland; and one adjoining neighborhood in northwest Washington, D.C.",
+    "  Result: Montgomery County, Maryland",
+    "",
+    "HOP 3 (d=1, Wikipedia - node 7 depends on node 6):",
+    "  Node 7: The average household income in Montgomery County is the 20th-highest among U.S. counties as of 2020.",
+    "  Final answer: 20"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "crime-incidents-in-2018",
+      "source": "datagov/crime-incidents-in-2018/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2018 file; group by WARD in feature properties; count incidents per ward.)",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2018/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ncounts = df[df['WARD'] != ''].groupby('WARD').size().reset_index(name='incident_count')\ncounts['ward_label'] = 'Ward ' + counts['WARD']\ncounts = counts.sort_values('ward_label')\nresult = dict(zip(counts['ward_label'], counts['incident_count'].astype(int)))",
+      "answer": {
+        "Ward 1": 4734,
+        "Ward 2": 6634,
+        "Ward 3": 1930,
+        "Ward 4": 3136,
+        "Ward 5": 5191,
+        "Ward 6": 4335,
+        "Ward 7": 4514,
+        "Ward 8": 3372
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "crime-incidents-in-2019",
+      "source": "datagov/crime-incidents-in-2019/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2019 file; group by WARD in feature properties; count incidents per ward.)",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2019/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ncounts = df[df['WARD'] != ''].groupby('WARD').size().reset_index(name='incident_count')\ncounts['ward_label'] = 'Ward ' + counts['WARD']\ncounts = counts.sort_values('ward_label')\nresult = dict(zip(counts['ward_label'], counts['incident_count'].astype(int)))",
+      "answer": {
+        "Ward 1": 4826,
+        "Ward 2": 7478,
+        "Ward 3": 1952,
+        "Ward 4": 2942,
+        "Ward 5": 5256,
+        "Ward 6": 4325,
+        "Ward 7": 4179,
+        "Ward 8": 3011
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "crime-incidents-in-2020",
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2020 file; group by WARD in feature properties; count incidents per ward.)",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2020/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ncounts = df[df['WARD'] != ''].groupby('WARD').size().reset_index(name='incident_count')\ncounts['ward_label'] = 'Ward ' + counts['WARD']\ncounts = counts.sort_values('ward_label')\nresult = dict(zip(counts['ward_label'], counts['incident_count'].astype(int)))",
+      "answer": {
+        "Ward 1": 3542,
+        "Ward 2": 4685,
+        "Ward 3": 1709,
+        "Ward 4": 2703,
+        "Ward 5": 4394,
+        "Ward 6": 3815,
+        "Ward 7": 4148,
+        "Ward 8": 2935
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-incidents-in-2021",
+      "source": "datagov/crime-incidents-in-2021/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2021 file; group by WARD in feature properties; count incidents per ward.)",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2021/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ncounts = df[df['WARD'] != ''].groupby('WARD').size().reset_index(name='incident_count')\ncounts['ward_label'] = 'Ward ' + counts['WARD']\ncounts = counts.sort_values('ward_label')\nresult = dict(zip(counts['ward_label'], counts['incident_count'].astype(int)))",
+      "answer": {
+        "Ward 1": 4195,
+        "Ward 2": 5360,
+        "Ward 3": 1440,
+        "Ward 4": 2576,
+        "Ward 5": 4415,
+        "Ward 6": 3799,
+        "Ward 7": 3585,
+        "Ward 8": 2926
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "crime-incidents-in-2018",
+      "source": "datagov/crime-incidents-in-2018/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2018 file; group by WARD in feature properties; count incidents per ward.)",
+      "sql": "WITH counts AS (\n  SELECT 'Ward ' || trim(f.properties.WARD) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.WARD) <> ''\n  GROUP BY ward\n)\nSELECT json_group_object(ward, cnt) AS answer\nFROM counts",
+      "answer": {
+        "Ward 1": 4734,
+        "Ward 2": 6634,
+        "Ward 3": 1930,
+        "Ward 4": 3136,
+        "Ward 5": 5191,
+        "Ward 6": 4335,
+        "Ward 7": 4514,
+        "Ward 8": 3372
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "crime-incidents-in-2019",
+      "source": "datagov/crime-incidents-in-2019/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2019 file; group by WARD in feature properties; count incidents per ward.)",
+      "sql": "WITH counts AS (\n  SELECT 'Ward ' || trim(f.properties.WARD) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.WARD) <> ''\n  GROUP BY ward\n)\nSELECT json_group_object(ward, cnt) AS answer\nFROM counts",
+      "answer": {
+        "Ward 1": 4826,
+        "Ward 2": 7478,
+        "Ward 3": 1952,
+        "Ward 4": 2942,
+        "Ward 5": 5256,
+        "Ward 6": 4325,
+        "Ward 7": 4179,
+        "Ward 8": 3011
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "crime-incidents-in-2020",
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2020 file; group by WARD in feature properties; count incidents per ward.)",
+      "sql": "WITH counts AS (\n  SELECT 'Ward ' || trim(f.properties.WARD) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.WARD) <> ''\n  GROUP BY ward\n)\nSELECT json_group_object(ward, cnt) AS answer\nFROM counts",
+      "answer": {
+        "Ward 1": 3542,
+        "Ward 2": 4685,
+        "Ward 3": 1709,
+        "Ward 4": 2703,
+        "Ward 5": 4394,
+        "Ward 6": 3815,
+        "Ward 7": 4148,
+        "Ward 8": 2935
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-incidents-in-2021",
+      "source": "datagov/crime-incidents-in-2021/files/data.txt",
+      "intent": "Which DC Ward had the lowest average total crime count across 2018-2021? (Filter for this node: 2021 file; group by WARD in feature properties; count incidents per ward.)",
+      "sql": "WITH counts AS (\n  SELECT 'Ward ' || trim(f.properties.WARD) AS ward, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.WARD) <> ''\n  GROUP BY ward\n)\nSELECT json_group_object(ward, cnt) AS answer\nFROM counts",
+      "answer": {
+        "Ward 1": 4195,
+        "Ward 2": 5360,
+        "Ward 3": 1440,
+        "Ward 4": 2576,
+        "Ward 5": 4415,
+        "Ward 6": 3799,
+        "Ward 7": 3585,
+        "Ward 8": 2926
+      }
+    }
+  ]
+}

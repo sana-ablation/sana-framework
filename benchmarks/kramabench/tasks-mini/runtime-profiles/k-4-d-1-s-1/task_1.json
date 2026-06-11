@@ -1,0 +1,59 @@
+{
+  "dataset_sequence": [
+    "kramabench-astronomy-easy-4"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+    "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+    "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+    "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the yearly sunspot file and restrict it to 1960 through 2020.",
+    "2. Identify activity maxima using the requested prominence and distance rules.",
+    "3. Identify activity minima using the same rules on the inverted yearly series.",
+    "4. Average the spacing between minima and format the requested period, maximum-year, and minimum-year summary."
+  ],
+  "original_final_question": "Determine the approximate period of solar activity cycles and identify the top five years of minimum and maximum activity between 1960 and 2020 using historical yearly mean sunspot numbers. To be considered as a maximum, a peak needs to have a prominence of 20 and distance of 5. Similar rules apply for the minimum. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the yearly sunspot file and restrict it to 1960 through 2020.",
+    "Node 2 depends on node 1: Identify activity maxima using the requested prominence and distance rules.",
+    "Node 3 depends on node 1: Identify activity minima using the same rules on the inverted series.",
+    "Node 4 depends on nodes 2 and 3: Average the spacing between minima and format the requested summary.",
+    "Final answer: The average period is 11 years, with maxima in 1968, 1979, 1989, 2000, and 2014, and minima in 1964, 1976, 1986, 1996, and 2008."
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-easy-4",
+      "source": "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+      "intent": "How many yearly sunspot records fall between 1960 and 2020 inclusive?",
+      "code": "import pandas as pd\nimport math\npath = 'other-benchmarks/Kramabench/data/astronomy/input/SILSO/SN_y_tot_V2.0.csv'\ndf = pd.read_csv(path, sep=';', header=None, names=['Year', 'MeanSunspotNumber', 'StdDev', 'Observations', 'Definitive'])\ndf['YearInt'] = df['Year'].apply(math.floor).astype(int)\nfiltered = df[(df['YearInt'] >= 1960) & (df['YearInt'] <= 2020)].copy()\nyears = filtered['YearInt'].tolist()\nvalues = filtered['MeanSunspotNumber'].tolist()\ndef _prominences(vals, peaks):\n    out = []\n    n = len(vals)\n    for i in peaks:\n        left = i\n        while left > 0:\n            left -= 1\n            if vals[left] > vals[i]:\n                break\n        right = i\n        while right < n - 1:\n            right += 1\n            if vals[right] > vals[i]:\n                break\n        out.append(min(vals[i] - min(vals[left:i + 1]), vals[i] - min(vals[i:right + 1])))\n    return out\ndef find_peaks_like_scipy(vals, prominence=20, distance=5):\n    peaks = [i for i in range(1, len(vals) - 1) if vals[i] > vals[i - 1] and vals[i] > vals[i + 1]]\n    peaks = [i for i, p in zip(peaks, _prominences(vals, peaks)) if p >= prominence]\n    kept = []\n    for i in sorted(peaks, key=lambda j: vals[j], reverse=True):\n        if all(abs(i - j) >= distance for j in kept):\n            kept.append(i)\n    return sorted(kept)\ndef english_years(items):\n    items = [str(x) for x in items]\n    return ', '.join(items[:-1]) + ', and ' + items[-1]\nmaxima_years = [years[i] for i in find_peaks_like_scipy(values)]\nminima_years = [years[i] for i in find_peaks_like_scipy([-v for v in values])]\navg_period = sum(b - a for a, b in zip(minima_years, minima_years[1:])) / (len(minima_years) - 1)\nresult = str(len(filtered))\nprint(result)\n",
+      "answer": "61"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-easy-4",
+      "source": "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+      "intent": "Which years are activity maxima under the prominence and distance rules?",
+      "code": "import pandas as pd\nimport math\npath = 'other-benchmarks/Kramabench/data/astronomy/input/SILSO/SN_y_tot_V2.0.csv'\ndf = pd.read_csv(path, sep=';', header=None, names=['Year', 'MeanSunspotNumber', 'StdDev', 'Observations', 'Definitive'])\ndf['YearInt'] = df['Year'].apply(math.floor).astype(int)\nfiltered = df[(df['YearInt'] >= 1960) & (df['YearInt'] <= 2020)].copy()\nyears = filtered['YearInt'].tolist()\nvalues = filtered['MeanSunspotNumber'].tolist()\ndef _prominences(vals, peaks):\n    out = []\n    n = len(vals)\n    for i in peaks:\n        left = i\n        while left > 0:\n            left -= 1\n            if vals[left] > vals[i]:\n                break\n        right = i\n        while right < n - 1:\n            right += 1\n            if vals[right] > vals[i]:\n                break\n        out.append(min(vals[i] - min(vals[left:i + 1]), vals[i] - min(vals[i:right + 1])))\n    return out\ndef find_peaks_like_scipy(vals, prominence=20, distance=5):\n    peaks = [i for i in range(1, len(vals) - 1) if vals[i] > vals[i - 1] and vals[i] > vals[i + 1]]\n    peaks = [i for i, p in zip(peaks, _prominences(vals, peaks)) if p >= prominence]\n    kept = []\n    for i in sorted(peaks, key=lambda j: vals[j], reverse=True):\n        if all(abs(i - j) >= distance for j in kept):\n            kept.append(i)\n    return sorted(kept)\ndef english_years(items):\n    items = [str(x) for x in items]\n    return ', '.join(items[:-1]) + ', and ' + items[-1]\nmaxima_years = [years[i] for i in find_peaks_like_scipy(values)]\nminima_years = [years[i] for i in find_peaks_like_scipy([-v for v in values])]\navg_period = sum(b - a for a, b in zip(minima_years, minima_years[1:])) / (len(minima_years) - 1)\nresult = str(maxima_years)\nprint(result)\n",
+      "answer": "[1968, 1979, 1989, 2000, 2014]"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-easy-4",
+      "source": "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+      "intent": "Which years are activity minima under the same prominence and distance rules?",
+      "code": "import pandas as pd\nimport math\npath = 'other-benchmarks/Kramabench/data/astronomy/input/SILSO/SN_y_tot_V2.0.csv'\ndf = pd.read_csv(path, sep=';', header=None, names=['Year', 'MeanSunspotNumber', 'StdDev', 'Observations', 'Definitive'])\ndf['YearInt'] = df['Year'].apply(math.floor).astype(int)\nfiltered = df[(df['YearInt'] >= 1960) & (df['YearInt'] <= 2020)].copy()\nyears = filtered['YearInt'].tolist()\nvalues = filtered['MeanSunspotNumber'].tolist()\ndef _prominences(vals, peaks):\n    out = []\n    n = len(vals)\n    for i in peaks:\n        left = i\n        while left > 0:\n            left -= 1\n            if vals[left] > vals[i]:\n                break\n        right = i\n        while right < n - 1:\n            right += 1\n            if vals[right] > vals[i]:\n                break\n        out.append(min(vals[i] - min(vals[left:i + 1]), vals[i] - min(vals[i:right + 1])))\n    return out\ndef find_peaks_like_scipy(vals, prominence=20, distance=5):\n    peaks = [i for i in range(1, len(vals) - 1) if vals[i] > vals[i - 1] and vals[i] > vals[i + 1]]\n    peaks = [i for i, p in zip(peaks, _prominences(vals, peaks)) if p >= prominence]\n    kept = []\n    for i in sorted(peaks, key=lambda j: vals[j], reverse=True):\n        if all(abs(i - j) >= distance for j in kept):\n            kept.append(i)\n    return sorted(kept)\ndef english_years(items):\n    items = [str(x) for x in items]\n    return ', '.join(items[:-1]) + ', and ' + items[-1]\nmaxima_years = [years[i] for i in find_peaks_like_scipy(values)]\nminima_years = [years[i] for i in find_peaks_like_scipy([-v for v in values])]\navg_period = sum(b - a for a, b in zip(minima_years, minima_years[1:])) / (len(minima_years) - 1)\nresult = str(minima_years)\nprint(result)\n",
+      "answer": "[1964, 1976, 1986, 1996, 2008]"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-astronomy-easy-4",
+      "source": "datagov/kramabench-astronomy-easy-4/files/SILSO/SN_y_tot_V2.0.csv",
+      "intent": "Combining the detected extrema, what period and extrema years should be reported?",
+      "code": "import pandas as pd\nimport math\npath = 'other-benchmarks/Kramabench/data/astronomy/input/SILSO/SN_y_tot_V2.0.csv'\ndf = pd.read_csv(path, sep=';', header=None, names=['Year', 'MeanSunspotNumber', 'StdDev', 'Observations', 'Definitive'])\ndf['YearInt'] = df['Year'].apply(math.floor).astype(int)\nfiltered = df[(df['YearInt'] >= 1960) & (df['YearInt'] <= 2020)].copy()\nyears = filtered['YearInt'].tolist()\nvalues = filtered['MeanSunspotNumber'].tolist()\ndef _prominences(vals, peaks):\n    out = []\n    n = len(vals)\n    for i in peaks:\n        left = i\n        while left > 0:\n            left -= 1\n            if vals[left] > vals[i]:\n                break\n        right = i\n        while right < n - 1:\n            right += 1\n            if vals[right] > vals[i]:\n                break\n        out.append(min(vals[i] - min(vals[left:i + 1]), vals[i] - min(vals[i:right + 1])))\n    return out\ndef find_peaks_like_scipy(vals, prominence=20, distance=5):\n    peaks = [i for i in range(1, len(vals) - 1) if vals[i] > vals[i - 1] and vals[i] > vals[i + 1]]\n    peaks = [i for i, p in zip(peaks, _prominences(vals, peaks)) if p >= prominence]\n    kept = []\n    for i in sorted(peaks, key=lambda j: vals[j], reverse=True):\n        if all(abs(i - j) >= distance for j in kept):\n            kept.append(i)\n    return sorted(kept)\ndef english_years(items):\n    items = [str(x) for x in items]\n    return ', '.join(items[:-1]) + ', and ' + items[-1]\nmaxima_years = [years[i] for i in find_peaks_like_scipy(values)]\nminima_years = [years[i] for i in find_peaks_like_scipy([-v for v in values])]\navg_period = sum(b - a for a, b in zip(minima_years, minima_years[1:])) / (len(minima_years) - 1)\nperiod_years = int(round(avg_period))\nresult = f'The average period is {period_years} years, with maxima in {english_years(maxima_years)}, and minima in {english_years(minima_years)}.'\nprint(result)\n",
+      "answer": "The average period is 11 years, with maxima in 1968, 1979, 1989, 2000, and 2014, and minima in 1964, 1976, 1986, 1996, and 2008."
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "dataset_sequence": [
+    "kramabench-astronomy-easy-1"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+    "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0311geomag_forecast.txt",
+    "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0312geomag_forecast.txt",
+    "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0313geomag_forecast.txt",
+    "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Extract the March 10 through March 12 predicted AP values from the March 9 forecast file.",
+    "2. Extract the observed AP value for March 10 from the corresponding following-day report.",
+    "3. Extract the observed AP value for March 11 from the corresponding following-day report.",
+    "4. Extract the observed AP value for March 12 from the corresponding following-day report.",
+    "5. Compute the mean absolute error between the forecast and observed AP values."
+  ],
+  "original_final_question": "What is the estimation error, in terms of MAE, of NOAA SWPC's 3-day forecast of AP from March 9, 2025 for the period March 10-12, 2025? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Extract the March 10-12 predicted AP values from the March 9 forecast file.",
+    "Node 2: Extract the observed AP value for March 10 from the following day report.",
+    "Node 3: Extract the observed AP value for March 11 from the following day report.",
+    "Node 4: Extract the observed AP value for March 12 from the following day report.",
+    "Node 5 depends on nodes 1-4: Compute the mean absolute error between forecast and observed AP values.",
+    "Final answer: 15"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+      "intent": "What AP values did the March 9 forecast predict for March 10 through March 12?",
+      "code": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0309geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Predicted Ap (\\d{2}) Mar-(\\d{2}) Mar\\s+(\\d+)-(\\d+)-(\\d+)', content)\nresult = str(list(map(int, match.groups()[2:]))).replace(\"'\", '\"')\nprint(result)\n",
+      "answer": "[25, 20, 12]"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0311geomag_forecast.txt",
+      "intent": "What observed AP for March 10 is reported in the March 11 file?",
+      "code": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0311geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\nresult = str(int(match.group(2)))\nprint(result)\n",
+      "answer": "10"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0312geomag_forecast.txt",
+      "intent": "What observed AP for March 11 is reported in the March 12 file?",
+      "code": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0312geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\nresult = str(int(match.group(2)))\nprint(result)\n",
+      "answer": "10"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0313geomag_forecast.txt",
+      "intent": "What observed AP for March 12 is reported in the March 13 file?",
+      "code": "import re\npath = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0313geomag_forecast.txt'\ncontent = open(path).read()\nmatch = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\nresult = str(int(match.group(2)))\nprint(result)\n",
+      "answer": "32"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+      "intent": "What is the mean absolute error between the three forecasted AP values and the three observed AP values?",
+      "code": "import re\nforecast_path = 'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0309geomag_forecast.txt'\nobs_paths = [\n    'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0311geomag_forecast.txt',\n    'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0312geomag_forecast.txt',\n    'other-benchmarks/Kramabench/data/astronomy/input/geomag_forecast/0313geomag_forecast.txt',\n]\nforecast_content = open(forecast_path).read()\nmatch = re.search(r'Predicted Ap (\\d{2}) Mar-(\\d{2}) Mar\\s+(\\d+)-(\\d+)-(\\d+)', forecast_content)\nforecast = list(map(int, match.groups()[2:]))\nobserved = []\nfor path in obs_paths:\n    content = open(path).read()\n    match = re.search(r'Observed Ap (\\d{2}) Mar\\s+(\\d+)', content)\n    observed.append(int(match.group(2)))\nresult = str(int(sum(abs(a - b) for a, b in zip(observed, forecast)) / len(forecast)))\nprint(result)\n",
+      "answer": "15"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+      "intent": "What AP values did the March 9 forecast predict for March 10 through March 12?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0311geomag_forecast.txt",
+      "intent": "What observed AP for March 10 is reported in the March 11 file?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0312geomag_forecast.txt",
+      "intent": "What observed AP for March 11 is reported in the March 12 file?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0313geomag_forecast.txt",
+      "intent": "What observed AP for March 12 is reported in the March 13 file?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-astronomy-easy-1",
+      "source": "datagov/kramabench-astronomy-easy-1/files/geomag_forecast/0309geomag_forecast.txt",
+      "intent": "What is the mean absolute error between the three forecasted AP values and the three observed AP values?",
+      "answer": "Cannot execute SQL: query_file only supports CSV/JSON; this source is plain text. Download the file and use execute_ideal/download-style Python to parse it."
+    }
+  ]
+}

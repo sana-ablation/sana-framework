@@ -1,0 +1,211 @@
+{
+  "dataset_sequence": [
+    "2007-state-expenditures",
+    "2008-state-expenditures",
+    "2009-state-expenditures",
+    "2010-state-expenditures",
+    "Missouri_Department_of_Transportation",
+    "Springfield,_Missouri",
+    "500-cities-local-data-for-better-health-2016-release",
+    "500-cities-local-data-for-better-health-2018-release"
+  ],
+  "source_sequence": [
+    "datagov/2007-state-expenditures/files/rows.txt",
+    "datagov/2008-state-expenditures/files/rows.txt",
+    "datagov/2009-state-expenditures/files/rows.txt",
+    "datagov/2010-state-expenditures/files/rows.txt",
+    "wikipedia/Missouri_Department_of_Transportation/content.txt",
+    "wikipedia/Springfield,_Missouri/content.txt",
+    "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+    "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Missouri state agencies, aggregate spending in fiscal years 2007, 2008, 2009, and 2010, then identify the agency ranked third by average spending across those years.",
+    "2. For that agency, determine the city where its Southwest district is based.",
+    "3. Identify the highway born in that city and determine its two terminus cities.",
+    "4. Compare those terminus cities on binge drinking prevalence in the 2016 and 2018 city health data and return the city with the lower average prevalence."
+  ],
+  "original_final_question": "Find the Missouri state agency that ranked third in average spending from 2007-10, for that agency, which city is its Southwest district based and the highway that was born there. Between that highway's two terminus cities, which one had lower average binge drinking prevalence across the 2016 and 2018? Return the city name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4, Missouri State Expenditures FY2007-FY2010 - nodes 1-4):",
+    "  Node 1: FY2007 expenditures -> Top 5 includes TRANSPORTATION",
+    "  Node 2: FY2008 expenditures -> Top 5 includes TRANSPORTATION",
+    "  Node 3: FY2009 expenditures -> Top 5 includes TRANSPORTATION",
+    "  Node 4: FY2010 expenditures -> Top 5 includes TRANSPORTATION",
+    "  Aggregation: TRANSPORTATION is 3rd highest by average expenditure",
+    "  Result: Missouri Department of Transportation",
+    "",
+    "HOP 2 (d=1, Wikipedia Missouri_Department_of_Transportation - node 5):",
+    "  Node 5: MoDOT Southwest district is based in Springfield",
+    "  Result: Springfield",
+    "",
+    "HOP 3 (d=1, Wikipedia Springfield,_Missouri - node 6):",
+    "  Node 6: Route 66 was the Chicago-to-Los Angeles highway",
+    "  Result: termini are Chicago and Los Angeles",
+    "",
+    "HOP 4 (d=2, 500-Cities health data 2016 and 2018 - nodes 7-8):",
+    "  Node 7: 2016 binge drinking - Los Angeles 15.9% < Chicago 20.1%",
+    "  Node 8: 2018 binge drinking - Los Angeles 16.7% < Chicago 21.5%",
+    "  Final answer: Los Angeles"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2007-state-expenditures",
+      "source": "datagov/2007-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2007; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "code": "import json\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2007-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\npayload = json.loads(obj[\"Body\"].read().decode(\"utf-8\"))\ncolumns = [col.get(\"fieldName\") or col.get(\"name\") for col in payload[\"meta\"][\"view\"][\"columns\"]]\ndf = pd.DataFrame(payload[\"data\"], columns=columns)\ndf[\"payments_total\"] = pd.to_numeric(df[\"payments_total\"], errors=\"coerce\")\nanswer = (\n    df[df[\"fiscal_year\"].astype(str) == \"2007\"]\n    .groupby(\"agency_name\")[\"payments_total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .round(2)\n    .to_dict()\n)",
+      "answer": {
+        "SOCIAL SERVICES": 5528171459.84,
+        "ELEMENTARY AND SECONDARY EDUCATION": 4893252163.41,
+        "TRANSPORTATION": 1922237354.88,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1062578010.95,
+        "MENTAL HEALTH": 759892459.14
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2008-state-expenditures",
+      "source": "datagov/2008-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2008; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2008-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf_2008 = df[df[\"Fiscal Year\"] == 2008].copy() if \"Fiscal Year\" in df.columns else df.copy()\ndf_2008[\"Payments Total\"] = pd.to_numeric(df_2008[\"Payments Total\"], errors=\"coerce\")\nanswer = (\n    df_2008.groupby(\"Agency Name\", dropna=False)[\"Payments Total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .round(2)\n    .to_dict()\n)",
+      "answer": {
+        "SOCIAL SERVICES": 5988522037.62,
+        "ELEMENTARY AND SECONDARY EDUCATION": 5048553721.08,
+        "TRANSPORTATION": 1786534604.37,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1220312581.65,
+        "MENTAL HEALTH": 813799778.73
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2009-state-expenditures",
+      "source": "datagov/2009-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2009; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2009-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf_2009 = df[df[\"Fiscal Year\"] == 2009].copy() if \"Fiscal Year\" in df.columns else df.copy()\ndf_2009[\"Payments Total\"] = pd.to_numeric(df_2009[\"Payments Total\"], errors=\"coerce\")\nanswer = (\n    df_2009.groupby(\"Agency Name\", dropna=False)[\"Payments Total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .round(2)\n    .to_dict()\n)",
+      "answer": {
+        "SOCIAL SERVICES": 6707806742.86,
+        "ELEMENTARY AND SECONDARY EDUCATION": 5170194688.51,
+        "TRANSPORTATION": 2000940522.19,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1291298943.33,
+        "MENTAL HEALTH": 877438429.19
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2010-state-expenditures",
+      "source": "datagov/2010-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2010; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2010-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ndf_2010 = df[df[\"Fiscal Year\"] == 2010].copy() if \"Fiscal Year\" in df.columns else df.copy()\ndf_2010[\"Payments Total\"] = pd.to_numeric(df_2010[\"Payments Total\"], errors=\"coerce\")\nanswer = (\n    df_2010.groupby(\"Agency Name\", dropna=False)[\"Payments Total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .round(2)\n    .to_dict()\n)",
+      "answer": {
+        "SOCIAL SERVICES": 7141666880.32,
+        "ELEMENTARY AND SECONDARY EDUCATION": 5351561573.54,
+        "TRANSPORTATION": 2144139919.08,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1320888790.61,
+        "MENTAL HEALTH": 921056914.52
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "500-cities-local-data-for-better-health-2016-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_6 answer>) had lower average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "code": "import csv\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ntext = obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\").splitlines()\nreader = csv.DictReader(text)\nanswer = {}\nfor row in reader:\n    if (\n        row[\"Short_Question_Text\"] == \"Binge Drinking\"\n        and row[\"GeographicLevel\"] == \"City\"\n        and row[\"DataValueTypeID\"] == \"CrdPrv\"\n        and row[\"CityName\"] in {\"Chicago\", \"Los Angeles\"}\n    ):\n        answer[row[\"CityName\"]] = float(row[\"Data_Value\"])",
+      "answer": {
+        "Chicago": 20.1,
+        "Los Angeles": 15.9
+      }
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "500-cities-local-data-for-better-health-2018-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_6 answer>) had lower average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "code": "import csv\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ntext = obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\").splitlines()\nreader = csv.DictReader(text)\nanswer = {}\nfor row in reader:\n    if (\n        row[\"Short_Question_Text\"] == \"Binge Drinking\"\n        and row[\"GeographicLevel\"] == \"City\"\n        and row[\"DataValueTypeID\"] == \"CrdPrv\"\n        and row[\"CityName\"] in {\"Chicago\", \"Los Angeles\"}\n    ):\n        answer[row[\"CityName\"]] = float(row[\"Data_Value\"])",
+      "answer": {
+        "Chicago": 21.5,
+        "Los Angeles": 16.7
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2007-state-expenditures",
+      "source": "datagov/2007-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2007; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\n  SELECT agency_name AS key, round(total, 2) AS value\n  FROM (\n    SELECT json_extract_string(row[10], '$') AS agency_name, SUM(TRY_CAST(json_extract_string(row[14], '$') AS DOUBLE)) AS total\n    FROM t, UNNEST(data) AS u(row)\n    WHERE json_extract_string(row[9], '$') = '2007'\n    GROUP BY agency_name\n  ) totals\n  ORDER BY total DESC\n  LIMIT 5\n) q",
+      "answer": {
+        "SOCIAL SERVICES": 5528171459.84,
+        "ELEMENTARY AND SECONDARY EDUCATION": 4893252163.41,
+        "TRANSPORTATION": 1922237354.88,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1062578010.95,
+        "MENTAL HEALTH": 759892459.14
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2008-state-expenditures",
+      "source": "datagov/2008-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2008; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\n  SELECT \"Agency Name\" AS key, round(SUM(TRY_CAST(\"Payments Total\" AS DOUBLE)), 2) AS value\n  FROM t\n  WHERE TRY_CAST(\"Fiscal Year\" AS BIGINT) = 2008\n  GROUP BY \"Agency Name\"\n  ORDER BY value DESC\n  LIMIT 5\n) q",
+      "answer": {
+        "SOCIAL SERVICES": 5988522037.62,
+        "ELEMENTARY AND SECONDARY EDUCATION": 5048553721.08,
+        "TRANSPORTATION": 1786534604.37,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1220312581.65,
+        "MENTAL HEALTH": 813799778.73
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2009-state-expenditures",
+      "source": "datagov/2009-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2009; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\n  SELECT \"Agency Name\" AS key, round(SUM(TRY_CAST(\"Payments Total\" AS DOUBLE)), 2) AS value\n  FROM t\n  WHERE TRY_CAST(\"Fiscal Year\" AS BIGINT) = 2009\n  GROUP BY \"Agency Name\"\n  ORDER BY value DESC\n  LIMIT 5\n) q",
+      "answer": {
+        "SOCIAL SERVICES": 6707806742.86,
+        "ELEMENTARY AND SECONDARY EDUCATION": 5170194688.51,
+        "TRANSPORTATION": 2000940522.19,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1291298943.33,
+        "MENTAL HEALTH": 877438429.19
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2010-state-expenditures",
+      "source": "datagov/2010-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agency had the 3rd highest average expenditure from FY2007-FY2010? (Filter for this node: Fiscal Year == 2010; group by Agency Name; sum Payments Total; rank by total; keep top 5.)",
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\n  SELECT \"Agency Name\" AS key, round(SUM(TRY_CAST(\"Payments Total\" AS DOUBLE)), 2) AS value\n  FROM t\n  WHERE TRY_CAST(\"Fiscal Year\" AS BIGINT) = 2010\n  GROUP BY \"Agency Name\"\n  ORDER BY value DESC\n  LIMIT 5\n) q",
+      "answer": {
+        "SOCIAL SERVICES": 7141666880.32,
+        "ELEMENTARY AND SECONDARY EDUCATION": 5351561573.54,
+        "TRANSPORTATION": 2144139919.08,
+        "HIGHER EDUCATION AND WORKFORCE DEV": 1320888790.61,
+        "MENTAL HEALTH": 921056914.52
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "500-cities-local-data-for-better-health-2016-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_6 answer>) had lower average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "answer": {
+        "Chicago": 20.1,
+        "Los Angeles": 15.9
+      },
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\nSELECT \"CityName\" AS key, try_cast(\"Data_Value\" AS DOUBLE) AS value\nFROM t\nWHERE \"Short_Question_Text\" = 'Binge Drinking'\n  AND \"GeographicLevel\" = 'City'\n  AND \"DataValueTypeID\" = 'CrdPrv'\n  AND \"CityName\" IN ('Chicago', 'Los Angeles')\nORDER BY \"CityName\"\n) q"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "500-cities-local-data-for-better-health-2018-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_6 answer>) had lower average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "answer": {
+        "Chicago": 21.5,
+        "Los Angeles": 16.7
+      },
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\nSELECT \"CityName\" AS key, try_cast(\"Data_Value\" AS DOUBLE) AS value\nFROM t\nWHERE \"Short_Question_Text\" = 'Binge Drinking'\n  AND \"GeographicLevel\" = 'City'\n  AND \"DataValueTypeID\" = 'CrdPrv'\n  AND \"CityName\" IN ('Chicago', 'Los Angeles')\nORDER BY \"CityName\"\n) q"
+    }
+  ]
+}

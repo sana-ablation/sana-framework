@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-hard-14"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-hard-14/files/annual_aqi_by_county_2024.csv",
+    "datagov/kramabench-wildfire-hard-14/files/Wildfire_Acres_by_State.csv",
+    "datagov/kramabench-wildfire-hard-14/files/annual_aqi_by_county_2024.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Aggregate the air-quality data to each state's proportion of generally unsafe days.",
+    "2. Read the 2024 wildfire acreage totals by state.",
+    "3. Join the state-level air-quality proportions with wildfire acreage totals and compute the correlation rounded to two decimals."
+  ],
+  "original_final_question": "What is the correlation between the proportion of generally unsafe air quality days according to the EPA and the amount of land affected by fires in 2024? Round to 2 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 computes state-level proportions of generally unsafe AQI days.",
+    "Node 2 reads state wildfire acres.",
+    "Node 3 depends on nodes 1-2 and computes the requested correlation rounded to two decimals.",
+    "Final answer: 0.65"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-hard-14",
+      "source": "datagov/kramabench-wildfire-hard-14/files/annual_aqi_by_county_2024.csv",
+      "intent": "How many state-level AQI averages are computed after deriving unsafe-day proportions?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/annual_aqi_by_county_2024.csv'\ndf = pd.read_csv(path)\ndf['bad days'] = df['Unhealthy Days'] + df['Very Unhealthy Days'] + df['Hazardous Days']\ndf['bad days proportion'] = df['bad days'] / df['Days with AQI']\nstate_df = df.groupby(['State']).mean(numeric_only=True).reset_index()\nprint(str(len(state_df)))\n",
+      "answer": "54"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-hard-14",
+      "source": "datagov/kramabench-wildfire-hard-14/files/Wildfire_Acres_by_State.csv",
+      "intent": "How many state rows are in the wildfire acres table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\ndf = pd.read_csv(path)\nprint(str(len(df)))\n",
+      "answer": "52"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-hard-14",
+      "source": "datagov/kramabench-wildfire-hard-14/files/annual_aqi_by_county_2024.csv",
+      "intent": "What is the correlation between state unsafe-air-day proportion and total acres burned, rounded to two decimals?",
+      "code": "import pandas as pd\naqi_path = 'other-benchmarks/Kramabench/data/wildfire/input/annual_aqi_by_county_2024.csv'\nacres_path = 'other-benchmarks/Kramabench/data/wildfire/input/Wildfire_Acres_by_State.csv'\naqi = pd.read_csv(aqi_path)\naqi['bad days'] = aqi['Unhealthy Days'] + aqi['Very Unhealthy Days'] + aqi['Hazardous Days']\naqi['bad days proportion'] = aqi['bad days'] / aqi['Days with AQI']\naqi_state = aqi.groupby(['State']).mean(numeric_only=True).reset_index()\nacres = pd.read_csv(acres_path)\naugmented = aqi_state.merge(acres[['State', 'Total Acres Burned', 'Population']], on='State', how='left')\ncorrelation = augmented[['bad days proportion', 'Total Acres Burned']].corr().iloc[0, 1]\nprint('{:.2f}'.format(correlation))\n",
+      "answer": "0.65"
+    }
+  ]
+}

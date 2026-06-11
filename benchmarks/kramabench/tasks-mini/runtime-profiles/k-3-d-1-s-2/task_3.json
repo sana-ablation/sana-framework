@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-hard-9"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-hard-9/files/worldcities.csv",
+    "datagov/kramabench-archeology-hard-9/files/roman_cities.csv",
+    "datagov/kramabench-archeology-hard-9/files/worldcities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter modern city rows to population greater than 1,000,000.",
+    "2. Match those modern cities to Roman-era cities within 0.1 degrees.",
+    "3. For each matched modern city, select the Roman rank among nearby samples and compute the population-rank correlation."
+  ],
+  "original_final_question": "What is the correlation (to 6 decimal places) between the rank of ancient Roman cities and the population of their corresponding modern cities with a population of over one million? For rank, assume that if there is an or, the average of the two numbers. Assume that an ancient city is the same as a current city if the distance between the two is less than 0.1 degrees. If there are multiple ancient cities, take the last sample in the data. Round your answer to 6 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter modern city rows to population greater than 1,000,000.",
+    "Node 2 depends on node 1: Match those modern cities to Roman-era cities within 0.1 degrees.",
+    "Node 3 depends on node 2: For each matched modern city, select the Roman rank among nearby samples and compute the population-rank correlation.",
+    "Final answer: 0.015648"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-hard-9",
+      "source": "datagov/kramabench-archeology-hard-9/files/worldcities.csv",
+      "intent": "How many modern city rows have population greater than 1,000,000?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nresult = str(len(df[df['population'] > 1000000]))\nprint(result)\n",
+      "answer": "767"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-hard-9",
+      "source": "datagov/kramabench-archeology-hard-9/files/roman_cities.csv",
+      "intent": "How many modern cities over 1,000,000 people match at least one Roman-era city within 0.1 degrees?",
+      "code": "import pandas as pd\nimport numpy as np\nimport re\nroman_path = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\nworld_path = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\nroman = pd.read_csv(roman_path)\nworld = pd.read_csv(world_path)\nroman_xy = roman[['Longitude (X)', 'Latitude (Y)']].to_numpy(float)\ndef match_indices(modern, radius=0.1):\n    points = modern[['lng', 'lat']].to_numpy(float)\n    good = []\n    roman_matches = []\n    for start in range(0, len(points), 512):\n        chunk = points[start:start + 512]\n        dist2 = ((chunk[:, None, :] - roman_xy[None, :, :]) ** 2).sum(axis=2)\n        mask = dist2 <= radius * radius\n        for offset, row in enumerate(mask):\n            indices = np.flatnonzero(row)\n            if len(indices):\n                good.append(start + offset)\n                roman_matches.append(indices.tolist())\n    return good, roman_matches\nmodern = world[world['population'] > 1000000].reset_index(drop=True)\nmatched, roman_matches = match_indices(modern)\nresult = str(len(matched))\nprint(result)\n",
+      "answer": "30"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-hard-9",
+      "source": "datagov/kramabench-archeology-hard-9/files/worldcities.csv",
+      "intent": "Using the matched modern cities and selected Roman ranks, what is the population-rank correlation rounded to six decimals?",
+      "code": "import pandas as pd\nimport numpy as np\nimport re\nroman_path = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\nworld_path = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\nroman = pd.read_csv(roman_path)\nworld = pd.read_csv(world_path)\nroman_xy = roman[['Longitude (X)', 'Latitude (Y)']].to_numpy(float)\ndef match_indices(modern, radius=0.1):\n    points = modern[['lng', 'lat']].to_numpy(float)\n    good = []\n    roman_matches = []\n    for start in range(0, len(points), 512):\n        chunk = points[start:start + 512]\n        dist2 = ((chunk[:, None, :] - roman_xy[None, :, :]) ** 2).sum(axis=2)\n        mask = dist2 <= radius * radius\n        for offset, row in enumerate(mask):\n            indices = np.flatnonzero(row)\n            if len(indices):\n                good.append(start + offset)\n                roman_matches.append(indices.tolist())\n    return good, roman_matches\ndef clean_rank(value):\n    numbers = re.findall(r'\\d+\\.?\\d*', str(value))\n    numbers = list(map(float, numbers))\n    return sum(numbers) / len(numbers) if numbers else -1\nroman['Barrington Atlas Rank'] = roman['Barrington Atlas Rank'].apply(clean_rank)\nmodern = world[world['population'] > 1000000].reset_index(drop=True)\nmatched, roman_matches = match_indices(modern)\nroman_indices = []\nfor matches in roman_matches:\n    roman_indices.append(roman.iloc[matches]['Barrington Atlas Rank'].idxmax())\npopulations = modern.iloc[matched].reset_index(drop=True)['population']\nranks = roman.iloc[roman_indices].reset_index(drop=True)['Barrington Atlas Rank']\nresult = f\"{populations.corr(ranks):.6f}\"\nprint(result)\n",
+      "answer": "0.015648"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+## AVAILABLE SEARCH TOOLS
+- `search_value` — sparse keyword search over dataset content (FTS); use for exact terms, dataset names, and field names
+- `search_schema` — sparse keyword search over dataset schemas (column names, types); use when you prioritize matching column or table names
+- `search_prefix` — S3 prefix search by dataset name fragment; use when you already know part of the dataset or entity name
+
+## SEARCH STRATEGY GUIDE (NAIVE)
+Use the sparse tools you actually have:
+1. `search_value` for primary lexical discovery and reformulation
+2. `search_schema` when you need exact column or table-name matching
+3. `search_prefix` only when you already know the naming pattern
+
+If one `search_value` call is weak, tighten terms (program + geography + time) and try `search_prefix` with likely dataset-name fragments.

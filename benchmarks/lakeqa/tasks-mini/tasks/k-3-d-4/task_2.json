@@ -1,0 +1,159 @@
+{
+  "question": "Among Texas counties in the top five for average capital outlay spending from 2018 to 2021, identify the two highest by average prison releases in 2019 and 2020. For those two counties, compute the percentage increase in VA disability compensation recipients from 2020 to 2023, then report the larger increase percentage rounded to the nearest integer. Return the integer only. Your response should be in the format [Answer].",
+  "answer": "9",
+  "nodes": {
+    "1": {
+      "source": "datagov/texas-state-expenditures-by-county-2018/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/texas-state-expenditures-by-county-2018/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Fiscal Year'] = pd.to_numeric(df['Fiscal Year'], errors='coerce')\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\ndf['County'] = df['County'].astype(str).str.strip()\ndf['Major Spending Category'] = df['Major Spending Category'].astype(str)\n\nfiltered = df[(df['Fiscal Year'] == 2018) & (df['County'] != '') & (df['County'].str.lower() != 'nan') & (df['Major Spending Category'].str.upper().str.contains('CAPITAL OUTLAY', na=False))]\ntotals = filtered.groupby('County', dropna=False)['Amount'].sum().round(2).reset_index()\ntotals['county_out'] = totals['County'].str.lower().str.title()\ntop = totals.sort_values(['Amount', 'county_out'], ascending=[False, True]).head(5)\nresult = dict(zip(top['county_out'], top['Amount']))",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2018; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1303630847.3,
+        "Dallas": 838316444.65,
+        "Travis": 427160745.36,
+        "Montgomery": 424383088.05,
+        "Bexar": 269462082.97
+      }
+    },
+    "2": {
+      "source": "datagov/texas-state-expenditures-by-county-2019/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/texas-state-expenditures-by-county-2019/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Fiscal Year'] = pd.to_numeric(df['Fiscal Year'], errors='coerce')\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\ndf['County'] = df['County'].astype(str).str.strip()\ndf['Major Spending Category'] = df['Major Spending Category'].astype(str)\n\nfiltered = df[(df['Fiscal Year'] == 2019) & (df['County'] != '') & (df['County'].str.lower() != 'nan') & (df['Major Spending Category'].str.upper().str.contains('CAPITAL OUTLAY', na=False))]\ntotals = filtered.groupby('County', dropna=False)['Amount'].sum().round(2).reset_index()\ntotals['county_out'] = totals['County'].str.lower().str.title()\ntop = totals.sort_values(['Amount', 'county_out'], ascending=[False, True]).head(5)\nresult = dict(zip(top['county_out'], top['Amount']))",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2019; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1391779835.06,
+        "Dallas": 827510409.8,
+        "Travis": 614936080.37,
+        "Montgomery": 416744287.28,
+        "Bexar": 302940592.72
+      }
+    },
+    "3": {
+      "source": "datagov/texas-state-expenditures-by-county-2020/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/texas-state-expenditures-by-county-2020/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Fiscal Year'] = pd.to_numeric(df['Fiscal Year'], errors='coerce')\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\ndf['County'] = df['County'].astype(str).str.strip()\ndf['Major Spending Category'] = df['Major Spending Category'].astype(str)\n\nfiltered = df[(df['Fiscal Year'] == 2020) & (df['County'] != '') & (df['County'].str.lower() != 'nan') & (df['Major Spending Category'].str.upper().str.contains('CAPITAL OUTLAY', na=False))]\ntotals = filtered.groupby('County', dropna=False)['Amount'].sum().round(2).reset_index()\ntotals['county_out'] = totals['County'].str.lower().str.title()\ntop = totals.sort_values(['Amount', 'county_out'], ascending=[False, True]).head(5)\nresult = dict(zip(top['county_out'], top['Amount']))",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2020; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1663151150.96,
+        "Dallas": 1324261419.12,
+        "Travis": 821945717.49,
+        "Montgomery": 612813968.49,
+        "Bexar": 494340352.72
+      }
+    },
+    "4": {
+      "source": "datagov/texas-state-expenditures-by-county-2021/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/texas-state-expenditures-by-county-2021/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Fiscal Year'] = pd.to_numeric(df['Fiscal Year'], errors='coerce')\ndf['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')\ndf['County'] = df['County'].astype(str).str.strip()\ndf['Major Spending Category'] = df['Major Spending Category'].astype(str)\n\nfiltered = df[(df['Fiscal Year'] == 2021) & (df['County'] != '') & (df['County'].str.lower() != 'nan') & (df['Major Spending Category'].str.upper().str.contains('CAPITAL OUTLAY', na=False))]\ntotals = filtered.groupby('County', dropna=False)['Amount'].sum().round(2).reset_index()\ntotals['county_out'] = totals['County'].str.lower().str.title()\ntop = totals.sort_values(['Amount', 'county_out'], ascending=[False, True]).head(5)\nresult = dict(zip(top['county_out'], top['Amount']))",
+      "subquestion": "Which Texas counties were in the top 5 by average Capital Outlay expenditures across 2018-2021? (Filter for this node: Fiscal Year == 2021; Major Spending Category contains 'CAPITAL OUTLAY' (including 'HIGHWAY CONSTRUCTION-CAPITAL OUTLAY'); non-empty County; sum Amount by County.)",
+      "answer": {
+        "Harris": 1741663003.68,
+        "Dallas": 1171406639.17,
+        "Travis": 774601022.23,
+        "Montgomery": 705433711.03,
+        "Bexar": 596386366.99
+      }
+    },
+    "5": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt'\ndf = pd.read_csv(source)\ndf['County'] = df['County'].astype(str).str.strip()\ncounties = ['HARRIS', 'DALLAS', 'BEXAR', 'TRAVIS', 'MONTGOMERY']\nfiltered = df[df['County'].str.upper().isin(counties)]\ncounts = filtered.groupby(filtered['County'].str.upper()).size().reset_index(name='release_count')\ncounts['county_out'] = counts['County'].str.lower().str.title()\nranked = counts.sort_values(['release_count', 'county_out'], ascending=[False, True])\nresult = dict(zip(ranked['county_out'], ranked['release_count'].astype(int)))",
+      "subquestion": "Among the counties from the capital outlay set, which two had the highest average TDCJ releases across 2019-2020? (Filter for this node: count rows by County; County normalized to uppercase; restrict to Harris/Dallas/Bexar/Travis/Montgomery.)",
+      "answer": {
+        "Harris": 9029,
+        "Dallas": 5355,
+        "Bexar": 4545,
+        "Travis": 1857,
+        "Montgomery": 1315
+      }
+    },
+    "6": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt'\ndf = pd.read_csv(source)\ndf['County'] = df['County'].astype(str).str.strip()\ncounties = ['HARRIS', 'DALLAS', 'BEXAR', 'TRAVIS', 'MONTGOMERY']\nfiltered = df[df['County'].str.upper().isin(counties)]\ncounts = filtered.groupby(filtered['County'].str.upper()).size().reset_index(name='release_count')\ncounts['county_out'] = counts['County'].str.lower().str.title()\nranked = counts.sort_values(['release_count', 'county_out'], ascending=[False, True])\nresult = dict(zip(ranked['county_out'], ranked['release_count'].astype(int)))",
+      "subquestion": "Among the counties from the capital outlay set, which two had the highest average TDCJ releases across 2019-2020? (Filter for this node: count rows by County; County normalized to uppercase; restrict to Harris/Dallas/Bexar/Travis/Montgomery.)",
+      "answer": {
+        "Harris": 7059,
+        "Dallas": 4540,
+        "Bexar": 3917,
+        "Travis": 1596,
+        "Montgomery": 1250
+      }
+    },
+    "7": {
+      "source": "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\nfiltered = df[(df['State'] == 'Texas') & (df['County Name'].isin(['Harris', 'Dallas']))]\nranked = filtered.sort_values('County Name')\nresult = dict(zip(ranked['County Name'], ranked['Total: Disability Compensation Recipients'].astype(int)))",
+      "subquestion": "For the two counties from the releases comparison, what were the disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name in {Harris, Dallas}; use Total: Disability Compensation Recipients.)",
+      "answer": {
+        "Harris": 49804,
+        "Dallas": 26317
+      }
+    },
+    "8": {
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt'\ndf = pd.read_csv(source)\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\nfiltered = df[(df['State'] == 'Texas') & (df['County Name'].isin(['Harris', 'Dallas']))]\nranked = filtered.sort_values('County Name')\nresult = dict(zip(ranked['County Name'], ranked['Total: Disability Compensation Recipients'].astype(int)))",
+      "subquestion": "For the two counties from the releases comparison, what were the disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name in {Harris, Dallas}; use Total: Disability Compensation Recipients.)",
+      "answer": {
+        "Harris": 54266,
+        "Dallas": 25704
+      }
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, Texas Capital Outlay expenditures by county 2018-2021 - nodes 1-4):",
+    "  Node 1: 2018 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Node 2: 2019 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Node 3: 2020 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Node 4: 2021 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar",
+    "  Result: {Harris, Dallas, Travis, Montgomery, Bexar}",
+    "",
+    "HOP 2 (d=2, TDCJ releases 2019-2020 - nodes 5-6):",
+    "  Node 5: 2019 releases -> Harris 9,029; Dallas 5,355; Bexar 4,545; Travis 1,857; Montgomery 1,315",
+    "  Node 6: 2020 releases -> Harris 7,059; Dallas 4,540; Bexar 3,917; Travis 1,596; Montgomery 1,250",
+    "  Average releases: Harris 8,044; Dallas 4,947.5 (top two)",
+    "  Result: {Harris, Dallas}",
+    "",
+    "HOP 3 (d=2, Disability compensation recipients 2020 and 2023 - nodes 7-8):",
+    "  Node 7: 2020 recipients -> Harris 49,804; Dallas 26,317",
+    "  Node 8: 2023 recipients -> Harris 54,266; Dallas 25,704",
+    "  Percentage change: Harris (54,266 - 49,804) / 49,804 * 100 = 8.96%; Dallas (25,704 - 26,317) / 26,317 * 100 = -2.33%",
+    "  Larger increase percentage: 8.96% -> rounded to 9",
+    "  Final answer: 9"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "texas-state-expenditures-by-county-2018",
+    "texas-state-expenditures-by-county-2019",
+    "texas-state-expenditures-by-county-2020",
+    "texas-state-expenditures-by-county-2021",
+    "texas-department-of-criminal-justice-releases-fy-2019",
+    "texas-department-of-criminal-justice-releases-fy-2020",
+    "fy-2020-disability-compensation-recipients-by-county",
+    "fy-2023-disability-compensation-recipients-by-county"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: 2018 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar Node 2: 2019 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar Node 3: 2020 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar Node 4: 2021 Capital Outlay totals -> Harris, Dallas, Travis, Montgomery, Bexar Result: {Harris, Dallas, Travis, Montgomery, Bexar}",
+      "answer": "{Harris, Dallas, Travis, Montgomery, Bexar}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5,
+        6
+      ],
+      "reasoning": "Node 5: 2019 releases -> Harris 9,029; Dallas 5,355; Bexar 4,545; Travis 1,857; Montgomery 1,315 Node 6: 2020 releases -> Harris 7,059; Dallas 4,540; Bexar 3,917; Travis 1,596; Montgomery 1,250 Average releases: Harris 8,044; Dallas 4,947.5 (top two) Result: {Harris, Dallas}",
+      "answer": "{Harris, Dallas}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8
+      ],
+      "reasoning": "Node 7: 2020 recipients -> Harris 49,804; Dallas 26,317 Node 8: 2023 recipients -> Harris 54,266; Dallas 25,704 Percentage change: Harris (54,266 - 49,804) / 49,804 * 100 = 8.96%; Dallas (25,704 - 26,317) / 26,317 * 100 = -2.33% Larger increase percentage: 8.96% -> rounded to 9",
+      "answer": "9"
+    }
+  ]
+}

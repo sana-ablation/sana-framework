@@ -1,0 +1,149 @@
+{
+  "dataset_sequence": [
+    "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018",
+    "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020",
+    "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018",
+    "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019",
+    "Cameron_County,_Texas",
+    "Brownsville,_Texas",
+    "Gulf_Coast_of_the_United_States"
+  ],
+  "source_sequence": [
+    "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018/files/rows.txt",
+    "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020/files/rows.txt",
+    "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018/files/rows.txt",
+    "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019/files/rows.txt",
+    "wikipedia/Cameron_County,_Texas/content.txt",
+    "wikipedia/Brownsville,_Texas/content.txt",
+    "wikipedia/Gulf_Coast_of_the_United_States/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Harris, Hidalgo, Dallas, and Cameron counties, total day care home meal reimbursements in 2018-19 and 2020-21, compute the percentage decrease, and keep the two counties with the largest decreases.",
+    "2. For those two counties, compute average child-center enrollment across 2018-19 and 2019-20, then keep the county with the higher average.",
+    "3. Determine that county's county seat.",
+    "4. Using that county seat, determine the coast associated with the selected county.",
+    "5. Return the gulf associated with that coast."
+  ],
+  "original_final_question": "Among Harris, Hidalgo, Dallas, and Cameron counties in Texas, which two saw the largest percentage decrease in day care home meal reimbursements from 2018-19 to 2020-21? Of those two, which had the higher average child center enrollment across 2018-19 and 2019-20? For that county, what is the county seat, and which gulf does its coast border? Return the gulf name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=2, day care home reimbursements 2018-2019 vs 2020-2021 - nodes 1-2):",
+    "  Node 1 totals (2018-2019): Harris 8,757,796.13; Dallas 2,835,278.75; Hidalgo 1,202,699.73; Cameron 392,489.51",
+    "  Node 2 totals (2020-2021): Harris 7,558,597.77; Dallas 2,393,411.26; Hidalgo 971,063.56; Cameron 330,003.06",
+    "  Percent decreases: Hidalgo -19.26%, Cameron -15.92%, Dallas -15.58%, Harris -13.69% -> two largest decreases {Hidalgo, Cameron}",
+    "",
+    "HOP 2 (d=2, child center enrollment 2018-2019 vs 2019-2020 - nodes 3-4):",
+    "  Node 3 totals (2018-2019): Cameron 7,620,183; Hidalgo 1,661,128",
+    "  Node 4 totals (2019-2020): Cameron 1,076,746; Hidalgo 1,477,805",
+    "  Average enrollment: Cameron 4,348,464.5 vs Hidalgo 1,569,466.5 -> Cameron County",
+    "",
+    "HOP 3 (d=1, Cameron County Wikipedia - node 5):",
+    "  Node 5: Cameron County seat is Brownsville",
+    "",
+    "HOP 4 (d=1, Brownsville Wikipedia - node 6):",
+    "  Node 6: Brownsville is on the Gulf Coast",
+    "",
+    "HOP 5 (d=1, Gulf Coast Wikipedia - node 7):",
+    "  Node 7: Gulf Coast is the coastline along the Gulf of Mexico",
+    "  Final answer: Gulf of Mexico"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018/files/rows.txt",
+      "intent": "Among {Harris, Hidalgo, Dallas, Cameron}, which counties had the largest percentage decrease in day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum TotalMealReimbursement.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2016/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2015-2016'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "answer": {
+        "Harris": 8757796.13,
+        "Dallas": 2835278.75,
+        "Hidalgo": 1202699.73,
+        "Cameron": 392489.51
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020/files/rows.txt",
+      "intent": "Among {Harris, Hidalgo, Dallas, Cameron}, which counties had the largest percentage decrease in day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2020-2021; group by SiteCounty; sum TotalMealReimbursement.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2017/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2016-2017'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "answer": {
+        "Harris": 7558597.77,
+        "Dallas": 2393411.26,
+        "Hidalgo": 971063.56,
+        "Cameron": 330003.06
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018",
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018/files/rows.txt",
+      "intent": "Among {Hidalgo, Cameron}, which county had the higher average child center enrollment across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum EnrollmentQty.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2017-2018'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "answer": {
+        "Cameron": 7620183,
+        "Hidalgo": 1661128
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019",
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019/files/rows.txt",
+      "intent": "Among {Hidalgo, Cameron}, which county had the higher average child center enrollment across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2019-2020; group by SiteCounty; sum EnrollmentQty.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2018-2019'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "answer": {
+        "Cameron": 1076746,
+        "Hidalgo": 1477805
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018/files/rows.txt",
+      "intent": "Among {Harris, Hidalgo, Dallas, Cameron}, which counties had the largest percentage decrease in day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum TotalMealReimbursement.)",
+      "sql": "WITH filtered AS (\n  SELECT CASE \"SiteCounty\"\n           WHEN 'HARRIS' THEN 'Harris'\n           WHEN 'DALLAS' THEN 'Dallas'\n           WHEN 'HIDALGO' THEN 'Hidalgo'\n           WHEN 'CAMERON' THEN 'Cameron'\n         END AS county,\n         TRY_CAST(\"TotalMealReimbursement\" AS DOUBLE) AS reimbursement\n  FROM t\n  WHERE \"ProgramYear\" = '2018-2019'\n    AND \"SiteCounty\" IN ('HARRIS', 'DALLAS', 'HIDALGO', 'CAMERON')\n), totals AS (\n  SELECT county, ROUND(SUM(reimbursement), 2) AS total\n  FROM filtered\n  GROUP BY county\n)\nSELECT json_group_object(county, total) AS answer FROM totals",
+      "answer": {
+        "Harris": 8757796.13,
+        "Dallas": 2835278.75,
+        "Hidalgo": 1202699.73,
+        "Cameron": 392489.51
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020",
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020/files/rows.txt",
+      "intent": "Among {Harris, Hidalgo, Dallas, Cameron}, which counties had the largest percentage decrease in day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2020-2021; group by SiteCounty; sum TotalMealReimbursement.)",
+      "sql": "WITH filtered AS (\n  SELECT CASE \"SiteCounty\"\n           WHEN 'HARRIS' THEN 'Harris'\n           WHEN 'DALLAS' THEN 'Dallas'\n           WHEN 'HIDALGO' THEN 'Hidalgo'\n           WHEN 'CAMERON' THEN 'Cameron'\n         END AS county,\n         TRY_CAST(\"TotalMealReimbursement\" AS DOUBLE) AS reimbursement\n  FROM t\n  WHERE \"ProgramYear\" = '2020-2021'\n    AND \"SiteCounty\" IN ('HARRIS', 'DALLAS', 'HIDALGO', 'CAMERON')\n), totals AS (\n  SELECT county, ROUND(SUM(reimbursement), 2) AS total\n  FROM filtered\n  GROUP BY county\n)\nSELECT json_group_object(county, total) AS answer FROM totals",
+      "answer": {
+        "Harris": 7558597.77,
+        "Dallas": 2393411.26,
+        "Hidalgo": 971063.56,
+        "Cameron": 330003.06
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018",
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018/files/rows.txt",
+      "intent": "Among {Hidalgo, Cameron}, which county had the higher average child center enrollment across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum EnrollmentQty.)",
+      "sql": "WITH filtered AS (\n  SELECT CASE \"SiteCounty\"\n           WHEN 'CAMERON' THEN 'Cameron'\n           WHEN 'HIDALGO' THEN 'Hidalgo'\n         END AS county,\n         TRY_CAST(\"EnrollmentQty\" AS BIGINT) AS enrollment\n  FROM t\n  WHERE \"ProgramYear\" = '2018-2019'\n    AND \"SiteCounty\" IN ('CAMERON', 'HIDALGO')\n), totals AS (\n  SELECT county, CAST(SUM(enrollment) AS BIGINT) AS total\n  FROM filtered\n  GROUP BY county\n)\nSELECT json_group_object(county, total) AS answer FROM totals",
+      "answer": {
+        "Cameron": 7620183,
+        "Hidalgo": 1661128
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019",
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019/files/rows.txt",
+      "intent": "Among {Hidalgo, Cameron}, which county had the higher average child center enrollment across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2019-2020; group by SiteCounty; sum EnrollmentQty.)",
+      "sql": "WITH filtered AS (\n  SELECT CASE \"SiteCounty\"\n           WHEN 'CAMERON' THEN 'Cameron'\n           WHEN 'HIDALGO' THEN 'Hidalgo'\n         END AS county,\n         TRY_CAST(\"EnrollmentQty\" AS BIGINT) AS enrollment\n  FROM t\n  WHERE \"ProgramYear\" = '2019-2020'\n    AND \"SiteCounty\" IN ('CAMERON', 'HIDALGO')\n), totals AS (\n  SELECT county, CAST(SUM(enrollment) AS BIGINT) AS total\n  FROM filtered\n  GROUP BY county\n)\nSELECT json_group_object(county, total) AS answer FROM totals",
+      "answer": {
+        "Cameron": 1076746,
+        "Hidalgo": 1477805
+      }
+    }
+  ]
+}

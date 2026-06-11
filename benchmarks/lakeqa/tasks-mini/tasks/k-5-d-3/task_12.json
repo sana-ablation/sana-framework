@@ -1,0 +1,160 @@
+{
+  "question": "Can you find the counties where the top 3 community colleges by average contract count from FY 2014 to FY 2016 are located in. In those counties, narrow the scope down by choosing the county with the most population according to the 2020 census. In its county seat, what is the building with the highest average greenhouse gas emissions (2015-2023)? Finally, only report the year where this building is built. Your response should be in the format [Answer].",
+  "answer": "1936",
+  "nodes": {
+    "1": {
+      "source": "datagov/agency-contracts-fiscal-year-2014/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2014/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\nraw_names = ['Seattle Community College - District 6 (SCCD-6)', 'Green River Community College (GRC)', 'Spokane, Community Colleges of SCCD-17)']\nout_labels = ['Seattle Community College - District 6', 'Green River Community College', 'Community Colleges of Spokane']\ncounts = df['Agency Name'].astype(str).value_counts()\nanswer = '; '.join(f'{label}: {int(counts[raw]):,}' for raw, label in zip(raw_names, out_labels))",
+      "subquestion": "How many contracts did Seattle Community College - District 6 (SCCD-6), Green River Community College (GRC), and Spokane, Community Colleges of SCCD-17 have in FY 2014?",
+      "answer": "Seattle Community College - District 6: 1,308; Green River Community College: 1,723; Community Colleges of Spokane: 1,797"
+    },
+    "2": {
+      "source": "datagov/agency-contracts-fiscal-year-2015/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2015/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\nraw_names = ['Seattle Colleges', 'Green River Community College (GRC)', 'Spokane, Community Colleges of SCCD-17)']\nout_labels = ['Seattle Colleges', 'Green River Community College', 'Community Colleges of Spokane']\ncounts = df['Agency Name'].astype(str).value_counts()\nanswer = '; '.join(f'{label}: {int(counts[raw]):,}' for raw, label in zip(raw_names, out_labels))",
+      "subquestion": "How many contracts did Seattle Colleges, Green River Community College (GRC), and Spokane, Community Colleges of SCCD-17 have in FY 2015?",
+      "answer": "Seattle Colleges: 1,292; Green River Community College: 633; Community Colleges of Spokane: 383"
+    },
+    "3": {
+      "source": "datagov/agency-contracts-fiscal-year-2016/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2016/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\nraw_names = ['Seattle Community College - District 6 (SCCD-6)', 'Green River Community College (GRC)', 'Spokane, Community Colleges of SCCD-17)']\nout_labels = ['Seattle Community College - District 6', 'Green River Community College', 'Community Colleges of Spokane']\ncounts = df['Agency Name'].astype(str).value_counts()\nanswer = '; '.join(f'{label}: {int(counts[raw]):,}' for raw, label in zip(raw_names, out_labels))",
+      "subquestion": "How many contracts did Seattle Community College - District 6 (SCCD-6), Green River Community College (GRC), and Spokane, Community Colleges of SCCD-17 have in FY 2016?",
+      "answer": "Seattle Community College - District 6: 5,244; Green River Community College: 872; Community Colleges of Spokane: 265"
+    },
+    "4": {
+      "source": "wikipedia/Seattle_Colleges_District/content.txt",
+      "fact": "The Seattle Colleges District (also known simply as Seattle Colleges) is a group of public colleges in Seattle, Washington.",
+      "subquestion": "Where is Seattle Colleges District (the #1 community college by average contracts from nodes 1-3) located?",
+      "answer": "Seattle Colleges is located in Seattle, Washington"
+    },
+    "5": {
+      "source": "wikipedia/Green_River_College/content.txt",
+      "fact": "Green River College is a public community college in Auburn, Washington, United States.",
+      "subquestion": "Where is Green River College (the #2 community college by average contracts from nodes 1-3) located?",
+      "answer": "Green River College is located in Auburn, Washington"
+    },
+    "6": {
+      "source": "wikipedia/Community_Colleges_of_Spokane/content.txt",
+      "fact": "Community Colleges of Spokane is a community college district based in Spokane, Washington.",
+      "subquestion": "Where is Community Colleges of Spokane (the #3 community college by average contracts from nodes 1-3) located?",
+      "answer": "Community Colleges of Spokane is located in Spokane, Washington"
+    },
+    "7": {
+      "source": "wikipedia/King_County,_Washington/content.txt",
+      "fact": "King County is a county located in the U.S. state of Washington. The population was 2,269,675 in the 2020 census, making it the most populous county in Washington. The county seat is Seattle.",
+      "subquestion": "What is the 2020 census population and county seat of King County, Washington (containing Seattle and Auburn from nodes 4-5)?",
+      "answer": "King County had a 2020 population of 2,269,675 with Seattle as the county seat"
+    },
+    "8": {
+      "source": "wikipedia/Spokane_County,_Washington/content.txt",
+      "fact": "Spokane County is a county located in the U.S. state of Washington. As of the 2020 census, its population was 539,339. The county seat and largest city is Spokane.",
+      "subquestion": "What is the 2020 census population and county seat of Spokane County, Washington (containing Spokane from node 6)?",
+      "answer": "Spokane County had a 2020 population of 539,339 with Spokane as the county seat"
+    },
+    "9": {
+      "source": "datagov/building-energy-benchmarking-data-2015-present/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/building-energy-benchmarking-data-2015-present/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['DataYear'] = pd.to_numeric(df['DataYear'], errors='coerce')\ndf['TotalGHGEmissions'] = pd.to_numeric(df['TotalGHGEmissions'], errors='coerce')\nranked = (\n    df.loc[\n        df['City'].astype(str).str.upper().eq('SEATTLE')\n        & df['DataYear'].between(2015, 2023, inclusive='both')\n        & df['BuildingName'].notna(),\n        ['BuildingName', 'TotalGHGEmissions'],\n    ]\n    .groupby('BuildingName', dropna=False)['TotalGHGEmissions']\n    .mean()\n    .reset_index(name='avg_TotalGHGEmissions')\n    .sort_values(['avg_TotalGHGEmissions', 'BuildingName'], ascending=[False, True])\n    .reset_index(drop=True)\n)\ntop = ranked.iloc[0]\nanswer = f\"{top['BuildingName']} with {top['avg_TotalGHGEmissions']:,.1f} metric tons CO2e average\"",
+      "subquestion": "Which Seattle building (from nodes 7-8: the county seat of the most populous county) has the highest average TotalGHGEmissions from 2015 to 2023? (Filter DataYear between 2015 and 2023 inclusive; group by BuildingName; average TotalGHGEmissions.)",
+      "answer": "BOEING PLANT 2 ISAL  (BLDG 2-122)-North Boeing Field Campus with 20,835.8 metric tons CO2e average"
+    },
+    "10": {
+      "source": "wikipedia/Boeing_Plant_2/content.txt",
+      "fact": "Boeing Plant 2 (also known as Air Force Plant 17) was a factory building which was built in 1936 by The Boeing Company in Seattle, Washington, United States.",
+      "subquestion": "In what year was Boeing Plant 2 (the Boeing Plant 2 ISAL  (BLDG 2-122)-North Boeing Field Campus from node 9) built?",
+      "answer": "1936"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3, data.gov aggregation - nodes 1-3):",
+    "  Node 1: FY 2014 community college contracts",
+    "  Node 2: FY 2015 community college contracts",
+    "  Node 3: FY 2016 community college contracts",
+    "  Aggregation: Calculate average contracts per community college across 3 years",
+    "    Seattle Colleges: (1308 + 1292 + 5244) / 3 = 2614.7 average",
+    "    Green River College: (1723 + 633 + 872) / 3 = 1076.0 average",
+    "    Spokane CCs: (1797 + 383 + 265) / 3 = 815.0 average",
+    "  Result: Top 3 are Seattle Colleges, Green River, Spokane CCs",
+    "",
+    "HOP 2 (d=3, Wikipedia - nodes 4-6):",
+    "  Node 4: Seattle Colleges -> Seattle, Washington",
+    "  Node 5: Green River College -> Auburn, Washington",
+    "  Node 6: Community Colleges of Spokane -> Spokane, Washington",
+    "  Result: Two counties identified - King County (Seattle, Auburn) and Spokane County (Spokane)",
+    "",
+    "HOP 3 (d=2, Wikipedia - nodes 7-8):",
+    "  Node 7: King County - 2020 pop: 2,269,675, seat: Seattle",
+    "  Node 8: Spokane County - 2020 pop: 539,339, seat: Spokane",
+    "  Comparison: King County (2,269,675) > Spokane County (539,339)",
+    "  Result: King County is most populous -> county seat is Seattle",
+    "",
+    "HOP 4 (d=1, data.gov - node 9):",
+    "  Node 9: Seattle Building Energy Benchmarking shows BOEING PLANT 2 ISAL",
+    "         (BLDG 2-122)-North Boeing Field Campus has highest average GHG emissions",
+    "         (20,835.8 metric tons CO2e)",
+    "  Result: Boeing Plant 2 ISAL (BLDG 2-122)-North Boeing Field Campus (Boeing Plant 2)",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 10):",
+    "  Node 10: Boeing Plant 2 was built in 1936",
+    "",
+    "Final answer: 1936"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Boeing_Plant_2",
+    "Community_Colleges_of_Spokane",
+    "Green_River_College",
+    "King_County,_Washington",
+    "Seattle_Colleges_District",
+    "Spokane_County,_Washington",
+    "agency-contracts-fiscal-year-2014",
+    "agency-contracts-fiscal-year-2015",
+    "agency-contracts-fiscal-year-2016",
+    "building-energy-benchmarking-data-2015-present"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: FY 2014 community college contracts Node 2: FY 2015 community college contracts Node 3: FY 2016 community college contracts Aggregation: Calculate average contracts per community college across 3 years Seattle Colleges: (1308 + 1292 + 5244) / 3 = 2614.7 average Green River College: (1723 + 633 + 872) / 3 = 1076.0 average Spokane CCs: (1797 + 383 + 265) / 3 = 815.0 average Result: Top 3 are Seattle Colleges, Green River, Spokane CCs",
+      "answer": "Top 3 are Seattle Colleges, Green River, Spokane CCs"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Node 4: Seattle Colleges -> Seattle, Washington Node 5: Green River College -> Auburn, Washington Node 6: Community Colleges of Spokane -> Spokane, Washington Result: Two counties identified - King County (Seattle, Auburn) and Spokane County (Spokane)",
+      "answer": "Two counties identified - King County (Seattle, Auburn) and Spokane County (Spokane)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8
+      ],
+      "reasoning": "Node 7: King County - 2020 pop: 2,269,675, seat: Seattle Node 8: Spokane County - 2020 pop: 539,339, seat: Spokane Comparison: King County (2,269,675) > Spokane County (539,339) Result: King County is most populous -> county seat is Seattle",
+      "answer": "King County is most populous -> county seat is Seattle"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Seattle Building Energy Benchmarking shows BOEING PLANT 2 ISAL (BLDG 2-122)-North Boeing Field Campus has highest average GHG emissions (20,835.8 metric tons CO2e) Result: Boeing Plant 2 ISAL (BLDG 2-122)-North Boeing Field Campus (Boeing Plant 2)",
+      "answer": "Boeing Plant 2 ISAL (BLDG 2-122)-North Boeing Field Campus (Boeing Plant 2)"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Node 10: Boeing Plant 2 was built in 1936",
+      "answer": "1936"
+    }
+  ]
+}

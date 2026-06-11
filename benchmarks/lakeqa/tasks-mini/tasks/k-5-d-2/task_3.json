@@ -1,0 +1,139 @@
+{
+  "question": "Among Harris, Hidalgo, Dallas, and Cameron counties in Texas, which two saw the largest percentage decrease in day care home meal reimbursements from 2018-19 to 2020-21? Of those two, which had the higher average child center enrollment across 2018-19 and 2019-20? For that county, what is the county seat, and which gulf does its coast border? Return the gulf name only. Your response should be in the format [Answer].",
+  "answer": "Gulf of Mexico",
+  "nodes": {
+    "1": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2016/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2015-2016'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Among {Harris, Hidalgo, Dallas, Cameron}, which counties had the largest percentage decrease in day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum TotalMealReimbursement.)",
+      "answer": {
+        "Harris": 8757796.13,
+        "Dallas": 2835278.75,
+        "Hidalgo": 1202699.73,
+        "Cameron": 392489.51
+      }
+    },
+    "2": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2017/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2016-2017'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Among {Harris, Hidalgo, Dallas, Cameron}, which counties had the largest percentage decrease in day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2020-2021; group by SiteCounty; sum TotalMealReimbursement.)",
+      "answer": {
+        "Harris": 7558597.77,
+        "Dallas": 2393411.26,
+        "Hidalgo": 971063.56,
+        "Cameron": 330003.06
+      }
+    },
+    "3": {
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2017-2018'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Among {Hidalgo, Cameron}, which county had the higher average child center enrollment across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum EnrollmentQty.)",
+      "answer": {
+        "Cameron": 7620183,
+        "Hidalgo": 1661128
+      }
+    },
+    "4": {
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2018-2019'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Among {Hidalgo, Cameron}, which county had the higher average child center enrollment across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2019-2020; group by SiteCounty; sum EnrollmentQty.)",
+      "answer": {
+        "Cameron": 1076746,
+        "Hidalgo": 1477805
+      }
+    },
+    "5": {
+      "source": "wikipedia/Cameron_County,_Texas/content.txt",
+      "fact": "Cameron County's county seat is Brownsville.",
+      "subquestion": "What is the county seat of Cameron County, Texas (from the higher-enrollment county in the previous step)?",
+      "answer": "Brownsville"
+    },
+    "6": {
+      "source": "wikipedia/Brownsville,_Texas/content.txt",
+      "fact": "Brownsville is located on the western Gulf Coast in South Texas.",
+      "subquestion": "On which coast is Brownsville located?",
+      "answer": "Gulf Coast"
+    },
+    "7": {
+      "source": "wikipedia/Gulf_Coast_of_the_United_States/content.txt",
+      "fact": "The Gulf Coast of the United States is the coastline along the Gulf of Mexico.",
+      "subquestion": "The Gulf Coast is the coastline along which gulf?",
+      "answer": "Gulf of Mexico"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=2, day care home reimbursements 2018-2019 vs 2020-2021 - nodes 1-2):",
+    "  Node 1 totals (2018-2019): Harris 8,757,796.13; Dallas 2,835,278.75; Hidalgo 1,202,699.73; Cameron 392,489.51",
+    "  Node 2 totals (2020-2021): Harris 7,558,597.77; Dallas 2,393,411.26; Hidalgo 971,063.56; Cameron 330,003.06",
+    "  Percent decreases: Hidalgo -19.26%, Cameron -15.92%, Dallas -15.58%, Harris -13.69% -> two largest decreases {Hidalgo, Cameron}",
+    "",
+    "HOP 2 (d=2, child center enrollment 2018-2019 vs 2019-2020 - nodes 3-4):",
+    "  Node 3 totals (2018-2019): Cameron 7,620,183; Hidalgo 1,661,128",
+    "  Node 4 totals (2019-2020): Cameron 1,076,746; Hidalgo 1,477,805",
+    "  Average enrollment: Cameron 4,348,464.5 vs Hidalgo 1,569,466.5 -> Cameron County",
+    "",
+    "HOP 3 (d=1, Cameron County Wikipedia - node 5):",
+    "  Node 5: Cameron County seat is Brownsville",
+    "",
+    "HOP 4 (d=1, Brownsville Wikipedia - node 6):",
+    "  Node 6: Brownsville is on the Gulf Coast",
+    "",
+    "HOP 5 (d=1, Gulf Coast Wikipedia - node 7):",
+    "  Node 7: Gulf Coast is the coastline along the Gulf of Mexico",
+    "  Final answer: Gulf of Mexico"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Cameron_County,_Texas",
+    "Brownsville,_Texas",
+    "Gulf_Coast_of_the_United_States",
+    "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018",
+    "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019",
+    "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018",
+    "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Node 1 totals (2018-2019): Harris 8,757,796.13; Dallas 2,835,278.75; Hidalgo 1,202,699.73; Cameron 392,489.51 Node 2 totals (2020-2021): Harris 7,558,597.77; Dallas 2,393,411.26; Hidalgo 971,063.56; Cameron 330,003.06 Percent decreases: Hidalgo -19.26%, Cameron -15.92%, Dallas -15.58%, Harris -13.69% -> two largest decreases {Hidalgo, Cameron}",
+      "answer": "two largest decreases {Hidalgo, Cameron}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3,
+        4
+      ],
+      "reasoning": "Node 3 totals (2018-2019): Cameron 7,620,183; Hidalgo 1,661,128 Node 4 totals (2019-2020): Cameron 1,076,746; Hidalgo 1,477,805 Average enrollment: Cameron 4,348,464.5 vs Hidalgo 1,569,466.5 -> Cameron County",
+      "answer": "Cameron County"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: Cameron County seat is Brownsville",
+      "answer": "Brownsville"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6: Brownsville is on the Gulf Coast",
+      "answer": "Gulf Coast"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7: Gulf Coast is the coastline along the Gulf of Mexico",
+      "answer": "Gulf of Mexico"
+    }
+  ]
+}

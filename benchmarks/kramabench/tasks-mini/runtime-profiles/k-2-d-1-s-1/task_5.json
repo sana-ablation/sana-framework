@@ -1,0 +1,69 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-10"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+    "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the reports-by-type table and confirm the available year range.",
+    "2. Compute total reports by year and identify years where Fraud is at least half of the total."
+  ],
+  "original_final_question": "In which years were Fraud reports at least 50% of the total reports? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the reports-by-type table and confirm the available year range.",
+    "Node 2 depends on node 1: Compute total reports by year and identify years where Fraud is at least half of the total.",
+    "Final answer: [2010, 2011, 2012, 2013, 2014, 2019]"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-10",
+      "source": "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What year range and row count are present in the reports-by-type table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = f'{int(df.Year.min())}|{int(df.Year.max())}|{len(df)}'\nprint(result)\n",
+      "answer": "2001|2024|24"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-10",
+      "source": "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "Which years have Fraud reports at least half of total reports?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = str([int(year) for year in df.loc[df['fraud_pct'] >= 0.5, 'Year'].values])\nprint(result)\n",
+      "answer": [
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2019
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-10",
+      "source": "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What year range and row count are present in the reports-by-type table?",
+      "answer": "2001|2024|24",
+      "sql": "WITH rows AS (SELECT CAST(\"Number of Reports by Type\" AS INTEGER) AS year, CAST(REPLACE(column1, ',', '') AS DOUBLE) AS fraud, CAST(REPLACE(column2, ',', '') AS DOUBLE) AS identity_theft, CAST(REPLACE(column3, ',', '') AS DOUBLE) AS other_reports FROM t WHERE regexp_matches(CAST(\"Number of Reports by Type\" AS VARCHAR), '^[0-9]+$')), totals AS (SELECT *, fraud+identity_theft+other_reports AS total FROM rows) SELECT CAST(MIN(year) AS VARCHAR) || '|' || CAST(MAX(year) AS VARCHAR) || '|' || CAST(COUNT(*) AS VARCHAR) AS answer FROM totals"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-10",
+      "source": "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "Which years have Fraud reports at least half of total reports?",
+      "answer": [
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2019
+      ],
+      "sql": "WITH rows AS (SELECT CAST(\"Number of Reports by Type\" AS INTEGER) AS year, CAST(REPLACE(column1, ',', '') AS DOUBLE) AS fraud, CAST(REPLACE(column2, ',', '') AS DOUBLE) AS identity_theft, CAST(REPLACE(column3, ',', '') AS DOUBLE) AS other_reports FROM t WHERE regexp_matches(CAST(\"Number of Reports by Type\" AS VARCHAR), '^[0-9]+$')), totals AS (SELECT *, fraud+identity_theft+other_reports AS total FROM rows) SELECT year AS answer FROM totals WHERE fraud / total >= 0.5 ORDER BY year"
+    }
+  ]
+}

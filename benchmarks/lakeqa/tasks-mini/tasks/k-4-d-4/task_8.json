@@ -1,0 +1,230 @@
+{
+  "question": "Consider the only engineering firm founded after 1914 that has no current NY State construction manager projects, yet consistently ranked in the top 20 Washington State contractors by contract count annually from 2017 to 2020. In what year was the Native American interpreter born who helped negotiate the land cession that led to the founding of the city where that firm is based? Please return the year only. Your response should be in the format [Answer].",
+  "answer": "1825",
+  "nodes": {
+    "1": {
+      "source": "datagov/agency-contracts-fiscal-year-2017/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2017/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nanswer = df[\"Contractor Name\"].value_counts().head(20).index.tolist()\n",
+      "subquestion": "Which contractors ranked in the top 20 by contract count in Washington State agency contracts in fiscal year 2017?",
+      "answer": [
+        "ARAMARK UNIFORM SERVICES, INC.",
+        "McGranahan Architects",
+        "Schreiber Starling Whitehead Architects",
+        "McKinstry Essention, LLC",
+        "Liberty Business Forms",
+        "PBS Engineering+Environmental - Seattle",
+        "WSP USA, Inc.",
+        "HDR Engineering, Inc.",
+        "Schacht/Aslani Architects",
+        "KMB architects",
+        "Phoenix Protective Corp.",
+        "MSGS Architects",
+        "KolorKraze",
+        "Jacobs Engineering Group, Inc.",
+        "HNTB Corporation",
+        "S. M. Stemper Architects, PLLC",
+        "Pioneer Human Services",
+        "Imagesource Inc",
+        "Osborn Architects, Inc., PS",
+        "Golden Pacific Embossing"
+      ]
+    },
+    "2": {
+      "source": "datagov/agency-contracts-fiscal-year-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2018/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nanswer = df[\"Contractor Name\"].value_counts().head(20).index.tolist()\n",
+      "subquestion": "Which contractors ranked in the top 20 by contract count in Washington State agency contracts in fiscal year 2018?",
+      "answer": [
+        "A-1 Performance Inc",
+        "Jacobs Engineering Group, Inc.",
+        "WSP USA Inc.",
+        "Imagesource Inc",
+        "HDR Engineering, Inc.",
+        "HNTB Corporation",
+        "GENUINE PARTS CO",
+        "Sharp Electronics Corporation",
+        "A-1 Performance INC",
+        "Correctional Industries-DOC",
+        "Pioneer Human Services",
+        "Puget Sound Executive Srvces Inc",
+        "Client Network Services Inc",
+        "DOC Correctional Industries",
+        "Ricoh Usa Inc",
+        "Parametrix, Inc.",
+        "Phoenix Protective Corp.",
+        "ESD Financial Office",
+        "Northwest Envirometrics Inc",
+        "DES"
+      ]
+    },
+    "3": {
+      "source": "datagov/agency-contracts-fiscal-year-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2019/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nanswer = df[\"Contractor Name\"].value_counts().head(20).index.tolist()\n",
+      "subquestion": "Which contractors ranked in the top 20 by contract count in Washington State agency contracts in fiscal year 2019?",
+      "answer": [
+        "Sharp Electronics Corporation",
+        "DOC Correctional Industries",
+        "WSP USA Inc.",
+        "A-1 Performance Inc",
+        "Parametrix, Inc.",
+        "Imagesource Inc",
+        "Northwest Envirometrics Inc",
+        "Regence Blueshield",
+        "Shi International Corp",
+        "Capital Business Machines Inc",
+        "DES",
+        "Phoenix Protective Corp.",
+        "Jacobs Engineering Group, Inc.",
+        "Client Network Services Llc",
+        "HDR Engineering, Inc.",
+        "Talgo, Inc.",
+        "MISC CUSTOMER",
+        "OTB Solutions Group Llc",
+        "HNTB Corporation",
+        "Service Alternatives Inc."
+      ]
+    },
+    "4": {
+      "source": "datagov/agency-contracts-fiscal-year-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/agency-contracts-fiscal-year-2020/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nanswer = df[\"Contractor Name\"].value_counts().head(20).index.tolist()\n",
+      "subquestion": "Which contractors ranked in the top 20 by contract count in Washington State agency contracts in fiscal year 2020?",
+      "answer": [
+        "JP Morgan Chase Bank NA",
+        "WSP USA Inc.",
+        "University of Washington",
+        "WA State DSHS",
+        "HDR Engineering, Inc.",
+        "Parametrix, Inc.",
+        "Washington State University",
+        "Shi International Corp",
+        "Department of Transportation",
+        "HNTB Corporation",
+        "King County",
+        "Regence Blueshield",
+        "South Puget Sound Comm College",
+        "Jacobs Engineering Group, Inc.",
+        "WA State Univ",
+        "Department of Children, Youth, and Families",
+        "Moda Health Plan Inc",
+        "Lacey  City of",
+        "WSDOT",
+        "Department of Health"
+      ]
+    },
+    "5": {
+      "source": "wikipedia/HDR,_Inc./content.txt",
+      "fact": "HDR, Inc. is an American design and engineering company based in Omaha, Nebraska. In 1917, the Henningson Engineering Company started as a civil engineering firm in Omaha, where HDR's headquarters remain.",
+      "subquestion": "For HDR Engineering (one of the contractors in the intersection of nodes 1-4), where is it based and in what year did the company start?",
+      "answer": "Omaha, Nebraska; 1917"
+    },
+    "6": {
+      "source": "wikipedia/Jacobs_Solutions/content.txt",
+      "fact": "Jacobs Engineering was founded in 1947, by Joseph J. Jacobs.",
+      "subquestion": "For Jacobs Engineering Group (from the intersection of nodes 1-4), in what year was it founded?",
+      "answer": "1947"
+    },
+    "7": {
+      "source": "wikipedia/HNTB/content.txt",
+      "fact": "HNTB Corporation is an American architectural and infrastructure design firm. Founded in 1914 in Kansas City, Missouri, HNTB began with the partnership made by Ernest Emmanuel Howard with the firm Waddell & Harrington, founded in 1907.",
+      "subquestion": "For HNTB Corporation (from the intersection of nodes 1-4), in what year was it founded?",
+      "answer": "1914"
+    },
+    "8": {
+      "source": "datagov/active-construction-projects/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/active-construction-projects/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\ncandidates = [\"HDR Engineering, Inc.\", \"HNTB Corporation\", \"Jacobs Project Management Co.\"]\ncounts = {name: int((df[\"Construction Manager\"] == name).sum()) for name in candidates}\nanswer = [name for name in [\"HDR Engineering, Inc.\", \"HNTB Corporation\"] if counts[name] == 0]\nassert counts[\"Jacobs Project Management Co.\"] > 0\n",
+      "subquestion": "Of the three engineering contractors in the intersection (Jacobs Engineering Group, HNTB Corporation, HDR Engineering), which have zero NY State construction manager projects?",
+      "answer": [
+        "HDR Engineering, Inc.",
+        "HNTB Corporation"
+      ]
+    },
+    "9": {
+      "source": "wikipedia/Omaha,_Nebraska/content.txt",
+      "fact": "Omaha's pioneer period began in 1854, when the city was founded along the Missouri River. Logan Fontenelle, an interpreter for the Omaha Tribe, was important during the United States negotiations with Omaha leaders in 1853-1854 about ceding land to the United States prior to settlement.",
+      "subquestion": "In the city where the company identified by intersecting the founded-after-1914 companies (from nodes 5-7) with the zero-CM-projects companies (from node 8) is based, which Native American interpreter helped negotiate the 1853-1854 land cession that led to the city's founding?",
+      "answer": "Logan Fontenelle"
+    },
+    "10": {
+      "source": "wikipedia/Logan_Fontenelle/content.txt",
+      "fact": "Logan Fontenelle (May 6, 1825 – July 16, 1855), also known as Shon-ga-ska (White Horse), was a trader of Omaha and French ancestry, who served for years as an interpreter to the US Indian agent at the Bellevue Agency in Nebraska. He was especially important during the United States negotiations with Omaha leaders in 1853–1854 about ceding land to the United States prior to settlement.",
+      "subquestion": "In what year was <node_9 answer> born?",
+      "answer": "1825"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, data.gov agency contracts - nodes 1-4):",
+    "  Node 1: Top 20 contractors by contract count in WA State FY 2017 -> includes HDR, Jacobs, HNTB",
+    "  Node 2: Top 20 contractors by contract count in WA State FY 2018 -> includes HDR, Jacobs, HNTB",
+    "  Node 3: Top 20 contractors by contract count in WA State FY 2019 -> includes HDR, Jacobs, HNTB",
+    "  Node 4: Top 20 contractors by contract count in WA State FY 2020 -> includes HDR, Jacobs, HNTB",
+    "  Intersection of nodes 1-4: Contractors in top 20 all four years -> {Jacobs Engineering Group, HNTB Corporation, HDR Engineering}",
+    "",
+    "HOP 2 (d=4, company founding/NY projects - nodes 5-8):",
+    "  Node 5: HDR is based in Omaha and started in 1917",
+    "  Node 6: Jacobs Engineering was founded in 1947",
+    "  Node 7: HNTB Corporation was founded in 1914",
+    "  From nodes 5-7: Founded after 1914 -> {HDR (1917), Jacobs (1947)}",
+    "  Node 8: Zero NY State construction manager projects -> {HDR, HNTB}",
+    "  Intersection -> {HDR Engineering}",
+    "",
+    "HOP 3 (d=1, Wikipedia Omaha - node 9):",
+    "  Node 9: Omaha land-cession negotiations identify interpreter Logan Fontenelle",
+    "",
+    "HOP 4 (d=1, Wikipedia Logan Fontenelle - node 10):",
+    "  Node 10: Logan Fontenelle was born in 1825",
+    "",
+    "Final answer: 1825"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "HDR,_Inc.",
+    "HNTB",
+    "Jacobs_Solutions",
+    "Logan_Fontenelle",
+    "Omaha,_Nebraska",
+    "active-construction-projects",
+    "agency-contracts-fiscal-year-2017",
+    "agency-contracts-fiscal-year-2018",
+    "agency-contracts-fiscal-year-2019",
+    "agency-contracts-fiscal-year-2020"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: Top 20 contractors by contract count in WA State FY 2017 -> includes HDR, Jacobs, HNTB Node 2: Top 20 contractors by contract count in WA State FY 2018 -> includes HDR, Jacobs, HNTB Node 3: Top 20 contractors by contract count in WA State FY 2019 -> includes HDR, Jacobs, HNTB Node 4: Top 20 contractors by contract count in WA State FY 2020 -> includes HDR, Jacobs, HNTB Intersection of nodes 1-4: Contractors in top 20 all four years -> {Jacobs Engineering Group, HNTB Corporation, HDR Engineering}",
+      "answer": "{Jacobs Engineering Group, HNTB Corporation, HDR Engineering}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "reasoning": "Node 5: HDR is based in Omaha and started in 1917 Node 6: Jacobs Engineering was founded in 1947 Node 7: HNTB Corporation was founded in 1914 From nodes 5-7: Founded after 1914 -> {HDR (1917), Jacobs (1947)} Node 8: Zero NY State construction manager projects -> {HDR, HNTB} Intersection -> {HDR Engineering}",
+      "answer": "{HDR Engineering}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Omaha land-cession negotiations identify interpreter Logan Fontenelle",
+      "answer": "Logan Fontenelle"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Node 10: Logan Fontenelle was born in 1825",
+      "answer": "1825"
+    }
+  ]
+}

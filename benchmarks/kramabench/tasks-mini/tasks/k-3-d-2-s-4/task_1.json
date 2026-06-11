@@ -1,0 +1,97 @@
+{
+  "question": "For Boston Harbor beaches located in communities with more than 90% environmental justice (EJ) populations, what is the Pearson correlation (to 3 decimal places) between rainfall in the past 3 days and Enterococcus levels? Estimate Enterococcus levels labeled as less than x as x/2, and those labeled as greater than x as x. Write your answer as [ANSWER].",
+  "answer": "0.206",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-10/files/boston-harbor-beaches.txt",
+      "fact": "import re\n\npath = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nwith open(path, encoding='utf-8') as f:\n    beaches = []\n    for line in f:\n        name = line.strip()\n        if not name:\n            continue\n        beaches.append(re.sub(r'\\s+Beach$', '', name))\nanswer = '|'.join(beaches)\nprint(answer)\n",
+      "subquestion": "Which beach names are listed as Boston Harbor beaches, after removing the word Beach from each listed name?",
+      "answer": "Constitution|Castle Island|Pleasure Bay|City Point|M Street|Carson|Malibu|Tenean|Wollaston"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-10/files/environmental-justice-populations.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/environmental-justice-populations.csv'\ndf = pd.read_csv(path)\npct = pd.to_numeric(df['Percent of population in EJ BGs'], errors='coerce')\nmunicipalities = df.loc[pct.gt(90), 'Municipality'].astype(str).str.strip().tolist()\nanswer = '|'.join(municipalities)\nprint(answer)\n",
+      "subquestion": "Which municipalities have more than 90% of their population in environmental justice block groups?",
+      "answer": "Amherst|Aquinnah|Ashland|Avon|Boxborough|Brockton|Brookline|Cambridge|Charlemont|Chelsea|Everett|Hawley|Holbrook|Lawrence|Lowell|Lynn|Malden|Monroe|Quincy|Randolph|Revere|Rowe|Savoy|Springfield|Stoughton|Sunderland|Worcester"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-10/files/water-body-testing-2023.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv'\nnode_1_answer = 'Constitution|Castle Island|Pleasure Bay|City Point|M Street|Carson|Malibu|Tenean|Wollaston'\nnode_2_answer = 'Amherst|Aquinnah|Ashland|Avon|Boxborough|Brockton|Brookline|Cambridge|Charlemont|Chelsea|Everett|Hawley|Holbrook|Lawrence|Lowell|Lynn|Malden|Monroe|Quincy|Randolph|Revere|Rowe|Savoy|Springfield|Stoughton|Sunderland|Worcester'\n\nboston_beaches = {name.strip().title() for name in node_1_answer.split('|') if name.strip()}\nej_municipalities = {name.strip() for name in node_2_answer.split('|') if name.strip()}\ndf = pd.read_csv(path)\nmarine = df['Beach Type Description'].astype(str).str.strip().eq('Marine')\nin_ej_community = df['Community'].astype(str).str.strip().isin(ej_municipalities)\nfiltered = df[marine & in_ej_community].copy()\ncleaned_names = filtered['Beach Name'].astype(str).str.split('@').str[0].str.strip().str.title()\nmatches = sorted(set(cleaned_names).intersection(boston_beaches))\nanswer = '|'.join(matches)\nprint(answer)\n",
+      "subquestion": "Among 2023 marine beach testing records in the municipalities from <node_2 answer>, which cleaned beach names also appear in the Boston Harbor beach list from <node_1 answer>?",
+      "answer": "Wollaston"
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-10/files/wollaston_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\nnode_3_answer = 'Wollaston'\ntarget_beach = node_3_answer.split('|')[0].strip()\nassert target_beach == 'Wollaston'\npath = 'other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv'\n\ndf = pd.read_csv(path, skiprows=1, header=[0, 1])\ncols = df.columns.to_frame()\ncols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\ndf.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\nvalue_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\nid_cols = [col for col in df.columns if col not in value_cols]\nlong_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\nlong_df['Location'] = long_df['Variable'].str.split('_').str[0]\nlong_df['Measure'] = long_df['Variable'].str.split('_').str[1]\ntidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\ntidy.columns.name = None\nfor col in tidy.columns:\n    if col not in id_cols + ['Location', 'Tag']:\n        tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n\ntag = tidy['Tag'].astype(str).str.strip()\ntidy.loc[tag.eq('<'), 'Enterococcus'] = tidy.loc[tag.eq('<'), 'Enterococcus'] / 2\ncorr = tidy['3-Day Rain'].corr(tidy['Enterococcus'], method='pearson')\nanswer = f'{corr:.3f}'\nprint(answer)\n",
+      "subquestion": "For the qualifying beach from <node_3 answer>, what is the Pearson correlation between 3-Day Rain and Enterococcus after applying the less-than and greater-than Enterococcus tag rules, rounded to three decimals?",
+      "answer": "0.206"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: The Boston Harbor beach list normalizes to Constitution, Castle Island, Pleasure Bay, City Point, M Street, Carson, Malibu, Tenean, and Wollaston.",
+    "Node 2: Environmental justice population data identifies the municipalities with more than 90% of residents in EJ block groups.",
+    "Node 3 depends on nodes 1 and 2: Filtering 2023 marine beach testing records to those EJ municipalities and intersecting with the Boston Harbor list leaves Wollaston.",
+    "Node 4 depends on node 3: The Wollaston datasheet gives a 3-Day Rain versus Enterococcus Pearson correlation of 0.206 after applying the tag rules.",
+    "Final answer: 0.206"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-environment-hard-10/files/boston-harbor-beaches.txt",
+    "datagov/kramabench-environment-hard-10/files/environmental-justice-populations.csv",
+    "datagov/kramabench-environment-hard-10/files/water-body-testing-2023.csv",
+    "datagov/kramabench-environment-hard-10/files/wollaston_beach_datasheet.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Nodes 1 and 2 independently identify the Boston Harbor beach list and the municipalities with more than 90% EJ populations.",
+      "answer": "Boston Harbor beaches and >90% EJ municipalities"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 uses the first-hop answers to find the qualifying beach in 2023 marine beach testing data.",
+      "answer": "Wollaston"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 computes the requested rounded Pearson correlation from the qualifying beach datasheet.",
+      "answer": "0.206"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-10",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "./tasks-mini-kramabench/candidates/environment-hard-10.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/environment.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/environment/environment-hard-10.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-10",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-10/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt",
+      "2": "other-benchmarks/Kramabench/data/environment/input/environmental-justice-populations.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "question": "Calculate the ratio of peak atmospheric mass density experienced by Swarm A satellite during March 14th-17th 2014 vs July 18th-21st 2018. Write your answer as [ANSWER].",
+  "answer": "7.52",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv'\ndf = pd.read_csv(path)\nresult = f\"{df['Orbit Mean Density (kg/m^3)'].max():.16e}\"\nprint(result)\n",
+      "subquestion": "What is the peak Swarm A atmospheric mass density during March 14-17, 2014?",
+      "answer": "1.3285239839593709e-12"
+    },
+    "2": {
+      "source": "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv'\ndf = pd.read_csv(path)\nresult = f\"{df['Orbit Mean Density (kg/m^3)'].max():.16e}\"\nprint(result)\n",
+      "subquestion": "What is the peak Swarm A atmospheric mass density during July 18-21, 2018?",
+      "answer": "1.7666467344237410e-13"
+    },
+    "3": {
+      "source": "datagov/kramabench-astronomy-easy-2/files/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+      "fact": "import pandas as pd\nfirst_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv'\nsecond_path = 'other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv'\nfirst = pd.read_csv(first_path)['Orbit Mean Density (kg/m^3)'].max()\nsecond = pd.read_csv(second_path)['Orbit Mean Density (kg/m^3)'].max()\nresult = f\"{first / second:.2f}\"\nprint(result)\n",
+      "subquestion": "What is the ratio of the 2014 peak density to the 2018 peak density rounded to two decimals?",
+      "answer": "7.52"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the March 2014 Swarm A density file and find its maximum orbit mean density.",
+    "Node 2: Read the July 2018 Swarm A density file and find its maximum orbit mean density.",
+    "Node 3 depends on nodes 1 and 2: Divide the 2014 peak by the 2018 peak and round to two decimals.",
+    "Final answer: 7.52"
+  ],
+  "datasets_used": [
+    "kramabench-astronomy-easy-2"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the March 2014 Swarm A density file and find its maximum orbit mean density.",
+      "answer": "1.3285239839593709e-12"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Read the July 2018 Swarm A density file and find its maximum orbit mean density.",
+      "answer": "1.7666467344237410e-13"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: Divide the 2014 peak by the 2018 peak and round to two decimals.",
+      "answer": "7.52"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "astronomy-easy-2",
+    "domain": "astronomy",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/astronomy-easy-2.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-2",
+    "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-2/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+      "2": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv",
+      "3": "other-benchmarks/Kramabench/data/astronomy/input/STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

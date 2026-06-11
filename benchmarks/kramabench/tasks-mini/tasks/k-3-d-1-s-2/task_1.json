@@ -1,0 +1,83 @@
+{
+  "question": "Count the number of human conflicts between 800 and 1400 AD, and attribute them as best you can to modern countries. Define a conflict as between two actors that lasts at least a year. Write your answer as [ANSWER].",
+  "answer": "409",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-hard-12/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nresult = str(len(set(df['country'].dropna().unique().tolist())))\nprint(result)\n",
+      "subquestion": "How many unique modern country names are available for attributing conflict actors?",
+      "answer": "241"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-hard-12/files/conflict_brecke.csv",
+      "fact": "def country_matcher():\n    import pandas as pd\n    world_path = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\n    city_df = pd.read_csv(world_path)\n    return sorted(set(city_df['country'].dropna().unique().tolist()))\n\ndef get_matching_country(sentence, countries):\n    words = str(sentence).lower()\n    for item in countries:\n        if item.lower() in words:\n            return item\n    return None\n\ndef processed_conflicts():\n    import pandas as pd\n    conflict_path = 'other-benchmarks/Kramabench/data/archeology/input/conflict_brecke.csv'\n    countries = country_matcher()\n    conflict_data = pd.read_csv(conflict_path)\n    processed = []\n    for _, row in conflict_data.iterrows():\n        name = row['Conflict']\n        if '-' in name:\n            actor_a, actor_b = name.split('-', 1)\n        elif 'and' in name:\n            actor_a, actor_b = name.split('and', 1)\n        else:\n            actor_a = actor_b = name\n        start = int(row['StartYear'])\n        end = int(row['EndYear'])\n        actor_a = get_matching_country(actor_a, countries)\n        actor_b = get_matching_country(actor_b, countries)\n        if actor_a is None or actor_b is None or start < 800 or end > 1400:\n            continue\n        actor_a, actor_b = sorted([actor_a, actor_b])\n        processed.append({'actor_a': actor_a, 'actor_b': actor_b, 'start': start, 'end': end})\n    return pd.DataFrame(processed)\n\ndef merged_conflicts():\n    import pandas as pd\n    filtered = processed_conflicts()\n    merged = []\n    for _, df in filtered.groupby(['actor_a', 'actor_b']):\n        df = df.sort_values('start')\n        current = None\n        for _, row in df.iterrows():\n            row = row.copy()\n            if current is None:\n                current = row\n            elif row['start'] <= current['end']:\n                if row['end'] > current['end']:\n                    current['end'] = row['end']\n            else:\n                merged.append(current)\n                current = row\n        if current is not None:\n            merged.append(current)\n    return pd.DataFrame(merged)\nresult = str(len(processed_conflicts()))\nprint(result)\n",
+      "subquestion": "How many conflict records between 800 and 1400 AD can be attributed to two modern countries before merging overlaps?",
+      "answer": "480"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-hard-12/files/conflict_brecke.csv",
+      "fact": "def country_matcher():\n    import pandas as pd\n    world_path = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\n    city_df = pd.read_csv(world_path)\n    return sorted(set(city_df['country'].dropna().unique().tolist()))\n\ndef get_matching_country(sentence, countries):\n    words = str(sentence).lower()\n    for item in countries:\n        if item.lower() in words:\n            return item\n    return None\n\ndef processed_conflicts():\n    import pandas as pd\n    conflict_path = 'other-benchmarks/Kramabench/data/archeology/input/conflict_brecke.csv'\n    countries = country_matcher()\n    conflict_data = pd.read_csv(conflict_path)\n    processed = []\n    for _, row in conflict_data.iterrows():\n        name = row['Conflict']\n        if '-' in name:\n            actor_a, actor_b = name.split('-', 1)\n        elif 'and' in name:\n            actor_a, actor_b = name.split('and', 1)\n        else:\n            actor_a = actor_b = name\n        start = int(row['StartYear'])\n        end = int(row['EndYear'])\n        actor_a = get_matching_country(actor_a, countries)\n        actor_b = get_matching_country(actor_b, countries)\n        if actor_a is None or actor_b is None or start < 800 or end > 1400:\n            continue\n        actor_a, actor_b = sorted([actor_a, actor_b])\n        processed.append({'actor_a': actor_a, 'actor_b': actor_b, 'start': start, 'end': end})\n    return pd.DataFrame(processed)\n\ndef merged_conflicts():\n    import pandas as pd\n    filtered = processed_conflicts()\n    merged = []\n    for _, df in filtered.groupby(['actor_a', 'actor_b']):\n        df = df.sort_values('start')\n        current = None\n        for _, row in df.iterrows():\n            row = row.copy()\n            if current is None:\n                current = row\n            elif row['start'] <= current['end']:\n                if row['end'] > current['end']:\n                    current['end'] = row['end']\n            else:\n                merged.append(current)\n                current = row\n        if current is not None:\n            merged.append(current)\n    return pd.DataFrame(merged)\nresult = str(len(merged_conflicts()))\nprint(result)\n",
+      "subquestion": "After merging overlapping conflict intervals for each attributed country pair, how many conflicts remain?",
+      "answer": "409"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Build the modern country-name reference set from the world cities table.",
+    "Node 2 depends on node 1: Parse conflict actors, attribute each side to a modern country, and keep attributed records within 800-1400 AD.",
+    "Node 3 depends on node 2: For each attributed country pair, merge overlapping intervals and count the resulting conflicts.",
+    "Final answer: 409"
+  ],
+  "datasets_used": [
+    "kramabench-archeology-hard-12"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Build the modern country-name reference set from the world cities table.",
+      "answer": "241"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Parse conflict actors, attribute each side to a modern country, and keep attributed records within 800-1400 AD.",
+      "answer": "480"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: For each attributed country pair, merge overlapping intervals and count the resulting conflicts.",
+      "answer": "409"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-hard-12",
+    "domain": "archeology",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-hard-12.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-12",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-hard-12/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/conflict_brecke.csv",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/conflict_brecke.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

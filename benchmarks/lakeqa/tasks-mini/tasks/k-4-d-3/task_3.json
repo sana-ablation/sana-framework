@@ -1,0 +1,128 @@
+{
+  "question": "In which Virginia county is the NASA facility of a system developed? This system was used in the 2007 USGS topographic survey of the national monument honoring a U.S. president born in Virginia who also held a general officer rank and appears on current U.S. currency. Your response should be in the format [Answer].",
+  "answer": "Accomack County",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/List_of_presidents_of_the_United_States_by_home_state/content.txt",
+      "fact": "Eight U.S. presidents were born in Virginia: George Washington, Thomas Jefferson, James Madison, James Monroe, William Henry Harrison, John Tyler, Zachary Taylor, and Woodrow Wilson.",
+      "subquestion": "Which U.S. presidents were born in Virginia?",
+      "answer": [
+        "George Washington",
+        "Thomas Jefferson",
+        "James Madison",
+        "James Monroe",
+        "William Henry Harrison",
+        "John Tyler",
+        "Zachary Taylor",
+        "Woodrow Wilson"
+      ]
+    },
+    "2": {
+      "source": "wikipedia/List_of_presidents_of_the_United_States_by_military_rank/content.txt",
+      "fact": "Presidents who held a general officer rank include George Washington, Ulysses S. Grant, Dwight D. Eisenhower, Andrew Jackson, William H. Harrison, Zachary Taylor, James A. Garfield, William Howard Taft, Franklin Pierce, Chester A. Arthur, Andrew Johnson, Rutherford B. Hayes, and Benjamin Harrison.",
+      "subquestion": "Which U.S. presidents held a general officer rank?",
+      "answer": [
+        "George Washington",
+        "Ulysses S. Grant",
+        "Dwight D. Eisenhower",
+        "Andrew Jackson",
+        "William Henry Harrison",
+        "Zachary Taylor",
+        "James A. Garfield",
+        "William Howard Taft",
+        "Franklin Pierce",
+        "Chester A. Arthur",
+        "Andrew Johnson",
+        "Rutherford B. Hayes",
+        "Benjamin Harrison"
+      ]
+    },
+    "3": {
+      "source": "wikipedia/United_States_dollar/content.txt",
+      "fact": "Current U.S. currency portraits include George Washington, Thomas Jefferson, Abraham Lincoln, Andrew Jackson, Ulysses S. Grant, Franklin D. Roosevelt, and John F. Kennedy.",
+      "subquestion": "Which U.S. presidents appear on current U.S. currency?",
+      "answer": [
+        "George Washington",
+        "Thomas Jefferson",
+        "Abraham Lincoln",
+        "Andrew Jackson",
+        "Ulysses S. Grant",
+        "Franklin D. Roosevelt",
+        "John F. Kennedy"
+      ]
+    },
+    "4": {
+      "source": "wikipedia/George_Washington_Birthplace_National_Monument/content.txt",
+      "fact": "The George Washington Birthplace National Monument is a national monument in Westmoreland County, Virginia, commemorating the birthplace of George Washington, who was born there on February 22, 1732.",
+      "subquestion": "Which national monument commemorates the birthplace of <intersection of node_1, node_2, node_3>?",
+      "answer": "George Washington Birthplace National Monument"
+    },
+    "5": {
+      "source": "datagov/eaarl-topography-george-washington-birthplace-national-monument/files/USGS.cc604b53-f943-4516-a7a2-7d6e3d12beef.txt",
+      "fact": "import os\nimport re\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/eaarl-topography-george-washington-birthplace-national-monument/files/USGS.cc604b53-f943-4516-a7a2-7d6e3d12beef.txt\"\nbucket = os.environ.get(\"LAKEQA_BUCKET\", \"lakeqa-yc4103-datalake\")\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    with open(local_path, \"rb\") as f:\n        raw_bytes = f.read()\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    raw_bytes = obj[\"Body\"].read()\n\ntext = raw_bytes.decode(\"utf-8-sig\", errors=\"replace\")\nlines = [re.sub(r\"\\s+\", \" \", line).strip() for line in text.splitlines()]\nlines = [line for line in lines if line]\nframe = pd.DataFrame({\"line\": lines})\nline_series = frame[\"line\"].astype(str)\n\nif line_series.empty:\n    raise ValueError(\"Source text is empty.\")\n\nnormalized_text = \" \".join(lines)\nspans = []\nfor match in re.finditer(r\"Wallops\", normalized_text, flags=re.I):\n    start = max(0, match.start() - 300)\n    end = min(len(normalized_text), match.end() + 300)\n    spans.append(normalized_text[start:end])\n\nanswer = None\nfor span in spans:\n    lower = span.lower()\n    if \"eaarl\" in lower and \"wallops flight facility\" in lower and (\"develop\" in lower or \"nasa\" in lower):\n        answer = \"Wallops Flight Facility\"\n        break\n\nif answer is None:\n    raise ValueError(\"Could not find a text span tying EAARL to Wallops Flight Facility.\")",
+      "subquestion": "At which NASA facility was the EAARL system used in the 2007 USGS survey of <node_4 answer> developed?",
+      "answer": "Wallops Flight Facility"
+    },
+    "6": {
+      "source": "wikipedia/Wallops_Island/content.txt",
+      "fact": "Wallops Island is an island in Accomack County, Virginia, and the island is used primarily for the Wallops Flight Facility.",
+      "subquestion": "In which Virginia county is <node_5 answer> located?",
+      "answer": "Accomack County"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Find presidents born in Virginia → {Washington, Jefferson, Madison, Monroe, W.H. Harrison, Tyler, Taylor, Wilson}",
+    "Node 2: Find presidents who held general officer rank → {Washington, Grant, Eisenhower, Jackson, W.H. Harrison, Taylor, Garfield, W.H. Taft, Pierce, Arthur, Andrew Johnson, Hayes, B. Harrison}",
+    "Node 3: Find presidents on current US currency → {Washington, Jefferson, Lincoln, Jackson, Grant, F.D. Roosevelt, J.F. Kennedy}",
+    "Intersection of <node_1>, <node_2>, <node_3>: Only president in all three sets → George Washington",
+    "Node 4 depends on intersection: Find national monument for Washington's birthplace → George Washington Birthplace National Monument",
+    "Node 5 depends on node 4: Find NASA facility where EAARL system was developed → Wallops Flight Facility",
+    "Node 6 depends on node 5: Find Virginia county where Wallops is located → Accomack County",
+    "Final answer: Accomack County"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "George_Washington_Birthplace_National_Monument",
+    "List_of_presidents_of_the_United_States_by_home_state",
+    "List_of_presidents_of_the_United_States_by_military_rank",
+    "United_States_dollar",
+    "Wallops_Island",
+    "eaarl-topography-george-washington-birthplace-national-monument"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: Find presidents born in Virginia → {Washington, Jefferson, Madison, Monroe, W.H. Harrison, Tyler, Taylor, Wilson} Node 2: Find presidents who held general officer rank → {Washington, Grant, Eisenhower, Jackson, W.H. Harrison, Taylor, Garfield, W.H. Taft, Pierce, Arthur, Andrew Johnson, Hayes, B. Harrison} Node 3: Find presidents on current US currency → {Washington, Jefferson, Lincoln, Jackson, Grant, F.D. Roosevelt, J.F. Kennedy} Intersection of <node_1>, <node_2>, <node_3>: Only president in all three sets → George Washington",
+      "answer": "George Washington"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on intersection: Find national monument for Washington's birthplace → George Washington Birthplace National Monument",
+      "answer": "George Washington Birthplace National Monument"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 depends on node 4: Find NASA facility where EAARL system was developed → Wallops Flight Facility",
+      "answer": "Wallops Flight Facility"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6 depends on node 5: Find Virginia county where Wallops is located → Accomack County",
+      "answer": "Accomack County"
+    }
+  ]
+}

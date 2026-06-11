@@ -1,0 +1,22 @@
+{
+  "dataset_sequence": [
+    "wikipedia/hotpotqa__5a70f0a75542994082a3e403",
+    "wikipedia/hotpotqa__5a70f0a75542994082a3e403"
+  ],
+  "source_sequence": [
+    "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/Spettekaka.txt",
+    "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/Scanian_dialect.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Use the first supporting page to identify the intermediate evidence needed for the next lookup.",
+    "2. Use the second supporting page with that intermediate evidence to answer the question."
+  ],
+  "original_final_question": "Which dialect spoken in the province of Scania calls Spettekaka, \"spiddekaga\"? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "ideal_code": [],
+  "ideal_query": []
+}

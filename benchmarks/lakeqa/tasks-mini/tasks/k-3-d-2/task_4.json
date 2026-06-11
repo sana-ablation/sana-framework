@@ -1,0 +1,71 @@
+{
+  "question": "I want to investigate Adams Morgan in Washington, D.C. Identify the ward Adams Morgan belongs to, find the most common offense in that ward in 2019, and report the maximum of the incidents for that offense over the next two years?. Your response should be in the format [Answer].",
+  "answer": "1702",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Adams_Morgan/content.txt",
+      "fact": "The Adams Morgan article states that Adams Morgan is a part of Ward 1.",
+      "subquestion": "Adams Morgan is part of which Washington, D.C. ward?",
+      "answer": "1"
+    },
+    "2": {
+      "source": "datagov/crime-incidents-in-2019/files/data.txt",
+      "fact": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2019/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ndf['OFFENSE'] = df['OFFENSE'].astype(str).str.strip()\n\ncounts = (\n    df[df['WARD'] == '1']\n    .groupby('OFFENSE', dropna=False)\n    .size()\n    .reset_index(name='incident_count')\n    .sort_values(['incident_count', 'OFFENSE'], ascending=[False, True])\n)\n\nresult = counts.iloc[0]['OFFENSE'] if not counts.empty else None",
+      "subquestion": "In 2019 Washington, D.C. crime-incidents data, within Ward <node_1 answer>, which offense is most common?",
+      "answer": "THEFT/OTHER"
+    },
+    "3": {
+      "source": "datagov/crime-incidents-in-2020/files/data.txt",
+      "fact": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2020/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ndf['OFFENSE'] = df['OFFENSE'].astype(str).str.strip()\n\ncount = ((df['WARD'] == '1') & (df['OFFENSE'] == 'THEFT/OTHER')).sum()\nresult = str(int(count))",
+      "subquestion": "In 2020 Washington, D.C. crime-incidents data, how many incidents with offense <node_2 answer> occurred in Ward <node_1 answer>?",
+      "answer": "1587"
+    },
+    "4": {
+      "source": "datagov/crime-incidents-in-2021/files/data.txt",
+      "fact": "import json\nimport pandas as pd\n\nwith open('datagov/crime-incidents-in-2021/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['WARD'] = df['WARD'].astype(str).str.strip()\ndf['OFFENSE'] = df['OFFENSE'].astype(str).str.strip()\n\ncount = ((df['WARD'] == '1') & (df['OFFENSE'] == 'THEFT/OTHER')).sum()\nresult = str(int(count))",
+      "subquestion": "In 2021 Washington, D.C. crime-incidents data, how many incidents with offense <node_2 answer> occurred in Ward <node_1 answer>?",
+      "answer": "1702"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Adams Morgan is in Washington, D.C. Ward 1.",
+    "Node 2 depends on node 1: In 2019 within Ward 1, the most common offense is THEFT/OTHER.",
+    "Node 3 depends on node 2: 2020 Ward 1 incidents for THEFT/OTHER = 1,587.",
+    "Node 4 depends on node 2: 2021 Ward 1 incidents for THEFT/OTHER = 1,702.",
+    "Compare 2020 vs 2021: max(1587, 1702) = 1702.",
+    "Final answer: 1702"
+  ],
+  "datasets_used": [
+    "Adams_Morgan",
+    "crime-incidents-in-2019",
+    "crime-incidents-in-2020",
+    "crime-incidents-in-2021"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Adams Morgan is in Washington, D.C. Ward 1.",
+      "answer": "1"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: In 2019 within Ward 1, the most common offense is THEFT/OTHER.",
+      "answer": "THEFT/OTHER"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3,
+        4
+      ],
+      "reasoning": "Node 3 depends on node 2: 2020 Ward 1 incidents for THEFT/OTHER = 1,587. Node 4 depends on node 2: 2021 Ward 1 incidents for THEFT/OTHER = 1,702. Compare 2020 vs 2021: max(1587, 1702) = 1702. Final answer: 1702",
+      "answer": "1702"
+    }
+  ]
+}

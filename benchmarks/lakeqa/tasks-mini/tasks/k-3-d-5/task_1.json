@@ -1,0 +1,138 @@
+{
+  "question": "Can you first find the neighborhood after which the only NYC high school that was in the top 8 by overall score every year from 2006-2010 is named, then report which province did the person who built the first bridge connecting NYC to that neighborhood emigrate from?. Your response should be in the format [Answer].",
+  "answer": "Friesland",
+  "nodes": {
+    "1": {
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "fact": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2006-2007-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "subquestion": "Which NYC high schools were in the top 8 by overall score in 2006-07?",
+      "answer": [
+        "Manhattan Bridges High School",
+        "Bedford Academy High School",
+        "Marble Hill High School for International Studies",
+        "High School for Contemporary Arts",
+        "Bronx Aerospace High School",
+        "Eleanor Roosevelt High School",
+        "Bronx Academy of Letters"
+      ]
+    },
+    "2": {
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "fact": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2007-2008-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "subquestion": "Which NYC high schools were in the top 8 by overall score in 2007-08?",
+      "answer": [
+        "Brooklyn International High School",
+        "Gregorio Luperon High School",
+        "High School for Contemporary Arts",
+        "Bedford Academy High School",
+        "Manhattan Bridges High School",
+        "Marble Hill High School for International Studies",
+        "New World High School"
+      ]
+    },
+    "3": {
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "fact": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2008-2009-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "subquestion": "Which NYC high schools were in the top 8 by overall score in 2008-09?",
+      "answer": [
+        "High School of Hospitality Management",
+        "Bedford Academy High School",
+        "Williamsburg Preparatory School",
+        "South Bronx Preparatory",
+        "Marble Hill High School for International Studies",
+        "High School for Violin and Dance",
+        "Essex Street Academy"
+      ]
+    },
+    "4": {
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "fact": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2009-2010-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('2009-2010 OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "subquestion": "Which NYC high schools were in the top 8 by overall score in 2009-10?",
+      "answer": [
+        "Theatre Arts Production Company School",
+        "Brooklyn International High School",
+        "Williamsburg Preparatory School",
+        "Marble Hill High School for International Studies",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Village Academy",
+        "High School for Violin and Dance"
+      ]
+    },
+    "5": {
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "fact": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2010-2011-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('2010-2011 OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "subquestion": "Which NYC high schools were in the top 8 by overall score in 2010-11?",
+      "answer": [
+        "Brooklyn International High School",
+        "Manhattan Village Academy",
+        "It Takes a Village Academy",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Bridges High School",
+        "Academy of Finance and Enterprise",
+        "Marble Hill High School for International Studies"
+      ]
+    },
+    "6": {
+      "source": "wikipedia/Marble_Hill,_Manhattan/content.txt",
+      "fact": "King's Bridge was built in 1693 by Frederick Philipse, a Frisian-born merchant. It was the first bridge connecting New York City to the mainland, located near Marble Hill at what is now West 230th Street.",
+      "subquestion": "Who built the first bridge at <intersection of node_1, node_2, node_3, node_4, node_5> neighborhood in 1693?",
+      "answer": "Frederick Philipse"
+    },
+    "7": {
+      "source": "wikipedia/Frederick_Philipse/content.txt",
+      "fact": "Frederick Philipse (1626-1702) was a Dutch-American merchant who emigrated from Friesland in the Netherlands. He became one of the wealthiest men in colonial New York.",
+      "subquestion": "From which area of the Netherlands did <node_6 answer> emigrate?",
+      "answer": "Friesland"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Find top 8 NYC high schools by overall score in 2006-07 → includes Marble Hill",
+    "Node 2: Find top 8 NYC high schools by overall score in 2007-08 → includes Marble Hill",
+    "Node 3: Find top 8 NYC high schools by overall score in 2008-09 → includes Marble Hill",
+    "Node 4: Find top 8 NYC high schools by overall score in 2009-10 → includes Marble Hill",
+    "Node 5: Find top 8 NYC high schools by overall score in 2010-11 → includes Marble Hill",
+    "Intersection of <node_1>, <node_2>, <node_3>, <node_4>, <node_5>: Only school in top 7 all five years → Marble Hill High School for International Studies",
+    "Node 6 depends on intersection: Find who built first bridge at Marble Hill in 1693 → Frederick Philipse",
+    "Node 7 depends on node 6: Find area of Netherlands where Philipse emigrated from → Friesland",
+    "Final answer: Friesland"
+  ],
+  "datasets_used": [
+    "2006-2007-school-progress-report",
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "2010-2011-school-progress-report",
+    "Frederick_Philipse",
+    "Marble_Hill,_Manhattan"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "reasoning": "Node 1: Find top 8 NYC high schools by overall score in 2006-07 → includes Marble Hill Node 2: Find top 8 NYC high schools by overall score in 2007-08 → includes Marble Hill Node 3: Find top 8 NYC high schools by overall score in 2008-09 → includes Marble Hill Node 4: Find top 8 NYC high schools by overall score in 2009-10 → includes Marble Hill Node 5: Find top 8 NYC high schools by overall score in 2010-11 → includes Marble Hill Intersection of <node_1>, <node_2>, <node_3>, <node_4>, <node_5>: Only school in top 7 all five years → Marble Hill High School for International Studies",
+      "answer": "Only school in top 7 all five years → Marble Hill High School for International Studies"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6 depends on intersection: Find who built first bridge at Marble Hill in 1693 → Frederick Philipse",
+      "answer": "Find who built first bridge at Marble Hill in 1693 → Frederick Philipse"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7 depends on node 6: Find area of Netherlands where Philipse emigrated from → Friesland",
+      "answer": "Friesland"
+    }
+  ]
+}

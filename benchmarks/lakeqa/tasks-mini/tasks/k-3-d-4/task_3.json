@@ -1,0 +1,152 @@
+{
+  "question": "Which Washington county had the lowest 2020 census population among those counties that (1) had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22, (2) had district-average Math proficiency above 40% in the 2021-22 school year, and (3) were not the most populous county in Washington? Only report the county name in the format of `X County`. Your response should be in the format [Answer].",
+  "answer": "Whitman County",
+  "nodes": {
+    "1": {
+      "source": "datagov/report-card-enrollment-2018-19-school-year/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/report-card-enrollment-2018-19-school-year/files/rows.txt'\ndf = pd.read_csv(source)\nfiltered = df[(df['OrganizationLevel'] == 'District') & (df['GradeLevel'] == 'All Grades')].copy()\nfiltered['Low-Income'] = pd.to_numeric(filtered['Low-Income'], errors='coerce')\nfiltered['All Students'] = pd.to_numeric(filtered['All Students'], errors='coerce')\nby_county = filtered.groupby('County', dropna=False)[['Low-Income', 'All Students']].sum().reset_index()\nby_county['low_income_pct'] = by_county['Low-Income'] / by_county['All Students'] * 100\nresult = by_county[(by_county['low_income_pct'] >= 32) & (by_county['low_income_pct'] <= 40)].sort_values('County')['County'].tolist()",
+      "subquestion": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Whitman"
+      ]
+    },
+    "2": {
+      "source": "datagov/report-card-enrollment-2019-20-school-year/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/report-card-enrollment-2019-20-school-year/files/rows.txt'\ndf = pd.read_csv(source)\nfiltered = df[(df['OrganizationLevel'] == 'District') & (df['GradeLevel'] == 'All Grades')].copy()\nfiltered['Low-Income'] = pd.to_numeric(filtered['Low-Income'], errors='coerce')\nfiltered['All Students'] = pd.to_numeric(filtered['All Students'], errors='coerce')\nby_county = filtered.groupby('County', dropna=False)[['Low-Income', 'All Students']].sum().reset_index()\nby_county['low_income_pct'] = by_county['Low-Income'] / by_county['All Students'] * 100\nresult = by_county[(by_county['low_income_pct'] >= 32) & (by_county['low_income_pct'] <= 40)].sort_values('County')['County'].tolist()",
+      "subquestion": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Whitman"
+      ]
+    },
+    "3": {
+      "source": "datagov/report-card-enrollment-2020-21-school-year/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/report-card-enrollment-2020-21-school-year/files/rows.txt'\ndf = pd.read_csv(source)\nfiltered = df[(df['OrganizationLevel'] == 'District') & (df['GradeLevel'] == 'All Grades')].copy()\nfiltered['Low-Income'] = pd.to_numeric(filtered['Low-Income'], errors='coerce')\nfiltered['All Students'] = pd.to_numeric(filtered['All Students'], errors='coerce')\nby_county = filtered.groupby('County', dropna=False)[['Low-Income', 'All Students']].sum().reset_index()\nby_county['low_income_pct'] = by_county['Low-Income'] / by_county['All Students'] * 100\nresult = by_county[(by_county['low_income_pct'] >= 32) & (by_county['low_income_pct'] <= 40)].sort_values('County')['County'].tolist()",
+      "subquestion": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "answer": [
+        "Island",
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Snohomish",
+        "Thurston",
+        "Whitman"
+      ]
+    },
+    "4": {
+      "source": "datagov/report-card-enrollment-2021-22-school-year/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/report-card-enrollment-2021-22-school-year/files/rows.txt'\ndf = pd.read_csv(source)\nfiltered = df[(df['OrganizationLevel'] == 'District') & (df['GradeLevel'] == 'All Grades')].copy()\nfiltered['Low-Income'] = pd.to_numeric(filtered['Low-Income'], errors='coerce')\nfiltered['All Students'] = pd.to_numeric(filtered['All Students'], errors='coerce')\nby_county = filtered.groupby('County', dropna=False)[['Low-Income', 'All Students']].sum().reset_index()\nby_county['low_income_pct'] = by_county['Low-Income'] / by_county['All Students'] * 100\nresult = by_county[(by_county['low_income_pct'] >= 32) & (by_county['low_income_pct'] <= 40)].sort_values('County')['County'].tolist()",
+      "subquestion": "Which Washington counties had Low-Income student enrollment percentage between 32-40% in every school year from 2018-19 through 2021-22? (Filter: OrganizationLevel=District; GradeLevel=All Grades; group by County; Low-Income% = Low-Income / All Students * 100; keep 32-40%.)",
+      "answer": [
+        "King",
+        "Kitsap",
+        "San Juan",
+        "Whitman"
+      ]
+    },
+    "5": {
+      "source": "datagov/report-card-assessment-data-2021-22-school-year/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/report-card-assessment-data-2021-22-school-year/files/rows.txt'\ndf = pd.read_csv(source)\ncandidate_counties = ['King', 'Kitsap', 'San Juan', 'Whitman']\nfiltered = df[(df['OrganizationLevel'] == 'District') & (df['StudentGroup'] == 'All Students') & (df['TestSubject'] == 'Math') & (df['County'].isin(candidate_counties))].copy()\nfiltered['CountMetStandard'] = pd.to_numeric(filtered['CountMetStandard'], errors='coerce')\nfiltered['Count of Students Expected to Test'] = pd.to_numeric(filtered['Count of Students Expected to Test'], errors='coerce')\nby_county = filtered.groupby('County', dropna=False)[['CountMetStandard', 'Count of Students Expected to Test']].sum().reset_index()\nby_county['math_pct'] = by_county['CountMetStandard'] / by_county['Count of Students Expected to Test'] * 100\nresult = by_county[by_county['math_pct'] > 40].sort_values('County')['County'].tolist()",
+      "subquestion": "Among {King, Kitsap, San Juan, Whitman} (from hop 1), which counties had district-average Math proficiency above 40% in 2021-22? (Filter: OrganizationLevel=District; StudentGroup=All Students; GradeLevel=All Grades; TestSubject=Math; compute unweighted mean of PercentMetStandard by County; keep >40%.)",
+      "answer": [
+        "King",
+        "Kitsap",
+        "Whitman"
+      ]
+    },
+    "6": {
+      "source": "wikipedia/King_County,_Washington/content.txt",
+      "fact": "According to the Wikipedia article for King County, Washington, 'The population was 2,269,675 in the 2020 census, making it the most populous county in Washington.'",
+      "subquestion": "Among {King, Kitsap, San Juan, Whitman} (from hop 1), which counties are NOT the most populous in Washington?",
+      "answer": [
+        "Kitsap",
+        "San Juan",
+        "Whitman"
+      ]
+    },
+    "7": {
+      "source": "wikipedia/Kitsap_County,_Washington/content.txt",
+      "fact": "According to the Wikipedia article for Kitsap County, Washington, 'As of the 2020 census, its population was 275,611.'",
+      "subquestion": "Among {Kitsap, Whitman} (from hop 2), which county had the lower 2020 census population?",
+      "answer": "Kitsap had population 275,611"
+    },
+    "8": {
+      "source": "wikipedia/Whitman_County,_Washington/content.txt",
+      "fact": "According to the Wikipedia article for Whitman County, Washington, 'As of the 2020 census, the population was 47,973.' Also, 'The county seat is Colfax.'",
+      "subquestion": "Among {Kitsap, Whitman} (from hop 2), which county had the lower 2020 census population?",
+      "answer": "Whitman had population 47,973 (lower than Kitsap's 275,611), county seat is Colfax"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, Washington Report Card Enrollment 2018-22 - nodes 1-4):",
+    "  Node 1: 2018-19 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Whitman}",
+    "  Node 2: 2019-20 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Whitman}",
+    "  Node 3: 2020-21 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Thurston, Whitman}",
+    "  Node 4: 2021-22 Low-Income 32-40% -> {King, Kitsap, San Juan, Whitman}",
+    "  Intersection: {King, Kitsap, San Juan, Whitman}",
+    "",
+    "HOP 2 (d=2, Assessment data + King Wikipedia - nodes 5-6):",
+    "  Node 5 (Assessment 2021-22): Math proficiency >40% -> {King, Kitsap, Whitman} (eliminates San Juan at 35.2%)",
+    "  Node 6 (King Wikipedia): King is most populous -> NOT most populous = {Kitsap, San Juan, Whitman}",
+    "  Intersection: {Kitsap, Whitman}",
+    "",
+    "HOP 3 (d=2, Wikipedia county articles - nodes 7-8):",
+    "  Node 7 (Kitsap Wikipedia): 2020 population = 275,611",
+    "  Node 8 (Whitman Wikipedia): 2020 population = 47,973; county seat is Colfax",
+    "  Comparison: 47,973 < 275,611 -> Whitman has lower population",
+    "  Result: Whitman County, county seat = Colfax",
+    "",
+    "Final answer: Whitman County"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "King_County,_Washington",
+    "Kitsap_County,_Washington",
+    "Whitman_County,_Washington",
+    "report-card-assessment-data-2021-22-school-year",
+    "report-card-enrollment-2018-19-school-year",
+    "report-card-enrollment-2019-20-school-year",
+    "report-card-enrollment-2020-21-school-year",
+    "report-card-enrollment-2021-22-school-year"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: 2018-19 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Whitman} Node 2: 2019-20 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Whitman} Node 3: 2020-21 Low-Income 32-40% -> {Island, King, Kitsap, San Juan, Snohomish, Thurston, Whitman} Node 4: 2021-22 Low-Income 32-40% -> {King, Kitsap, San Juan, Whitman} Intersection: {King, Kitsap, San Juan, Whitman}",
+      "answer": "{King, Kitsap, San Juan, Whitman}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5,
+        6
+      ],
+      "reasoning": "Node 5 (Assessment 2021-22): Math proficiency >40% -> {King, Kitsap, Whitman} (eliminates San Juan at 35.2%) Node 6 (King Wikipedia): King is most populous -> NOT most populous = {Kitsap, San Juan, Whitman} Intersection: {Kitsap, Whitman}",
+      "answer": "{Kitsap, Whitman}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8
+      ],
+      "reasoning": "Node 7 (Kitsap Wikipedia): 2020 population = 275,611 Node 8 (Whitman Wikipedia): 2020 population = 47,973; county seat is Colfax Comparison: 47,973 < 275,611 -> Whitman has lower population Result: Whitman County, county seat = Colfax",
+      "answer": "Whitman County"
+    }
+  ]
+}

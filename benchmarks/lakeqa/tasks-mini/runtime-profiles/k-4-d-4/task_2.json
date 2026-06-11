@@ -1,0 +1,213 @@
+{
+  "dataset_sequence": [
+    "chicago-public-schools-progress-report-cards-2011-2012",
+    "chicago-public-schools-elementary-school-progress-report-card-2012-2013",
+    "chicago-public-schools-elementary-school-progress-report-2013-2014",
+    "chicago-public-schools-school-progress-reports-sy1718",
+    "chicago-public-schools-school-locations-sy1516",
+    "census-data-selected-socioeconomic-indicators-in-chicago-2008-2012",
+    "Wrigley_Field",
+    "Chicago_Cubs"
+  ],
+  "source_sequence": [
+    "datagov/chicago-public-schools-progress-report-cards-2011-2012/files/rows.txt",
+    "datagov/chicago-public-schools-elementary-school-progress-report-card-2012-2013/files/rows.txt",
+    "datagov/chicago-public-schools-elementary-school-progress-report-2013-2014/files/rows.txt",
+    "datagov/chicago-public-schools-school-progress-reports-sy1718/files/rows.txt",
+    "datagov/chicago-public-schools-school-locations-sy1516/files/rows.txt",
+    "datagov/census-data-selected-socioeconomic-indicators-in-chicago-2008-2012/files/rows.txt",
+    "wikipedia/Wrigley_Field/content.txt",
+    "wikipedia/Chicago_Cubs/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Chicago public elementary schools, compute the qualifying school set for each required progress-report condition in 2011-2012, 2012-2013, 2013-2014, and 2017-2018, then keep schools that satisfy all four conditions.",
+    "2. Determine the Chicago community area for the schools that remain after the progress-report filters.",
+    "3. From those community areas, keep the one with per capita income above $50,000.",
+    "4. For that community area, identify the MLB stadium located there and the team that plays at it.",
+    "5. Return the year that MLB team was founded."
+  ],
+  "original_final_question": "In Chicago elementary schools that are public school, find which school (1) received the top performance rating in 2011-12, (2) showed above-average growth in the 2012–13, and (3) classified as moderately organized under the My Voice, My School measure, and (4) showed above-average or far-above-average student growth in 2017–2018, based on progress report cards. This school is also located in a community area with a per capita income above $50K. In what year was the MLB team founded that plays in the stadium located within that same community area? Please return the year only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4, data.gov CPS progress reports - nodes 1-4):",
+    "  Node 1: 2011-2012 CPS Progress Report Cards, elementary schools with CPS Performance Policy Level \"Level 1\" -> 127 schools",
+    "  Node 2: 2012-2013 CPS elementary progress report card, Growth Overall Level \"Above Average\" -> 230 schools",
+    "  Node 3: 2013-2014 CPS elementary progress report, My Voice, My School Overall Rating \"MODERATELY ORGANIZED\" -> 42 schools",
+    "  Node 4: 2017-2018 CPS progress reports, Student_Growth_Rating \"ABOVE AVERAGE\" or \"FAR ABOVE AVERAGE\" -> 299 schools",
+    "  Intersection of nodes 1-4: {Cleveland, Hawthorne, Poe, Reinberg} (4 schools)",
+    "",
+    "HOP 2 (d=2, data.gov School Locations + Census - nodes 5-6):",
+    "  Node 5 (School Locations SY2015-16): Community areas for the 4 schools -> Irving Park, Lake View, Pullman, Portage Park",
+    "  Node 6 (Census Data): Per capita income > $50,000 -> Lake View only",
+    "  Result: Hawthorne is the only school in a community area with per capita income > $50,000 (Lake View)",
+    "",
+    "HOP 3 (d=1, Wikipedia Wrigley Field - node 7):",
+    "  Node 7: Wrigley Field is in the Lakeview community area and is the home ballpark of the Chicago Cubs",
+    "",
+    "HOP 4 (d=1, Wikipedia Chicago Cubs - node 8):",
+    "  Node 8: The Chicago Cubs were established in 1876",
+    "",
+    "Final answer: 1876"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "chicago-public-schools-progress-report-cards-2011-2012",
+      "source": "datagov/chicago-public-schools-progress-report-cards-2011-2012/files/rows.txt",
+      "intent": "Which elementary schools had CPS Performance Policy Level \"Level 1\" in the 2011-2012 CPS Progress Report Cards?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/chicago-public-schools-progress-report-cards-2011-2012/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nmask = df['CPS Performance Policy Level'].isin(['Level 1'])\nmask = mask & (df['Elementary, Middle, or High School'] == 'ES')\nfiltered = df[mask].copy()\nassert len(filtered) == 127\nlookup = dict(zip(filtered['School Name'].astype(str), filtered['School ID'].astype(str)))\nanswer = {\n    \"Cleveland\": lookup[\"Cleveland\"],\n    \"Hawthorne\": lookup[\"Hawthorne\"],\n    \"Poe\": lookup[\"Poe\"],\n    \"Reinberg\": lookup[\"Reinberg\"],\n    'and 123 others': \"...\",\n}\n",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 123 others": "..."
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "chicago-public-schools-elementary-school-progress-report-card-2012-2013",
+      "source": "datagov/chicago-public-schools-elementary-school-progress-report-card-2012-2013/files/rows.txt",
+      "intent": "Which schools in the 2012-2013 CPS elementary progress report card have Growth Overall Level \"Above Average\"?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/chicago-public-schools-elementary-school-progress-report-card-2012-2013/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nmask = df['Growth Overall Level'].isin(['Above Average'])\nfiltered = df[mask].copy()\nassert len(filtered) == 230\nlookup = dict(zip(filtered['Short Name'].astype(str), filtered['School ID'].astype(str)))\nanswer = {\n    \"Cleveland\": lookup[\"Cleveland\"],\n    \"Hawthorne\": lookup[\"Hawthorne\"],\n    \"Poe\": lookup[\"Poe\"],\n    \"Reinberg\": lookup[\"Reinberg\"],\n    'and 226 others': \"...\",\n}\n",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 226 others": "..."
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "chicago-public-schools-elementary-school-progress-report-2013-2014",
+      "source": "datagov/chicago-public-schools-elementary-school-progress-report-2013-2014/files/rows.txt",
+      "intent": "Which schools in the 2013-2014 CPS elementary progress report have My Voice, My School Overall Rating \"MODERATELY ORGANIZED\"?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/chicago-public-schools-elementary-school-progress-report-2013-2014/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nmask = df['My Voice, My School Overall Rating'].isin(['MODERATELY ORGANIZED'])\nfiltered = df[mask].copy()\nassert len(filtered) == 42\nlookup = dict(zip(filtered['Short Name'].astype(str), filtered['School ID'].astype(str)))\nanswer = {\n    \"Cleveland\": lookup[\"Cleveland\"],\n    \"Hawthorne\": lookup[\"Hawthorne\"],\n    \"Poe\": lookup[\"Poe\"],\n    \"Reinberg\": lookup[\"Reinberg\"],\n    'and 38 others': \"...\",\n}\n",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 38 others": "..."
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "chicago-public-schools-school-progress-reports-sy1718",
+      "source": "datagov/chicago-public-schools-school-progress-reports-sy1718/files/rows.txt",
+      "intent": "Which Chicago Public Schools had Student_Growth_Rating \"ABOVE AVERAGE\" or \"FAR ABOVE AVERAGE\" in school year 2017-18?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/chicago-public-schools-school-progress-reports-sy1718/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nmask = df['Student_Growth_Rating'].isin(['ABOVE AVERAGE', 'FAR ABOVE AVERAGE'])\nfiltered = df[mask].copy()\nassert len(filtered) == 299\nlookup = dict(zip(filtered['Short_Name'].astype(str), filtered['School_ID'].astype(str)))\nanswer = {\n    \"Cleveland\": lookup[\"Cleveland\"],\n    \"Hawthorne\": lookup[\"Hawthorne\"],\n    \"Poe\": lookup[\"Poe\"],\n    \"Reinberg\": lookup[\"Reinberg\"],\n    'and 295 others': \"...\",\n}\n",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 295 others": "..."
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "chicago-public-schools-school-locations-sy1516",
+      "source": "datagov/chicago-public-schools-school-locations-sy1516/files/rows.txt",
+      "intent": "In which community areas are the schools that meet all four progress-report criteria located, according to CPS School Locations SY2015-16?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/chicago-public-schools-school-locations-sy1516/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nschool_ids = [609857, 609974, 610132, 610145]\nmask = df[\"School_ID\"].isin(school_ids)\nname_map = {\"CLEVELAND\": \"Cleveland\", \"HAWTHORNE\": \"Hawthorne\", \"POE\": \"Poe\", \"REINBERG\": \"Reinberg\"}\narea_map = {\n    row[\"Short_Name\"]: str(row[\"Community_Area_Name\"]).title()\n    for _, row in df.loc[mask].iterrows()\n}\nanswer = {name_map[name]: area_map[name] for name in [\"CLEVELAND\", \"HAWTHORNE\", \"POE\", \"REINBERG\"]}\n",
+      "answer": {
+        "Cleveland": "Irving Park",
+        "Hawthorne": "Lake View",
+        "Poe": "Pullman",
+        "Reinberg": "Portage Park"
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "census-data-selected-socioeconomic-indicators-in-chicago-2008-2012",
+      "source": "datagov/census-data-selected-socioeconomic-indicators-in-chicago-2008-2012/files/rows.txt",
+      "intent": "Which of those community areas has per capita income above $50,000?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/census-data-selected-socioeconomic-indicators-in-chicago-2008-2012/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncommunity_areas = [\"Irving Park\", \"Lake View\", \"Pullman\", \"Portage Park\"]\nmask = (\n    df[\"COMMUNITY AREA NAME\"].isin(community_areas)\n    & (df[\"PER CAPITA INCOME \"] > 50000)\n)\n\nanswer = dict(\n    zip(\n        df.loc[mask, \"COMMUNITY AREA NAME\"],\n        df.loc[mask, \"PER CAPITA INCOME \"].map(lambda x: f\"${x:,.0f}\")\n    )\n)\nprint(answer)",
+      "answer": {
+        "Lake View": "$60,058"
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "chicago-public-schools-progress-report-cards-2011-2012",
+      "source": "datagov/chicago-public-schools-progress-report-cards-2011-2012/files/rows.txt",
+      "intent": "Which elementary schools had CPS Performance Policy Level \"Level 1\" in the 2011-2012 CPS Progress Report Cards?",
+      "sql": "WITH filtered AS (\n  SELECT CAST(TRY_CAST(\"School ID\" AS BIGINT) AS VARCHAR) AS id\n  FROM t\n  WHERE \"CPS Performance Policy Level\" = 'Level 1' AND \"Elementary, Middle, or High School\" = 'ES'\n), vals AS (\n  SELECT 'Cleveland' AS key, max(CASE WHEN id = '609857' THEN id END) AS value FROM filtered\n  UNION ALL SELECT 'Hawthorne', max(CASE WHEN id = '609974' THEN id END) FROM filtered\n  UNION ALL SELECT 'Poe', max(CASE WHEN id = '610132' THEN id END) FROM filtered\n  UNION ALL SELECT 'Reinberg', max(CASE WHEN id = '610145' THEN id END) FROM filtered\n  UNION ALL SELECT 'and 123 others', '...'\n)\nSELECT to_json(map(list(key), list(value))) AS answer FROM vals",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 123 others": "..."
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "chicago-public-schools-elementary-school-progress-report-card-2012-2013",
+      "source": "datagov/chicago-public-schools-elementary-school-progress-report-card-2012-2013/files/rows.txt",
+      "intent": "Which schools in the 2012-2013 CPS elementary progress report card have Growth Overall Level \"Above Average\"?",
+      "sql": "WITH filtered AS (\n  SELECT upper(trim(CAST(\"School Short Name\" AS VARCHAR))) AS name_key, CAST(TRY_CAST(\"School ID\" AS BIGINT) AS VARCHAR) AS id\n  FROM t\n  WHERE \"Growth Overall Level\" = 'Above Average'\n), vals AS (\n  SELECT 'Cleveland' AS key, max(CASE WHEN name_key = 'CLEVELAND' THEN id END) AS value FROM filtered\n  UNION ALL SELECT 'Hawthorne', max(CASE WHEN name_key = 'HAWTHORNE' THEN id END) FROM filtered\n  UNION ALL SELECT 'Poe', max(CASE WHEN name_key = 'POE' THEN id END) FROM filtered\n  UNION ALL SELECT 'Reinberg', max(CASE WHEN name_key = 'REINBERG' THEN id END) FROM filtered\n  UNION ALL SELECT 'and 226 others', '...'\n)\nSELECT to_json(map(list(key), list(value))) AS answer FROM vals",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 226 others": "..."
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "chicago-public-schools-elementary-school-progress-report-2013-2014",
+      "source": "datagov/chicago-public-schools-elementary-school-progress-report-2013-2014/files/rows.txt",
+      "intent": "Which schools in the 2013-2014 CPS elementary progress report have My Voice, My School Overall Rating \"MODERATELY ORGANIZED\"?",
+      "sql": "WITH filtered AS (\n  SELECT CAST(TRY_CAST(\"School ID\" AS BIGINT) AS VARCHAR) AS id\n  FROM t\n  WHERE \"My Voice, My School Overall Rating\" = 'MODERATELY ORGANIZED'\n), vals AS (\n  SELECT 'Cleveland' AS key, max(CASE WHEN id = '609857' THEN id END) AS value FROM filtered\n  UNION ALL SELECT 'Hawthorne', max(CASE WHEN id = '609974' THEN id END) FROM filtered\n  UNION ALL SELECT 'Poe', max(CASE WHEN id = '610132' THEN id END) FROM filtered\n  UNION ALL SELECT 'Reinberg', max(CASE WHEN id = '610145' THEN id END) FROM filtered\n  UNION ALL SELECT 'and 38 others', '...'\n)\nSELECT to_json(map(list(key), list(value))) AS answer FROM vals",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 38 others": "..."
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "chicago-public-schools-school-progress-reports-sy1718",
+      "source": "datagov/chicago-public-schools-school-progress-reports-sy1718/files/rows.txt",
+      "intent": "Which Chicago Public Schools had Student_Growth_Rating \"ABOVE AVERAGE\" or \"FAR ABOVE AVERAGE\" in school year 2017-18?",
+      "sql": "WITH filtered AS (\n  SELECT upper(trim(CAST(\"Short_Name\" AS VARCHAR))) AS name_key, CAST(TRY_CAST(\"School_ID\" AS BIGINT) AS VARCHAR) AS id\n  FROM t\n  WHERE Student_Growth_Rating IN ('ABOVE AVERAGE', 'FAR ABOVE AVERAGE')\n), vals AS (\n  SELECT 'Cleveland' AS key, max(CASE WHEN name_key = 'CLEVELAND' THEN id END) AS value FROM filtered\n  UNION ALL SELECT 'Hawthorne', max(CASE WHEN name_key = 'HAWTHORNE' THEN id END) FROM filtered\n  UNION ALL SELECT 'Poe', max(CASE WHEN name_key = 'POE' THEN id END) FROM filtered\n  UNION ALL SELECT 'Reinberg', max(CASE WHEN name_key = 'REINBERG' THEN id END) FROM filtered\n  UNION ALL SELECT 'and 295 others', '...'\n)\nSELECT to_json(map(list(key), list(value))) AS answer FROM vals",
+      "answer": {
+        "Cleveland": "609857",
+        "Hawthorne": "609974",
+        "Poe": "610132",
+        "Reinberg": "610145",
+        "and 295 others": "..."
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "chicago-public-schools-school-locations-sy1516",
+      "source": "datagov/chicago-public-schools-school-locations-sy1516/files/rows.txt",
+      "intent": "In which community areas are the schools that meet all four progress-report criteria located, according to CPS School Locations SY2015-16?",
+      "sql": "WITH vals AS (\n  SELECT CASE trim(Short_Name)\n      WHEN 'CLEVELAND' THEN 'Cleveland'\n      WHEN 'HAWTHORNE' THEN 'Hawthorne'\n      WHEN 'POE' THEN 'Poe'\n      WHEN 'REINBERG' THEN 'Reinberg'\n    END AS key,\n    array_to_string(list_transform(string_split(lower(trim(COMMAREA)), ' '), x -> upper(substr(x,1,1)) || substr(x,2)), ' ') AS value\n  FROM t\n  WHERE TRY_CAST(School_ID AS BIGINT) IN (609857,609974,610132,610145)\n)\nSELECT to_json(map(list(key), list(value))) AS answer FROM vals WHERE key IS NOT NULL",
+      "answer": {
+        "Cleveland": "Irving Park",
+        "Hawthorne": "Lake View",
+        "Poe": "Pullman",
+        "Reinberg": "Portage Park"
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "census-data-selected-socioeconomic-indicators-in-chicago-2008-2012",
+      "source": "datagov/census-data-selected-socioeconomic-indicators-in-chicago-2008-2012/files/rows.txt",
+      "intent": "Which of those community areas has per capita income above $50,000?",
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\n  SELECT 'Lake View' AS key,\n         '$' || substr(CAST(TRY_CAST(\"PER CAPITA INCOME\" AS BIGINT) AS VARCHAR), 1, 2) || ',' || substr(CAST(TRY_CAST(\"PER CAPITA INCOME\" AS BIGINT) AS VARCHAR), 3) AS value\n  FROM t\n  WHERE trim(\"Community Area Name\") = 'Lake View'\n    AND TRY_CAST(\"PER CAPITA INCOME\" AS BIGINT) > 50000\n) q",
+      "answer": {
+        "Lake View": "$60,058"
+      }
+    }
+  ]
+}

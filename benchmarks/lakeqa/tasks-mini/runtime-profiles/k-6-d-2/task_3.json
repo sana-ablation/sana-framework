@@ -1,0 +1,97 @@
+{
+  "dataset_sequence": [
+    "county-mental-health-profiles-phase-2-beginning-2014",
+    "Erie_County,_New_York",
+    "Monroe_County,_New_York",
+    "Buffalo,_New_York",
+    "Rochester,_New_York",
+    "Erie_Canal",
+    "Albany,_New_York",
+    "index-violent-property-and-firearm-rates-by-county-beginning-1990"
+  ],
+  "source_sequence": [
+    "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+    "wikipedia/Erie_County,_New_York/content.txt",
+    "wikipedia/Monroe_County,_New_York/content.txt",
+    "wikipedia/Buffalo,_New_York/content.txt",
+    "wikipedia/Rochester,_New_York/content.txt",
+    "wikipedia/Erie_Canal/content.txt",
+    "wikipedia/Albany,_New_York/content.txt",
+    "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Excluding New York City counties, identify the top two New York counties by total mental health service recipients across 2017 and 2018.",
+    "2. For the two counties from step 1, determine each county seat.",
+    "3. For those county seats, determine each city's incorporation year and identify the earlier-incorporated city.",
+    "4. Determine the canal for which the city from step 3 is a terminus, then identify the city at the canal's other terminus.",
+    "5. Determine the county containing the other-terminus city from step 4.",
+    "6. Return the 2018 violent crime rate per 100,000 population for that county."
+  ],
+  "original_final_question": "Among New York counties outside of NYC, identify the top two by total mental health service recipients from 2017 to 2018. The county seat with the earlier incorporation date between these two is located at the terminus of a canal. What was the 2018 violent crime rate per 100,000 population in the county that contains the city at this canal's other terminus? Please return the numeric rate only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1): Identify top 2 non-NYC NY counties by total mental health service recipients (2017-2018)",
+    "  Node 1: Mental health data -> Erie County (83,049 recipients) and Monroe County (74,299 recipients)",
+    "  Result: {Erie County, Monroe County}",
+    "HOP 2 (d=2): Find county seats of both counties from hop 1",
+    "  Node 2: Erie County -> Buffalo",
+    "  Node 3: Monroe County -> Rochester",
+    "  Result: {Buffalo, Rochester}",
+    "HOP 3 (d=2): Find incorporation years of cities from hop 2 and determine which is older; identify the canal",
+    "  Node 4: Buffalo -> Erie Canal terminus; incorporated 1832",
+    "  Node 5: Rochester -> incorporated 1834",
+    "  Comparison: 1832 < 1834 -> Buffalo is older",
+    "  Result: Buffalo is older; Erie Canal",
+    "HOP 4 (d=1): Find the eastern terminus of the Erie Canal from hop 3",
+    "  Node 6: Erie Canal -> other terminus is Albany",
+    "  Result: Albany",
+    "HOP 5 (d=1): Find what county Albany is in",
+    "  Node 7: Albany -> county seat of Albany County",
+    "  Result: Albany County",
+    "HOP 6 (d=1): Find violent crime rate for Albany County in 2018",
+    "  Node 8: Albany County -> 359.8 per 100,000 in 2018",
+    "  Result: 359.8",
+    "Final answer: Albany County; 359.8"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "county-mental-health-profiles-phase-2-beginning-2014",
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "intent": "Which non-NYC NY counties are in the top 2 by total mental health service recipients (2017-2018)? (Filter for this node: Service Year in {2017, 2018}; group by County Label; sum Count of Recipients by Rate Code Group and County; exclude NYC counties {Bronx, Kings, New York, Queens, Richmond}; rank by total; keep top 2.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nrecipient_col = \"Count of Recipients by Rate Code Group and County\"\nexclude_nyc = {\"Bronx\", \"Kings\", \"New York\", \"Queens\", \"Richmond\"}\n\nresult = (\n    df[\n        df[\"Service Year\"].isin([2017, 2018])\n        & ~df[\"County Label\"].isin(exclude_nyc)\n    ]\n    .groupby(\"County Label\", as_index=False)[recipient_col]\n    .sum()\n    .sort_values(recipient_col, ascending=False)\n    .reset_index(drop=True)\n)\n\nanswer = [f\"{county} County\" for county in result.head(2)[\"County Label\"].tolist()]",
+      "answer": [
+        "Erie County",
+        "Monroe County"
+      ]
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "What was the violent crime rate per 100,000 population in 2018 for the county (from hop 5)? (Filter for this node: County == Albany; Year == 2018; read Violent Rate.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nresult = df[(df[\"County\"] == \"Albany\") & (df[\"Year\"] == 2018)][[\"County\", \"Year\", \"Violent Rate\"]]\nanswer = str(result[\"Violent Rate\"].iloc[0])",
+      "answer": "359.8"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "county-mental-health-profiles-phase-2-beginning-2014",
+      "source": "datagov/county-mental-health-profiles-phase-2-beginning-2014/files/rows.txt",
+      "intent": "Which non-NYC NY counties are in the top 2 by total mental health service recipients (2017-2018)? (Filter for this node: Service Year in {2017, 2018}; group by County Label; sum Count of Recipients by Rate Code Group and County; exclude NYC counties {Bronx, Kings, New York, Queens, Richmond}; rank by total; keep top 2.)",
+      "answer": [
+        "Erie County",
+        "Monroe County"
+      ],
+      "sql": "WITH totals AS (\n  SELECT \"County Label\" AS county, SUM(TRY_CAST(\"Count of Recipients by Rate Code Group and County\" AS DOUBLE)) AS recipients\n  FROM t\n  WHERE TRY_CAST(\"Service Year\" AS INTEGER) IN (2017, 2018)\n    AND \"County Label\" NOT IN ('Bronx', 'Kings', 'New York', 'Queens', 'Richmond')\n  GROUP BY \"County Label\"\n)\nSELECT county || ' County' AS answer\nFROM totals\nORDER BY recipients DESC, county ASC\nLIMIT 2"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "What was the violent crime rate per 100,000 population in 2018 for the county (from hop 5)? (Filter for this node: County == Albany; Year == 2018; read Violent Rate.)",
+      "answer": "359.8",
+      "sql": "SELECT TRY_CAST(\"Violent Rate\" AS DOUBLE) AS answer\nFROM t\nWHERE \"County\" = 'Albany'\n  AND TRY_CAST(\"Year\" AS INTEGER) = 2018\nLIMIT 1"
+    }
+  ]
+}

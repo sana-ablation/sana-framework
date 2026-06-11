@@ -1,0 +1,112 @@
+{
+  "dataset_sequence": [
+    "crime-data-from-2010-to-2019",
+    "arrest-data-from-2010-to-2019",
+    "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present",
+    "crime-data-from-2020-to-present"
+  ],
+  "source_sequence": [
+    "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+    "datagov/arrest-data-from-2010-to-2019/files/rows.txt",
+    "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+    "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+    "datagov/crime-data-from-2020-to-present/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. In 2010 through 2019 Los Angeles crime records, identify the year with the most stolen vehicle incidents.",
+    "2. Using the peak year from step 1, identify the Los Angeles area with the most arrests for driving under the influence.",
+    "3. Using LAPD stop-incident records, determine the numeric area identifier for the area from step 2.",
+    "4. Determine the crime code for stolen vehicles, then in 2020 Los Angeles crime records count incidents with that code for the area identifier from step 3 and return that count."
+  ],
+  "original_final_question": "Which year saw the highest number of stolen vehicle incidents in Los Angeles between 2010 to 2019? During that peak year, which area had the most arrests for driving under the influence? Finally, how many stolen vehicles were reported in that specific area in 2020? Only report the number of the stolen vehicles. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: In 2010 to 2019 LA crime records, the year with the most VEHICLE - STOLEN incidents -> 2016.",
+    "Node 2 depends on node 1: In 2016 arrests, the area with the most Driving Under Influence arrests -> Van Nuys.",
+    "Node 3 depends on node 2: In LAPD RIPA stop-incident records, Van Nuys corresponds to Area ID 9.",
+    "Node 4: In Los Angeles crime records, VEHICLE - STOLEN corresponds to crime code 510.",
+    "Node 5 depends on nodes 3-4: In 2020 crime records for Area ID 9, incident count where Crm Cd = 510 -> 915.",
+    "Final answer: 915"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "From 2010 to 2019, which year has the most Los Angeles incidents with crime description \"VEHICLE - STOLEN\"?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-data-from-2010-to-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf = df[df[\"Crm Cd Desc\"] == \"VEHICLE - STOLEN\"].copy()\ndf[\"DATE OCC\"] = pd.to_datetime(df[\"DATE OCC\"], errors=\"coerce\")\ndf = df[df[\"DATE OCC\"].dt.year.between(2010, 2019, inclusive=\"both\")]\nanswer = df.groupby(df[\"DATE OCC\"].dt.year).size().sort_values(ascending=False).index[0]\nprint(int(answer))\nanswer = str(answer)",
+      "answer": "2016"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "arrest-data-from-2010-to-2019",
+      "source": "datagov/arrest-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In <node_1 answer> Los Angeles arrest records, which area has the most arrests in the charge group \"Driving Under Influence\"?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/arrest-data-from-2010-to-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Arrest Date\"] = pd.to_datetime(df[\"Arrest Date\"], errors=\"coerce\")\ndf = df[\n    (df[\"Arrest Date\"].dt.year == 2016)\n    & (df[\"Charge Group Description\"] == \"Driving Under Influence\")\n]\nanswer = df.groupby(\"Area Name\").size().sort_values(ascending=False).index[0]\nprint(answer)",
+      "answer": "Van Nuys"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present",
+      "source": "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+      "intent": "Using LAPD stop-incident records collected under California's RIPA program, what numeric Area ID corresponds to area name <node_2 answer> (answer as an integer)?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf = df[df[\"Area Name\"] == \"Van Nuys\"].copy()\nanswer = pd.to_numeric(df[\"Area ID\"], errors=\"coerce\").dropna().astype(int).mode().iloc[0]\nprint(int(answer))\nanswer = str(answer)",
+      "answer": "9"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In Los Angeles crime records, what crime code corresponds to the crime description \"VEHICLE - STOLEN\"? Answer with the crime code only.",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-data-from-2010-to-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf = df[df[\"Crm Cd Desc\"] == \"VEHICLE - STOLEN\"].copy()\nanswer = pd.to_numeric(df[\"Crm Cd\"], errors=\"coerce\").dropna().astype(int).mode().iloc[0]\nprint(int(answer))\nanswer = str(answer)",
+      "answer": "510"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "crime-data-from-2020-to-present",
+      "source": "datagov/crime-data-from-2020-to-present/files/rows.txt",
+      "intent": "Using the 2020 to present Los Angeles crime records, in 2020 how many incidents with crime code <node_4 answer> occurred in Area ID <node_3 answer>?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-data-from-2020-to-present/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"DATE OCC\"] = pd.to_datetime(df[\"DATE OCC\"], errors=\"coerce\")\ndf = df[\n    (df[\"DATE OCC\"].dt.year == 2020)\n    & (pd.to_numeric(df[\"AREA\"], errors=\"coerce\") == 9)\n    & (pd.to_numeric(df[\"Crm Cd\"], errors=\"coerce\") == 510)\n]\nanswer = len(df)\nprint(int(answer))\nanswer = str(answer)",
+      "answer": "915"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "From 2010 to 2019, which year has the most Los Angeles incidents with crime description \"VEHICLE - STOLEN\"?",
+      "answer": "Cannot execute SQL: file is too big (505.31 MB >= 500 MB limit)."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "arrest-data-from-2010-to-2019",
+      "source": "datagov/arrest-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In <node_1 answer> Los Angeles arrest records, which area has the most arrests in the charge group \"Driving Under Influence\"?",
+      "sql": "SELECT \"Area Name\" AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"Arrest Date\" AS DATE)) = 2016\n  AND \"Charge Group Description\" = 'Moving Traffic Violations'\nGROUP BY \"Area Name\"\nORDER BY count(*) DESC\nLIMIT 1",
+      "answer": "Van Nuys"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present",
+      "source": "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+      "intent": "Using LAPD stop-incident records collected under California's RIPA program, what numeric Area ID corresponds to area name <node_2 answer> (answer as an integer)?",
+      "sql": "SELECT CAST(\"Area ID\" AS INTEGER) AS answer\nFROM t\nWHERE \"Area Name\" = 'Van Nuys'\nGROUP BY \"Area ID\"\nORDER BY count(*) DESC\nLIMIT 1",
+      "answer": "9"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In Los Angeles crime records, what crime code corresponds to the crime description \"VEHICLE - STOLEN\"? Answer with the crime code only.",
+      "answer": "Cannot execute SQL: file is too big (505.31 MB >= 500 MB limit)."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "crime-data-from-2020-to-present",
+      "source": "datagov/crime-data-from-2020-to-present/files/rows.txt",
+      "intent": "Using the 2020 to present Los Angeles crime records, in 2020 how many incidents with crime code <node_4 answer> occurred in Area ID <node_3 answer>?",
+      "sql": "SELECT count(*) AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"DATE OCC\" AS DATE)) = 2020\n  AND AREA = 9\n  AND \"Crm Cd\" = 510",
+      "answer": "915"
+    }
+  ]
+}

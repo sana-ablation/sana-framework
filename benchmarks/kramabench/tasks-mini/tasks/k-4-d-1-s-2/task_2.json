@@ -1,0 +1,103 @@
+{
+  "question": "What is the average Potassium in ppm from the first and last time the study recorded people in the Maltese area? Assume that Potassium is linearly interpolated between samples. Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "answer": "8454.5332",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-hard-1/files/radiocarbon_database_regional.xlsx",
+      "fact": "import pandas as pd\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0).dropna(how='all').dropna(axis=1, how='all')\ncarbon['year'] = 1950 - carbon['date']\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nmalta = carbon[carbon['Region'] == 'Malta']\nresult = f\"{len(malta)}|{int(malta['year'].min())}|{int(malta['year'].max())}\"\nprint(result)\n",
+      "subquestion": "How many Malta-region radiocarbon records are present, and what are their earliest and latest calendar years?",
+      "answer": "14|-4462|-4055"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-hard-1/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0).dropna(how='all').dropna(axis=1, how='all')\ncarbon['year'] = 1950 - carbon['date']\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nresult = f\"{len(climate)}|{climate['year'].nunique()}\"\nprint(result)\n",
+      "subquestion": "After cleaning the climate sheet as in the source script, how many rows and unique calendar years are available for interpolation?",
+      "answer": "8360|2768"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-hard-1/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0).dropna(how='all').dropna(axis=1, how='all')\ncarbon['year'] = 1950 - carbon['date']\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\ndef interpolated_k(year):\n    previous_year = climate[climate['year'] <= year].sort_values('year', ascending=False).head(1).iloc[0]\n    next_year = climate[climate['year'] >= year].sort_values('year', ascending=True).head(1).iloc[0]\n    if previous_year['year'] == year:\n        return previous_year['K']\n    if next_year['year'] == year:\n        return next_year['K']\n    interpolation = (year - previous_year['year']) / (next_year['year'] - previous_year['year'])\n    return previous_year['K'] + interpolation * (next_year['K'] - previous_year['K'])\nmalta = carbon[carbon['Region'] == 'Malta']\nyears = range(int(malta['year'].min()), int(malta['year'].max()))\nvalues = [interpolated_k(year) for year in years]\nresult = str(len(values))\nprint(result)\n",
+      "subquestion": "How many integer years are interpolated between the first and last Malta-region sample years using the source-script half-open range?",
+      "answer": "407"
+    },
+    "4": {
+      "source": "datagov/kramabench-archeology-hard-1/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0).dropna(how='all').dropna(axis=1, how='all')\ncarbon['year'] = 1950 - carbon['date']\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\ndef interpolated_k(year):\n    previous_year = climate[climate['year'] <= year].sort_values('year', ascending=False).head(1).iloc[0]\n    next_year = climate[climate['year'] >= year].sort_values('year', ascending=True).head(1).iloc[0]\n    if previous_year['year'] == year:\n        return previous_year['K']\n    if next_year['year'] == year:\n        return next_year['K']\n    interpolation = (year - previous_year['year']) / (next_year['year'] - previous_year['year'])\n    return previous_year['K'] + interpolation * (next_year['K'] - previous_year['K'])\nmalta = carbon[carbon['Region'] == 'Malta']\nyears = range(int(malta['year'].min()), int(malta['year'].max()))\nvalues = [interpolated_k(year) for year in years]\nresult = f\"{sum(values) / len(values):.4f}\"\nprint(result)\n",
+      "subquestion": "What is the mean interpolated potassium value over those years rounded to four decimals?",
+      "answer": "8454.5332"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the radiocarbon table and identify the Malta-region sample year span.",
+    "Node 2: Read and clean the climate measurements table as the source script does.",
+    "Node 3 depends on nodes 1 and 2: Interpolate potassium for each integer year in the Malta span using the source-script half-open range.",
+    "Node 4 depends on node 3: Average the interpolated potassium values and round to four decimals.",
+    "Final answer: 8454.5332"
+  ],
+  "datasets_used": [
+    "radiocarbon_database_regional.xlsx",
+    "climateMeasurements.xlsx"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the radiocarbon table and identify the Malta-region sample year span.",
+      "answer": "14|-4462|-4055"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Read and clean the climate measurements table as the source script does.",
+      "answer": "8360|2768"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: Interpolate potassium for each integer year in the Malta span using the source-script half-open range.",
+      "answer": "407"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on node 3: Average the interpolated potassium values and round to four decimals.",
+      "answer": "8454.5332"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-hard-1",
+    "domain": "archeology",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-hard-1.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-1",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-hard-1/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "4": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1",
+    "candidate_workload_answer": "8577.5298",
+    "source_script_verified_answer": "8454.5332",
+    "answer_correction_note": "The raw workload/candidate answer is stale; checked-in source script archeology-hard-1.py run against current raw data prints 8454.5332."
+  }
+}

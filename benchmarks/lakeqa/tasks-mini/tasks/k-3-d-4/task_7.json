@@ -1,0 +1,153 @@
+{
+  "question": "Can you find the Manhattan neighborhood where the only NYC elementary school in District 3 that ranked in the top 3 by performance category score in all four consecutive years from 2006-2010. There is a museum that is a notable structure in that neighborhood and is adjacent to the Central Park, in what year is that museum built?. Your response should be in the format [Answer].",
+  "answer": "1869",
+  "practical_motivation": "A family researching the best elementary schools in Manhattan's Upper West Side wants to understand the cultural institutions in the neighborhood, particularly the famous museum that has educated generations of students.",
+  "nodes": {
+    "1": {
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2006-2007-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'PS 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'PS 199 JESSIE ISADOR STRAUS': 'PS 199 Jessie Isador Straus', 'PS 180 HUGO NEWMAN': 'PS 180 Hugo Newman'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2006-07?",
+      "depends_on": [],
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 199 Jessie Isador Straus",
+        "PS 180 Hugo Newman"
+      ]
+    },
+    "2": {
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2007-2008-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'P.S. 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'P.S. 166 THE RICHARD RODGERS SCHOOL OF THE ARTS AND TECHNOLOGY': 'PS 166 Richard Rodgers School', 'P.S. 087 WILLIAM SHERMAN': 'PS 087 William Sherman'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2007-08?",
+      "depends_on": [],
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 166 Richard Rodgers School",
+        "PS 087 William Sherman"
+      ]
+    },
+    "3": {
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2008-2009-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'P.S. 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'P.S. 163 ALFRED E. SMITH': 'PS 163 Alfred E. Smith', 'P.S. 087 WILLIAM SHERMAN': 'PS 087 William Sherman'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2008-09?",
+      "depends_on": [],
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 163 Alfred E. Smith",
+        "PS 087 William Sherman"
+      ]
+    },
+    "4": {
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2009-2010-school-progress-report/files/rows.txt'\ndf = pd.read_csv(source)\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['2009-2010 PERFORMANCE CATEGORY SCORE'] = pd.to_numeric(df['2009-2010 PERFORMANCE CATEGORY SCORE'], errors='coerce')\ndf['school_key'] = df['SCHOOL'].astype(str).str.strip().str.upper()\nfiltered = df[(df['DISTRICT'] == 3) & (df['SCHOOL LEVEL*'].astype(str).str.startswith('Elementary'))].copy()\nname_map = {'P.S. 009 SARAH ANDERSON': 'PS 009 Sarah Anderson', 'P.S. 199 JESSIE ISADOR STRAUS': 'PS 199 Jessie Isador Straus', 'P.S. 163 ALFRED E. SMITH': 'PS 163 Alfred E. Smith'}\nfiltered['school_out'] = filtered['school_key'].map(name_map).fillna(filtered['SCHOOL'].astype(str).str.strip())\nranked = filtered.sort_values(['2009-2010 PERFORMANCE CATEGORY SCORE', 'school_out'], ascending=[False, True]).head(3)\nresult = ranked['school_out'].tolist()",
+      "subquestion": "Which NYC elementary schools in District 3 ranked in the top 3 by performance category score in 2009-10?",
+      "depends_on": [],
+      "answer": [
+        "PS 009 Sarah Anderson",
+        "PS 199 Jessie Isador Straus",
+        "PS 163 Alfred E. Smith"
+      ]
+    },
+    "5": {
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "fact": "import pandas as pd\n\nsource = 'datagov/2013-2014-school-locations/files/rows.txt'\ndf = pd.read_csv(source)\nfiltered = df[df['LOCATION_NAME'].astype(str).str.upper().str.contains('SARAH ANDERSON', na=False)].copy()\nresult = filtered.iloc[0]['NTA_NAME'].strip()",
+      "subquestion": "In which neighborhood is <intersection of node_1, node_2, node_3, node_4: PS 009 Sarah Anderson> located?",
+      "depends_on": [
+        "intersection_of_1_2_3_4"
+      ],
+      "answer": "Upper West Side"
+    },
+    "6": {
+      "source": "wikipedia/Upper_West_Side/content.txt",
+      "fact": "The Upper West Side is considered one of Manhattan's cultural and intellectual hubs, with the American Museum of Natural History located near its center, and Lincoln Center for the Performing Arts at its south end.",
+      "subquestion": "What are some notable structures that is a museum in <node_5 answer: Upper West Side>?",
+      "depends_on": [
+        "node_5"
+      ],
+      "answer": [
+        "American Museum of Natural History",
+        "Lincoln Center for the Performing Arts"
+      ]
+    },
+    "7": {
+      "source": "wikipedia/Central_Park/content.txt",
+      "fact": "Manhattan Square on the west side was reserved for the American Museum of Natural History, while a corresponding area on the East Side became the Metropolitan Museum of Art. Both museums are major cultural institutions adjacent to Central Park.",
+      "subquestion": "Which museums are located adjacent to Central Park?",
+      "depends_on": [
+        "node_5"
+      ],
+      "answer": [
+        "American Museum of Natural History",
+        "Metropolitan Museum of Art"
+      ]
+    },
+    "8": {
+      "source": "wikipedia/American_Museum_of_Natural_History/content.txt",
+      "fact": "The American Museum of Natural History (AMNH) is a natural history museum on the Upper West Side of Manhattan in New York City. Located in Theodore Roosevelt Park, across the street from Central Park, the museum complex comprises 21 interconnected buildings. The legislation creating the museum was signed by Governor John Thompson Hoffman on April 6, 1869.",
+      "subquestion": "In what year was <intersection of node_6, node_7: American Museum of Natural History> established?",
+      "depends_on": [
+        "intersection_of_6_7"
+      ],
+      "answer": "1869"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4 superlative - nodes 1,2,3,4 all independent, all data.gov from different years):",
+    "  Node 1: Progress report 2006-07 → {PS 009, PS 199, PS 180}",
+    "  Node 2: Progress report 2007-08 → {PS 009, PS 166, PS 087}",
+    "  Node 3: Progress report 2008-09 → {PS 009, PS 163, PS 087}",
+    "  Node 4: Progress report 2009-10 → {PS 009, PS 199, PS 163}",
+    "  Intersection(1,2,3,4) → PS 009 Sarah Anderson (only school in top 3 all 4 years)",
+    "",
+    "HOP 2 (d=2 - nodes 6,7 depend on node 5, mix of data.gov and Wikipedia):",
+    "  Node 5: School locations (data.gov) → PS 009 is in Upper West Side",
+    "  Node 6: Upper West Side Wikipedia → museums in neighborhood → {AMNH, Lincoln Center}",
+    "  Node 7: Central Park Wikipedia → museums adjacent to park → {AMNH, Metropolitan Museum of Art}",
+    "  Intersection(6,7) → American Museum of Natural History (only museum in both Upper West Side AND adjacent to Central Park)",
+    "",
+    "HOP 3 (d=1 - depends on hop 2 result, Wikipedia):",
+    "  Node 8: AMNH Wikipedia → established in 1869",
+    "",
+    "Final answer: 1869"
+  ],
+  "datasets_used": [
+    "2006-2007-school-progress-report",
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "2013-2014-school-locations",
+    "American_Museum_of_Natural_History",
+    "Central_Park",
+    "Upper_West_Side"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: Progress report 2006-07 → {PS 009, PS 199, PS 180} Node 2: Progress report 2007-08 → {PS 009, PS 166, PS 087} Node 3: Progress report 2008-09 → {PS 009, PS 163, PS 087} Node 4: Progress report 2009-10 → {PS 009, PS 199, PS 163} Intersection(1,2,3,4) → PS 009 Sarah Anderson (only school in top 3 all 4 years)",
+      "answer": "node 1: PS 009 Sarah Anderson, PS 199 Jessie Isador Straus, PS 180 Hugo Newman; node 2: PS 009 Sarah Anderson, PS 166 Richard Rodgers School, PS 087 William Sherman; node 3: PS 009 Sarah Anderson, PS 163 Alfred E. Smith, PS 087 William Sherman; node 4: PS 009 Sarah Anderson, PS 199 Jessie Isador Straus, PS 163 Alfred E. Smith"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5,
+        6,
+        7
+      ],
+      "reasoning": "Node 5: School locations (data.gov) → PS 009 is in Upper West Side Node 6: Upper West Side Wikipedia → museums in neighborhood → {AMNH, Lincoln Center} Node 7: Central Park Wikipedia → museums adjacent to park → {AMNH, Metropolitan Museum of Art} Intersection(6,7) → American Museum of Natural History (only museum in both Upper West Side AND adjacent to Central Park)",
+      "answer": "node 5: Upper West Side; node 6: American Museum of Natural History, Lincoln Center for the Performing Arts; node 7: American Museum of Natural History, Metropolitan Museum of Art"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8: AMNH Wikipedia → established in 1869",
+      "answer": "1869"
+    }
+  ]
+}

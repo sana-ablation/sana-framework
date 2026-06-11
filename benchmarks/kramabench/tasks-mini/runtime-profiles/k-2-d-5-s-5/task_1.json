@@ -1,0 +1,77 @@
+{
+  "dataset_sequence": [
+    "kramabench-environment-easy-4"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-environment-easy-4/files/water-body-testing-2019.csv",
+    "datagov/kramabench-environment-easy-4/files/water-body-testing-2020.csv",
+    "datagov/kramabench-environment-easy-4/files/water-body-testing-2021.csv",
+    "datagov/kramabench-environment-easy-4/files/water-body-testing-2022.csv",
+    "datagov/kramabench-environment-easy-4/files/water-body-testing-2023.csv",
+    "datagov/kramabench-environment-easy-4/files/water-body-testing-2019.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. For 2019, count Wollaston Beach samples and the subset marked as swimming-standard violations.",
+    "2. For 2020, count Wollaston Beach samples and the subset marked as swimming-standard violations.",
+    "3. For 2021, count Wollaston Beach samples and the subset marked as swimming-standard violations.",
+    "4. For 2022, count Wollaston Beach samples and the subset marked as swimming-standard violations.",
+    "5. For 2023, count Wollaston Beach samples and the subset marked as swimming-standard violations.",
+    "6. Convert each year's violation count to that year's violation rate, average the yearly rates, subtract from one, convert to a percentage, and round to the nearest integer."
+  ],
+  "original_final_question": "What is the percentage, rounded to the nearest integer, of time from 2019 through 2023 inclusive that the water quality at Quincy's Wollaston Beach met swimming standards? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Nodes 1-5: For each yearly water-body testing file, count Wollaston Beach records and records marked as swimming-standard violations.",
+    "Node 6 depends on nodes 1-5: Convert each yearly violation count to a violation rate, average those rates, subtract from one, and round the resulting percentage of time meeting swimming standards.",
+    "Final answer: 86"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-easy-4",
+      "source": "datagov/kramabench-environment-easy-4/files/water-body-testing-2019.csv",
+      "intent": "In the 2019 water-body testing records, how many rows are for Wollaston Beach and how many of those rows are marked as violations?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2019.csv'\ntotal = 0\nviolations = 0\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    for row in csv.DictReader(f):\n        if 'Wollaston' in (row.get('Beach Name') or ''):\n            total += 1\n            if (row.get('Violation') or '').strip().lower() == 'yes':\n                violations += 1\nresult = f'{total}|{violations}'\nprint(result)\n",
+      "answer": "348|45"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-easy-4",
+      "source": "datagov/kramabench-environment-easy-4/files/water-body-testing-2020.csv",
+      "intent": "In the 2020 water-body testing records, how many rows are for Wollaston Beach and how many of those rows are marked as violations?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv'\ntotal = 0\nviolations = 0\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    for row in csv.DictReader(f):\n        if 'Wollaston' in (row.get('Beach Name') or ''):\n            total += 1\n            if (row.get('Violation') or '').strip().lower() == 'yes':\n                violations += 1\nresult = f'{total}|{violations}'\nprint(result)\n",
+      "answer": "340|52"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-easy-4",
+      "source": "datagov/kramabench-environment-easy-4/files/water-body-testing-2021.csv",
+      "intent": "In the 2021 water-body testing records, how many rows are for Wollaston Beach and how many of those rows are marked as violations?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv'\ntotal = 0\nviolations = 0\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    for row in csv.DictReader(f):\n        if 'Wollaston' in (row.get('Beach Name') or ''):\n            total += 1\n            if (row.get('Violation') or '').strip().lower() == 'yes':\n                violations += 1\nresult = f'{total}|{violations}'\nprint(result)\n",
+      "answer": "331|60"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-environment-easy-4",
+      "source": "datagov/kramabench-environment-easy-4/files/water-body-testing-2022.csv",
+      "intent": "In the 2022 water-body testing records, how many rows are for Wollaston Beach and how many of those rows are marked as violations?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv'\ntotal = 0\nviolations = 0\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    for row in csv.DictReader(f):\n        if 'Wollaston' in (row.get('Beach Name') or ''):\n            total += 1\n            if (row.get('Violation') or '').strip().lower() == 'yes':\n                violations += 1\nresult = f'{total}|{violations}'\nprint(result)\n",
+      "answer": "368|45"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-environment-easy-4",
+      "source": "datagov/kramabench-environment-easy-4/files/water-body-testing-2023.csv",
+      "intent": "In the 2023 water-body testing records, how many rows are for Wollaston Beach and how many of those rows are marked as violations?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv'\ntotal = 0\nviolations = 0\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    for row in csv.DictReader(f):\n        if 'Wollaston' in (row.get('Beach Name') or ''):\n            total += 1\n            if (row.get('Violation') or '').strip().lower() == 'yes':\n                violations += 1\nresult = f'{total}|{violations}'\nprint(result)\n",
+      "answer": "317|41"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "kramabench-environment-easy-4",
+      "source": "datagov/kramabench-environment-easy-4/files/water-body-testing-2019.csv",
+      "intent": "Using the 2019-2023 Wollaston Beach violation rates, what is the rounded integer percentage of time that the water quality met swimming standards?",
+      "code": "import csv\npaths = [\n    'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2019.csv',\n    'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv',\n    'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv',\n    'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv',\n    'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv',\n]\nrates = []\nfor path in paths:\n    total = 0\n    violations = 0\n    with open(path, newline='', encoding='utf-8-sig') as f:\n        for row in csv.DictReader(f):\n            if 'Wollaston' in (row.get('Beach Name') or ''):\n                total += 1\n                if (row.get('Violation') or '').strip().lower() == 'yes':\n                    violations += 1\n    rates.append(violations / total if total else 0.0)\nfraction_meeting_standards = 1 - (sum(rates) / len(rates))\nresult = str(round(fraction_meeting_standards * 100))\nprint(result)\n",
+      "answer": "86"
+    }
+  ]
+}

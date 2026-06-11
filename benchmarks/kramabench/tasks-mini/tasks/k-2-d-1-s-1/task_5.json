@@ -1,0 +1,88 @@
+{
+  "question": "In which years were Fraud reports at least 50% of the total reports? Write your answer as [ANSWER].",
+  "answer": [
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2019
+  ],
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = f'{int(df.Year.min())}|{int(df.Year.max())}|{len(df)}'\nprint(result)\n",
+      "subquestion": "What year range and row count are present in the reports-by-type table?",
+      "answer": "2001|2024|24"
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-easy-10/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = str([int(year) for year in df.loc[df['fraud_pct'] >= 0.5, 'Year'].values])\nprint(result)\n",
+      "subquestion": "Which years have Fraud reports at least half of total reports?",
+      "answer": [
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2019
+      ]
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the reports-by-type table and confirm the available year range.",
+    "Node 2 depends on node 1: Compute total reports by year and identify years where Fraud is at least half of the total.",
+    "Final answer: [2010, 2011, 2012, 2013, 2014, 2019]"
+  ],
+  "datasets_used": [
+    "csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the reports-by-type table and confirm the available year range.",
+      "answer": "2001|2024|24"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Compute total reports by year and identify years where Fraud is at least half of the total.",
+      "answer": [
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2019
+      ]
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-easy-10",
+    "domain": "legal",
+    "difficulty": "easy",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-easy-10.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-10",
+    "s3_mirror_prefix": "datagov/kramabench-legal-easy-10/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

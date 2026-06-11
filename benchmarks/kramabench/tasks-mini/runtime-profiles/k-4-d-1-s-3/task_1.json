@@ -1,0 +1,68 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-hard-18"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv",
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the report-count table and extract total reports for 2007.",
+    "2. Read the 2024 report categories table and extract the identity-theft share.",
+    "3. Read the identity-theft-by-age table and compute the share for age ranges forty or older.",
+    "4. Multiply the 2007 total by both shares and round to the nearest thousand."
+  ],
+  "original_final_question": "If the 2007 reports were distributed exactly like the 2024 ones, how many identity theft reports in 2007 would concern people ages 40 or older, rounded to the nearest thousand? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the report-count table and extract total reports for 2007.",
+    "Node 2: Read the 2024 report categories table and extract the Identity Theft proportion.",
+    "Node 3: Read the identity-theft-by-age table and sum the proportions for age ranges over 40.",
+    "Node 4 depends on nodes 1-3: Multiply the 2007 total by both proportions and round to the nearest thousand.",
+    "Final answer: 91000"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-hard-18",
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "What is the total number of reports in 2007?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\nprint(int(df[df['Year'] == 2007]['# of Reports'].iloc[0]))\n",
+      "answer": 1070447
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-18",
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the 2024 Identity Theft report-category proportion?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat_df = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\npct = cat_df[cat_df['Category'] == 'Identity Theft']['Percentage'].iloc[0]\nprint(f'{float(pct.strip(\"%\")) / 100:.4f}')\n",
+      "answer": "0.1754"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-legal-hard-18",
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv",
+      "intent": "What proportion of 2024 identity-theft reports with age information were for people ages 40 or older?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\ndf['Percentage of reports'] = df['# of Reports'] / df['# of Reports'].sum()\nprop = df[df['Age Range'] > '40']['Percentage of reports'].sum()\nprint(f'{prop:.4f}')\n",
+      "answer": "0.4861"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-legal-hard-18",
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "intent": "Using the 2007 total, 2024 Identity Theft proportion, and age-40-plus proportion, what is the estimate rounded to the nearest thousand?",
+      "code": "import numpy as np\nimport pandas as pd\ncount_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ncat_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\nage_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv'\ndf = pd.read_csv(count_path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\ntotal_2007_reports = df[df['Year'] == 2007]['# of Reports'].iloc[0]\ncat_df = pd.read_csv(cat_path, skiprows=2, encoding='unicode_escape').dropna()\nidentity_theft_percentage = cat_df[cat_df['Category'] == 'Identity Theft']['Percentage'].iloc[0]\nidentity_theft_percentage = float(identity_theft_percentage.strip('%')) / 100\nage_df = pd.read_csv(age_path, skiprows=2).dropna()\nage_df['# of Reports'] = age_df['# of Reports'].str.replace(',', '').astype(int)\nage_df['Percentage of reports'] = age_df['# of Reports'] / age_df['# of Reports'].sum()\nid_theft_over_40 = age_df[age_df['Age Range'] > '40']['Percentage of reports'].sum()\nprint(int(np.round(total_2007_reports * identity_theft_percentage * id_theft_over_40, -3)))\n",
+      "answer": 91000
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-hard-18",
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the 2024 Identity Theft report-category proportion?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

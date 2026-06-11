@@ -1,0 +1,2140 @@
+{
+  "candidate_set": "kramabench_raw_all_main_workload",
+  "candidate_version": "kramabench_raw_all_v1",
+  "source": "other-benchmarks/Kramabench/workload",
+  "selected_count": 104,
+  "selection_mode": "all_main_workload_no_filters",
+  "filters": {},
+  "domains": [
+    "archeology",
+    "astronomy",
+    "biomedical",
+    "environment",
+    "legal",
+    "wildfire"
+  ],
+  "candidates": [
+    {
+      "source_id": "archeology-easy-10",
+      "domain": "archeology",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "worldcities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-easy-10.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-10",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-easy-10/files/"
+    },
+    {
+      "source_id": "archeology-easy-11",
+      "domain": "archeology",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "worldcities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-easy-11.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-11",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-easy-11/files/"
+    },
+    {
+      "source_id": "archeology-easy-3",
+      "domain": "archeology",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "roman_cities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-easy-3.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-3",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-easy-3/files/"
+    },
+    {
+      "source_id": "archeology-easy-4",
+      "domain": "archeology",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "climateMeasurements.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-easy-4.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-4",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-easy-4/files/"
+    },
+    {
+      "source_id": "archeology-easy-6",
+      "domain": "archeology",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "worldcities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-easy-6.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-6",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-easy-6/files/"
+    },
+    {
+      "source_id": "archeology-easy-8",
+      "domain": "archeology",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "roman_cities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-easy-8.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-easy-8",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-easy-8/files/"
+    },
+    {
+      "source_id": "archeology-hard-1",
+      "domain": "archeology",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "climateMeasurements.xlsx",
+        "radiocarbon_database_regional.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-hard-1.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-1",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-hard-1/files/"
+    },
+    {
+      "source_id": "archeology-hard-12",
+      "domain": "archeology",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "conflict_brecke.csv",
+        "worldcities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-hard-12.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-12",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-hard-12/files/"
+    },
+    {
+      "source_id": "archeology-hard-2",
+      "domain": "archeology",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "climateMeasurements.xlsx",
+        "radiocarbon_database_regional.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-hard-2.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-2",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-hard-2/files/"
+    },
+    {
+      "source_id": "archeology-hard-5",
+      "domain": "archeology",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 9,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "climateMeasurements.xlsx",
+        "radiocarbon_database_regional.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-hard-5.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-5",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-hard-5/files/"
+    },
+    {
+      "source_id": "archeology-hard-7",
+      "domain": "archeology",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "roman_cities.csv",
+        "worldcities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-hard-7.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-7",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-hard-7/files/"
+    },
+    {
+      "source_id": "archeology-hard-9",
+      "domain": "archeology",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "roman_cities.csv",
+        "worldcities.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/archeology-hard-9.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-9",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-archeology-hard-9/files/"
+    },
+    {
+      "source_id": "astronomy-easy-1",
+      "domain": "astronomy",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 5,
+      "dataset_count": 4,
+      "normalized_data_sources": [
+        "geomag_forecast/0309geomag_forecast.txt",
+        "geomag_forecast/0311geomag_forecast.txt",
+        "geomag_forecast/0312geomag_forecast.txt",
+        "geomag_forecast/0313geomag_forecast.txt"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-1.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-1",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "geomag_forecast.txt"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-1/files/"
+    },
+    {
+      "source_id": "astronomy-easy-2",
+      "domain": "astronomy",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 4,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "STORM-AI/warmup/v2/Sat_Density/swarma-wu016-20140314_to_20140317.csv",
+        "STORM-AI/warmup/v2/Sat_Density/swarma-wu545-20180718_to_20180721.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-2.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-2",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "matplotlib.dat"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-2/files/"
+    },
+    {
+      "source_id": "astronomy-easy-3",
+      "domain": "astronomy",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "STORM-AI/warmup/v2/wu001_to_wu715-initial_states.csv",
+        "STORM-AI/warmup/v2/Sat_Density/swarma-*2015*.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-3.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-3",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-3/files/"
+    },
+    {
+      "source_id": "astronomy-easy-4",
+      "domain": "astronomy",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "SILSO/SN_y_tot_V2.0.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-4.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-4",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-4/files/"
+    },
+    {
+      "source_id": "astronomy-easy-5",
+      "domain": "astronomy",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "TLE/48445.tle"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-5.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-5",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-5/files/"
+    },
+    {
+      "source_id": "astronomy-easy-6",
+      "domain": "astronomy",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "space-track/58214_storm.csv",
+        "space-track/58214_quiet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-easy-6.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-easy-6",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-easy-6/files/"
+    },
+    {
+      "source_id": "astronomy-hard-10",
+      "domain": "astronomy",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "STORM-AI/warmup/v2/OMNI2/omni2-wu590-20181001_to_20181130.csv",
+        "STORM-AI/warmup/v2/Sat_Density/swarma-wu???-201810??_to_201810??.csv",
+        "swarm/POD/SW_OPER_SP3ACOM_2__201810??T235942_201810??T235942_0201/*.sp3"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-10.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-10",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-10/files/"
+    },
+    {
+      "source_id": "astronomy-hard-11",
+      "domain": "astronomy",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 5,
+      "dataset_count": 4,
+      "normalized_data_sources": [
+        "swarmb/SB_DNS_POD_2024_*.txt",
+        "omni2_low_res/omni2_2024.dat",
+        "omni2_low_res/omni2_2023.dat",
+        "omni2_low_res/omni2.txt"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-11.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-11",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "when_utc.dat",
+        "omni.index.dat"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-11/files/"
+    },
+    {
+      "source_id": "astronomy-hard-12",
+      "domain": "astronomy",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "swarm/POD/SW_OPER_SP3ACOM_2__201909??T????_201909??T????_0201/*.sp3",
+        "mock_tiegcm_grid_sept2019.npz"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-12.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-12",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-12/files/"
+    },
+    {
+      "source_id": "astronomy-hard-7",
+      "domain": "astronomy",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 6,
+      "normalized_data_sources": [
+        "STORM-AI/warmup/v2/OMNI2/omni2-wu334-20160824_to_20161023.csv",
+        "STORM-AI/warmup/v2/GOES/goes-wu334-20160824_to_20161023.csv",
+        "STORM-AI/warmup/v2/Sat_Density/swarma-wu334-20161023_to_20161026.csv",
+        "STORM-AI/warmup/v2/OMNI2/omni2-wu335-20160827_to_20161026.csv",
+        "STORM-AI/warmup/v2/GOES/goes-wu335-20160827_to_20161026.csv",
+        "STORM-AI/warmup/v2/Sat_Density/swarma-wu335-20161026_to_20161029.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-7.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-7",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-7/files/"
+    },
+    {
+      "source_id": "astronomy-hard-8",
+      "domain": "astronomy",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 8,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "omni2/omni2_Kp_Index.lst",
+        "omni2/omni2_Flow_Pressure.lst",
+        "swarm/SW_OPER_ACCACAL_2__20240511T000000_20240511T235959_0304.cdf"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-8.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-8",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "cdflib.cdf"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-8/files/"
+    },
+    {
+      "source_id": "astronomy-hard-9",
+      "domain": "astronomy",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "TLE/43180.tle",
+        "omni2_low_res/omni2_2024.dat",
+        "omni2_low_res/omni2.txt"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/astronomy-hard-9.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/astronomy/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/astronomy/astronomy-hard-9",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-astronomy-hard-9/files/"
+    },
+    {
+      "source_id": "biomedical-easy-2",
+      "domain": "biomedical",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-easy-2.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-easy-2/files/"
+    },
+    {
+      "source_id": "biomedical-easy-6",
+      "domain": "biomedical",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-easy-6.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-easy-6/files/"
+    },
+    {
+      "source_id": "biomedical-easy-9",
+      "domain": "biomedical",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc3.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-easy-9.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/biomedical/biomedical-easy-9",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-easy-9/files/"
+    },
+    {
+      "source_id": "biomedical-hard-1",
+      "domain": "biomedical",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx",
+        "1-s2.0-S0092867420301070-mmc2.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-hard-1.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-1/files/"
+    },
+    {
+      "source_id": "biomedical-hard-3",
+      "domain": "biomedical",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx",
+        "1-s2.0-S0092867420301070-mmc7.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-hard-3.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-3/files/"
+    },
+    {
+      "source_id": "biomedical-hard-4",
+      "domain": "biomedical",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 3,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx",
+        "1-s2.0-S0092867420301070-mmc4.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-hard-4.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-4/files/"
+    },
+    {
+      "source_id": "biomedical-hard-5",
+      "domain": "biomedical",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx",
+        "1-s2.0-S0092867420301070-mmc7.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-hard-5.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-5/files/"
+    },
+    {
+      "source_id": "biomedical-hard-7",
+      "domain": "biomedical",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 3,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc3.xlsx"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-hard-7.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-7/files/"
+    },
+    {
+      "source_id": "biomedical-hard-8",
+      "domain": "biomedical",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "1-s2.0-S0092867420301070-mmc1.xlsx",
+        "1-s2.0-S0092867420301070-mmc6.xlsx",
+        "hyperactivated.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/biomedical-hard-8.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-biomedical-hard-8/files/"
+    },
+    {
+      "source_id": "environment-easy-1",
+      "domain": "environment",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "water-body-testing-2013.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-easy-1.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-1",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-easy-1/files/"
+    },
+    {
+      "source_id": "environment-easy-2",
+      "domain": "environment",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 22,
+      "normalized_data_sources": [
+        "water-body-testing-2002.csv",
+        "water-body-testing-2003.csv",
+        "water-body-testing-2004.csv",
+        "water-body-testing-2005.csv",
+        "water-body-testing-2006.csv",
+        "water-body-testing-2007.csv",
+        "water-body-testing-2008.csv",
+        "water-body-testing-2009.csv",
+        "water-body-testing-2010.csv",
+        "water-body-testing-2011.csv",
+        "water-body-testing-2012.csv",
+        "water-body-testing-2013.csv",
+        "water-body-testing-2014.csv",
+        "water-body-testing-2015.csv",
+        "water-body-testing-2016.csv",
+        "water-body-testing-2017.csv",
+        "water-body-testing-2018.csv",
+        "water-body-testing-2019.csv",
+        "water-body-testing-2020.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2022.csv",
+        "water-body-testing-2023.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-easy-2.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-2",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-easy-2/files/"
+    },
+    {
+      "source_id": "environment-easy-3",
+      "domain": "environment",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "water-body-testing-2012.csv",
+        "water-body-testing-2013.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-easy-3.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-3",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-easy-3/files/"
+    },
+    {
+      "source_id": "environment-easy-4",
+      "domain": "environment",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 5,
+      "normalized_data_sources": [
+        "water-body-testing-2019.csv",
+        "water-body-testing-2020.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2022.csv",
+        "water-body-testing-2023.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-easy-4.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-4",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-easy-4/files/"
+    },
+    {
+      "source_id": "environment-easy-5",
+      "domain": "environment",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 4,
+      "normalized_data_sources": [
+        "monthly_precipitations_boston.csv",
+        "monthly_precipitations_chatham.csv",
+        "monthly_precipitations_amherst.csv",
+        "monthly_precipitations_ashburnham.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-easy-5.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-5",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-easy-5/files/"
+    },
+    {
+      "source_id": "environment-easy-6",
+      "domain": "environment",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 21,
+      "normalized_data_sources": [
+        "water-body-testing-2022.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2020.csv",
+        "water-body-testing-2019.csv",
+        "water-body-testing-2018.csv",
+        "water-body-testing-2017.csv",
+        "water-body-testing-2016.csv",
+        "water-body-testing-2015.csv",
+        "water-body-testing-2014.csv",
+        "water-body-testing-2013.csv",
+        "water-body-testing-2012.csv",
+        "water-body-testing-2011.csv",
+        "water-body-testing-2010.csv",
+        "water-body-testing-2009.csv",
+        "water-body-testing-2008.csv",
+        "water-body-testing-2007.csv",
+        "water-body-testing-2006.csv",
+        "water-body-testing-2005.csv",
+        "water-body-testing-2004.csv",
+        "water-body-testing-2003.csv",
+        "water-body-testing-2002.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-easy-6.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-6",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-easy-6/files/"
+    },
+    {
+      "source_id": "environment-hard-10",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 11,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "environmental-justice-populations.csv",
+        "water-body-testing-2023.csv",
+        "wollaston_beach_datasheet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-10.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-10",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "_datasheet.csv",
+        "_beach_datasheet.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-10/files/"
+    },
+    {
+      "source_id": "environment-hard-11",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "pleasure_bay_and_castle_island_beach_datasheet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-11.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-11",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-11/files/"
+    },
+    {
+      "source_id": "environment-hard-12",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 9,
+      "normalized_data_sources": [
+        "boston-harbor-beaches.txt",
+        "constitution_beach_datasheet.csv",
+        "carson_beach_datasheet.csv",
+        "pleasure_bay_and_castle_island_beach_datasheet.csv",
+        "m_street_beach_datasheet.csv",
+        "city_point_beach_datasheet.csv",
+        "malibu_beach_datasheet.csv",
+        "tenean_beach_datasheet.csv",
+        "wollaston_beach_datasheet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-12.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-12",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-12/files/"
+    },
+    {
+      "source_id": "environment-hard-13",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "constitution_beach_datasheet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-13.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-13",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-13/files/"
+    },
+    {
+      "source_id": "environment-hard-14",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 7,
+      "normalized_data_sources": [
+        "water-body-testing-2009.csv",
+        "water-body-testing-2008.csv",
+        "water-body-testing-2007.csv",
+        "monthly_precipitations_boston.csv",
+        "monthly_precipitations_chatham.csv",
+        "monthly_precipitations_amherst.csv",
+        "monthly_precipitations_ashburnham.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-14.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-14",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-14/files/"
+    },
+    {
+      "source_id": "environment-hard-15",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 4,
+      "normalized_data_sources": [
+        "water-body-testing-2020.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2022.csv",
+        "water-body-testing-2023.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-15.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-15",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-15/files/"
+    },
+    {
+      "source_id": "environment-hard-16",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 22,
+      "normalized_data_sources": [
+        "water-body-testing-2002.csv",
+        "water-body-testing-2003.csv",
+        "water-body-testing-2004.csv",
+        "water-body-testing-2005.csv",
+        "water-body-testing-2006.csv",
+        "water-body-testing-2007.csv",
+        "water-body-testing-2008.csv",
+        "water-body-testing-2009.csv",
+        "water-body-testing-2010.csv",
+        "water-body-testing-2011.csv",
+        "water-body-testing-2012.csv",
+        "water-body-testing-2013.csv",
+        "water-body-testing-2014.csv",
+        "water-body-testing-2015.csv",
+        "water-body-testing-2016.csv",
+        "water-body-testing-2017.csv",
+        "water-body-testing-2018.csv",
+        "water-body-testing-2019.csv",
+        "water-body-testing-2020.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2022.csv",
+        "water-body-testing-2023.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-16.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-16",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-16/files/"
+    },
+    {
+      "source_id": "environment-hard-17",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 9,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "monthly_precipitations_chatham.csv",
+        "water-body-testing-2016.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-17.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-17",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-17/files/"
+    },
+    {
+      "source_id": "environment-hard-18",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 8,
+      "normalized_data_sources": [
+        "monthly_precipitations_boston.csv",
+        "monthly_precipitations_chatham.csv",
+        "monthly_precipitations_amherst.csv",
+        "monthly_precipitations_ashburnham.csv",
+        "water-body-testing-2020.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2022.csv",
+        "water-body-testing-2023.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-18.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-18",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-18/files/"
+    },
+    {
+      "source_id": "environment-hard-19",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 9,
+      "dataset_count": 24,
+      "normalized_data_sources": [
+        "water-body-testing-2002.csv",
+        "water-body-testing-2003.csv",
+        "water-body-testing-2004.csv",
+        "water-body-testing-2005.csv",
+        "water-body-testing-2006.csv",
+        "water-body-testing-2007.csv",
+        "water-body-testing-2008.csv",
+        "water-body-testing-2009.csv",
+        "water-body-testing-2010.csv",
+        "water-body-testing-2011.csv",
+        "water-body-testing-2012.csv",
+        "water-body-testing-2013.csv",
+        "water-body-testing-2014.csv",
+        "water-body-testing-2015.csv",
+        "water-body-testing-2016.csv",
+        "water-body-testing-2017.csv",
+        "water-body-testing-2018.csv",
+        "water-body-testing-2019.csv",
+        "water-body-testing-2020.csv",
+        "water-body-testing-2021.csv",
+        "water-body-testing-2022.csv",
+        "water-body-testing-2023.csv",
+        "monthly_precipitations_boston.csv",
+        "monthly_precipitations_chatham.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-19.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-19",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-19/files/"
+    },
+    {
+      "source_id": "environment-hard-20",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 9,
+      "dataset_count": 5,
+      "normalized_data_sources": [
+        "monthly_precipitations_boston.csv",
+        "monthly_precipitations_chatham.csv",
+        "monthly_precipitations_amherst.csv",
+        "monthly_precipitations_ashburnham.csv",
+        "water-body-testing-2015.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-20.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-20",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-20/files/"
+    },
+    {
+      "source_id": "environment-hard-7",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "environmental-justice-populations.csv",
+        "water-body-testing-2023.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-7.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-7",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-7/files/"
+    },
+    {
+      "source_id": "environment-hard-8",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 9,
+      "normalized_data_sources": [
+        "boston-harbor-beaches.txt",
+        "constitution_beach_datasheet.csv",
+        "carson_beach_datasheet.csv",
+        "pleasure_bay_and_castle_island_beach_datasheet.csv",
+        "m_street_beach_datasheet.csv",
+        "city_point_beach_datasheet.csv",
+        "malibu_beach_datasheet.csv",
+        "tenean_beach_datasheet.csv",
+        "wollaston_beach_datasheet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-8.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-8",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-8/files/"
+    },
+    {
+      "source_id": "environment-hard-9",
+      "domain": "environment",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 9,
+      "normalized_data_sources": [
+        "boston-harbor-beaches.txt",
+        "constitution_beach_datasheet.csv",
+        "carson_beach_datasheet.csv",
+        "pleasure_bay_and_castle_island_beach_datasheet.csv",
+        "m_street_beach_datasheet.csv",
+        "city_point_beach_datasheet.csv",
+        "malibu_beach_datasheet.csv",
+        "tenean_beach_datasheet.csv",
+        "wollaston_beach_datasheet.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/environment-hard-9.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-9",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-environment-hard-9/files/"
+    },
+    {
+      "source_id": "legal-easy-10",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Number_of_Reports_by_Type.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-10.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-10",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-10/files/"
+    },
+    {
+      "source_id": "legal-easy-11",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Number_of_Reports_by_Type.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-11.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-11",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-11/files/"
+    },
+    {
+      "source_id": "legal-easy-12",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Report_Categories.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-12.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-12",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-12/files/"
+    },
+    {
+      "source_id": "legal-easy-13",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Report_Categories.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-13.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-13",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-13/files/"
+    },
+    {
+      "source_id": "legal-easy-19",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Fraud_Reports_by_Amount_Lost.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-19.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-19",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "self.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-19/files/"
+    },
+    {
+      "source_id": "legal-easy-20",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 8,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Number_of_Reports_by_Type.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-20.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-20",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "self.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-20/files/"
+    },
+    {
+      "source_id": "legal-easy-21",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_State_Identity_Theft_Reports.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-21.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-21",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "self.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-21/files/"
+    },
+    {
+      "source_id": "legal-easy-25",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-25.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-25",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "Consumers.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-25/files/"
+    },
+    {
+      "source_id": "legal-easy-26",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_State_Top_Ten_Report_Categories.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-26.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-26",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-26/files/"
+    },
+    {
+      "source_id": "legal-easy-27",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_State_Top_Ten_Report_Categories.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-27.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-27",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-27/files/"
+    },
+    {
+      "source_id": "legal-easy-3",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Number_of_Reports_by_Type.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-3.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-3",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-3/files/"
+    },
+    {
+      "source_id": "legal-easy-4",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Data_Contributors.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-4.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-4",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "2024_Data_Contributors.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-4/files/"
+    },
+    {
+      "source_id": "legal-easy-5",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Fraud_Reports_by_Payment_Method.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-5.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-5",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "2024_Fraud_Reports_by_Payment_Method.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-5/files/"
+    },
+    {
+      "source_id": "legal-easy-9",
+      "domain": "legal",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Report_Count.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-easy-9.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-easy-9",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-easy-9/files/"
+    },
+    {
+      "source_id": "legal-hard-1",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 8,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "metropolitan_statistics.html",
+        "State MSA Identity Theft Data/*"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-1.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-1",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-1/files/"
+    },
+    {
+      "source_id": "legal-hard-14",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "State MSA Identity Theft data/*.csv",
+        "new_england_states.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-14.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-14",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-14/files/"
+    },
+    {
+      "source_id": "legal-hard-15",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "State MSA Identity Theft data/*.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-15.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-15",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-15/files/"
+    },
+    {
+      "source_id": "legal-hard-16",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "State MSA Identity Theft data/*.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-16.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-16",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-16/files/"
+    },
+    {
+      "source_id": "legal-hard-17",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "2024_CSN_Report_Count.csv",
+        "2024_CSN_Report_Categories.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-17.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-17",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-17/files/"
+    },
+    {
+      "source_id": "legal-hard-18",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "2024_CSN_Report_Count.csv",
+        "2024_CSN_Report_Categories.csv",
+        "2024_CSN_Identity_Theft_Reports_by_Age.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-18.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-18",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-18/files/"
+    },
+    {
+      "source_id": "legal-hard-2",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 9,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "metropolitan_statistics.html",
+        "State MSA Identity Theft Data/*"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-2.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-2",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-2/files/"
+    },
+    {
+      "source_id": "legal-hard-22",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "2024_CSN_Report_Type.csv",
+        "2024_CSN_Identity_Theft_Reports_by_Type.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-22.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-22",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "self.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-22/files/"
+    },
+    {
+      "source_id": "legal-hard-23",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+        "2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-23.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-23",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "self.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-23/files/"
+    },
+    {
+      "source_id": "legal-hard-24",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 7,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "2024_CSN_State_Rankings_Identity_Theft_Reports.csv",
+        "2024_CSN_State_Rankings_Fraud_and_Other_Reports.csv",
+        "State MSA Identity Theft data/*.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-24.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-24",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "self.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-24/files/"
+    },
+    {
+      "source_id": "legal-hard-28",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "2024_CSN_Reports_by_Military_Consumers.csv",
+        "2024_CSN_Report_Categories.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-28.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-28",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-28/files/"
+    },
+    {
+      "source_id": "legal-hard-29",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "State MSA Fraud and Other Data/*.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-29.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-29",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-29/files/"
+    },
+    {
+      "source_id": "legal-hard-30",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "State MSA Fraud and Other Data/*.csv",
+        "State MSA Identity Theft Data/*.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-30.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-30",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-30/files/"
+    },
+    {
+      "source_id": "legal-hard-6",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 6,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-6.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-6",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "CSN_Top_Three_Identity_Theft_Reports_by_Year.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-6/files/"
+    },
+    {
+      "source_id": "legal-hard-7",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 7,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-7.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-7",
+      "has_complete_dr_input": true,
+      "missing_solution_refs": [
+        "CSN_Top_Three_Identity_Theft_Reports_by_Year.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-7/files/"
+    },
+    {
+      "source_id": "legal-hard-8",
+      "domain": "legal",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "State MSA Fraud and Other data/Florida.csv",
+        "2024_CSN_Metropolitan_Areas_Fraud_and_Other_Reports.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/legal-hard-8.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+      "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-8",
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "Data/Floria.csv",
+        "CSN_Metropolitan_Areas_Fraud_and_Other_Reports.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-legal-hard-8/files/"
+    },
+    {
+      "source_id": "wildfire-easy-1",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "noaa_wildfires_monthly_stats.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-1.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-1/files/"
+    },
+    {
+      "source_id": "wildfire-easy-13",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 3,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "cleaned_helicopter_requests_by_region.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-13.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-13/files/"
+    },
+    {
+      "source_id": "wildfire-easy-15",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-15.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-15/files/"
+    },
+    {
+      "source_id": "wildfire-easy-2",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "usa.gpkg",
+        "nifc_geographic_areas.gpkg"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-2.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-2/files/"
+    },
+    {
+      "source_id": "wildfire-easy-3",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "usa.gpkg",
+        "nifc_geographic_areas.gpkg"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-3.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-3/files/"
+    },
+    {
+      "source_id": "wildfire-easy-8",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "Fire_Weather_Data_2002-2014_2016.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-8.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-8/files/"
+    },
+    {
+      "source_id": "wildfire-easy-9",
+      "domain": "wildfire",
+      "difficulty": "easy",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "Fire_Weather_Data_2002-2014_2016.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-easy-9.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-easy-9/files/"
+    },
+    {
+      "source_id": "wildfire-hard-10",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "Wildfire_Acres_by_State.csv",
+        "democratic_vs_republican_votes_by_usa_state_2020.csv",
+        "wildfire_total_fires_p45_54.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-10.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-10/files/"
+    },
+    {
+      "source_id": "wildfire-hard-11",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "Wildfire_Acres_by_State.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-11.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-11/files/"
+    },
+    {
+      "source_id": "wildfire-hard-12",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 1,
+      "normalized_data_sources": [
+        "Fire_Weather_Data_2002-2014_2016.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-12.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-12/files/"
+    },
+    {
+      "source_id": "wildfire-hard-14",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "Wildfire_Acres_by_State.csv",
+        "annual_aqi_by_county_2024.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-14.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-14/files/"
+    },
+    {
+      "source_id": "wildfire-hard-16",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-16.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-16/files/"
+    },
+    {
+      "source_id": "wildfire-hard-17",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 5,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv",
+        "PublicView_RAWS_-3515561676727363726.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-17.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "noaa_wildfires_sylvia.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-17/files/"
+    },
+    {
+      "source_id": "wildfire-hard-18",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-18.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-18/files/"
+    },
+    {
+      "source_id": "wildfire-hard-19",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 10,
+      "dataset_count": 3,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv",
+        "WeatherEvents_Jan2016-Dec2022.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-19.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "WeatherEvents_Jan2016-Dec2022.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-19/files/"
+    },
+    {
+      "source_id": "wildfire-hard-20",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-20.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-20/files/"
+    },
+    {
+      "source_id": "wildfire-hard-21",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "needs_source_resolution",
+      "subtask_count": 10,
+      "dataset_count": 4,
+      "normalized_data_sources": [
+        "noaa_wildfires.csv",
+        "noaa_wildfires_variabledescrip.csv",
+        "ZHVI.csv",
+        "state_abbreviation_to_state.json"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-21.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [
+        "ZHVI.csv"
+      ],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-21/files/"
+    },
+    {
+      "source_id": "wildfire-hard-4",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 6,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "nifc_suppression_costs.csv",
+        "nifc_human_caused_acres.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-4.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-4/files/"
+    },
+    {
+      "source_id": "wildfire-hard-5",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 7,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "noaa_wildfires_monthly_stats.csv",
+        "nifc_wildfires.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-5.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-5/files/"
+    },
+    {
+      "source_id": "wildfire-hard-6",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 5,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "noaa_wildfires_monthly_stats.csv",
+        "nifc_wildfires.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-6.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-6/files/"
+    },
+    {
+      "source_id": "wildfire-hard-7",
+      "domain": "wildfire",
+      "difficulty": "hard",
+      "source_mode": "full_domain_data",
+      "source_status": "ready",
+      "subtask_count": 4,
+      "dataset_count": 2,
+      "normalized_data_sources": [
+        "nifc_human_caused_acres.csv",
+        "nifc_lightning_caused_acres.csv"
+      ],
+      "candidate_path": "tasks-mini-kramabench/candidates/wildfire-hard-7.json",
+      "raw_data_root": "other-benchmarks/Kramabench/data/wildfire/input",
+      "dr_input_bundle": null,
+      "has_complete_dr_input": false,
+      "missing_solution_refs": [],
+      "s3_mirror_prefix": "datagov/kramabench-wildfire-hard-7/files/"
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "question": "Jon Whitmore was the chief executive officer of an organization. Determine the city where that organization was founded, then the county it is in and the two-digit state FIPS code from school district office listings. In that state, find the counties that rank in the top three for public schools, private schools, and school district offices; among those counties, what is the highest postsecondary institution count? Only report the number. Your response should be in the format [Answer].",
+  "answer": "11",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Jon_Whitmore/content.txt",
+      "fact": "Jon Scott Whitmore was the chief executive officer of ACT, Inc. (2010–2015).",
+      "subquestion": "Jon Scott Whitmore was the chief executive officer of what organization?",
+      "answer": "ACT, Inc."
+    },
+    "2": {
+      "source": "wikipedia/ACT_(for-profit_organization)/content.txt",
+      "fact": "ACT, Inc. is a for-profit educational company founded in Iowa City, Iowa.",
+      "subquestion": "In what city was <node_1 answer> founded?",
+      "answer": "Iowa City"
+    },
+    "3": {
+      "source": "wikipedia/Iowa_City,_Iowa/content.txt",
+      "fact": "Iowa City is the largest city in Johnson County, Iowa, United States, and its county seat.",
+      "subquestion": "<node_2 answer> is located in which county?",
+      "answer": "Johnson County"
+    },
+    "4": {
+      "source": "datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/school-district-office-locations-current-d848f/files/nces::school-district-office-locations-current-1.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read().decode(\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [col.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for col in df.columns]\n\nresult = df[(df[\"CITY\"] == \"Iowa City\") & (df[\"NMCNTY\"] == \"Johnson County\")][[\"CITY\", \"NMCNTY\", \"STFIP\"]].drop_duplicates().reset_index(drop=True)\nanswer = result[\"STFIP\"].iloc[0]",
+      "subquestion": "In the school district office listings, entries with CITY='<node_2 answer>' and NMCNTY='<node_3 answer>' share what two-digit state FIPS code (STFIP)?",
+      "answer": "19"
+    },
+    "5": {
+      "source": "datagov/public-school-locations-2018-19-42360/files/data-F2nGlG.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/public-school-locations-2018-19-42360/files/data-F2nGlG.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read().decode(\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [col.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for col in df.columns]\n\nresult = (\n    df[df[\"STFIP\"].astype(str) == \"19\"]\n    .groupby(\"NMCNTY\", dropna=False)\n    .size()\n    .reset_index(name=\"public_school_count\")\n    .sort_values([\"public_school_count\", \"NMCNTY\"], ascending=[False, True], kind=\"mergesort\")\n    .reset_index(drop=True)\n)\nanswer = \"; \".join(result[\"NMCNTY\"].head(3).tolist())",
+      "subquestion": "For STFIP='<node_4 answer>', which 3 county names have the most public schools? Return the county names separated by '; '.",
+      "answer": "Polk County; Linn County; Scott County"
+    },
+    "6": {
+      "source": "datagov/private-school-locations-2017-18-f49f6/files/data-dqdQDP.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/private-school-locations-2017-18-f49f6/files/data-dqdQDP.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read().decode(\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [col.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for col in df.columns]\n\nresult = (\n    df[df[\"STFIP\"].astype(str) == \"19\"]\n    .groupby(\"NMCNTY\", dropna=False)\n    .size()\n    .reset_index(name=\"private_school_count\")\n    .sort_values([\"private_school_count\", \"NMCNTY\"], ascending=[False, True], kind=\"mergesort\")\n    .reset_index(drop=True)\n)\nanswer = \"; \".join(result[\"NMCNTY\"].head(3).tolist())",
+      "subquestion": "For STFIP='<node_4 answer>', which 3 county names have the most private schools? Return the county names separated by '; '.",
+      "answer": "Polk County; Linn County; Sioux County"
+    },
+    "7": {
+      "source": "datagov/school-district-office-locations-2020-21-d8df0/files/data-UDaCeM.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/school-district-office-locations-2020-21-d8df0/files/data-UDaCeM.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read().decode(\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [col.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for col in df.columns]\n\nresult = (\n    df[df[\"STFIP\"].astype(str) == \"19\"]\n    .groupby(\"NMCNTY\", dropna=False)\n    .size()\n    .reset_index(name=\"school_district_office_count\")\n    .sort_values([\"school_district_office_count\", \"NMCNTY\"], ascending=[False, True], kind=\"mergesort\")\n    .reset_index(drop=True)\n)\nanswer = \"; \".join(result[\"NMCNTY\"].head(3).tolist())",
+      "subquestion": "For STFIP='<node_4 answer>', which 3 county names have the most school district offices? Return the county names separated by '; '.",
+      "answer": "Linn County; Polk County; Pottawattamie County"
+    },
+    "8": {
+      "source": "datagov/postsecondary-school-locations-2019-20-64b31/files/data-cbxYz6.txt",
+      "fact": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/postsecondary-school-locations-2019-20-64b31/files/data-cbxYz6.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.loads(obj[\"Body\"].read().decode(\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ndf.columns = [col.replace(\"properties.\", \"\").replace(\"geometry.\", \"\") for col in df.columns]\n\ncounty_counts = (\n    df[df[\"STFIP\"].astype(str) == \"19\"]\n    .groupby(\"NMCNTY\", dropna=False)\n    .size()\n    .reset_index(name=\"postsecondary_institution_count\")\n)\n\nA = {\"Polk County\", \"Linn County\", \"Scott County\"}\nB = {\"Polk County\", \"Linn County\", \"Sioux County\"}\nC = {\"Linn County\", \"Polk County\", \"Pottawattamie County\"}\ncandidate_counties = C & (A | B)\n\nresult = (\n    county_counts[county_counts[\"NMCNTY\"].isin(candidate_counties)]\n    .sort_values([\"postsecondary_institution_count\", \"NMCNTY\"], ascending=[False, True], kind=\"mergesort\")\n    .reset_index(drop=True)\n)\nanswer = str(int(result[\"postsecondary_institution_count\"].iloc[0]))",
+      "subquestion": "Let A be the set of counties in <node_5 answer>, B be the set of counties in <node_6 answer>, and C be the set of counties in <node_7 answer>. Consider the intersection of C with the union of A and B. Among those counties, what is the highest postsecondary institution count in STFIP='<node_4 answer>'? Answer with the number only.",
+      "answer": "11"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia Jon_Whitmore - node 1):",
+    "  Node 1: Jon Scott Whitmore was the chief executive officer of ACT, Inc. (2010-2015).",
+    "",
+    "HOP 2 (d=1, Wikipedia ACT_(for-profit_organization) - node 2):",
+    "  Node 2: ACT, Inc. is a for-profit educational company founded in Iowa City, Iowa.",
+    "",
+    "HOP 3 (d=1, Wikipedia Iowa_City,_Iowa - node 3):",
+    "  Node 3: Iowa City is the largest city in Johnson County, Iowa, United States, and its county seat.",
+    "",
+    "HOP 4 (d=1, State FIPS lookup - node 4):",
+    "  Node 4: CITY='Iowa City' and NMCNTY='Johnson County' share STFIP 19.",
+    "",
+    "HOP 5 (d=3, County top counts - nodes 5-7):",
+    "  Node 5: For STFIP=19, the top 3 counties by public schools are Polk, Linn, and Scott.",
+    "  Node 6: For STFIP=19, the top 3 counties by private schools are Polk, Linn, and Sioux.",
+    "  Node 7: For STFIP=19, the top 3 counties by school district offices are Linn, Polk, and Pottawattamie.",
+    "",
+    "HOP 6 (d=4, Postsecondary selection - node 8):",
+    "  Node 8: The candidate counties are Linn and Polk; postsecondary counts are 7 and 11, so the highest count is 11.",
+    "",
+    "Final answer: 11"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Jon_Whitmore",
+    "ACT_(for-profit_organization)",
+    "Iowa_City,_Iowa",
+    "school-district-office-locations-current-d848f",
+    "public-school-locations-2018-19-42360",
+    "private-school-locations-2017-18-f49f6",
+    "school-district-office-locations-2020-21-d8df0",
+    "postsecondary-school-locations-2019-20-64b31"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Jon Scott Whitmore was the chief executive officer of ACT, Inc. (2010-2015).",
+      "answer": "ACT, Inc."
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: ACT, Inc. is a for-profit educational company founded in Iowa City, Iowa.",
+      "answer": "Iowa City"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3: Iowa City is the largest city in Johnson County, Iowa, United States, and its county seat.",
+      "answer": "Johnson County"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4: CITY='Iowa City' and NMCNTY='Johnson County' share STFIP 19.",
+      "answer": "19"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        5,
+        6,
+        7
+      ],
+      "reasoning": "Node 5: For STFIP=19, the top 3 counties by public schools are Polk, Linn, and Scott. Node 6: For STFIP=19, the top 3 counties by private schools are Polk, Linn, and Sioux. Node 7: For STFIP=19, the top 3 counties by school district offices are Linn, Polk, and Pottawattamie.",
+      "answer": "node 5: Polk County; Linn County; Scott County; node 6: Polk County; Linn County; Sioux County; node 7: Linn County; Polk County; Pottawattamie County"
+    },
+    {
+      "hop": 6,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8: The candidate counties are Linn and Polk; postsecondary counts are 7 and 11, so the highest count is 11.",
+      "answer": "11"
+    }
+  ]
+}

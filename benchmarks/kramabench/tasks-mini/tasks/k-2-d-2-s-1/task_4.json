@@ -1,0 +1,77 @@
+{
+  "question": "What is the ratio of reported credit card identity-theft reports between 2024 and 2020, computed as 2024 reports divided by 2020 reports and rounded to four decimal places?. Write your answer as [ANSWER].",
+  "answer": 1.1413,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-hard-6/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "fact": "import pandas as pd\nimport re\nfrom io import StringIO\n\ndef convert_value(val):\n    if pd.isna(val):\n        return None\n    if isinstance(val, str):\n        val = val.strip().replace(',', '')\n        if val == '':\n            return None\n        if val.startswith('$'):\n            val = val[1:]\n        match = re.match(r'^([\\d.]+)([MK]?)$', val, re.IGNORECASE)\n        if match:\n            num, suffix = match.groups()\n            num = float(num)\n            if suffix.upper() == 'M':\n                num *= 1_000_000\n            elif suffix.upper() == 'K':\n                num *= 1_000\n            return int(num) if num.is_integer() else num\n        try:\n            return float(val) if '.' in val else int(val)\n        except Exception:\n            return val\n    return val\n\ndef read_clean_numeric_csv(path, encoding='utf-8'):\n    with open(path, 'r', encoding=encoding) as f:\n        lines = [line.strip() for line in f if line.strip()]\n    header_idx = None\n    for i, line in enumerate(lines):\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) >= 2:\n            header_idx = i\n            break\n    if header_idx is None:\n        raise ValueError('No suitable header row found.')\n    data_lines = []\n    for line in lines[header_idx:]:\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) < 2:\n            break\n        data_lines.append(line)\n    df = pd.read_csv(StringIO('\\n'.join(data_lines)))\n    for col in df.columns:\n        df[col] = df[col].apply(convert_value)\n    return df\n\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv'\ndf = read_clean_numeric_csv(path)\ndf['Year'] = df['Year'].astype(str).str.strip().str.lower()\nrow = df[(df['Theft Type'].eq(2020)) & (df['Year'].eq('credit card'))].iloc[0]\nprint(int(row['# of Reports']))\n",
+      "subquestion": "What was the reported credit card identity-theft count in 2020?",
+      "answer": 393446
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-hard-6/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "fact": "import pandas as pd\nimport re\nfrom io import StringIO\n\ndef convert_value(val):\n    if pd.isna(val):\n        return None\n    if isinstance(val, str):\n        val = val.strip().replace(',', '')\n        if val == '':\n            return None\n        if val.startswith('$'):\n            val = val[1:]\n        match = re.match(r'^([\\d.]+)([MK]?)$', val, re.IGNORECASE)\n        if match:\n            num, suffix = match.groups()\n            num = float(num)\n            if suffix.upper() == 'M':\n                num *= 1_000_000\n            elif suffix.upper() == 'K':\n                num *= 1_000\n            return int(num) if num.is_integer() else num\n        try:\n            return float(val) if '.' in val else int(val)\n        except Exception:\n            return val\n    return val\n\ndef read_clean_numeric_csv(path, encoding='utf-8'):\n    with open(path, 'r', encoding=encoding) as f:\n        lines = [line.strip() for line in f if line.strip()]\n    header_idx = None\n    for i, line in enumerate(lines):\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) >= 2:\n            header_idx = i\n            break\n    if header_idx is None:\n        raise ValueError('No suitable header row found.')\n    data_lines = []\n    for line in lines[header_idx:]:\n        parts = [p.strip() for p in line.split(',')]\n        if sum(1 for p in parts if p) < 2:\n            break\n        data_lines.append(line)\n    df = pd.read_csv(StringIO('\\n'.join(data_lines)))\n    for col in df.columns:\n        df[col] = df[col].apply(convert_value)\n    return df\n\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv'\ndf = read_clean_numeric_csv(path)\ndf['Year'] = df['Year'].astype(str).str.strip().str.lower()\nrow = df[(df['Theft Type'].eq(2024)) & (df['Year'].eq('credit card'))].iloc[0]\nprint(int(row['# of Reports']))\n",
+      "subquestion": "What was the reported credit card identity-theft count in 2024?",
+      "answer": 449032
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-hard-6/files/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "fact": "reports_2020 = 393446\nreports_2024 = 449032\nprint(round(reports_2024 / reports_2020, 4))\n",
+      "subquestion": "Using <node_1 answer> and <node_2 answer>, what is the 2024-to-2020 credit card report ratio rounded to four decimals?",
+      "answer": 1.1413
+    }
+  },
+  "reasoning_chain": [
+    "Nodes 1-2 read the top-three identity-theft report table and extract the 2020 and 2024 credit card report counts.",
+    "Node 3 divides the 2024 count by the 2020 count and rounds to four decimals.",
+    "Final answer: 1.1413"
+  ],
+  "datasets_used": [
+    "kramabench-legal-hard-6"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Extract the two credit card report counts from the raw table.",
+      "answer": "393446 and 449032"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Compute and round the ratio.",
+      "answer": "1.1413"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-hard-6",
+    "domain": "legal",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-hard-6.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/legal.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/legal/legal-hard-6.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-6",
+    "s3_mirror_prefix": "datagov/kramabench-legal-hard-6/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Top_Three_Identity_Theft_Reports_by_Year.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

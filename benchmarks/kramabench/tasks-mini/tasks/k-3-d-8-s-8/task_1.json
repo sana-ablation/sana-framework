@@ -1,0 +1,186 @@
+{
+  "question": "Is it true that the year-to-year trend in freshwater beach exceedance rates follows the same increase/decrease pattern as summer rainfall totals from 2020 through 2023, after imputing missing monthly precipitation values with each month's median over the available years? Write your answer as [ANSWER].",
+  "answer": "True",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-18/files/monthly_precipitations_boston.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\nmonths = ['Jun', 'Jul', 'Aug']\ndf = pd.read_csv(path).head(27)\ndf = df[['Year'] + months].copy()\nfor month in months:\n    values = pd.to_numeric(df[month].replace('M', pd.NA), errors='coerce')\n    df[month] = values.fillna(values.median())\ntarget = df[df['Year'].astype(str).isin(['2020', '2021', '2022', '2023'])]\nresult = [round(float(value), 2) for value in target[months].sum(axis=1).tolist()]\nprint(result)\n",
+      "subquestion": "For the Boston monthly precipitation table, what are the June-through-August precipitation totals for 2020, 2021, 2022, and 2023 after replacing missing monthly values with that month's median?",
+      "answer": [
+        6.89,
+        19.64,
+        4.42,
+        20.33
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-18/files/monthly_precipitations_chatham.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv'\nmonths = ['Jun', 'Jul', 'Aug']\ndf = pd.read_csv(path).head(27)\ndf = df[['Year'] + months].copy()\nfor month in months:\n    values = pd.to_numeric(df[month].replace('M', pd.NA), errors='coerce')\n    df[month] = values.fillna(values.median())\ntarget = df[df['Year'].astype(str).isin(['2020', '2021', '2022', '2023'])]\nresult = [round(float(value), 2) for value in target[months].sum(axis=1).tolist()]\nprint(result)\n",
+      "subquestion": "For the Chatham monthly precipitation table, what are the June-through-August precipitation totals for 2020, 2021, 2022, and 2023 after replacing missing monthly values with that month's median?",
+      "answer": [
+        2.78,
+        8.32,
+        8.32,
+        8.32
+      ]
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-18/files/monthly_precipitations_amherst.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv'\nmonths = ['Jun', 'Jul', 'Aug']\ndf = pd.read_csv(path).head(27)\ndf = df[['Year'] + months].copy()\nfor month in months:\n    values = pd.to_numeric(df[month].replace('M', pd.NA), errors='coerce')\n    df[month] = values.fillna(values.median())\ntarget = df[df['Year'].astype(str).isin(['2020', '2021', '2022', '2023'])]\nresult = [round(float(value), 2) for value in target[months].sum(axis=1).tolist()]\nprint(result)\n",
+      "subquestion": "For the Amherst monthly precipitation table, what are the June-through-August precipitation totals for 2020, 2021, 2022, and 2023 after replacing missing monthly values with that month's median?",
+      "answer": [
+        9.49,
+        18.38,
+        7.55,
+        21.27
+      ]
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-18/files/monthly_precipitations_ashburnham.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv'\nmonths = ['Jun', 'Jul', 'Aug']\ndf = pd.read_csv(path).head(27)\ndf = df[['Year'] + months].copy()\nfor month in months:\n    values = pd.to_numeric(df[month].replace('M', pd.NA), errors='coerce')\n    df[month] = values.fillna(values.median())\ntarget = df[df['Year'].astype(str).isin(['2020', '2021', '2022', '2023'])]\nresult = [round(float(value), 2) for value in target[months].sum(axis=1).tolist()]\nprint(result)\n",
+      "subquestion": "For the Ashburnham monthly precipitation table, what are the June-through-August precipitation totals for 2020, 2021, 2022, and 2023 after replacing missing monthly values with that month's median?",
+      "answer": [
+        11.08,
+        16.13,
+        7.41,
+        18.83
+      ]
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-hard-18/files/monthly_precipitations_boston.csv",
+      "fact": "source_path = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\nnode_1_answer = [6.89, 19.64, 4.42, 20.33]\nnode_2_answer = [2.78, 8.32, 8.32, 8.32]\nnode_3_answer = [9.49, 18.38, 7.55, 21.27]\nnode_4_answer = [11.08, 16.13, 7.41, 18.83]\n\ndef trend(values):\n    return [1 if values[i] < values[i + 1] else -1 if values[i] > values[i + 1] else 0 for i in range(len(values) - 1)]\n\ntotals = [round(sum(parts), 2) for parts in zip(node_1_answer, node_2_answer, node_3_answer, node_4_answer)]\nresult = trend(totals)\nprint(result)\n",
+      "subquestion": "After summing the four city summer precipitation totals from <node_1 answer>, <node_2 answer>, <node_3 answer>, and <node_4 answer> by year, what is the year-to-year trend from 2020 to 2023, using 1 for increase, -1 for decrease, and 0 for no change?",
+      "answer": [
+        1,
+        -1,
+        1
+      ]
+    },
+    "6": {
+      "source": "datagov/kramabench-environment-hard-18/files/water-body-testing-2020.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv'\ndf = pd.read_csv(path)\nfresh = df[df['Beach Type Description'].astype(str).str.strip().eq('Fresh')]\nyes_count = int(fresh['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(fresh))\nrate = yes_count / total_count\nresult = f'{yes_count}/{total_count}:{rate:.10f}'\nprint(result)\n",
+      "subquestion": "In the 2020 water-body testing table, what freshwater beach violation count, freshwater sample count, and exceedance rate are observed?",
+      "answer": "363/6526:0.0556236592"
+    },
+    "7": {
+      "source": "datagov/kramabench-environment-hard-18/files/water-body-testing-2021.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv'\ndf = pd.read_csv(path)\nfresh = df[df['Beach Type Description'].astype(str).str.strip().eq('Fresh')]\nyes_count = int(fresh['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(fresh))\nrate = yes_count / total_count\nresult = f'{yes_count}/{total_count}:{rate:.10f}'\nprint(result)\n",
+      "subquestion": "In the 2021 water-body testing table, what freshwater beach violation count, freshwater sample count, and exceedance rate are observed?",
+      "answer": "505/7606:0.0663949514"
+    },
+    "8": {
+      "source": "datagov/kramabench-environment-hard-18/files/water-body-testing-2022.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv'\ndf = pd.read_csv(path)\nfresh = df[df['Beach Type Description'].astype(str).str.strip().eq('Fresh')]\nyes_count = int(fresh['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(fresh))\nrate = yes_count / total_count\nresult = f'{yes_count}/{total_count}:{rate:.10f}'\nprint(result)\n",
+      "subquestion": "In the 2022 water-body testing table, what freshwater beach violation count, freshwater sample count, and exceedance rate are observed?",
+      "answer": "358/7690:0.0465539662"
+    },
+    "9": {
+      "source": "datagov/kramabench-environment-hard-18/files/water-body-testing-2023.csv",
+      "fact": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv'\ndf = pd.read_csv(path)\nfresh = df[df['Beach Type Description'].astype(str).str.strip().eq('Fresh')]\nyes_count = int(fresh['Violation'].astype(str).str.strip().str.lower().eq('yes').sum())\ntotal_count = int(len(fresh))\nrate = yes_count / total_count\nresult = f'{yes_count}/{total_count}:{rate:.10f}'\nprint(result)\n",
+      "subquestion": "In the 2023 water-body testing table, what freshwater beach violation count, freshwater sample count, and exceedance rate are observed?",
+      "answer": "433/7767:0.0557486803"
+    },
+    "10": {
+      "source": "datagov/kramabench-environment-hard-18/files/water-body-testing-2020.csv",
+      "fact": "source_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv'\nnode_6_answer = '363/6526:0.0556236592'\nnode_7_answer = '505/7606:0.0663949514'\nnode_8_answer = '358/7690:0.0465539662'\nnode_9_answer = '433/7767:0.0557486803'\n\ndef trend(values):\n    return [1 if values[i] < values[i + 1] else -1 if values[i] > values[i + 1] else 0 for i in range(len(values) - 1)]\n\nrates = [float(value.split(':', 1)[1]) for value in [node_6_answer, node_7_answer, node_8_answer, node_9_answer]]\nresult = trend(rates)\nprint(result)\n",
+      "subquestion": "Using the yearly freshwater exceedance rates from <node_6 answer>, <node_7 answer>, <node_8 answer>, and <node_9 answer>, what is the year-to-year trend from 2020 to 2023, using 1 for increase, -1 for decrease, and 0 for no change?",
+      "answer": [
+        1,
+        -1,
+        1
+      ]
+    },
+    "11": {
+      "source": "datagov/kramabench-environment-hard-18/files/monthly_precipitations_boston.csv",
+      "fact": "source_path = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\nnode_5_answer = [1, -1, 1]\nnode_10_answer = [1, -1, 1]\nresult = node_5_answer == node_10_answer\nprint(result)\n",
+      "subquestion": "Does the rainfall trend from <node_5 answer> exactly match the freshwater exceedance-rate trend from <node_10 answer>?",
+      "answer": "True"
+    }
+  },
+  "reasoning_chain": [
+    "Nodes 1-4: For each precipitation station, read the first 27 annual rows, impute missing June, July, and August values with the month median, and compute 2020-2023 summer totals.",
+    "Node 5 depends on nodes 1-4: Sum the city summer totals by year and convert the totals into an increase/decrease trend.",
+    "Nodes 6-9: For each 2020-2023 water-body testing file, filter to freshwater beaches and compute the violation count over the freshwater sample count as the exceedance rate.",
+    "Node 10 depends on nodes 6-9: Convert the four freshwater exceedance rates into the corresponding year-to-year trend.",
+    "Node 11 depends on nodes 5 and 10: Compare the two trend sequences.",
+    "Final answer: True"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-environment-hard-18/files/monthly_precipitations_amherst.csv",
+    "datagov/kramabench-environment-hard-18/files/monthly_precipitations_ashburnham.csv",
+    "datagov/kramabench-environment-hard-18/files/monthly_precipitations_boston.csv",
+    "datagov/kramabench-environment-hard-18/files/monthly_precipitations_chatham.csv",
+    "datagov/kramabench-environment-hard-18/files/water-body-testing-2020.csv",
+    "datagov/kramabench-environment-hard-18/files/water-body-testing-2021.csv",
+    "datagov/kramabench-environment-hard-18/files/water-body-testing-2022.csv",
+    "datagov/kramabench-environment-hard-18/files/water-body-testing-2023.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Nodes 1-4 compute per-city summer precipitation totals, while nodes 6-9 compute per-year freshwater exceedance rates from the raw water-body testing files.",
+      "answer": "station summer totals and yearly freshwater exceedance rates"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5,
+        10
+      ],
+      "reasoning": "Node 5 converts summed rainfall totals into a trend, and node 10 converts freshwater exceedance rates into a trend.",
+      "answer": "rainfall trend [1, -1, 1] and exceedance trend [1, -1, 1]"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        11
+      ],
+      "reasoning": "Node 11 compares the rainfall and freshwater exceedance-rate trends and finds they match exactly.",
+      "answer": "True"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-18",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-hard-18.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/environment.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/environment/environment-hard-18.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-18",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-18/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv",
+      "6": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv",
+      "7": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2021.csv",
+      "8": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2022.csv",
+      "9": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2023.csv",
+      "10": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2020.csv",
+      "11": "other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

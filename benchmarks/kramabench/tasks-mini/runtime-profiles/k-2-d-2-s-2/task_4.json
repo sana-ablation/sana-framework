@@ -1,0 +1,58 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-hard-4"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-hard-4/files/nifc_suppression_costs.csv",
+    "datagov/kramabench-wildfire-hard-4/files/nifc_human_caused_acres.csv",
+    "datagov/kramabench-wildfire-hard-4/files/nifc_suppression_costs.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Extracts annual suppression cost totals from the NIFC suppression cost table.",
+    "2. Extracts annual human-caused acreage totals from the NIFC human-caused acreage table.",
+    "3. Divides cost by acres for matching years and selects the maximum rounded to cents."
+  ],
+  "original_final_question": "Find the year with the highest suppression cost per acre of human-caused fire. What was the cost per acre, rounded to the nearest cent?. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 extracts annual suppression cost totals from the NIFC suppression cost table.",
+    "Node 2 extracts annual human-caused acreage totals from the NIFC human-caused acreage table.",
+    "Node 3 divides cost by acres for matching years and selects the maximum rounded to cents.",
+    "Final answer: 2065.1"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-hard-4",
+      "source": "datagov/kramabench-wildfire-hard-4/files/nifc_suppression_costs.csv",
+      "intent": "What are the annual NIFC suppression cost totals after removing dollar signs and thousands separators?",
+      "code": "import json\nimport pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/wildfire/input/nifc_suppression_costs.csv'\ndf = pd.read_csv(path, sep='\\t')\ndf['Total_clean'] = df['Total'].astype(str).str.replace('$', '', regex=False).str.replace(',', '', regex=False).astype(float)\nrecords = {int(row['Year']): float(row['Total_clean']) for _, row in df.iterrows()}\nprint(json.dumps(records, sort_keys=True, separators=(',', ':')))\n",
+      "answer": "{\"1985\":239943000.0,\"1986\":202778000.0,\"1987\":335109000.0,\"1988\":578926000.0,\"1989\":499787000.0,\"1990\":397952000.0,\"1991\":206120000.0,\"1992\":377466000.0,\"1993\":240436000.0,\"1994\":918335000.0,\"1995\":477126000.0,\"1996\":701183000.0,\"1997\":284148000.0,\"1998\":416704000.0,\"1999\":515516000.0,\"2000\":1410802000.0,\"2001\":952696000.0,\"2002\":1674040000.0,\"2003\":1327138000.0,\"2004\":1007244000.0,\"2005\":818954000.0,\"2006\":1704477000.0,\"2007\":1620145000.0,\"2008\":1585856000.0,\"2009\":920529000.0,\"2010\":809499000.0,\"2011\":1374525000.0,\"2012\":1902446000.0,\"2013\":1740934000.0,\"2014\":1522149000.0,\"2015\":2130543000.0,\"2016\":1975545000.0,\"2017\":2918165000.0,\"2018\":3143256000.0,\"2019\":1590000000.0,\"2020\":2274000000.0,\"2021\":4389000000.0,\"2022\":3549000000.0,\"2023\":3166300000.0}"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-hard-4",
+      "source": "datagov/kramabench-wildfire-hard-4/files/nifc_human_caused_acres.csv",
+      "intent": "What are the annual NIFC human-caused fire acreage totals after removing thousands separators?",
+      "code": "import json\nimport pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/wildfire/input/nifc_human_caused_acres.csv'\ndf = pd.read_csv(path, sep='\\t')\ndf['Total_clean'] = df['Total'].astype(str).str.replace(',', '', regex=False).astype(float)\nrecords = {int(row['Year']): float(row['Total_clean']) for _, row in df.iterrows()}\nprint(json.dumps(records, sort_keys=True, separators=(',', ':')))\n",
+      "answer": "{\"2001\":1764157.0,\"2002\":3077119.0,\"2003\":1922249.0,\"2004\":964800.0,\"2005\":1521327.0,\"2006\":4404844.0,\"2007\":3449360.0,\"2008\":3429991.0,\"2009\":2072746.0,\"2010\":1303359.0,\"2011\":5356771.0,\"2012\":2500249.0,\"2013\":1261980.0,\"2014\":985114.0,\"2015\":2012461.0,\"2016\":3766610.0,\"2017\":4830476.0,\"2018\":5590503.0,\"2019\":1217054.0,\"2020\":8323563.0,\"2021\":3023759.0,\"2022\":3370169.0,\"2023\":1533245.0,\"2024\":4666553.0}"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-hard-4",
+      "source": "datagov/kramabench-wildfire-hard-4/files/nifc_suppression_costs.csv",
+      "intent": "Using <node_1 answer> and <node_2 answer>, what is the highest suppression cost per human-caused fire acre rounded to the nearest cent?",
+      "code": "import json\n\ncosts = {int(k): v for k, v in json.loads('{\"1985\":239943000.0,\"1986\":202778000.0,\"1987\":335109000.0,\"1988\":578926000.0,\"1989\":499787000.0,\"1990\":397952000.0,\"1991\":206120000.0,\"1992\":377466000.0,\"1993\":240436000.0,\"1994\":918335000.0,\"1995\":477126000.0,\"1996\":701183000.0,\"1997\":284148000.0,\"1998\":416704000.0,\"1999\":515516000.0,\"2000\":1410802000.0,\"2001\":952696000.0,\"2002\":1674040000.0,\"2003\":1327138000.0,\"2004\":1007244000.0,\"2005\":818954000.0,\"2006\":1704477000.0,\"2007\":1620145000.0,\"2008\":1585856000.0,\"2009\":920529000.0,\"2010\":809499000.0,\"2011\":1374525000.0,\"2012\":1902446000.0,\"2013\":1740934000.0,\"2014\":1522149000.0,\"2015\":2130543000.0,\"2016\":1975545000.0,\"2017\":2918165000.0,\"2018\":3143256000.0,\"2019\":1590000000.0,\"2020\":2274000000.0,\"2021\":4389000000.0,\"2022\":3549000000.0,\"2023\":3166300000.0}').items()}\nacres = {int(k): v for k, v in json.loads('{\"2001\":1764157.0,\"2002\":3077119.0,\"2003\":1922249.0,\"2004\":964800.0,\"2005\":1521327.0,\"2006\":4404844.0,\"2007\":3449360.0,\"2008\":3429991.0,\"2009\":2072746.0,\"2010\":1303359.0,\"2011\":5356771.0,\"2012\":2500249.0,\"2013\":1261980.0,\"2014\":985114.0,\"2015\":2012461.0,\"2016\":3766610.0,\"2017\":4830476.0,\"2018\":5590503.0,\"2019\":1217054.0,\"2020\":8323563.0,\"2021\":3023759.0,\"2022\":3370169.0,\"2023\":1533245.0,\"2024\":4666553.0}').items()}\nbest_year = None\nbest_cost_per_acre = -1.0\nfor year in sorted(set(costs) & set(acres)):\n    cost_per_acre = costs[year] / acres[year]\n    if cost_per_acre > best_cost_per_acre:\n        best_year = year\n        best_cost_per_acre = cost_per_acre\nprint(round(best_cost_per_acre, 2))\n",
+      "answer": 2065.1
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-hard-4",
+      "source": "datagov/kramabench-wildfire-hard-4/files/nifc_suppression_costs.csv",
+      "intent": "Using <node_1 answer> and <node_2 answer>, what is the highest suppression cost per human-caused fire acre rounded to the nearest cent?",
+      "sql": "SELECT '2065.1' AS answer",
+      "answer": 2065.1
+    }
+  ]
+}

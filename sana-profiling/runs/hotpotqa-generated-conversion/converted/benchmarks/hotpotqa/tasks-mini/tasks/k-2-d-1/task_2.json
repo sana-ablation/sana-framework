@@ -1,0 +1,62 @@
+{
+  "question": "Which dialect spoken in the province of Scania calls Spettekaka, \"spiddekaga\"? Write your answer as [ANSWER].",
+  "answer": "Scanian dialects",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/Spettekaka.txt",
+      "fact": "Spettekaka or spettkaka (\"spiddekaga\" in native Scanian) is a local dessert of the southern parts of Sweden, chiefly in the province of Scania (Skåne) but also in Halland.",
+      "subquestion": "What intermediate evidence is needed from the first supporting page?",
+      "answer": "<text evidence>"
+    },
+    "2": {
+      "source": "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/Scanian_dialect.txt",
+      "fact": "Scanian (   ) is a closely related group of South Swedish dialects spoken in the province of Scania in southern Sweden.",
+      "subquestion": "Using the intermediate evidence, what supporting evidence answers the question?",
+      "answer": "Scanian dialects"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "datasets_used": [
+    "wikipedia/hotpotqa__5a70f0a75542994082a3e403",
+    "wikipedia/hotpotqa__5a70f0a75542994082a3e403"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Use the first supporting page to identify the intermediate evidence needed for the second lookup.",
+      "answer": "<text evidence>"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Use the second supporting page with the intermediate evidence to answer the question.",
+      "answer": "Scanian dialects"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "hotpotqa",
+    "split": "dev_distractor",
+    "source_id": "5a70f0a75542994082a3e403",
+    "type": "bridge",
+    "level": "hard",
+    "promoted_from": "other-benchmarks/tasks-hotpotqa-mini/k-2-d-2/task_2.json",
+    "raw_source": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json",
+    "source_mode": "raw_context_supporting_facts",
+    "s3_mirror_prefix": "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a70f0a75542994082a3e403:Spettekaka:0",
+      "2": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a70f0a75542994082a3e403:Scanian dialect:0"
+    },
+    "promotion_status": "smoke_converted",
+    "promotion_rule": "generated_hotpotqa_lakeqa_transform_five_import_smoke_v1"
+  }
+}

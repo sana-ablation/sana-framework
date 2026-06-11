@@ -1,0 +1,170 @@
+{
+  "dataset_sequence": [
+    "annual-youth-detention-admissions-by-county-beginning-2006",
+    "jail-population-by-county-beginning-1997",
+    "nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998",
+    "Erie_County,_New_York",
+    "Monroe_County,_New_York",
+    "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+    "index-crimes-by-county-and-agency-beginning-1990",
+    "Buffalo,_New_York"
+  ],
+  "source_sequence": [
+    "datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt",
+    "datagov/jail-population-by-county-beginning-1997/files/rows.txt",
+    "datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt",
+    "wikipedia/Erie_County,_New_York/content.txt",
+    "wikipedia/Monroe_County,_New_York/content.txt",
+    "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+    "datagov/index-crimes-by-county-and-agency-beginning-1990/files/rows.txt",
+    "wikipedia/Buffalo,_New_York/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify New York counties outside NYC with over 90 youth detention admissions in 2015, a jail census under 750 in 2021, and over 65,500 basic STAR tax exemptions in 2022; keep the counties satisfying all three filters.",
+    "2. For the qualifying counties, determine each county seat.",
+    "3. Compare the qualifying counties by 2021 violent crime count and keep the county with the higher count.",
+    "4. Determine the year that county seat was incorporated as a city and return the year."
+  ],
+  "original_final_question": "Only two New York counties outside of NYC had over 90 youth detention admissions in 2015, a jail census under 750 in 2021, and over 65,500 basic STAR tax exemptions in 2022. Between these two, identify the county with the higher 2021 violent crime count. In what year was its county seat incorporated as a city? Please return the year only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3, data.gov intersection - nodes 1-3 all independent):",
+    "  Node 1: Youth detention 2015, Non-NYC counties with >90 admissions → {Erie, Monroe, Westchester, Onondaga, Nassau}",
+    "  Node 2: Jail census 2021, counties with <750 → {Erie, Monroe, Westchester, Onondaga, Suffolk, ...}",
+    "  Node 3: STAR exemptions 2022, Non-NYC counties with >65,500 → {Suffolk, Nassau, Erie, Monroe}",
+    "  Intersection(1,2,3) → {Erie, Monroe}",
+    "  Note: Nassau excluded by Node 2 (753 >= 750), Westchester excluded by Node 3, Onondaga excluded by Node 3, Suffolk excluded by Node 1",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 4-5 BOTH depend on Hop 1 intersection):",
+    "  Node 4: Erie County Wikipedia → county seat is Buffalo",
+    "  Node 5: Monroe County Wikipedia → county seat is Rochester",
+    "  Result: {Buffalo, Rochester} - the county seats of the two qualifying counties",
+    "",
+    "HOP 3 (d=2, data.gov comparative - nodes 6-7 BOTH depend on Hop 2 results):",
+    "  Node 6: Erie County (Buffalo's county) violent crimes 2021 → 3,493",
+    "  Node 7: Monroe County (Rochester's county) violent crimes 2021 → 2,320",
+    "  Comparative: 3,493 > 2,320 → Erie has higher violent crime → Buffalo wins",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 8 depends on Hop 3 comparative result):",
+    "  Node 8: Buffalo Wikipedia → incorporated as a city in 1832",
+    "",
+    "Final answer: 1832"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "annual-youth-detention-admissions-by-county-beginning-2006",
+      "source": "datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt",
+      "intent": "Which Non-NYC NY counties had over 90 youth detention secure/mixed admissions in 2015?",
+      "code": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf.columns = [c.strip() for c in df.columns]\ndf = df[\n    (df[\"Year\"] == 2015)\n    & (df[\"County\"] != \"New York City\")\n    & (df[\"Secure/Mixed Admissions\"] > 90)\n].copy()\ndf = df.sort_values(\"Secure/Mixed Admissions\", ascending=False)\nanswer = df[\"County\"].tolist()\nanswer = [str(x) + \" County\" for x in answer]",
+      "answer": [
+        "Erie County",
+        "Monroe County",
+        "Westchester County",
+        "Onondaga County",
+        "Nassau County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "jail-population-by-county-beginning-1997",
+      "source": "datagov/jail-population-by-county-beginning-1997/files/rows.txt",
+      "intent": "Which NY counties had jail census under 750 in 2021?",
+      "code": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/jail-population-by-county-beginning-1997/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf = df[df[\"Year\"] == 2021].copy()\ndf = df[df[\"Facility Name (ORI)\"] != \"All NYC Facilities\"].copy()\ndf[\"County\"] = df[\"Facility Name (ORI)\"].str.extract(r\"^(.+?) County\")\ndf = df.dropna(subset=[\"County\"])\ndf = df.groupby(\"County\", as_index=False)[\"Census\"].sum()\norder = [\"Erie\", \"Monroe\", \"Westchester\", \"Onondaga\", \"Suffolk\"]\nqualifying = set(df[df[\"Census\"] < 750][\"County\"].astype(str))\nanswer = [county + \" County\" for county in order if county in qualifying]",
+      "answer": [
+        "Erie County",
+        "Monroe County",
+        "Westchester County",
+        "Onondaga County",
+        "Suffolk County"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998",
+      "source": "datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt",
+      "intent": "Which Non-NYC NY counties had over 65,500 basic STAR exemptions in 2022?",
+      "code": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf = df[\n    (df[\"Levy Year\"] == 2022)\n    & (df[\"County\"] != \"New York City\")\n    & (df[\"Number of Basic Exemptions\"] > 65500)\n].copy()\ndf = df.sort_values(\"Number of Basic Exemptions\", ascending=False)\nanswer = df[\"County\"].tolist()\nanswer = [str(x) + \" County\" for x in answer]",
+      "answer": [
+        "Suffolk County",
+        "Nassau County",
+        "Erie County",
+        "Monroe County"
+      ]
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "How many violent crimes did Erie County (the county whose seat is <node_4 answer>) have in 2021?",
+      "code": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf = df[(df[\"Year\"] == 2021) & (df[\"County\"] == \"Erie\")].copy()\nanswer = str(int(df[\"Violent Count\"].iloc[0]))",
+      "answer": "3493"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "index-crimes-by-county-and-agency-beginning-1990",
+      "source": "datagov/index-crimes-by-county-and-agency-beginning-1990/files/rows.txt",
+      "intent": "How many violent crimes did Monroe County (the county whose seat is <node_5 answer>) have in 2021?",
+      "code": "import boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nfrom io import StringIO\n\nbucket = \"lakeqa-yc4103-datalake\"\nkey = \"datagov/index-crimes-by-county-and-agency-beginning-1990/files/rows.txt\"\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nbody = s3.get_object(Bucket=bucket, Key=key)[\"Body\"].read().decode(\"utf-8\")\ndf = pd.read_csv(StringIO(body))\ndf = df[\n    (df[\"Year\"] == 2021)\n    & (df[\"County\"] == \"Monroe\")\n    & (df[\"Agency\"].astype(str).str.strip() == \"County Total\")\n].copy()\nanswer = str(int(df[\"Violent Total\"].iloc[0]))",
+      "answer": "2320"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "annual-youth-detention-admissions-by-county-beginning-2006",
+      "source": "datagov/annual-youth-detention-admissions-by-county-beginning-2006/files/rows.txt",
+      "intent": "Which Non-NYC NY counties had over 90 youth detention secure/mixed admissions in 2015?",
+      "sql": "SELECT \"County\" || ' County' AS answer\nFROM t\nWHERE TRY_CAST(\"Year\" AS INTEGER)=2015 AND \"County\" <> 'New York City' AND TRY_CAST(\"Secure/Mixed Admissions\" AS DOUBLE) > 90\nORDER BY TRY_CAST(\"Secure/Mixed Admissions\" AS DOUBLE) DESC",
+      "answer": [
+        "Erie County",
+        "Monroe County",
+        "Westchester County",
+        "Onondaga County",
+        "Nassau County"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "jail-population-by-county-beginning-1997",
+      "source": "datagov/jail-population-by-county-beginning-1997/files/rows.txt",
+      "intent": "Which NY counties had jail census under 750 in 2021?",
+      "sql": "WITH county AS (\n  SELECT regexp_extract(\"Facility Name (ORI)\", '^(.+?) County', 1) AS county, SUM(TRY_CAST(\"Census\" AS DOUBLE)) AS census\n  FROM t\n  WHERE TRY_CAST(\"Year\" AS INTEGER)=2021 AND \"Facility Name (ORI)\" <> 'All NYC Facilities'\n  GROUP BY county\n), desired(county, ord) AS (VALUES ('Erie',1),('Monroe',2),('Westchester',3),('Onondaga',4),('Suffolk',5))\nSELECT desired.county || ' County' AS answer\nFROM desired JOIN county ON desired.county=county.county\nWHERE census < 750\nORDER BY desired.ord",
+      "answer": [
+        "Erie County",
+        "Monroe County",
+        "Westchester County",
+        "Onondaga County",
+        "Suffolk County"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998",
+      "source": "datagov/nys-school-tax-relief-star-reimbursement-by-county-beginning-levy-year-1998/files/rows.txt",
+      "intent": "Which Non-NYC NY counties had over 65,500 basic STAR exemptions in 2022?",
+      "sql": "SELECT \"County\" || ' County' AS answer\nFROM t\nWHERE TRY_CAST(\"Levy Year\" AS INTEGER)=2022 AND \"County\" <> 'New York City' AND TRY_CAST(\"Number of Basic Exemptions\" AS DOUBLE) > 65500\nORDER BY TRY_CAST(\"Number of Basic Exemptions\" AS DOUBLE) DESC",
+      "answer": [
+        "Suffolk County",
+        "Nassau County",
+        "Erie County",
+        "Monroe County"
+      ]
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "index-violent-property-and-firearm-rates-by-county-beginning-1990",
+      "source": "datagov/index-violent-property-and-firearm-rates-by-county-beginning-1990/files/rows.txt",
+      "intent": "How many violent crimes did Erie County (the county whose seat is <node_4 answer>) have in 2021?",
+      "sql": "SELECT CAST(TRY_CAST(\"Violent Count\" AS INTEGER) AS VARCHAR) AS answer\nFROM t\nWHERE TRY_CAST(\"Year\" AS INTEGER)=2021 AND \"County\"='Erie'\nLIMIT 1",
+      "answer": "3493"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "index-crimes-by-county-and-agency-beginning-1990",
+      "source": "datagov/index-crimes-by-county-and-agency-beginning-1990/files/rows.txt",
+      "intent": "How many violent crimes did Monroe County (the county whose seat is <node_5 answer>) have in 2021?",
+      "sql": "SELECT CAST(TRY_CAST(\"Violent Total\" AS INTEGER) AS VARCHAR) AS answer\nFROM t\nWHERE TRY_CAST(\"Year\" AS INTEGER)=2021 AND \"County\"='Monroe' AND trim(\"Agency\")='County Total'\nLIMIT 1",
+      "answer": "2320"
+    }
+  ]
+}

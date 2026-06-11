@@ -1,0 +1,100 @@
+{
+  "question": "How many beaches had a higher bacterial exceedance rate for water samples collected in 2013 compared to 2012, excluding those with no samples in 2012? Write your answer as [ANSWER].",
+  "answer": "268",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-easy-3/files/water-body-testing-2012.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-3/files/water-body-testing-2012.csv'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2012.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(local_authoring_path):\n    csv_path = local_authoring_path\nelif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_csv(csv_path, usecols=['Community Code', 'County Code', 'Beach Name'])\ndf['Beach Name'] = df['Beach Name'].astype(str).str.strip().str.lower()\ndf['beach_id'] = df['Community Code'].astype(str) + df['County Code'].astype(str) + df['Beach Name']\nanswer = str(int(df['beach_id'].nunique()))\nprint(answer)",
+      "subquestion": "How many distinct beach identifiers with samples are present in the 2012 water-body testing file?",
+      "answer": "1171"
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-easy-3/files/water-body-testing-2013.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource = 'datagov/kramabench-environment-easy-3/files/water-body-testing-2013.csv'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_authoring_path = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv'\ncache_path = os.path.join('/tmp/k123_data_cache', source)\n\nif os.path.exists(local_authoring_path):\n    csv_path = local_authoring_path\nelif os.path.exists(source):\n    csv_path = source\nelif os.path.exists(cache_path):\n    csv_path = cache_path\nelse:\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\ndf = pd.read_csv(csv_path, usecols=['Community Code', 'County Code', 'Beach Name'])\ndf['Beach Name'] = df['Beach Name'].astype(str).str.strip().str.lower()\ndf['beach_id'] = df['Community Code'].astype(str) + df['County Code'].astype(str) + df['Beach Name']\nanswer = str(int(df['beach_id'].nunique()))\nprint(answer)",
+      "subquestion": "How many distinct beach identifiers with samples are present in the 2013 water-body testing file?",
+      "answer": "1176"
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-easy-3/files/water-body-testing-2012.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource_2012 = 'datagov/kramabench-environment-easy-3/files/water-body-testing-2012.csv'\nsource_2013 = 'datagov/kramabench-environment-easy-3/files/water-body-testing-2013.csv'\nbucket = 'lakeqa-yc4103-datalake'\n\ndef resolve(source, local_authoring_path):\n    cache_path = os.path.join('/tmp/k123_data_cache', source)\n    if os.path.exists(local_authoring_path):\n        return local_authoring_path\n    if os.path.exists(source):\n        return source\n    if os.path.exists(cache_path):\n        return cache_path\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    return io.BytesIO(obj['Body'].read())\n\ndef beach_ids(path):\n    df = pd.read_csv(path, usecols=['Community Code', 'County Code', 'Beach Name'])\n    df['Beach Name'] = df['Beach Name'].astype(str).str.strip().str.lower()\n    return set(df['Community Code'].astype(str) + df['County Code'].astype(str) + df['Beach Name'])\n\npath_2012 = resolve(source_2012, 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2012.csv')\npath_2013 = resolve(source_2013, 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv')\nanswer = str(len(beach_ids(path_2012) & beach_ids(path_2013)))\nprint(answer)",
+      "subquestion": "After matching lower-cased beach names together with community and county codes, how many beach identifiers appear in both 2012 and 2013?",
+      "answer": "1138"
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-easy-3/files/water-body-testing-2013.csv",
+      "fact": "import os\nimport io\nimport pandas as pd\n\nsource_2012 = 'datagov/kramabench-environment-easy-3/files/water-body-testing-2012.csv'\nsource_2013 = 'datagov/kramabench-environment-easy-3/files/water-body-testing-2013.csv'\nbucket = 'lakeqa-yc4103-datalake'\nnode_3_answer = '1138'\n\ndef resolve(source, local_authoring_path):\n    cache_path = os.path.join('/tmp/k123_data_cache', source)\n    if os.path.exists(local_authoring_path):\n        return local_authoring_path\n    if os.path.exists(source):\n        return source\n    if os.path.exists(cache_path):\n        return cache_path\n    import boto3\n    from botocore import UNSIGNED\n    from botocore.config import Config\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    return io.BytesIO(obj['Body'].read())\n\ndef summary(path):\n    df = pd.read_csv(path, usecols=['Community Code', 'County Code', 'Beach Name', 'Violation'])\n    df['Beach Name'] = df['Beach Name'].astype(str).str.strip().str.lower()\n    df['beach_id'] = df['Community Code'].astype(str) + df['County Code'].astype(str) + df['Beach Name']\n    grouped = df.groupby('beach_id').agg(\n        total_samples=('beach_id', 'count'),\n        num_violations=('Violation', lambda s: s.astype(str).str.strip().str.lower().eq('yes').sum()),\n    )\n    grouped['exceedance_rate'] = grouped['num_violations'] / grouped['total_samples'] * 100\n    return grouped\n\npath_2012 = resolve(source_2012, 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2012.csv')\npath_2013 = resolve(source_2013, 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv')\nmerged = summary(path_2012).merge(summary(path_2013), left_index=True, right_index=True, suffixes=('_2012', '_2013'))\nassert str(len(merged)) == node_3_answer\nanswer = str(int((merged['exceedance_rate_2013'] > merged['exceedance_rate_2012']).sum()))\nprint(answer)",
+      "subquestion": "Among the matched beach identifiers in <node_3 answer>, how many have a strictly higher bacterial exceedance rate in 2013 than in 2012?",
+      "answer": "268"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: The 2012 water-body testing file has 1,171 distinct beach identifiers with samples.",
+    "Node 2: The 2013 water-body testing file has 1,176 distinct beach identifiers with samples.",
+    "Node 3 depends on nodes 1 and 2: Matching by community code, county code, and lower-cased beach name leaves 1,138 identifiers present in both years.",
+    "Node 4 depends on node 3: Among the 1,138 matched identifiers, 268 have a 2013 bacterial exceedance rate greater than their 2012 rate.",
+    "Final answer: 268"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-environment-easy-3/files/water-body-testing-2012.csv",
+    "datagov/kramabench-environment-easy-3/files/water-body-testing-2013.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1 counts sampled beach identifiers in the 2012 water-body testing file.",
+      "answer": "1171"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 counts sampled beach identifiers in the 2013 water-body testing file.",
+      "answer": "1176"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 compares the yearly identifier sets and keeps only identifiers present in both years, which excludes beaches with no 2012 samples.",
+      "answer": "1138"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 computes per-identifier violation rates in each year and counts the matched identifiers where the 2013 rate is strictly higher.",
+      "answer": "268"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-easy-3",
+    "domain": "environment",
+    "difficulty": "easy",
+    "promoted_from": "./tasks-mini-kramabench/candidates/environment-easy-3.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-easy-3",
+    "s3_mirror_prefix": "datagov/kramabench-environment-easy-3/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2012.csv",
+      "2": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2012.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/water-body-testing-2013.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

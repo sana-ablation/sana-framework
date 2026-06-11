@@ -1,0 +1,202 @@
+{
+  "dataset_sequence": [
+    "2006-2007-school-progress-report",
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "2010-2011-school-progress-report",
+    "Marble_Hill,_Manhattan",
+    "Frederick_Philipse"
+  ],
+  "source_sequence": [
+    "datagov/2006-2007-school-progress-report/files/rows.txt",
+    "datagov/2007-2008-school-progress-report/files/rows.txt",
+    "datagov/2008-2009-school-progress-report/files/rows.txt",
+    "datagov/2009-2010-school-progress-report/files/rows.txt",
+    "datagov/2010-2011-school-progress-report/files/rows.txt",
+    "wikipedia/Marble_Hill,_Manhattan/content.txt",
+    "wikipedia/Frederick_Philipse/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For school years 2006-2007, 2007-2008, 2008-2009, 2009-2010, and 2010-2011, identify the NYC high schools ranked in the top eight by overall score and keep the school that appears in every year.",
+    "2. Determine the neighborhood named by the school that remains after the yearly comparison.",
+    "3. For that neighborhood, identify the person who built the first bridge connecting New York City to it.",
+    "4. Determine the province or area from which that bridge builder emigrated."
+  ],
+  "original_final_question": "Can you first find the neighborhood after which the only NYC high school that was in the top 8 by overall score every year from 2006-2010 is named, then report which province did the person who built the first bridge connecting NYC to that neighborhood emigrate from?. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Find top 8 NYC high schools by overall score in 2006-07 → includes Marble Hill",
+    "Node 2: Find top 8 NYC high schools by overall score in 2007-08 → includes Marble Hill",
+    "Node 3: Find top 8 NYC high schools by overall score in 2008-09 → includes Marble Hill",
+    "Node 4: Find top 8 NYC high schools by overall score in 2009-10 → includes Marble Hill",
+    "Node 5: Find top 8 NYC high schools by overall score in 2010-11 → includes Marble Hill",
+    "Intersection of <node_1>, <node_2>, <node_3>, <node_4>, <node_5>: Only school in top 7 all five years → Marble Hill High School for International Studies",
+    "Node 6 depends on intersection: Find who built first bridge at Marble Hill in 1693 → Frederick Philipse",
+    "Node 7 depends on node 6: Find area of Netherlands where Philipse emigrated from → Friesland",
+    "Final answer: Friesland"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2006-2007-school-progress-report",
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2006-07?",
+      "code": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2006-2007-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "answer": [
+        "Manhattan Bridges High School",
+        "Bedford Academy High School",
+        "Marble Hill High School for International Studies",
+        "High School for Contemporary Arts",
+        "Bronx Aerospace High School",
+        "Eleanor Roosevelt High School",
+        "Bronx Academy of Letters"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2007-08?",
+      "code": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2007-2008-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "answer": [
+        "Brooklyn International High School",
+        "Gregorio Luperon High School",
+        "High School for Contemporary Arts",
+        "Bedford Academy High School",
+        "Manhattan Bridges High School",
+        "Marble Hill High School for International Studies",
+        "New World High School"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2008-09?",
+      "code": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2008-2009-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "answer": [
+        "High School of Hospitality Management",
+        "Bedford Academy High School",
+        "Williamsburg Preparatory School",
+        "South Bronx Preparatory",
+        "Marble Hill High School for International Studies",
+        "High School for Violin and Dance",
+        "Essex Street Academy"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2009-10?",
+      "code": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2009-2010-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('2009-2010 OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "answer": [
+        "Theatre Arts Production Company School",
+        "Brooklyn International High School",
+        "Williamsburg Preparatory School",
+        "Marble Hill High School for International Studies",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Village Academy",
+        "High School for Violin and Dance"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2010-11?",
+      "code": "import csv\n\ndef smart_title(name):\n    words = (name or '').strip().lower().split()\n    keep_lower = {'and', 'of', 'for', 'the', 'at', 'in', 'on', 'to', 'a'}\n    return ' '.join(w if i > 0 and w in keep_lower else w.capitalize() for i, w in enumerate(words))\n\nwith open('datagov/2010-2011-school-progress-report/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nscored = []\nfor r in rows:\n    level = (r.get('SCHOOL LEVEL*') or '').strip()\n    raw = (r.get('SCHOOL') or '').strip().replace(\" at Water's Edge\", '')\n    raw = raw.replace(' FOR SCIENCE AND MATHEMATICS', '').replace(': A COLLEGE BOARD SCHOOL', '')\n    if raw.endswith(', The'):\n        continue\n    school = smart_title(raw)\n    try:\n        score = float((r.get('2010-2011 OVERALL SCORE') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    if level == 'High School' and school:\n        scored.append((school, score))\n\ntop = sorted(scored, key=lambda x: (-x[1], x[0]))[:7]\nresult = [s for s, _ in top]",
+      "answer": [
+        "Brooklyn International High School",
+        "Manhattan Village Academy",
+        "It Takes a Village Academy",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Bridges High School",
+        "Academy of Finance and Enterprise",
+        "Marble Hill High School for International Studies"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2006-2007-school-progress-report",
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2006-07?",
+      "sql": "WITH scored AS (\n  SELECT replace(replace(replace(trim(\"SCHOOL\"), ' at Water''s Edge', ''), ' FOR SCIENCE AND MATHEMATICS', ''), ': A COLLEGE BOARD SCHOOL', '') AS raw_school,\n         TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE trim(\"SCHOOL LEVEL*\") = 'High School'\n    AND trim(\"SCHOOL\") <> ''\n    AND NOT ends_with(trim(\"SCHOOL\"), ', The')\n), ranked AS (\n  SELECT raw_school,\n         score,\n         ROW_NUMBER() OVER (ORDER BY score DESC, raw_school ASC) AS rn\n  FROM scored\n  WHERE score IS NOT NULL\n), titled AS (\n  SELECT rn,\n         string_agg(\n           CASE WHEN idx > 1 AND word IN ('and','of','for','the','at','in','on','to','a')\n                THEN word\n                ELSE upper(substr(word, 1, 1)) || substr(word, 2)\n           END,\n           ' ' ORDER BY idx\n         ) AS school\n  FROM ranked,\n       unnest(string_split(lower(raw_school), ' ')) WITH ORDINALITY AS u(word, idx)\n  WHERE rn <= 7\n  GROUP BY rn\n)\nSELECT school AS answer\nFROM titled\nORDER BY rn",
+      "answer": [
+        "Manhattan Bridges High School",
+        "Bedford Academy High School",
+        "Marble Hill High School for International Studies",
+        "High School for Contemporary Arts",
+        "Bronx Aerospace High School",
+        "Eleanor Roosevelt High School",
+        "Bronx Academy of Letters"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2007-08?",
+      "sql": "WITH scored AS (\n  SELECT replace(replace(replace(trim(\"SCHOOL\"), ' at Water''s Edge', ''), ' FOR SCIENCE AND MATHEMATICS', ''), ': A COLLEGE BOARD SCHOOL', '') AS raw_school,\n         TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE trim(\"SCHOOL LEVEL*\") = 'High School'\n    AND trim(\"SCHOOL\") <> ''\n    AND NOT ends_with(trim(\"SCHOOL\"), ', The')\n), ranked AS (\n  SELECT raw_school,\n         score,\n         ROW_NUMBER() OVER (ORDER BY score DESC, raw_school ASC) AS rn\n  FROM scored\n  WHERE score IS NOT NULL\n), titled AS (\n  SELECT rn,\n         string_agg(\n           CASE WHEN idx > 1 AND word IN ('and','of','for','the','at','in','on','to','a')\n                THEN word\n                ELSE upper(substr(word, 1, 1)) || substr(word, 2)\n           END,\n           ' ' ORDER BY idx\n         ) AS school\n  FROM ranked,\n       unnest(string_split(lower(raw_school), ' ')) WITH ORDINALITY AS u(word, idx)\n  WHERE rn <= 7\n  GROUP BY rn\n)\nSELECT school AS answer\nFROM titled\nORDER BY rn",
+      "answer": [
+        "Brooklyn International High School",
+        "Gregorio Luperon High School",
+        "High School for Contemporary Arts",
+        "Bedford Academy High School",
+        "Manhattan Bridges High School",
+        "Marble Hill High School for International Studies",
+        "New World High School"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2008-2009-school-progress-report",
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2008-09?",
+      "sql": "WITH scored AS (\n  SELECT replace(replace(replace(trim(\"SCHOOL\"), ' at Water''s Edge', ''), ' FOR SCIENCE AND MATHEMATICS', ''), ': A COLLEGE BOARD SCHOOL', '') AS raw_school,\n         TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE trim(\"SCHOOL LEVEL*\") = 'High School'\n    AND trim(\"SCHOOL\") <> ''\n    AND NOT ends_with(trim(\"SCHOOL\"), ', The')\n), ranked AS (\n  SELECT raw_school,\n         score,\n         ROW_NUMBER() OVER (ORDER BY score DESC, raw_school ASC) AS rn\n  FROM scored\n  WHERE score IS NOT NULL\n), titled AS (\n  SELECT rn,\n         string_agg(\n           CASE WHEN idx > 1 AND word IN ('and','of','for','the','at','in','on','to','a')\n                THEN word\n                ELSE upper(substr(word, 1, 1)) || substr(word, 2)\n           END,\n           ' ' ORDER BY idx\n         ) AS school\n  FROM ranked,\n       unnest(string_split(lower(raw_school), ' ')) WITH ORDINALITY AS u(word, idx)\n  WHERE rn <= 7\n  GROUP BY rn\n)\nSELECT school AS answer\nFROM titled\nORDER BY rn",
+      "answer": [
+        "High School of Hospitality Management",
+        "Bedford Academy High School",
+        "Williamsburg Preparatory School",
+        "South Bronx Preparatory",
+        "Marble Hill High School for International Studies",
+        "High School for Violin and Dance",
+        "Essex Street Academy"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-2010-school-progress-report",
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2009-10?",
+      "sql": "WITH scored AS (\n  SELECT replace(replace(replace(trim(\"SCHOOL\"), ' at Water''s Edge', ''), ' FOR SCIENCE AND MATHEMATICS', ''), ': A COLLEGE BOARD SCHOOL', '') AS raw_school,\n         TRY_CAST(\"2009-2010 OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE trim(\"SCHOOL LEVEL*\") = 'High School'\n    AND trim(\"SCHOOL\") <> ''\n    AND NOT ends_with(trim(\"SCHOOL\"), ', The')\n), ranked AS (\n  SELECT raw_school,\n         score,\n         ROW_NUMBER() OVER (ORDER BY score DESC, raw_school ASC) AS rn\n  FROM scored\n  WHERE score IS NOT NULL\n), titled AS (\n  SELECT rn,\n         string_agg(\n           CASE WHEN idx > 1 AND word IN ('and','of','for','the','at','in','on','to','a')\n                THEN word\n                ELSE upper(substr(word, 1, 1)) || substr(word, 2)\n           END,\n           ' ' ORDER BY idx\n         ) AS school\n  FROM ranked,\n       unnest(string_split(lower(raw_school), ' ')) WITH ORDINALITY AS u(word, idx)\n  WHERE rn <= 7\n  GROUP BY rn\n)\nSELECT school AS answer\nFROM titled\nORDER BY rn",
+      "answer": [
+        "Theatre Arts Production Company School",
+        "Brooklyn International High School",
+        "Williamsburg Preparatory School",
+        "Marble Hill High School for International Studies",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Village Academy",
+        "High School for Violin and Dance"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2010-2011-school-progress-report",
+      "source": "datagov/2010-2011-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools were in the top 8 by overall score in 2010-11?",
+      "sql": "WITH scored AS (\n  SELECT replace(replace(replace(trim(\"SCHOOL\"), ' at Water''s Edge', ''), ' FOR SCIENCE AND MATHEMATICS', ''), ': A COLLEGE BOARD SCHOOL', '') AS raw_school,\n         TRY_CAST(\"2010-2011 OVERALL SCORE\" AS DOUBLE) AS score\n  FROM t\n  WHERE trim(\"SCHOOL LEVEL*\") = 'High School'\n    AND trim(\"SCHOOL\") <> ''\n    AND NOT ends_with(trim(\"SCHOOL\"), ', The')\n), ranked AS (\n  SELECT raw_school,\n         score,\n         ROW_NUMBER() OVER (ORDER BY score DESC, raw_school ASC) AS rn\n  FROM scored\n  WHERE score IS NOT NULL\n), titled AS (\n  SELECT rn,\n         string_agg(\n           CASE WHEN idx > 1 AND word IN ('and','of','for','the','at','in','on','to','a')\n                THEN word\n                ELSE upper(substr(word, 1, 1)) || substr(word, 2)\n           END,\n           ' ' ORDER BY idx\n         ) AS school\n  FROM ranked,\n       unnest(string_split(lower(raw_school), ' ')) WITH ORDINALITY AS u(word, idx)\n  WHERE rn <= 7\n  GROUP BY rn\n)\nSELECT school AS answer\nFROM titled\nORDER BY rn",
+      "answer": [
+        "Brooklyn International High School",
+        "Manhattan Village Academy",
+        "It Takes a Village Academy",
+        "Williamsburg High School for Architecture and Design",
+        "Manhattan Bridges High School",
+        "Academy of Finance and Enterprise",
+        "Marble Hill High School for International Studies"
+      ]
+    }
+  ]
+}

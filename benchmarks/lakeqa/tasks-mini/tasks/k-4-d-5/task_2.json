@@ -1,0 +1,154 @@
+{
+  "question": "Among NYC municipal candidates who filed campaign expenditures in all five election cycles (2001, 2003, 2005, 2009, 2013) with between $103,000 and $251,000 in each cycle, two candidates qualify. One of these candidates represents the borough that recorded the higher number of NYCHA residents enrolled in the 2019 Summer Youth Employment Program. In what year was the candidate representing that specific borough born?. Your response should be in the format [Answer].",
+  "answer": "1959",
+  "practical_motivation": "A political researcher studying NYC's consistent grassroots politicians wants to identify candidates who maintained steady campaign activity across multiple election cycles without the massive fundraising of citywide candidates. By finding candidates with moderate, consistent expenditures ($103K-$251K per cycle across all offices), the researcher can study their districts' demographics. Comparing NYCHA youth employment data between their boroughs helps understand which communities these long-serving politicians represented, and biographical research completes the profile.",
+  "nodes": {
+    "1": {
+      "source": "datagov/2001-campaign-expenditures/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2001-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "subquestion": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2001 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "103 others"
+      ]
+    },
+    "2": {
+      "source": "datagov/2003-campaign-expenditures/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2003-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "subquestion": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2003 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "45 others"
+      ]
+    },
+    "3": {
+      "source": "datagov/2005-campaign-expenditures/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2005-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "subquestion": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2005 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "67 others"
+      ]
+    },
+    "4": {
+      "source": "datagov/2009-campaign-expenditures/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2009-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "subquestion": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2009 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "97 others"
+      ]
+    },
+    "5": {
+      "source": "datagov/2013-campaign-expenditures/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2013-campaign-expenditures/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"AMNT\"] = pd.to_numeric(df[\"AMNT\"], errors=\"coerce\")\nresult = (\n    df.groupby([\"CANDID\", \"CANDFIRST\", \"CANDLAST\"], dropna=False, as_index=False)[\"AMNT\"]\n    .sum()\n    .rename(columns={\"AMNT\": \"total_amnt\"})\n)\nresult = result[(result[\"total_amnt\"] >= 103000) & (result[\"total_amnt\"] <= 251000)]\nnames = (result[\"CANDFIRST\"].astype(str).str.strip() + \" \" + result[\"CANDLAST\"].astype(str).str.strip()).tolist()\nrequired = [\"Domenic Recchia\", \"Leroy Comrie\"]\nif not all(name in names for name in required):\n    raise ValueError(\"Expected qualifying candidates were not found.\")\nanswer = required + [f\"{len(names) - len(required)} others\"]\n",
+      "subquestion": "Which NYC municipal candidates filed campaign expenditures between $103,000 and $251,000 in the 2013 election cycle? (Filter: sum AMNT by candidate (CANDID, CANDFIRST, CANDLAST); keep totals between $103,000 and $251,000.)",
+      "answer": [
+        "Domenic Recchia",
+        "Leroy Comrie",
+        "91 others"
+      ]
+    },
+    "6": {
+      "source": "wikipedia/Leroy_Comrie/content.txt",
+      "fact": "Leroy George Comrie Jr. represents district 14 in the New York State Senate, which comprises neighborhoods within the borough of Queens.",
+      "subquestion": "Which NYC borough did Leroy Comrie (from <intersection of nodes 1-5>) represent?",
+      "answer": "Queens"
+    },
+    "7": {
+      "source": "wikipedia/Domenic_Recchia/content.txt",
+      "fact": "Domenic Michael Recchia Jr. formerly represented the 47th district of the New York City Council, which included areas of Bensonhurst, Brighton Beach, Coney Island, and Gravesend in south Brooklyn.",
+      "subquestion": "Which NYC borough did Domenic Recchia (from <intersection of nodes 1-5>) represent?",
+      "answer": "Brooklyn"
+    },
+    "8": {
+      "source": "datagov/summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163/files/rows.txt",
+      "fact": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nlocal_path = source if os.path.exists(source) else \"/tmp/k123_data_cache/\" + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj[\"Body\"].read())\n\ndf = pd.read_csv(csv_path, low_memory=False)\ndf[\"Year\"] = pd.to_numeric(df[\"Year\"], errors=\"coerce\")\ndf[\"Were accepted and enrolled\"] = pd.to_numeric(\n    df[\"Were accepted and enrolled\"].astype(str).str.replace(\",\", \"\", regex=False),\n    errors=\"coerce\",\n)\nresult = df[\n    df[\"Year\"].eq(2019)\n    & df[\"Borough\"].isin([\"Queens\", \"Brooklyn\"])\n][[\"Borough\", \"Were accepted and enrolled\"]].sort_values(\n    [\"Were accepted and enrolled\", \"Borough\"], ascending=[False, True], kind=\"mergesort\"\n).reset_index(drop=True)\nanswer = str(result.iloc[0][\"Borough\"])\n",
+      "subquestion": "Which borough had more NYCHA residents enrolled in SYEP in 2019: Queens (<node_6 answer>) or Brooklyn (<node_7 answer>)? (Filter: Year == 2019; compare 'Were accepted and enrolled' for Queens vs Brooklyn.)",
+      "answer": "Brooklyn"
+    },
+    "9": {
+      "source": "wikipedia/Domenic_Recchia/content.txt",
+      "fact": "Domenic Michael Recchia Jr. was born on July 25, 1959.",
+      "subquestion": "In what year was Domenic Recchia (the candidate representing <node_8 answer>) born?",
+      "answer": "1959"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=5, data.gov intersection - nodes 1-5 all independent):",
+    "  Node 1: 2001 expenditures $103K-$251K -> 105 candidates (answer abbreviated: Recchia, Comrie, +103 others)",
+    "  Node 2: 2003 expenditures $103K-$251K -> 47 candidates (answer abbreviated: Recchia, Comrie, +45 others)",
+    "  Node 3: 2005 expenditures $103K-$251K -> 69 candidates (answer abbreviated: Recchia, Comrie, +67 others)",
+    "  Node 4: 2009 expenditures $103K-$251K -> 99 candidates (answer abbreviated: Recchia, Comrie, +97 others)",
+    "  Node 5: 2013 expenditures $103K-$251K -> 93 candidates (answer abbreviated: Recchia, Comrie, +91 others)",
+    "  Intersection(1,2,3,4,5) -> {Leroy Comrie, Domenic Recchia} (only candidates in $103K-$251K range ALL 5 years)",
+    "",
+    "HOP 2 (d=2, Wikipedia - nodes 6-7 BOTH depend on Hop 1 intersection):",
+    "  Node 6: Leroy Comrie Wikipedia -> represents NY State Senate District 14 within the borough of Queens",
+    "  Node 7: Domenic Recchia Wikipedia -> represented Brooklyn (CC District 47)",
+    "  Result: {Queens, Brooklyn} - the boroughs of the two qualifying candidates",
+    "",
+    "HOP 3 (d=1, data.gov comparative - node 8 compares both boroughs from same dataset):",
+    "  Node 8: NYCHA SYEP 2019 enrollment -> Brooklyn (3,889) vs Queens (1,019)",
+    "  Comparative: 3,889 > 1,019 -> Brooklyn has more -> Domenic Recchia",
+    "",
+    "HOP 4 (d=1, Wikipedia - node 9 depends on Hop 3 result):",
+    "  Node 9: Domenic Recchia Wikipedia -> born July 25, 1959",
+    "",
+    "Final answer: 1959"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "2001-campaign-expenditures",
+    "2003-campaign-expenditures",
+    "2005-campaign-expenditures",
+    "2009-campaign-expenditures",
+    "2013-campaign-expenditures",
+    "Domenic_Recchia",
+    "Leroy_Comrie",
+    "summer-youth-employment-program-syep-for-nycha-residents-by-borough-local-law-163"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "reasoning": "Node 1: 2001 expenditures $103K-$251K -> 105 candidates (answer abbreviated: Recchia, Comrie, +103 others) Node 2: 2003 expenditures $103K-$251K -> 47 candidates (answer abbreviated: Recchia, Comrie, +45 others) Node 3: 2005 expenditures $103K-$251K -> 69 candidates (answer abbreviated: Recchia, Comrie, +67 others) Node 4: 2009 expenditures $103K-$251K -> 99 candidates (answer abbreviated: Recchia, Comrie, +97 others) Node 5: 2013 expenditures $103K-$251K -> 93 candidates (answer abbreviated: Recchia, Comrie, +91 others) Intersection(1,2,3,4,5) -> {Leroy Comrie, Domenic Recchia} (only candidates in $103K-$251K range ALL 5 years)",
+      "answer": "{Leroy Comrie, Domenic Recchia} (only candidates in $103K-$251K range ALL 5 years)"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        6,
+        7
+      ],
+      "reasoning": "Node 6: Leroy Comrie Wikipedia -> represents NY State Senate District 14 within the borough of Queens Node 7: Domenic Recchia Wikipedia -> represented Brooklyn (CC District 47) Result: {Queens, Brooklyn} - the boroughs of the two qualifying candidates",
+      "answer": "{Queens, Brooklyn} - the boroughs of the two qualifying candidates"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        8
+      ],
+      "reasoning": "Node 8: NYCHA SYEP 2019 enrollment -> Brooklyn (3,889) vs Queens (1,019) Comparative: 3,889 > 1,019 -> Brooklyn has more -> Domenic Recchia",
+      "answer": "Brooklyn has more -> Domenic Recchia"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Domenic Recchia Wikipedia -> born July 25, 1959",
+      "answer": "1959"
+    }
+  ]
+}

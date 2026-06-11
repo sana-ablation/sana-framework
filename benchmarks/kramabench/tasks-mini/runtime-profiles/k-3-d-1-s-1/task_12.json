@@ -1,0 +1,48 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-easy-9"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-easy-9/files/Fire_Weather_Data_2002-2014_2016.csv",
+    "datagov/kramabench-wildfire-easy-9/files/Fire_Weather_Data_2002-2014_2016.csv",
+    "datagov/kramabench-wildfire-easy-9/files/Fire_Weather_Data_2002-2014_2016.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the fire weather table and identify the fatalities field and the average-relative-humidity field.",
+    "2. Compute mean fatalities per record for the subset with average relative humidity below 30 percent.",
+    "3. Compute the overall mean fatalities per record, subtract it from the low-humidity mean, and round the signed difference to four decimals."
+  ],
+  "original_final_question": "How many more or less fatalities occurred due to wildfires on days with humidity less than 30% compared to the average? Positive numbers indicate more, and negative numbers will indicate less. Round to four decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 reads the fire weather table.",
+    "Node 2 filters to low-humidity records and computes their mean fatalities.",
+    "Node 3 depends on node 2 and subtracts the overall mean fatalities, rounded to four decimals.",
+    "Final answer: -0.0053"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-9",
+      "source": "datagov/kramabench-wildfire-easy-9/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "intent": "How many wildfire records are in the fire weather table?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\nprint(str(len(df)))\n",
+      "answer": "6658"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-easy-9",
+      "source": "datagov/kramabench-wildfire-easy-9/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "intent": "What is the mean fatalities value for records with average relative humidity below 30%?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\nlow = df[df['avrh_mean'] < 30]['fatalities_last'].mean()\nprint('{:.12f}'.format(low))\n",
+      "answer": "0.012884043608"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-wildfire-easy-9",
+      "source": "datagov/kramabench-wildfire-easy-9/files/Fire_Weather_Data_2002-2014_2016.csv",
+      "intent": "Rounded to four decimals, how much does that mean differ from the overall mean fatalities value? ",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/Fire_Weather_Data_2002-2014_2016.csv'\ndf = pd.read_csv(path)\nlow = df[df['avrh_mean'] < 30]['fatalities_last'].mean()\navg = df['fatalities_last'].mean()\nprint('{:.4f}'.format(low - avg))\n",
+      "answer": "-0.0053"
+    }
+  ]
+}

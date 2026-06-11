@@ -1,0 +1,135 @@
+{
+  "question": "What is the average age of patients with serous tumor samples analyzed in the study? Write your answer as [ANSWER].",
+  "answer": 68.5,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-biomedical-easy-2/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "import os\nfrom zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\nsource = 'datagov/kramabench-biomedical-easy-2/files/1-s2.0-S0092867420301070-mmc1.xlsx'\nlocal_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nif not os.path.exists(local_path):\n    local_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nns = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'\n\ndef col_index(ref):\n    letters = ''.join(ch for ch in ref if ch.isalpha())\n    index = 0\n    for ch in letters:\n        index = index * 26 + ord(ch.upper()) - 64\n    return index - 1\n\ndef node_text(node):\n    return ''.join(node.itertext())\n\ndef load_rows(path):\n    with ZipFile(path) as zf:\n        shared_root = ET.fromstring(zf.read('xl/sharedStrings.xml'))\n        shared = [node_text(si) for si in shared_root.findall(ns + 'si')]\n        sheet = ET.fromstring(zf.read('xl/worksheets/sheet1.xml'))\n    rows = []\n    for row in sheet.findall('.//' + ns + 'row'):\n        values = {}\n        for cell in row.findall(ns + 'c'):\n            value_node = cell.find(ns + 'v')\n            if value_node is None:\n                continue\n            value = value_node.text\n            if cell.attrib.get('t') == 's':\n                value = shared[int(value)]\n            values[col_index(cell.attrib['r'])] = value\n        if values:\n            rows.append([values.get(i, '') for i in range(max(values) + 1)])\n    headers = rows[0]\n    return [{header: row[i] if i < len(row) else '' for i, header in enumerate(headers)} for row in rows[1:]]\n\nrecords = load_rows(local_path)\nanswer = [row['idx'] for row in records if row['Case_excluded'] == 'No' and row['Histologic_type'] == 'Serous']\nprint(answer)\n",
+      "subquestion": "Which included cases have Serous histologic type in the clinical metadata?",
+      "answer": [
+        "S006",
+        "S009",
+        "S016",
+        "S041",
+        "S042",
+        "S058",
+        "S071",
+        "S072",
+        "S096",
+        "S097",
+        "S102",
+        "S103"
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-biomedical-easy-2/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "import os\nfrom zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\nsource = 'datagov/kramabench-biomedical-easy-2/files/1-s2.0-S0092867420301070-mmc1.xlsx'\nlocal_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nif not os.path.exists(local_path):\n    local_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nnode_1_answer = ['S006', 'S009', 'S016', 'S041', 'S042', 'S058', 'S071', 'S072', 'S096', 'S097', 'S102', 'S103']\nns = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'\n\ndef col_index(ref):\n    letters = ''.join(ch for ch in ref if ch.isalpha())\n    index = 0\n    for ch in letters:\n        index = index * 26 + ord(ch.upper()) - 64\n    return index - 1\n\ndef node_text(node):\n    return ''.join(node.itertext())\n\ndef load_rows(path):\n    with ZipFile(path) as zf:\n        shared_root = ET.fromstring(zf.read('xl/sharedStrings.xml'))\n        shared = [node_text(si) for si in shared_root.findall(ns + 'si')]\n        sheet = ET.fromstring(zf.read('xl/worksheets/sheet1.xml'))\n    rows = []\n    for row in sheet.findall('.//' + ns + 'row'):\n        values = {}\n        for cell in row.findall(ns + 'c'):\n            value_node = cell.find(ns + 'v')\n            if value_node is None:\n                continue\n            value = value_node.text\n            if cell.attrib.get('t') == 's':\n                value = shared[int(value)]\n            values[col_index(cell.attrib['r'])] = value\n        if values:\n            rows.append([values.get(i, '') for i in range(max(values) + 1)])\n    headers = rows[0]\n    return [{header: row[i] if i < len(row) else '' for i, header in enumerate(headers)} for row in rows[1:]]\n\nrecords = load_rows(local_path)\ncase_ids = set(node_1_answer)\nanswer = [float(row['Age']) for row in records if row['idx'] in case_ids and row['Age'] not in ('', 'NA')]\nprint(answer)\n",
+      "subquestion": "What are the ages for the Serous included cases identified in <node_1 answer>?",
+      "answer": [
+        63.0,
+        83.0,
+        90.0,
+        59.0,
+        62.0,
+        65.0,
+        45.0,
+        60.0,
+        63.0,
+        77.0,
+        85.0,
+        70.0
+      ]
+    },
+    "3": {
+      "source": "datagov/kramabench-biomedical-easy-2/files/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "fact": "import os\nfrom zipfile import ZipFile\nimport xml.etree.ElementTree as ET\n\nsource = 'datagov/kramabench-biomedical-easy-2/files/1-s2.0-S0092867420301070-mmc1.xlsx'\nlocal_path = 'other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx'\nif not os.path.exists(local_path):\n    local_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nnode_2_answer = [63.0, 83.0, 90.0, 59.0, 62.0, 65.0, 45.0, 60.0, 63.0, 77.0, 85.0, 70.0]\nns = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'\n\ndef col_index(ref):\n    letters = ''.join(ch for ch in ref if ch.isalpha())\n    index = 0\n    for ch in letters:\n        index = index * 26 + ord(ch.upper()) - 64\n    return index - 1\n\ndef node_text(node):\n    return ''.join(node.itertext())\n\ndef load_rows(path):\n    with ZipFile(path) as zf:\n        shared_root = ET.fromstring(zf.read('xl/sharedStrings.xml'))\n        shared = [node_text(si) for si in shared_root.findall(ns + 'si')]\n        sheet = ET.fromstring(zf.read('xl/worksheets/sheet1.xml'))\n    rows = []\n    for row in sheet.findall('.//' + ns + 'row'):\n        values = {}\n        for cell in row.findall(ns + 'c'):\n            value_node = cell.find(ns + 'v')\n            if value_node is None:\n                continue\n            value = value_node.text\n            if cell.attrib.get('t') == 's':\n                value = shared[int(value)]\n            values[col_index(cell.attrib['r'])] = value\n        if values:\n            rows.append([values.get(i, '') for i in range(max(values) + 1)])\n    headers = rows[0]\n    return [{header: row[i] if i < len(row) else '' for i, header in enumerate(headers)} for row in rows[1:]]\n\nrecords = load_rows(local_path)\nages = [float(row['Age']) for row in records if row['Case_excluded'] == 'No' and row['Histologic_type'] == 'Serous' and row['Age'] not in ('', 'NA')]\nif ages != node_2_answer:\n    raise ValueError('Serous age list does not match the prior node answer')\nanswer = sum(ages) / len(ages)\nprint(answer)\n",
+      "subquestion": "What is the arithmetic mean of the Serous included-case ages in <node_2 answer>?",
+      "answer": 68.5
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: The clinical metadata identifies 12 included cases with Serous histologic type.",
+    "Node 2 depends on node 1: The Age values for those Serous included cases are 63.0, 83.0, 90.0, 59.0, 62.0, 65.0, 45.0, 60.0, 63.0, 77.0, 85.0, and 70.0.",
+    "Node 3 depends on node 2: The arithmetic mean of those ages is 68.5.",
+    "Final answer: 68.5"
+  ],
+  "datasets_used": [
+    "kramabench-biomedical-easy-2"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: The clinical metadata identifies 12 included cases with Serous histologic type.",
+      "answer": [
+        "S006",
+        "S009",
+        "S016",
+        "S041",
+        "S042",
+        "S058",
+        "S071",
+        "S072",
+        "S096",
+        "S097",
+        "S102",
+        "S103"
+      ]
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: The Age values for those Serous included cases are 63.0, 83.0, 90.0, 59.0, 62.0, 65.0, 45.0, 60.0, 63.0, 77.0, 85.0, and 70.0.",
+      "answer": [
+        63.0,
+        83.0,
+        90.0,
+        59.0,
+        62.0,
+        65.0,
+        45.0,
+        60.0,
+        63.0,
+        77.0,
+        85.0,
+        70.0
+      ]
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: The arithmetic mean of those ages is 68.5.",
+      "answer": 68.5
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "biomedical-easy-2",
+    "domain": "biomedical",
+    "difficulty": "easy",
+    "promoted_from": "./tasks-mini-kramabench/candidates/biomedical-easy-2.json",
+    "candidate_list": "./tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/biomedical/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": null,
+    "s3_mirror_prefix": "datagov/kramabench-biomedical-easy-2/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "2": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx",
+      "3": "other-benchmarks/Kramabench/data/biomedical/input/1-s2.0-S0092867420301070-mmc1.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

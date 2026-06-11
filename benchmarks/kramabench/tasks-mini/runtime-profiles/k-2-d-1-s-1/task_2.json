@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-easy-3"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-easy-3/files/roman_cities.csv",
+    "datagov/kramabench-archeology-easy-3/files/roman_cities.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Filter the Roman cities table to rows whose country is Greece.",
+    "2. Convert Greek city rank values to numbers, averaging alternatives written with “or”, then average them."
+  ],
+  "original_final_question": "What is the average rank of cities in Greece? Assume that if there is an 'or', the average of the two numbers. Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Filter the Roman cities table to rows whose country is Greece.",
+    "Node 2 depends on node 1: Convert Greek city rank values to numbers, averaging alternatives written with “or”, then average them.",
+    "Final answer: 3.1333"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-3",
+      "source": "datagov/kramabench-archeology-easy-3/files/roman_cities.csv",
+      "intent": "How many Roman city rows have Greece as the country?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nresult = str(int((df['Country'] == 'Greece').sum()))\nprint(result)\n",
+      "answer": "135"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-3",
+      "source": "datagov/kramabench-archeology-easy-3/files/roman_cities.csv",
+      "intent": "Using the average of alternatives in Barrington rank values, what is the mean rank for Greek cities rounded to four decimals?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\ngreece = df[df['Country'] == 'Greece']\ndef parse_rank(value):\n    text = str(value)\n    if 'or' in text:\n        left, right = text.split('or')\n        return (int(left.strip()) + int(right.strip())) / 2.0\n    return int(text.strip())\nresult = f\"{greece['Barrington Atlas Rank'].apply(parse_rank).mean():.4f}\"\nprint(result)\n",
+      "answer": "3.1333"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-easy-3",
+      "source": "datagov/kramabench-archeology-easy-3/files/roman_cities.csv",
+      "intent": "How many Roman city rows have Greece as the country?",
+      "answer": "135",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer FROM t WHERE Country = 'Greece'"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-easy-3",
+      "source": "datagov/kramabench-archeology-easy-3/files/roman_cities.csv",
+      "intent": "Using the average of alternatives in Barrington rank values, what is the mean rank for Greek cities rounded to four decimals?",
+      "answer": "3.1333",
+      "sql": "SELECT printf('%.4f', AVG(CASE WHEN strpos(CAST(\"Barrington Atlas Rank\" AS VARCHAR), 'or') > 0 THEN (CAST(trim(split_part(CAST(\"Barrington Atlas Rank\" AS VARCHAR), 'or', 1)) AS DOUBLE) + CAST(trim(split_part(CAST(\"Barrington Atlas Rank\" AS VARCHAR), 'or', 2)) AS DOUBLE))/2.0 ELSE CAST(trim(CAST(\"Barrington Atlas Rank\" AS VARCHAR)) AS DOUBLE) END)) AS answer FROM t WHERE Country = 'Greece'"
+    }
+  ]
+}

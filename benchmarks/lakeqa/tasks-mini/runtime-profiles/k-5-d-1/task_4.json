@@ -1,0 +1,96 @@
+{
+  "dataset_sequence": [
+    "Queens",
+    "nypd-complaint-data-historic",
+    "nypd-shooting-incident-data-historic",
+    "nypd-use-of-force-incidents"
+  ],
+  "source_sequence": [
+    "wikipedia/Queens/content.txt",
+    "datagov/nypd-complaint-data-historic/files/rows.txt",
+    "datagov/nypd-shooting-incident-data-historic/files/rows.txt",
+    "datagov/nypd-complaint-data-historic/files/rows.txt",
+    "datagov/nypd-use-of-force-incidents/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Establish the Queens borough context for the New York City crime datasets.",
+    "2. In 2022, count Queens complaints by precinct and identify the precinct with the highest count.",
+    "3. For the precinct from step 2, count shootings by location descriptor, identify the most common descriptor, then count 2022 Queens complaints by precinct for that descriptor and keep the precinct with the highest count.",
+    "4. Determine how many use-of-force incidents occurred in the precinct from step 3 in 2024 and return the number."
+  ],
+  "original_final_question": "I'm analyzing crime patterns in Queens. First, identify the precinct that received the most complaints in 2022. Within that precinct, what was the most common location descriptor for shootings? Then, find which precinct in Queens had the highest number of complaints for that specific location descriptor in 2022, and tell me how many use-of-force incidents occurred in that latter precinct in 2024. Only report the number of incidents. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Queens is a borough of New York City.",
+    "Node 2 depends on node 1: In 2022 complaints for Queens, the top precinct is 114.",
+    "Node 3 depends on node 2: In 2022 shootings within precinct 114, the most common location descriptor is OUTSIDE.",
+    "Node 4 depends on node 3: In 2022 complaints in Queens with location OUTSIDE, the top precinct is 103.",
+    "Node 5 depends on node 4: In 2024 use-of-force incidents for precinct 103, the count is 258.",
+    "Final answer: 258"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "nypd-complaint-data-historic",
+      "source": "datagov/nypd-complaint-data-historic/files/rows.txt",
+      "intent": "In 2022 complaint entries for <node_1 answer>, which precinct has the most complaints?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/nypd-complaint-data-historic/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_1_answer = 'Queens'\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['CMPLNT_FR_DT', 'BORO_NM', 'ADDR_PCT_CD'], dtype=str, chunksize=500000, low_memory=False):\n    years = pd.to_datetime(chunk['CMPLNT_FR_DT'], errors='coerce').dt.year.eq(2022)\n    boros = chunk['BORO_NM'].astype(str).str.strip().str.upper().eq(node_1_answer.upper())\n    filtered = chunk[years & boros]\n    precincts = pd.to_numeric(filtered['ADDR_PCT_CD'], errors='coerce').dropna().astype(int)\n    vc = precincts.value_counts()\n    for precinct, count in vc.items():\n        counts[int(precinct)] = counts.get(int(precinct), 0) + int(count)\n\nanswer = str(int(max(counts, key=counts.get)))\n",
+      "answer": "114"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "nypd-shooting-incident-data-historic",
+      "source": "datagov/nypd-shooting-incident-data-historic/files/rows.txt",
+      "intent": "In 2022 shooting incident entries within precinct <node_2 answer>, which location descriptor is most common?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/nypd-shooting-incident-data-historic/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_2_answer = '114'\ntarget_precinct = pd.to_numeric(node_2_answer, errors='coerce')\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['OCCUR_DATE', 'PRECINCT', 'LOC_OF_OCCUR_DESC'], dtype=str, chunksize=500000, low_memory=False):\n    years = pd.to_datetime(chunk['OCCUR_DATE'], errors='coerce').dt.year.eq(2022)\n    precincts = pd.to_numeric(chunk['PRECINCT'], errors='coerce').eq(target_precinct)\n    filtered = chunk[years & precincts]\n    vc = filtered['LOC_OF_OCCUR_DESC'].astype(str).str.strip().replace({'': pd.NA, 'nan': pd.NA}).dropna().value_counts()\n    for loc, count in vc.items():\n        counts[loc] = counts.get(loc, 0) + int(count)\n\nanswer = str(max(counts, key=counts.get))\n",
+      "answer": "OUTSIDE"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "nypd-complaint-data-historic",
+      "source": "datagov/nypd-complaint-data-historic/files/rows.txt",
+      "intent": "In 2022 complaint entries in Queens where the location descriptor is <node_3 answer>, which precinct has the most complaints?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/nypd-complaint-data-historic/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_3_answer = 'OUTSIDE'\ncounts = {}\nfor chunk in pd.read_csv(csv_path, usecols=['CMPLNT_FR_DT', 'BORO_NM', 'LOC_OF_OCCUR_DESC', 'ADDR_PCT_CD'], dtype=str, chunksize=500000, low_memory=False):\n    years = pd.to_datetime(chunk['CMPLNT_FR_DT'], errors='coerce').dt.year.eq(2022)\n    boros = chunk['BORO_NM'].astype(str).str.strip().str.upper().eq('QUEENS')\n    locs = chunk['LOC_OF_OCCUR_DESC'].astype(str).str.strip().str.upper().eq(node_3_answer.upper())\n    filtered = chunk[years & boros & locs]\n    precincts = pd.to_numeric(filtered['ADDR_PCT_CD'], errors='coerce').dropna().astype(int)\n    vc = precincts.value_counts()\n    for precinct, count in vc.items():\n        counts[int(precinct)] = counts.get(int(precinct), 0) + int(count)\n\nanswer = str(int(max(counts, key=counts.get)))\n",
+      "answer": "103"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "nypd-use-of-force-incidents",
+      "source": "datagov/nypd-use-of-force-incidents/files/rows.txt",
+      "intent": "In 2024 use-of-force incidents, how many incidents occurred in precinct <node_4 answer>?",
+      "code": "import os\nimport io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/nypd-use-of-force-incidents/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nlocal_path = source if os.path.exists(source) else '/tmp/k123_data_cache/' + source\n\nif os.path.exists(local_path):\n    csv_path = local_path\nelse:\n    s3 = boto3.client('s3', config=Config(signature_version=UNSIGNED))\n    obj = s3.get_object(Bucket=bucket, Key=source)\n    csv_path = io.BytesIO(obj['Body'].read())\n\nnode_4_answer = '103'\ntarget_precinct = pd.to_numeric(node_4_answer, errors='coerce')\ncount = 0\nfor chunk in pd.read_csv(csv_path, usecols=['Occurrence Date', 'Incident Pct'], dtype=str, chunksize=500000, low_memory=False):\n    years = pd.to_datetime(chunk['Occurrence Date'], errors='coerce').dt.year.eq(2024)\n    precincts = pd.to_numeric(chunk['Incident Pct'], errors='coerce').eq(target_precinct)\n    count += int((years & precincts).sum())\n\nanswer = str(count)\n",
+      "answer": "258"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "nypd-complaint-data-historic",
+      "source": "datagov/nypd-complaint-data-historic/files/rows.txt",
+      "intent": "In 2022 complaint entries for <node_1 answer>, which precinct has the most complaints?",
+      "answer": "Cannot execute SQL: file is too big (2.82 GB >= 500 MB limit)."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "nypd-shooting-incident-data-historic",
+      "source": "datagov/nypd-shooting-incident-data-historic/files/rows.txt",
+      "intent": "In 2022 shooting incident entries within precinct <node_2 answer>, which location descriptor is most common?",
+      "answer": "OUTSIDE",
+      "sql": "SELECT trim(CAST(\"LOC_OF_OCCUR_DESC\" AS VARCHAR)) AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"OCCUR_DATE\" AS DATE)) = 2022\n  AND TRY_CAST(\"PRECINCT\" AS DOUBLE) = 114\n  AND trim(CAST(\"LOC_OF_OCCUR_DESC\" AS VARCHAR)) <> ''\nGROUP BY answer\nORDER BY COUNT(*) DESC, answer ASC\nLIMIT 1"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "nypd-complaint-data-historic",
+      "source": "datagov/nypd-complaint-data-historic/files/rows.txt",
+      "intent": "In 2022 complaint entries in Queens where the location descriptor is <node_3 answer>, which precinct has the most complaints?",
+      "answer": "Cannot execute SQL: file is too big (2.82 GB >= 500 MB limit)."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "nypd-use-of-force-incidents",
+      "source": "datagov/nypd-use-of-force-incidents/files/rows.txt",
+      "intent": "In 2024 use-of-force incidents, how many incidents occurred in precinct <node_4 answer>?",
+      "answer": "258",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"Occurrence Date\" AS DATE)) = 2024\n  AND TRY_CAST(\"Incident Pct\" AS DOUBLE) = 103 "
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-25"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+    "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Extract the military branch table and clean each Median Fraud Loss value.",
+    "2. Select the branch with the largest cleaned median fraud loss."
+  ],
+  "original_final_question": "Which branch of the U.S. Military had the largest Median Fraud Loss reported by its service members in 2024? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Extract the military branch table and clean each Median Fraud Loss value.",
+    "Node 2 depends on node 1: Select the branch with the largest cleaned median fraud loss.",
+    "Final answer: U.S. Space Force"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-25",
+      "source": "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "intent": "What median fraud loss is reported for each military branch?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\nstart = next(i for i, row in enumerate(rows) if row and row[0] == 'Military Branch')\nbranch_rows = []\nfor row in rows[start + 1:]:\n    if not row or not row[0].strip():\n        break\n    median = int(row[5].replace('$', '').replace(',', '').strip())\n    branch_rows.append((row[0].strip(), median))\nmax_branch, max_median = max(branch_rows, key=lambda item: item[1])\nresult = [f'{branch}|{median}' for branch, median in branch_rows]\nprint(result)\n",
+      "answer": [
+        "U.S. Air Force|584",
+        "U.S. Army|731",
+        "U.S. Coast Guard|500",
+        "U.S. Marines|727",
+        "U.S. Navy|569",
+        "U.S. Space Force|1300"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-25",
+      "source": "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "intent": "Which military branch has the highest median fraud loss?",
+      "code": "import csv\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv'\nwith open(path, newline='', encoding='utf-8-sig') as f:\n    rows = list(csv.reader(f))\nstart = next(i for i, row in enumerate(rows) if row and row[0] == 'Military Branch')\nbranch_rows = []\nfor row in rows[start + 1:]:\n    if not row or not row[0].strip():\n        break\n    median = int(row[5].replace('$', '').replace(',', '').strip())\n    branch_rows.append((row[0].strip(), median))\nmax_branch, max_median = max(branch_rows, key=lambda item: item[1])\nprint(max_branch)\n",
+      "answer": "U.S. Space Force"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-25",
+      "source": "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "intent": "What median fraud loss is reported for each military branch?",
+      "answer": [
+        "U.S. Air Force|584",
+        "U.S. Army|731",
+        "U.S. Coast Guard|500",
+        "U.S. Marines|727",
+        "U.S. Navy|569",
+        "U.S. Space Force|1300"
+      ],
+      "sql": "SELECT \"Fraud, Identity Theft, and Other Reports by Military Consumers\" || '|' || CAST(CAST(REPLACE(REPLACE(TRIM(column5), '$', ''), ',', '') AS BIGINT) AS VARCHAR) AS answer FROM t WHERE \"Fraud, Identity Theft, and Other Reports by Military Consumers\" LIKE 'U.S.%' ORDER BY \"Fraud, Identity Theft, and Other Reports by Military Consumers\""
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-25",
+      "source": "datagov/kramabench-legal-easy-25/files/csn-data-book-2024-csv/CSVs/2024_CSN_Fraud, Identity Theft, and Other Reports by Military Consumers.csv",
+      "intent": "Which military branch has the highest median fraud loss?",
+      "answer": "U.S. Space Force",
+      "sql": "SELECT \"Fraud, Identity Theft, and Other Reports by Military Consumers\" AS answer FROM t WHERE \"Fraud, Identity Theft, and Other Reports by Military Consumers\" LIKE 'U.S.%' ORDER BY CAST(REPLACE(REPLACE(TRIM(column5), '$', ''), ',', '') AS BIGINT) DESC LIMIT 1"
+    }
+  ]
+}

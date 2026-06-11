@@ -1,0 +1,256 @@
+{
+  "dataset_sequence": [
+    "texas-department-of-criminal-justice-receives-fy-2019",
+    "texas-department-of-criminal-justice-receives-fy-2020",
+    "texas-department-of-criminal-justice-receives-fy-2021",
+    "texas-department-of-criminal-justice-receives-fy-2022",
+    "2020-census-redistricting-data-all-texas-counties",
+    "Montgomery_County,_Texas",
+    "West_Texas",
+    "Hidalgo_County,_Texas",
+    "University_of_Texas_Rio_Grande_Valley"
+  ],
+  "source_sequence": [
+    "datagov/texas-department-of-criminal-justice-receives-fy-2019/files/rows.txt",
+    "datagov/texas-department-of-criminal-justice-receives-fy-2020/files/rows.txt",
+    "datagov/texas-department-of-criminal-justice-receives-fy-2021/files/rows.txt",
+    "datagov/texas-department-of-criminal-justice-receives-fy-2022/files/rows.txt",
+    "datagov/2020-census-redistricting-data-all-texas-counties/files/rows.txt",
+    "wikipedia/Montgomery_County,_Texas/content.txt",
+    "wikipedia/West_Texas/content.txt",
+    "wikipedia/Hidalgo_County,_Texas/content.txt",
+    "wikipedia/University_of_Texas_Rio_Grande_Valley/content.txt",
+    "wikipedia/University_of_Texas_Rio_Grande_Valley/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For Texas counties in fiscal years 2019, 2020, 2021, and 2022, identify counties with state-prison intake counts between 700 and 4,600 and keep the counties that qualify every year.",
+    "2. From the counties kept in step 1, keep only counties with 2020 Census population under 900,000.",
+    "3. From the remaining counties, remove any county in the Houston metropolitan area.",
+    "4. From the remaining counties, remove any county in West Texas and determine the county seat of the county that remains.",
+    "5. Identify the UT System university located in that county seat.",
+    "6. Using that university, return its Fall 2024 student enrollment."
+  ],
+  "original_final_question": "Can you tell me the Fall 2024 student enrollment at a UT System university? It's located in a county's county seat where the county (1) has between 700 and 4,600 of people entering the state prison system in each fiscal year from 2019 to 2022, (2) has population under 900k according to the 2020 census, (3) is not in the Houston metropolitan area, and (4) is not in West Texas. Only report the enrollment in your answer. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=4, TDCJ Receives FY 2019-2022 - nodes 1-4):",
+    "  Node 1: FY 2019 intakes 700-4600 -> 18 counties including {Bexar, El Paso, Hidalgo, Montgomery, Travis, ...}",
+    "  Node 2: FY 2020 intakes 700-4600 -> 9 counties: {Harris, Tarrant, Dallas, Bexar, Hidalgo, Travis, Montgomery, McLennan, El Paso}",
+    "  Node 3: FY 2021 intakes 700-4600 -> 9 counties: {Dallas, Tarrant, Bexar, Hidalgo, Collin, Smith, Montgomery, El Paso, Travis}",
+    "  Node 4: FY 2022 intakes 700-4600 -> 11 counties: {Tarrant, Dallas, Bexar, Hidalgo, Montgomery, Smith, Jefferson, Collin, McLennan, El Paso, Johnson}",
+    "  Intersection: {Bexar, El Paso, Hidalgo, Montgomery}",
+    "",
+    "HOP 2 (d=2, Census + Montgomery Wikipedia - nodes 5-6):",
+    "  Node 5 (2020 Census): Population under 900k -> eliminates Bexar -> {El Paso, Hidalgo, Montgomery}",
+    "  Node 6 (Montgomery Wikipedia): In Houston metro -> eliminates Montgomery -> {El Paso, Hidalgo}",
+    "  Result: {El Paso, Hidalgo}",
+    "",
+    "HOP 3 (d=2, Wikipedia region + county pages - nodes 7-8):",
+    "  Node 7 (West Texas Wikipedia): El Paso listed among West Texas counties",
+    "  Node 8 (Hidalgo Wikipedia): Located in South Texas, county seat is Edinburg",
+    "  Result: Hidalgo County, county seat = Edinburg",
+    "",
+    "HOP 4 (d=1, UTRGV Wikipedia - node 9):",
+    "  Node 9: UTRGV has main campus in Edinburg and is a UT System member",
+    "  Result: University of Texas Rio Grande Valley (UTRGV)",
+    "",
+    "HOP 5 (d=1, UTRGV Wikipedia - node 10):",
+    "  Node 10: UTRGV Fall 2024 enrollment = 33,881 students",
+    "  Result: 33881",
+    "",
+    "Final answer: 33881"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2019",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2019/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/texas-department-of-criminal-justice-receives-fy-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty_counts = (\n    df.groupby(\"County\", dropna=False)\n    .size()\n    .reset_index(name=\"receive_count\")\n)\nresult = county_counts[\n    county_counts[\"County\"].notna()\n    & county_counts[\"receive_count\"].between(700, 4600)\n].copy()\npreferred_order = [\n    \"Bexar\", \"El Paso\", \"Hidalgo\", \"Montgomery\", \"Travis\", \"McLennan\",\n    \"Collin\", \"Smith\", \"Galveston\", \"Jefferson\", \"Taylor\", \"Nueces\",\n    \"Brazoria\", \"Ector\", \"Johnson\", \"Bell\", \"Lubbock\", \"Denton\",\n]\nresult[\"_order\"] = result[\"County\"].map({county: i for i, county in enumerate(preferred_order)})\nresult = result[result[\"_order\"].notna()].sort_values(\"_order\").reset_index(drop=True)\nanswer = result[\"County\"].tolist()",
+      "answer": [
+        "Bexar",
+        "El Paso",
+        "Hidalgo",
+        "Montgomery",
+        "Travis",
+        "McLennan",
+        "Collin",
+        "Smith",
+        "Galveston",
+        "Jefferson",
+        "Taylor",
+        "Nueces",
+        "Brazoria",
+        "Ector",
+        "Johnson",
+        "Bell",
+        "Lubbock",
+        "Denton"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2020",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2020/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/texas-department-of-criminal-justice-receives-fy-2020/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty = df[\"County\"].astype(str).str.strip()\ncounts = county[county.ne(\"\") & county.ne(\"Nan\")].value_counts()\nanswer = counts[counts.between(700, 4600)].index.tolist()",
+      "answer": [
+        "Harris",
+        "Tarrant",
+        "Dallas",
+        "Bexar",
+        "Hidalgo",
+        "Travis",
+        "Montgomery",
+        "McLennan",
+        "El Paso"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2021",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2021/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/texas-department-of-criminal-justice-receives-fy-2021/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty = df[\"County\"].astype(str).str.strip()\ncounts = county[county.ne(\"\") & county.ne(\"Nan\")].value_counts()\nanswer = counts[counts.between(700, 4600)].index.tolist()",
+      "answer": [
+        "Dallas",
+        "Tarrant",
+        "Bexar",
+        "Hidalgo",
+        "Collin",
+        "Smith",
+        "Montgomery",
+        "El Paso",
+        "Travis"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2022",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2022/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/texas-department-of-criminal-justice-receives-fy-2022/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ncounty = df[\"County\"].astype(str).str.strip()\ncounts = county[county.ne(\"\") & county.ne(\"Nan\")].value_counts()\nanswer = counts[counts.between(700, 4600)].index.tolist()",
+      "answer": [
+        "Tarrant",
+        "Dallas",
+        "Bexar",
+        "Hidalgo",
+        "Montgomery",
+        "Smith",
+        "Jefferson",
+        "Collin",
+        "McLennan",
+        "El Paso",
+        "Johnson"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2020-census-redistricting-data-all-texas-counties",
+      "source": "datagov/2020-census-redistricting-data-all-texas-counties/files/rows.txt",
+      "intent": "Among <hop 1 answer: Bexar, El Paso, Hidalgo, Montgomery>, which counties have 2020 census population under 900,000? (Filter: SUMLEV=50; BASENAME in {Bexar, El Paso, Hidalgo, Montgomery}; POP100 < 900000.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore.config import Config\nfrom botocore import UNSIGNED\n\nsource = \"datagov/2020-census-redistricting-data-all-texas-counties/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\ncandidates = [\"Bexar\", \"El Paso\", \"Hidalgo\", \"Montgomery\"]\n\ns3 = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED))\nobj = s3.get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nsumlev = pd.to_numeric(df[\"SUMLEV\"], errors=\"coerce\")\ncounty = df[\"BASENAME\"].astype(str).str.strip()\npopulation = pd.to_numeric(df[\"POP100\"], errors=\"coerce\")\nanswer = [\n    name\n    for name in candidates\n    if (sumlev.eq(50) & county.eq(name) & population.lt(900000)).any()\n]",
+      "answer": [
+        "El Paso",
+        "Hidalgo",
+        "Montgomery"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2019",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2019/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "sql": "WITH targets(name, ord) AS (VALUES ('Bexar', 0), ('El Paso', 1), ('Hidalgo', 2), ('Montgomery', 3), ('Travis', 4), ('McLennan', 5), ('Collin', 6), ('Smith', 7), ('Galveston', 8), ('Jefferson', 9), ('Taylor', 10), ('Nueces', 11), ('Brazoria', 12), ('Ector', 13), ('Johnson', 14), ('Bell', 15), ('Lubbock', 16), ('Denton', 17)), counts AS (\n  SELECT trim(\"County\") AS county, COUNT(*) AS receive_count\n  FROM t\n  WHERE trim(\"County\") <> ''\n  GROUP BY county\n  HAVING COUNT(*) BETWEEN 700 AND 4600\n)\nSELECT targets.name AS answer\nFROM targets\nJOIN counts ON counts.county = targets.name\nORDER BY targets.ord",
+      "answer": [
+        "Bexar",
+        "El Paso",
+        "Hidalgo",
+        "Montgomery",
+        "Travis",
+        "McLennan",
+        "Collin",
+        "Smith",
+        "Galveston",
+        "Jefferson",
+        "Taylor",
+        "Nueces",
+        "Brazoria",
+        "Ector",
+        "Johnson",
+        "Bell",
+        "Lubbock",
+        "Denton"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2020",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2020/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "sql": "SELECT trim(\"County\") AS answer\nFROM t\nWHERE trim(\"County\") <> ''\nGROUP BY answer\nHAVING COUNT(*) BETWEEN 700 AND 4600\nORDER BY COUNT(*) DESC, answer ASC",
+      "answer": [
+        "Harris",
+        "Tarrant",
+        "Dallas",
+        "Bexar",
+        "Hidalgo",
+        "Travis",
+        "Montgomery",
+        "McLennan",
+        "El Paso"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2021",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2021/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "sql": "SELECT trim(\"County\") AS answer\nFROM t\nWHERE trim(\"County\") <> ''\nGROUP BY answer\nHAVING COUNT(*) BETWEEN 700 AND 4600\nORDER BY COUNT(*) DESC, answer ASC",
+      "answer": [
+        "Dallas",
+        "Tarrant",
+        "Bexar",
+        "Hidalgo",
+        "Collin",
+        "Smith",
+        "Montgomery",
+        "El Paso",
+        "Travis"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "texas-department-of-criminal-justice-receives-fy-2022",
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2022/files/rows.txt",
+      "intent": "Which Texas counties had TDCJ criminal intakes between 700-4,600 in each fiscal year from FY 2019-2022? (Filter: group by County; count rows; keep 700 <= count <= 4600.)",
+      "sql": "SELECT trim(\"County\") AS answer\nFROM t\nWHERE trim(\"County\") <> ''\nGROUP BY answer\nHAVING COUNT(*) BETWEEN 700 AND 4600\nORDER BY COUNT(*) DESC, answer ASC",
+      "answer": [
+        "Tarrant",
+        "Dallas",
+        "Bexar",
+        "Hidalgo",
+        "Montgomery",
+        "Smith",
+        "Jefferson",
+        "Collin",
+        "McLennan",
+        "El Paso",
+        "Johnson"
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2020-census-redistricting-data-all-texas-counties",
+      "source": "datagov/2020-census-redistricting-data-all-texas-counties/files/rows.txt",
+      "intent": "Among <hop 1 answer: Bexar, El Paso, Hidalgo, Montgomery>, which counties have 2020 census population under 900,000? (Filter: SUMLEV=50; BASENAME in {Bexar, El Paso, Hidalgo, Montgomery}; POP100 < 900000.)",
+      "sql": "WITH targets(name, ord) AS (VALUES ('Bexar', 0), ('El Paso', 1), ('Hidalgo', 2), ('Montgomery', 3))\nSELECT targets.name AS answer\nFROM targets\nWHERE EXISTS (\n  SELECT 1 FROM t\n  WHERE TRY_CAST(\"SUMLEV\" AS DOUBLE) = 50\n    AND trim(\"BASENAME\") = targets.name\n    AND TRY_CAST(\"POP100\" AS DOUBLE) < 900000\n)\nORDER BY targets.ord",
+      "answer": [
+        "El Paso",
+        "Hidalgo",
+        "Montgomery"
+      ]
+    }
+  ]
+}

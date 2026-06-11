@@ -1,0 +1,140 @@
+{
+  "dataset_sequence": [
+    "2018-state-employee-pay",
+    "2019-state-employee-pay",
+    "2020-state-employee-pay",
+    "State_Auditor_of_Missouri",
+    "List_of_attorneys_general_of_Missouri",
+    "Edward_Bates",
+    "Missouri_Attorney_General",
+    "John_Ashcroft",
+    "chicago-population-counts"
+  ],
+  "source_sequence": [
+    "datagov/2018-state-employee-pay/files/rows.txt",
+    "datagov/2019-state-employee-pay/files/rows.txt",
+    "datagov/2020-state-employee-pay/files/rows.txt",
+    "wikipedia/State_Auditor_of_Missouri/content.txt",
+    "wikipedia/List_of_attorneys_general_of_Missouri/content.txt",
+    "wikipedia/Edward_Bates/content.txt",
+    "wikipedia/Missouri_Attorney_General/content.txt",
+    "wikipedia/John_Ashcroft/content.txt",
+    "datagov/chicago-population-counts/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify Missouri state agencies that ranked in the top five by average employee pay in 2018, 2019, and 2020.",
+    "2. For the remaining agencies, determine each agency's first officeholder and keep the agency whose first officeholder also served as U.S. Attorney General.",
+    "3. Within that agency, identify the person who also served as both a U.S. Senator and U.S. Attorney General.",
+    "4. Determine that person's birthplace.",
+    "5. Return the 2018 population of that birthplace."
+  ],
+  "original_final_question": "I am looking for a Missouri state agency that consistently ranked in the top 5 for average employee pay between 2018 and 2020. This agency's very first officeholder also served as U.S. Attorney General. Identify the person who served in that same agency, was a U.S. Senator, and was a U.S. Attorney General. What was the 2018 population of that person's birthplace? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Nodes 1-3 (d=3): Find Missouri state agencies in top 5 by average employee pay in ALL of 2018, 2019, and 2020",
+    "Node 1: 2018 top 5 by avg pay -> {OFFICE OF ATTORNEY GENERAL, OFFICE OF STATE AUDITOR, LEGISLATURE, OFFICE OF ADMINISTRATION, ECONOMIC DEVELOPMENT}",
+    "Node 2: Filter to those in 2019 top 5 -> {OFFICE OF ATTORNEY GENERAL, OFFICE OF STATE AUDITOR, OFFICE OF ADMINISTRATION}",
+    "Node 3: Filter to those in 2020 top 5 -> {OFFICE OF ATTORNEY GENERAL, OFFICE OF STATE AUDITOR}",
+    "Nodes 4-6 (d=3): Use first officeholders to select the office tied to a U.S. Attorney General",
+    "Node 4: First State Auditor -> William Christy",
+    "Node 5: First Missouri Attorney General -> Edward Bates",
+    "Node 6: Of those first officeholders, Edward Bates served as U.S. Attorney General -> select the Missouri Attorney General office",
+    "Node 7: From the Missouri Attorney General notable list, the only person listed as both U.S. Attorney General and U.S. Senator is John Ashcroft",
+    "Node 8: John Ashcroft was born in Chicago",
+    "Node 9: Chicago's 2018 citywide population was 2,705,988",
+    "Final answer: 2705988"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2018-state-employee-pay",
+      "source": "datagov/2018-state-employee-pay/files/rows.txt",
+      "intent": "Which Missouri state agencies had the highest average employee pay in 2018?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2018-state-employee-pay/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['YTD Gross Pay'] = pd.to_numeric(df['YTD Gross Pay'], errors='coerce')\nresult = df.groupby('Agency Name', dropna=False)['YTD Gross Pay'].mean().sort_values(ascending=False)\nanswer = result.head(5).index.tolist()",
+      "answer": [
+        "OFFICE OF ATTORNEY GENERAL",
+        "OFFICE OF STATE AUDITOR",
+        "LEGISLATURE",
+        "OFFICE OF ADMINISTRATION",
+        "ECONOMIC DEVELOPMENT"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2019-state-employee-pay",
+      "source": "datagov/2019-state-employee-pay/files/rows.txt",
+      "intent": "Which of <node_1 answer> remained in the top 5 by average employee pay in 2019?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2019-state-employee-pay/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\nprevious = ['OFFICE OF ATTORNEY GENERAL', 'OFFICE OF STATE AUDITOR', 'LEGISLATURE', 'OFFICE OF ADMINISTRATION', 'ECONOMIC DEVELOPMENT']\ndf['YTD Gross Pay'] = pd.to_numeric(df['YTD Gross Pay'], errors='coerce')\ntop5 = df.groupby('Agency Name', dropna=False)['YTD Gross Pay'].mean().sort_values(ascending=False).head(5).index.tolist()\nanswer = [agency for agency in previous if agency in top5]",
+      "answer": [
+        "OFFICE OF ATTORNEY GENERAL",
+        "OFFICE OF STATE AUDITOR",
+        "OFFICE OF ADMINISTRATION"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2020-state-employee-pay",
+      "source": "datagov/2020-state-employee-pay/files/rows.txt",
+      "intent": "Which of <node_2 answer> remained in the top 5 by average employee pay in 2020?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2020-state-employee-pay/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\nprevious = ['OFFICE OF ATTORNEY GENERAL', 'OFFICE OF STATE AUDITOR', 'OFFICE OF ADMINISTRATION']\ndf['YTD Gross Pay'] = pd.to_numeric(df['YTD Gross Pay'], errors='coerce')\ntop5 = df.groupby('Agency Name', dropna=False)['YTD Gross Pay'].mean().sort_values(ascending=False).head(5).index.tolist()\nanswer = [agency for agency in previous if agency in top5]",
+      "answer": [
+        "OFFICE OF ATTORNEY GENERAL",
+        "OFFICE OF STATE AUDITOR"
+      ]
+    },
+    {
+      "node_id": "9",
+      "dataset_id": "chicago-population-counts",
+      "source": "datagov/chicago-population-counts/files/rows.txt",
+      "intent": "What was the 2018 citywide population of <node_8 answer>?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/chicago-population-counts/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\nresult = df[(df['Geography Type'] == 'Citywide') & (pd.to_numeric(df['Year'], errors='coerce') == 2018) & (df['Geography'] == 'Chicago')]['Population - Total']\nanswer = str(int(result.iloc[0]))",
+      "answer": "2705988"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2018-state-employee-pay",
+      "source": "datagov/2018-state-employee-pay/files/rows.txt",
+      "intent": "Which Missouri state agencies had the highest average employee pay in 2018?",
+      "sql": "SELECT \"Agency Name\" AS answer\nFROM t\nGROUP BY \"Agency Name\"\nORDER BY AVG(TRY_CAST(\"YTD Gross Pay\" AS DOUBLE)) DESC\nLIMIT 5",
+      "answer": [
+        "OFFICE OF ATTORNEY GENERAL",
+        "OFFICE OF STATE AUDITOR",
+        "LEGISLATURE",
+        "OFFICE OF ADMINISTRATION",
+        "ECONOMIC DEVELOPMENT"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2019-state-employee-pay",
+      "source": "datagov/2019-state-employee-pay/files/rows.txt",
+      "intent": "Which of <node_1 answer> remained in the top 5 by average employee pay in 2019?",
+      "sql": "WITH top5 AS (\n  SELECT \"Agency Name\" AS agency\n  FROM t\n  GROUP BY \"Agency Name\"\n  ORDER BY AVG(TRY_CAST(\"YTD Gross Pay\" AS DOUBLE)) DESC\n  LIMIT 5\n), previous(ord, agency) AS (VALUES (1, 'OFFICE OF ATTORNEY GENERAL'), (2, 'OFFICE OF STATE AUDITOR'), (3, 'LEGISLATURE'), (4, 'OFFICE OF ADMINISTRATION'), (5, 'ECONOMIC DEVELOPMENT'))\nSELECT p.agency AS answer\nFROM previous p\nJOIN top5 t ON p.agency = t.agency\nORDER BY p.ord",
+      "answer": [
+        "OFFICE OF ATTORNEY GENERAL",
+        "OFFICE OF STATE AUDITOR",
+        "OFFICE OF ADMINISTRATION"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2020-state-employee-pay",
+      "source": "datagov/2020-state-employee-pay/files/rows.txt",
+      "intent": "Which of <node_2 answer> remained in the top 5 by average employee pay in 2020?",
+      "sql": "WITH top5 AS (\n  SELECT \"Agency Name\" AS agency\n  FROM t\n  GROUP BY \"Agency Name\"\n  ORDER BY AVG(TRY_CAST(\"YTD Gross Pay\" AS DOUBLE)) DESC\n  LIMIT 5\n), previous(ord, agency) AS (VALUES (1, 'OFFICE OF ATTORNEY GENERAL'), (2, 'OFFICE OF STATE AUDITOR'), (3, 'OFFICE OF ADMINISTRATION'))\nSELECT p.agency AS answer\nFROM previous p\nJOIN top5 t ON p.agency = t.agency\nORDER BY p.ord",
+      "answer": [
+        "OFFICE OF ATTORNEY GENERAL",
+        "OFFICE OF STATE AUDITOR"
+      ]
+    },
+    {
+      "node_id": "9",
+      "dataset_id": "chicago-population-counts",
+      "source": "datagov/chicago-population-counts/files/rows.txt",
+      "intent": "What was the 2018 citywide population of <node_8 answer>?",
+      "sql": "SELECT CAST(TRY_CAST(\"Population - Total\" AS BIGINT) AS VARCHAR) AS answer\nFROM t\nWHERE \"Geography Type\" = 'Citywide'\n  AND TRY_CAST(\"Year\" AS INTEGER) = 2018\n  AND \"Geography\" = 'Chicago'\nLIMIT 1",
+      "answer": "2705988"
+    }
+  ]
+}

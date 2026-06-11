@@ -1,0 +1,81 @@
+{
+  "dataset_sequence": [
+    "Michigan",
+    "postsecondary-school-locations-current-5a74c",
+    "school-district-office-locations-current-c8f9d",
+    "private-school-locations-current-f7d96"
+  ],
+  "source_sequence": [
+    "wikipedia/Michigan/content.txt",
+    "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+    "datagov/school-district-office-locations-current-c8f9d/files/data.txt",
+    "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine Michigan's capital city.",
+    "2. Using the relevant school-location records, determine the core-based statistical area associated with that city.",
+    "3. Count school district administrative offices in the core-based statistical area from step 2 for school year 2022-2023.",
+    "4. Count private schools in that same core-based statistical area for school year 2021-2022, then subtract this count from the district-office count from step 3."
+  ],
+  "original_final_question": "For Michigan's capital city, what is the number of school district administrative offices in its core-based statistical area in school year 2022-2023 minus the number of private schools in that CBSA in school year 2021-2022? Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: The state capital of Michigan is Lansing.",
+    "Node 2 depends on node 1: In school year 2022-2023, postsecondary institutions located in Lansing are in CBSA 29620.",
+    "Node 3 depends on nodes 1 and 2: School district offices in Lansing in CBSA 29620 (school year 2022-2023) = 11.",
+    "Node 4 depends on nodes 1 and 2: Private schools in Lansing in CBSA 29620 (school year 2021-2022) = 7.",
+    "Compute 11 - 7 = 4.",
+    "Final answer: 4"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "In school year 2022-2023, among postsecondary institutions located in the city of <node_1 answer>, what is the CBSA code?",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['CITY'] = df['CITY'].astype(str).str.strip()\ndf['CBSA'] = df['CBSA'].astype(str).str.strip()\ndf['SCHOOLYEAR'] = df['SCHOOLYEAR'].astype(str).str.strip()\n\nfiltered = df[(df['CITY'].str.upper() == 'LANSING') & (df['SCHOOLYEAR'] == '2022-2023')]\ncbsas = sorted(v for v in filtered['CBSA'].dropna().unique() if str(v).strip())\nresult = cbsas[0] if cbsas else None",
+      "answer": "29620"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "school-district-office-locations-current-c8f9d",
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "intent": "In school year 2022-2023, how many school district offices are located in the city of <node_1 answer> in CBSA <node_2 answer>?",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['CITY'] = df['CITY'].astype(str).str.strip()\ndf['CBSA'] = df['CBSA'].astype(str).str.strip()\ndf['SCHOOLYEAR'] = df['SCHOOLYEAR'].astype(str).str.strip()\n\ncount = len(df[(df['CITY'].str.upper() == 'LANSING') & (df['CBSA'] == '29620') & (df['SCHOOLYEAR'] == '2022-2023')])\nresult = str(int(count))",
+      "answer": "11"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "private-school-locations-current-f7d96",
+      "source": "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+      "intent": "In school year 2021-2022, how many private schools are located in the city of <node_1 answer> in CBSA <node_2 answer>?",
+      "code": "import json\nimport pandas as pd\n\nwith open('datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feat.get('properties', {}) for feat in obj.get('features', [])])\ndf['CITY'] = df['CITY'].astype(str).str.strip()\ndf['CBSA'] = df['CBSA'].astype(str).str.strip()\ndf['SCHOOLYEAR'] = df['SCHOOLYEAR'].astype(str).str.strip()\n\ncount = len(df[(df['CITY'].str.upper() == 'LANSING') & (df['CBSA'] == '29620') & (df['SCHOOLYEAR'] == '2021-2022')])\nresult = str(int(count))",
+      "answer": "7"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "In school year 2022-2023, among postsecondary institutions located in the city of <node_1 answer>, what is the CBSA code?",
+      "sql": "SELECT f.properties.CBSA AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE upper(trim(f.properties.CITY)) = 'LANSING'\n  AND trim(f.properties.SCHOOLYEAR) = '2022-2023'\n  AND trim(f.properties.CBSA) <> ''\nGROUP BY f.properties.CBSA\nORDER BY f.properties.CBSA ASC\nLIMIT 1",
+      "answer": "29620"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "school-district-office-locations-current-c8f9d",
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "intent": "In school year 2022-2023, how many school district offices are located in the city of <node_1 answer> in CBSA <node_2 answer>?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE upper(trim(f.properties.CITY)) = 'LANSING'\n  AND trim(f.properties.CBSA) = '29620'\n  AND trim(f.properties.SCHOOLYEAR) = '2022-2023'",
+      "answer": "11"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "private-school-locations-current-f7d96",
+      "source": "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+      "intent": "In school year 2021-2022, how many private schools are located in the city of <node_1 answer> in CBSA <node_2 answer>?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE upper(trim(f.properties.CITY)) = 'LANSING'\n  AND trim(f.properties.CBSA) = '29620'\n  AND trim(f.properties.SCHOOLYEAR) = '2021-2022'",
+      "answer": "7"
+    }
+  ]
+}

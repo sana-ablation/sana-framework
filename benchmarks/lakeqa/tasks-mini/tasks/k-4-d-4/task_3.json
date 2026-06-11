@@ -1,0 +1,165 @@
+{
+  "question": "Which New York City middle schools located in Queens District 26 had (1) at least 50 offers to specialized high schools on specialized high school admissions test in every school year from 2015-19, and (2) are named after scientists. In what year was the research institute founded and first directed by the older of these two scientists? Please return the year only. Your response should be in the format [Answer].",
+  "answer": "1887",
+  "nodes": {
+    "1": {
+      "source": "datagov/2015-2016-shsat-admissions-test-offers-by-sending-school/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2015-2016-shsat-admissions-test-offers-by-sending-school/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\noffers = pd.to_numeric(df['Count of Offers'], errors=\"coerce\")\nfiltered = df[offers >= 50].copy()\nlookup = {row[\"Feeder School Name\"]: (row[\"Feeder School DBN\"], int(pd.to_numeric(row['Count of Offers'], errors=\"coerce\"))) for _, row in filtered.iterrows()}\nanswer = {}\nfor school in [\"J.H.S. 067 Louis Pasteur\", \"M.S. 158 Marie Curie\", \"J.H.S. 074 Nathaniel Hawthorne\", \"J.H.S. 216 George J. Ryan\"]:\n    dbn, count = lookup[school]\n    answer[school] = f\"{dbn}, {count} offers\" if True else dbn\nanswer['and 23 others'] = \"...\"\n",
+      "subquestion": "Which NYC middle schools had at least 50 SHSAT offers to specialized high schools in school year 2015-16?",
+      "answer": {
+        "J.H.S. 067 Louis Pasteur": "26Q067, 84 offers",
+        "M.S. 158 Marie Curie": "26Q158, 104 offers",
+        "J.H.S. 074 Nathaniel Hawthorne": "26Q074, 102 offers",
+        "J.H.S. 216 George J. Ryan": "26Q216, 92 offers",
+        "and 23 others": "..."
+      }
+    },
+    "2": {
+      "source": "datagov/2016-2017-shsat-admissions-test-offers-by-sending-school/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2016-2017-shsat-admissions-test-offers-by-sending-school/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\noffers = pd.to_numeric(df['Count of Offers'], errors=\"coerce\")\nfiltered = df[offers >= 50].copy()\nlookup = {row[\"Feeder School Name\"]: (row[\"Feeder School DBN\"], int(pd.to_numeric(row['Count of Offers'], errors=\"coerce\"))) for _, row in filtered.iterrows()}\nanswer = {}\nfor school in [\"J.H.S. 067 Louis Pasteur\", \"M.S. 158 Marie Curie\", \"J.H.S. 074 Nathaniel Hawthorne\", \"J.H.S. 216 George J. Ryan\"]:\n    dbn, count = lookup[school]\n    answer[school] = f\"{dbn}, {count} offers\" if False else dbn\nanswer['and 23 others'] = \"...\"\n",
+      "subquestion": "Which NYC middle schools had at least 50 SHSAT offers to specialized high schools in school year 2016-17?",
+      "answer": {
+        "J.H.S. 067 Louis Pasteur": "26Q067",
+        "M.S. 158 Marie Curie": "26Q158",
+        "J.H.S. 074 Nathaniel Hawthorne": "26Q074",
+        "J.H.S. 216 George J. Ryan": "26Q216",
+        "and 23 others": "..."
+      }
+    },
+    "3": {
+      "source": "datagov/2017-2018-shsat-admissions-test-offers-by-sending-school/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2017-2018-shsat-admissions-test-offers-by-sending-school/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\noffers = pd.to_numeric(df['Count of Offers'], errors=\"coerce\")\nfiltered = df[offers >= 50].copy()\nlookup = {row[\"Feeder School Name\"]: (row[\"Feeder School DBN\"], int(pd.to_numeric(row['Count of Offers'], errors=\"coerce\"))) for _, row in filtered.iterrows()}\nanswer = {}\nfor school in [\"J.H.S. 067 Louis Pasteur\", \"M.S. 158 Marie Curie\", \"J.H.S. 074 Nathaniel Hawthorne\", \"J.H.S. 216 George J. Ryan\"]:\n    dbn, count = lookup[school]\n    answer[school] = f\"{dbn}, {count} offers\" if False else dbn\nanswer['and 24 others'] = \"...\"\n",
+      "subquestion": "Which NYC middle schools had at least 50 SHSAT offers to specialized high schools in school year 2017-18?",
+      "answer": {
+        "J.H.S. 067 Louis Pasteur": "26Q067",
+        "M.S. 158 Marie Curie": "26Q158",
+        "J.H.S. 074 Nathaniel Hawthorne": "26Q074",
+        "J.H.S. 216 George J. Ryan": "26Q216",
+        "and 24 others": "..."
+      }
+    },
+    "4": {
+      "source": "datagov/2018-2019-shsat-admissions-test-offers-by-sending-school/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/2018-2019-shsat-admissions-test-offers-by-sending-school/files/rows.txt'\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\noffers = pd.to_numeric(df['Number of Offers'], errors=\"coerce\")\nfiltered = df[offers >= 50].copy()\nlookup = {row[\"Feeder School Name\"]: (row[\"Feeder School DBN\"], int(pd.to_numeric(row['Number of Offers'], errors=\"coerce\"))) for _, row in filtered.iterrows()}\nanswer = {}\nfor school in [\"J.H.S. 067 Louis Pasteur\", \"M.S. 158 Marie Curie\", \"J.H.S. 074 Nathaniel Hawthorne\", \"J.H.S. 216 George J. Ryan\"]:\n    dbn, count = lookup[school]\n    answer[school] = f\"{dbn}, {count} offers\" if False else dbn\nanswer['and 19 others'] = \"...\"\n",
+      "subquestion": "Which NYC middle schools had at least 50 SHSAT offers to specialized high schools in school year 2018-19?",
+      "answer": {
+        "J.H.S. 067 Louis Pasteur": "26Q067",
+        "M.S. 158 Marie Curie": "26Q158",
+        "J.H.S. 074 Nathaniel Hawthorne": "26Q074",
+        "J.H.S. 216 George J. Ryan": "26Q216",
+        "and 19 others": "..."
+      }
+    },
+    "5": {
+      "source": "datagov/2016-2017-school-locations/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2016-2017-school-locations/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nschools = [\"J.H.S. 067 Louis Pasteur\", \"J.H.S. 074 Nathaniel Hawthorne\", \"M.S. 158 Marie Curie\", \"J.H.S. 216 George J. Ryan\"]\nfiltered = df[df[\"LOCATION_NAME\"].isin(schools)].copy()\nfiltered[\"GEOGRAPHICAL_DISTRICT_CODE\"] = pd.to_numeric(filtered[\"GEOGRAPHICAL_DISTRICT_CODE\"], errors=\"coerce\")\nassert set(filtered[\"GEOGRAPHICAL_DISTRICT_CODE\"].dropna().astype(int)) == {26}\nlookup = dict(zip(filtered[\"LOCATION_NAME\"], filtered[\"ATS_SYSTEM_CODE\"]))\nanswer = {school: f\"{lookup[school]}, District 26\" for school in schools}\n",
+      "subquestion": "Which of the 21 schools with >= 50 SHSAT offers in all 4 years are located in Queens District 26?",
+      "answer": {
+        "J.H.S. 067 Louis Pasteur": "26Q067, District 26",
+        "J.H.S. 074 Nathaniel Hawthorne": "26Q074, District 26",
+        "M.S. 158 Marie Curie": "26Q158, District 26",
+        "J.H.S. 216 George J. Ryan": "26Q216, District 26"
+      }
+    },
+    "6": {
+      "source": "wikipedia/Louis_Pasteur/content.txt",
+      "fact": "Louis Pasteur (27 December 1822 - 28 September 1895) was a French chemist, pharmacist, and microbiologist renowned for his discoveries of the principles of vaccination, microbial fermentation, and pasteurization. He was a scientist who made groundbreaking contributions to medicine and biology.",
+      "subquestion": "Was Louis Pasteur a scientist, and when was he born?",
+      "answer": "Yes, scientist; born December 27, 1822"
+    },
+    "7": {
+      "source": "wikipedia/Marie_Curie/content.txt",
+      "fact": "Maria Salomea Sklodowska-Curie (7 November 1867 - 4 July 1934), better known as Marie Curie, was a Polish and naturalised-French physicist and chemist who conducted pioneering research on radioactivity. She was a scientist who won two Nobel Prizes.",
+      "subquestion": "Was Marie Curie a scientist, and when was she born?",
+      "answer": "Yes, scientist; born November 7, 1867"
+    },
+    "8": {
+      "source": "wikipedia/Nathaniel_Hawthorne/content.txt",
+      "fact": "Nathaniel Hawthorne (July 4, 1804 - May 19, 1864) was an American novelist and short story writer. His works often focus on history, morality, and religion. He was not a scientist but a literary figure.",
+      "subquestion": "Was Nathaniel Hawthorne a scientist?",
+      "answer": "No, he was a novelist"
+    },
+    "9": {
+      "source": "wikipedia/Pasteur_Institute/content.txt",
+      "fact": "The Pasteur Institute is a French non-profit private foundation dedicated to the study of biology, micro-organisms, diseases, and vaccines. It is named after Louis Pasteur. The institute was founded on 4 June 1887 and inaugurated on 14 November 1888.",
+      "subquestion": "In what year was the research institute named after <the older scientist from nodes 6-7: Louis Pasteur> founded?",
+      "answer": "1887"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, data.gov SHSAT data - nodes 1-4):",
+    "  Node 1: SHSAT offers SY2015-16 >= 50 -> 27 schools (including 4 District 26 schools)",
+    "  Node 2: SHSAT offers SY2016-17 >= 50 -> 27 schools (including 4 District 26 schools)",
+    "  Node 3: SHSAT offers SY2017-18 >= 50 -> 28 schools (including 4 District 26 schools)",
+    "  Node 4: SHSAT offers SY2018-19 >= 50 -> 23 schools (including 4 District 26 schools)",
+    "  Intersection of nodes 1-4: Schools meeting criterion all 4 years -> 21 schools",
+    "",
+    "HOP 2 (d=1, data.gov School Locations - node 5):",
+    "  Node 5 (School Locations): Filter to Queens District 26 -> 4 schools (Pasteur, Hawthorne, Curie, Ryan)",
+    "",
+    "HOP 3 (d=3, Wikipedia - nodes 6-8):",
+    "  Node 6 (Wikipedia Louis_Pasteur): Pasteur was a scientist, born December 27, 1822",
+    "  Node 7 (Wikipedia Marie_Curie): Curie was a scientist, born November 7, 1867",
+    "  Node 8 (Wikipedia Nathaniel_Hawthorne): Hawthorne was NOT a scientist (novelist)",
+    "  Note: George J. Ryan has no Wikipedia article and cannot be verified as a scientist",
+    "  Filter: Scientists only -> Pasteur (born 1822), Curie (born 1867) = 2 scientists",
+    "  Superlative: Older (earlier birth year) -> Pasteur (1822) vs Curie (1867) -> Louis Pasteur is older",
+    "  Result: Louis Pasteur selected",
+    "",
+    "HOP 4 (d=1, Wikipedia Pasteur Institute - node 9):",
+    "  Node 9: Louis Pasteur founded the Pasteur Institute in 1887 and was its first director until his death",
+    "",
+    "Final answer: 1887"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "2015-2016-shsat-admissions-test-offers-by-sending-school",
+    "2016-2017-school-locations",
+    "2016-2017-shsat-admissions-test-offers-by-sending-school",
+    "2017-2018-shsat-admissions-test-offers-by-sending-school",
+    "2018-2019-shsat-admissions-test-offers-by-sending-school",
+    "Louis_Pasteur",
+    "Marie_Curie",
+    "Nathaniel_Hawthorne",
+    "Pasteur_Institute"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: SHSAT offers SY2015-16 >= 50 -> 27 schools (including 4 District 26 schools) Node 2: SHSAT offers SY2016-17 >= 50 -> 27 schools (including 4 District 26 schools) Node 3: SHSAT offers SY2017-18 >= 50 -> 28 schools (including 4 District 26 schools) Node 4: SHSAT offers SY2018-19 >= 50 -> 23 schools (including 4 District 26 schools) Intersection of nodes 1-4: Schools meeting criterion all 4 years -> 21 schools",
+      "answer": "21 schools"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5 (School Locations): Filter to Queens District 26 -> 4 schools (Pasteur, Hawthorne, Curie, Ryan)",
+      "answer": "4 schools (Pasteur, Hawthorne, Curie, Ryan)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6,
+        7,
+        8
+      ],
+      "reasoning": "Node 6 (Wikipedia Louis_Pasteur): Pasteur was a scientist, born December 27, 1822 Node 7 (Wikipedia Marie_Curie): Curie was a scientist, born November 7, 1867 Node 8 (Wikipedia Nathaniel_Hawthorne): Hawthorne was NOT a scientist (novelist) Note: George J. Ryan has no Wikipedia article and cannot be verified as a scientist Filter: Scientists only -> Pasteur (born 1822), Curie (born 1867) = 2 scientists Superlative: Older (earlier birth year) -> Pasteur (1822) vs Curie (1867) -> Louis Pasteur is older Result: Louis Pasteur selected",
+      "answer": "Louis Pasteur selected"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Louis Pasteur founded the Pasteur Institute in 1887 and was its first director until his death",
+      "answer": "1887"
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-13"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-13/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+    "datagov/kramabench-legal-easy-13/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the 2024 report-categories table and identify the largest and smallest report counts.",
+    "2. Divide the largest count by the smallest count and round to two decimals."
+  ],
+  "original_final_question": "In 2024, what was the ratio of reports between the most frequent and the least frequent category (rounded to two decimal places)? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the 2024 report-categories table and identify the largest and smallest report counts.",
+    "Node 2 depends on node 1: Divide the largest count by the smallest count and round to two decimals.",
+    "Final answer: 1097.47"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-13",
+      "source": "datagov/kramabench-legal-easy-13/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What are the maximum and minimum 2024 report counts among categories?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\ncat['Percentage'] = cat['Percentage'].astype(str).str.replace('%', '').astype(float) / 100\ncat['Rank'] = cat['Rank'].astype(int)\ncat[' # of Reports '] = cat[' # of Reports '].astype(str).str.replace(',', '').astype(int)\ncat_sorted = cat.sort_values(by='Percentage', ascending=False).copy()\ncat_sorted['Percentage_cumsum'] = cat_sorted['Percentage'].cumsum()\nresult = f\"{int(cat[' # of Reports '].max())}|{int(cat[' # of Reports '].min())}\"\nprint(result)\n",
+      "answer": "1353175|1233"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-13",
+      "source": "datagov/kramabench-legal-easy-13/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the maximum-to-minimum report-count ratio rounded to two decimals?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\ncat['Percentage'] = cat['Percentage'].astype(str).str.replace('%', '').astype(float) / 100\ncat['Rank'] = cat['Rank'].astype(int)\ncat[' # of Reports '] = cat[' # of Reports '].astype(str).str.replace(',', '').astype(int)\ncat_sorted = cat.sort_values(by='Percentage', ascending=False).copy()\ncat_sorted['Percentage_cumsum'] = cat_sorted['Percentage'].cumsum()\nresult = f\"{cat[' # of Reports '].max() / cat[' # of Reports '].min():.2f}\"\nprint(result)\n",
+      "answer": "1097.47"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-13",
+      "source": "datagov/kramabench-legal-easy-13/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What are the maximum and minimum 2024 report counts among categories?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-13",
+      "source": "datagov/kramabench-legal-easy-13/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "intent": "What is the maximum-to-minimum report-count ratio rounded to two decimals?",
+      "answer": "Cannot execute SQL: query_file cannot read this CSV because DuckDB reports invalid non-UTF-8 encoding. Download the file and use execute_ideal/download-style Python with the correct encoding."
+    }
+  ]
+}

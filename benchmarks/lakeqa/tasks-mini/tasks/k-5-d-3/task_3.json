@@ -1,0 +1,187 @@
+{
+  "question": "From the top three Texas counties based on average Texas department of criminal justice releases across 2019 to 2021, find the county that has the most recently established county seat. In that specific county, identify the school district with the highest average identified student percentage between 2019 and 2021. What year was that school district established? Please return the year only. Your response should be in the format [Answer].",
+  "answer": "1916",
+  "nodes": {
+    "1": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['Harris', 'Dallas', 'Tarrant']\ncounts = df[df['County'].isin(counties)].groupby('County').size()\nanswer = '; '.join(f\"{county}: {int(counts[county]):,}\" for county in counties)",
+      "subquestion": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2019? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "answer": "Harris: 9,029; Dallas: 5,355; Tarrant: 4,769"
+    },
+    "2": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['Harris', 'Dallas', 'Tarrant']\ncounts = df[df['County'].isin(counties)].groupby('County').size()\nanswer = '; '.join(f\"{county}: {int(counts[county]):,}\" for county in counties)",
+      "subquestion": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2020? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "answer": "Harris: 7,059; Dallas: 4,540; Tarrant: 4,450"
+    },
+    "3": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ncounties = ['Harris', 'Dallas', 'Tarrant']\ncounts = df[df['County'].isin(counties)].groupby('County').size()\nanswer = '; '.join(f\"{county}: {int(counts[county]):,}\" for county in counties)",
+      "subquestion": "How many TDCJ releases did Harris, Dallas, and Tarrant counties have in FY 2021? (Filter County in {Harris, Dallas, Tarrant}; count rows.)",
+      "answer": "Harris: 5,210; Dallas: 3,565; Tarrant: 3,252"
+    },
+    "4": {
+      "source": "wikipedia/Harris_County,_Texas/content.txt",
+      "fact": "Harris County is a county located in the U.S. state of Texas. Its county seat is Houston.",
+      "subquestion": "What is the county seat of Harris County, Texas (the #1 county by average TDCJ releases from nodes 1-3)?",
+      "answer": "Houston is the county seat of Harris County"
+    },
+    "5": {
+      "source": "wikipedia/Dallas_County,_Texas/content.txt",
+      "fact": "Dallas County is a county located in the U.S. state of Texas. Its county seat is Dallas.",
+      "subquestion": "What is the county seat of Dallas County, Texas (the #2 county by average TDCJ releases from nodes 1-3)?",
+      "answer": "Dallas is the county seat of Dallas County"
+    },
+    "6": {
+      "source": "wikipedia/Tarrant_County,_Texas/content.txt",
+      "fact": "Tarrant County is a county located in the U.S. state of Texas. Its county seat is Fort Worth.",
+      "subquestion": "What is the county seat of Tarrant County, Texas (the #3 county by average TDCJ releases from nodes 1-3)?",
+      "answer": "Fort Worth is the county seat of Tarrant County"
+    },
+    "7": {
+      "source": "wikipedia/Houston/content.txt",
+      "fact": "Houston was founded by land investors on August 30, 1836, at the confluence of Buffalo Bayou and White Oak Bayou.",
+      "subquestion": "When was Houston (county seat of Harris County from node 4) founded/established?",
+      "answer": "Houston was founded on August 30, 1836"
+    },
+    "8": {
+      "source": "wikipedia/Dallas/content.txt",
+      "fact": "In 1841, John Neely Bryan established a permanent settlement named Dallas.",
+      "subquestion": "When was Dallas (county seat of Dallas County from node 5) established?",
+      "answer": "Dallas was established in 1841"
+    },
+    "9": {
+      "source": "wikipedia/Fort_Worth,_Texas/content.txt",
+      "fact": "The city of Fort Worth was established in 1849 as an army outpost on a bluff overlooking the Trinity River.",
+      "subquestion": "When was Fort Worth (county seat of Tarrant County from node 6) established?",
+      "answer": "Fort Worth was established in 1849"
+    },
+    "10": {
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nresult = (\n    df[(df['SiteCounty'] == 'TARRANT') & (df['CEName'].str.contains('ISD', na=False))]\n    .groupby('CEName', as_index=False)['SiteISP']\n    .mean()\n)\nresult['SiteISP'] = result['SiteISP'].round(2)\nranked = result.sort_values(['SiteISP', 'CEName'], ascending=[False, True]).reset_index(drop=True)\nanswer = f\"Lake Worth ISD: {ranked.loc[0, 'SiteISP']:.2f}% average ISP\"",
+      "subquestion": "Which ISD had the highest average ISP in Tarrant County (from nodes 7-9: the county with the newest county seat) in the 2019-2020 program year? (Filter SiteCounty == 'TARRANT'; filter CEName contains 'ISD'; group by CEName; average SiteISP.)",
+      "answer": "Lake Worth ISD: 65.00% average ISP"
+    },
+    "11": {
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'TARRANT') & (df['CEName'] == 'LAKE WORTH ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Lake Worth ISD: {average_isp:.2f}% average ISP'",
+      "subquestion": "What was the average ISP for Lake Worth ISD in Tarrant County in the 2020-2021 program year? (Filter SiteCounty == 'TARRANT'; filter CEName == 'LAKE WORTH ISD'; average SiteISP.)",
+      "answer": "Lake Worth ISD: 65.94% average ISP"
+    },
+    "12": {
+      "source": "datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['SiteISP'] = pd.to_numeric(df['SiteISP'], errors='coerce')\nfiltered = df[(df['SiteCounty'] == 'TARRANT') & (df['CEName'] == 'LAKE WORTH ISD')].copy()\naverage_isp = filtered['SiteISP'].mean()\nanswer = f'Lake Worth ISD: {average_isp:.2f}% average ISP'",
+      "subquestion": "What was the average ISP for Lake Worth ISD in Tarrant County in the 2021-2022 program year? (Filter SiteCounty == 'TARRANT'; filter CEName == 'LAKE WORTH ISD'; average SiteISP.)",
+      "answer": "Lake Worth ISD: 71.65% average ISP"
+    },
+    "13": {
+      "source": "wikipedia/Lake_Worth_Independent_School_District/content.txt",
+      "fact": "On May 6, 1916, local citizens voted 16-1 to incorporate Rosen Heights Independent School District (ISD), which later became Lake Worth ISD.",
+      "subquestion": "In what year was Lake Worth ISD (from nodes 10-12: the ISD with highest average ISP in Tarrant County) established?",
+      "answer": "1916"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3, data.gov aggregation - nodes 1-3):",
+    "  Node 1: FY 2019 TDCJ releases by county",
+    "  Node 2: FY 2020 TDCJ releases by county",
+    "  Node 3: FY 2021 TDCJ releases by county",
+    "  Aggregation: Calculate average TDCJ releases per county across 3 years",
+    "    Harris County: (9,029 + 7,059 + 5,210) / 3 = 7,099.3 average",
+    "    Dallas County: (5,355 + 4,540 + 3,565) / 3 = 4,486.7 average",
+    "    Tarrant County: (4,769 + 4,450 + 3,252) / 3 = 4,157.0 average",
+    "  Result: Top 3 Texas counties are Harris, Dallas, Tarrant",
+    "",
+    "HOP 2 (d=3, Wikipedia - nodes 4-6):",
+    "  Node 4: Harris County -> county seat: Houston",
+    "  Node 5: Dallas County -> county seat: Dallas",
+    "  Node 6: Tarrant County -> county seat: Fort Worth",
+    "  Result: Three county seats identified (Houston, Dallas, Fort Worth)",
+    "",
+    "HOP 3 (d=3, Wikipedia - nodes 7-9):",
+    "  Node 7: Houston -> founded 1836",
+    "  Node 8: Dallas -> established 1841",
+    "  Node 9: Fort Worth -> established 1849",
+    "  Comparison: Houston (1836) < Dallas (1841) < Fort Worth (1849)",
+    "  Result: Fort Worth is the newest county seat -> Tarrant County is the target",
+    "",
+    "HOP 4 (d=3, data.gov aggregation - nodes 10-12):",
+    "  Node 10: 2019-2020 School Nutrition for Tarrant County ISDs",
+    "  Node 11: 2020-2021 School Nutrition for Tarrant County ISDs",
+    "  Node 12: 2021-2022 School Nutrition for Tarrant County ISDs",
+    "  Aggregation: Calculate average ISP per ISD in Tarrant County across 3 years",
+    "    Lake Worth ISD: (65.00% + 65.94% + 71.65%) / 3 = 67.53% average ISP (highest among ISDs)",
+    "  Result: Lake Worth ISD has highest average ISP in Tarrant County",
+    "",
+    "HOP 5 (d=1, Wikipedia - node 13):",
+    "  Node 13: Lake Worth ISD was established in 1916 (as Rosen Heights ISD)",
+    "",
+    "Final answer: 1916"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Dallas",
+    "Dallas_County,_Texas",
+    "Fort_Worth,_Texas",
+    "Harris_County,_Texas",
+    "Houston",
+    "Lake_Worth_Independent_School_District",
+    "Tarrant_County,_Texas",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2019",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2020",
+    "school-nutrition-programs-contact-information-and-site-level-program-participation-pr-2021",
+    "texas-department-of-criminal-justice-releases-fy-2019",
+    "texas-department-of-criminal-justice-releases-fy-2020",
+    "texas-department-of-criminal-justice-releases-fy-2021"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: FY 2019 TDCJ releases by county Node 2: FY 2020 TDCJ releases by county Node 3: FY 2021 TDCJ releases by county Aggregation: Calculate average TDCJ releases per county across 3 years Harris County: (9,029 + 7,059 + 5,210) / 3 = 7,099.3 average Dallas County: (5,355 + 4,540 + 3,565) / 3 = 4,486.7 average Tarrant County: (4,769 + 4,450 + 3,252) / 3 = 4,157.0 average Result: Top 3 Texas counties are Harris, Dallas, Tarrant",
+      "answer": "Top 3 Texas counties are Harris, Dallas, Tarrant"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Node 4: Harris County -> county seat: Houston Node 5: Dallas County -> county seat: Dallas Node 6: Tarrant County -> county seat: Fort Worth Result: Three county seats identified (Houston, Dallas, Fort Worth)",
+      "answer": "Three county seats identified (Houston, Dallas, Fort Worth)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Node 7: Houston -> founded 1836 Node 8: Dallas -> established 1841 Node 9: Fort Worth -> established 1849 Comparison: Houston (1836) < Dallas (1841) < Fort Worth (1849) Result: Fort Worth is the newest county seat -> Tarrant County is the target",
+      "answer": "Fort Worth is the newest county seat -> Tarrant County is the target"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        10,
+        11,
+        12
+      ],
+      "reasoning": "Node 10: 2019-2020 School Nutrition for Tarrant County ISDs Node 11: 2020-2021 School Nutrition for Tarrant County ISDs Node 12: 2021-2022 School Nutrition for Tarrant County ISDs Aggregation: Calculate average ISP per ISD in Tarrant County across 3 years Lake Worth ISD: (65.00% + 65.94% + 71.65%) / 3 = 67.53% average ISP (highest among ISDs) Result: Lake Worth ISD has highest average ISP in Tarrant County",
+      "answer": "Lake Worth ISD has highest average ISP in Tarrant County"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        13
+      ],
+      "reasoning": "Node 13: Lake Worth ISD was established in 1916 (as Rosen Heights ISD)",
+      "answer": "1916"
+    }
+  ]
+}

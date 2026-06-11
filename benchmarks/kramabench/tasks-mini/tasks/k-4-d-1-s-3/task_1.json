@@ -1,0 +1,101 @@
+{
+  "question": "If the 2007 reports were distributed exactly like the 2024 ones, how many identity theft reports in 2007 would concern people ages 40 or older, rounded to the nearest thousand? Write your answer as [ANSWER].",
+  "answer": 91000,
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\nprint(int(df[df['Year'] == 2007]['# of Reports'].iloc[0]))\n",
+      "subquestion": "What is the total number of reports in 2007?",
+      "answer": 1070447
+    },
+    "2": {
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\ncat_df = pd.read_csv(path, skiprows=2, encoding='unicode_escape').dropna()\npct = cat_df[cat_df['Category'] == 'Identity Theft']['Percentage'].iloc[0]\nprint(f'{float(pct.strip(\"%\")) / 100:.4f}')\n",
+      "subquestion": "What is the 2024 Identity Theft report-category proportion?",
+      "answer": "0.1754"
+    },
+    "3": {
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\ndf['Percentage of reports'] = df['# of Reports'] / df['# of Reports'].sum()\nprop = df[df['Age Range'] > '40']['Percentage of reports'].sum()\nprint(f'{prop:.4f}')\n",
+      "subquestion": "What proportion of 2024 identity-theft reports with age information were for people ages 40 or older?",
+      "answer": "0.4861"
+    },
+    "4": {
+      "source": "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "fact": "import numpy as np\nimport pandas as pd\ncount_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv'\ncat_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv'\nage_path = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv'\ndf = pd.read_csv(count_path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\ndf['# of Reports'] = df['# of Reports'].str.replace(',', '').astype(int)\ntotal_2007_reports = df[df['Year'] == 2007]['# of Reports'].iloc[0]\ncat_df = pd.read_csv(cat_path, skiprows=2, encoding='unicode_escape').dropna()\nidentity_theft_percentage = cat_df[cat_df['Category'] == 'Identity Theft']['Percentage'].iloc[0]\nidentity_theft_percentage = float(identity_theft_percentage.strip('%')) / 100\nage_df = pd.read_csv(age_path, skiprows=2).dropna()\nage_df['# of Reports'] = age_df['# of Reports'].str.replace(',', '').astype(int)\nage_df['Percentage of reports'] = age_df['# of Reports'] / age_df['# of Reports'].sum()\nid_theft_over_40 = age_df[age_df['Age Range'] > '40']['Percentage of reports'].sum()\nprint(int(np.round(total_2007_reports * identity_theft_percentage * id_theft_over_40, -3)))\n",
+      "subquestion": "Using the 2007 total, 2024 Identity Theft proportion, and age-40-plus proportion, what is the estimate rounded to the nearest thousand?",
+      "answer": 91000
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the report-count table and extract total reports for 2007.",
+    "Node 2: Read the 2024 report categories table and extract the Identity Theft proportion.",
+    "Node 3: Read the identity-theft-by-age table and sum the proportions for age ranges over 40.",
+    "Node 4 depends on nodes 1-3: Multiply the 2007 total by both proportions and round to the nearest thousand.",
+    "Final answer: 91000"
+  ],
+  "datasets_used": [
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+    "datagov/kramabench-legal-hard-18/files/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Read the report-count table and extract total reports for 2007.",
+      "answer": 1070447
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Read the 2024 report categories table and extract the Identity Theft proportion.",
+      "answer": "0.1754"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3: Read the identity-theft-by-age table and sum the proportions for age ranges over 40.",
+      "answer": "0.4861"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on nodes 1-3: Multiply the 2007 total by both proportions and round to the nearest thousand.",
+      "answer": 91000
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "legal-hard-18",
+    "domain": "legal",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/legal-hard-18.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/legal/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/legal/legal-hard-18",
+    "s3_mirror_prefix": "datagov/kramabench-legal-hard-18/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv",
+      "2": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Categories.csv",
+      "3": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Identity_Theft_Reports_by_Age.csv",
+      "4": "other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Report_Count.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

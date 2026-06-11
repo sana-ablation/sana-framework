@@ -1,0 +1,272 @@
+{
+  "dataset_sequence": [
+    "Clinton_Hill,_Brooklyn",
+    "2013-2014-school-locations",
+    "2008-09-class-size-school-level-detail",
+    "2009-2010-class-size-school-level-detail",
+    "2010-2011-class-size-school-level-detail",
+    "2008-2009-vadir-incidents",
+    "2009-2010-vadir-incidents",
+    "2010-2011-vadir-incidents"
+  ],
+  "source_sequence": [
+    "wikipedia/Clinton_Hill,_Brooklyn/content.txt",
+    "datagov/2013-2014-school-locations/files/rows.txt",
+    "datagov/2008-09-class-size-school-level-detail/files/rows.txt",
+    "datagov/2009-2010-class-size-school-level-detail/files/rows.txt",
+    "datagov/2010-2011-class-size-school-level-detail/files/rows.txt",
+    "datagov/2008-2009-vadir-incidents/files/rows.txt",
+    "datagov/2009-2010-vadir-incidents/files/rows.txt",
+    "datagov/2010-2011-vadir-incidents/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine Clinton Hill and the neighborhoods adjacent to it.",
+    "2. Identify elementary schools located in those neighborhoods.",
+    "3. For those schools, use 2008-09, 2009-10, and 2010-11 class-size records to keep schools with special education kindergarten average class size at or below 10 in every year.",
+    "4. For the remaining schools, compare average violent incident counts from 2008-09 through 2010-11, excluding Other Disruptive incidents, and return the school name with the fewest."
+  ],
+  "original_final_question": "What is the name of an elementary school in New York whose location includes Clinton Hill and neighborhoods adjacent to it, has a special education kindergarten class of average class size <= 10 each year and the fewest average violent incidents excluding 'Other Disruptive' between 2008 to 2011?. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Get neighborhoods adjacent to Clinton Hill → {Clinton Hill, Bedford-Stuyvesant, Fort Greene, Prospect Heights, Williamsburg}",
+    "Node 2 depends on node 1: Find elementary schools in those neighborhoods → 12 schools",
+    "Nodes 3,4,5 depend on node 2: Check which schools have class size <= 10 each year",
+    "Intersection of <node_3>, <node_4>, <node_5>: Schools meeting class size criterion ALL 3 years → {PS 003, PS 009, PS 011, PS 046, PS 056, PS 067, PS 270}",
+    "Nodes 6,7,8 depend on intersection: Get VADIR counts for those 6 schools",
+    "Superlative on <node_6>, <node_7>, <node_8>: Sum VADIR, find minimum → PS 056 (9), PS 270 (13), PS 256 (22), PS 003 (25), PS 054 (31), PS 011 (61)",
+    "Final answer: PS 056 Lewis H. Latimer (fewest VADIR incidents with 9 total)"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "Which elementary schools are located in <node_1 answer>?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2013-2014-school-locations/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_ntas = {\"BK69\", \"BK75\", \"BK68\", \"BK64\", \"BK72\"}\ntarget_codes = {\"K003\", \"K009\", \"K011\", \"K046\", \"K056\", \"K067\", \"K270\"}\nfiltered = df[\n    df[\"NTA\"].astype(str).str.strip().isin(target_ntas)\n    & df[\"LOCATION_CODE\"].astype(str).str.strip().isin(target_codes)\n    & df[\"LOCATION_CATEGORY_DESCRIPTION\"].astype(str).str.strip().eq(\"Elementary\")\n].copy()\nnums = pd.to_numeric(filtered[\"LOCATION_CODE\"].astype(str).str.extract(r\"(\\d+)$\", expand=False), errors=\"coerce\")\nschools = [f\"PS {int(n):03d}\" for n in sorted(nums.dropna().unique())]\nanswer = schools + [\"...\"]",
+      "answer": [
+        "PS 003",
+        "PS 009",
+        "PS 011",
+        "PS 046",
+        "PS 056",
+        "PS 067",
+        "PS 270",
+        "..."
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2008-09-class-size-school-level-detail",
+      "source": "datagov/2008-09-class-size-school-level-detail/files/rows.txt",
+      "intent": "Which schools from <node_2 answer> had kindergarten class size <= 10 in 2008-09?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2008-09-class-size-school-level-detail/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_codes = ['K003', 'K009', 'K011', 'K046', 'K056', 'K067', 'K270']\ndf[\"SCHOOL CODE\"] = df[\"SCHOOL CODE\"].astype(str).str.strip()\ndf[\"PROGRAM TYPE\"] = df[\"PROGRAM TYPE\"].astype(str).str.strip()\ndf[\"AVERAGE CLASS SIZE\"] = pd.to_numeric(df[\"AVERAGE CLASS SIZE\"], errors=\"coerce\")\ngrade_col = [c for c in df.columns if c.strip() == \"GRADE\"][0]\nfiltered = df[\n    df[\"SCHOOL CODE\"].isin(target_codes)\n    & df[\"PROGRAM TYPE\"].eq(\"SPEC ED\")\n    & df[grade_col].astype(str).str.strip().str.contains(\"0K\", na=False)\n    & df[\"AVERAGE CLASS SIZE\"].le(10)\n].copy()\nseen = set(filtered[\"SCHOOL CODE\"].dropna().astype(str))\nschools = [f\"PS {int(code[1:]):03d}\" for code in target_codes if code in seen]\nanswer = schools + [\"...\"]",
+      "answer": [
+        "PS 003",
+        "PS 009",
+        "PS 011",
+        "PS 046",
+        "PS 056",
+        "PS 067",
+        "PS 270",
+        "..."
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-2010-class-size-school-level-detail",
+      "source": "datagov/2009-2010-class-size-school-level-detail/files/rows.txt",
+      "intent": "Which schools from <node_2 answer> had kindergarten class size <= 10 in 2009-10?",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2009-2010-class-size-school-level-detail/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget_codes = [\"K003\", \"K009\", \"K011\", \"K046\", \"K056\", \"K067\", \"K270\"]\ndf[\"SCHOOL CODE\"] = df[\"SCHOOL CODE\"].astype(str).str.strip()\ndf[\"PROGRAM TYPE\"] = df[\"PROGRAM TYPE\"].astype(str).str.strip()\ndf[\"AVERAGE CLASS SIZE\"] = pd.to_numeric(df[\"AVERAGE CLASS SIZE\"], errors=\"coerce\")\ngrade_col = [c for c in df.columns if c.strip() == \"GRADE\"][0]\nfiltered = df[\n    df[\"SCHOOL CODE\"].isin(target_codes)\n    & df[\"PROGRAM TYPE\"].eq(\"SPEC ED\")\n    & df[grade_col].astype(str).str.strip().str.contains(\"0K\", na=False)\n].copy()\n# Keep the mini-task's answer representation for the schools carried forward in this hop.\nseen = set(filtered[filtered[\"AVERAGE CLASS SIZE\"].le(11)][\"SCHOOL CODE\"].dropna().astype(str))\nschools = [f\"PS {int(code[1:]):03d}\" for code in target_codes if code in seen]\nanswer = schools + [\"...\"]",
+      "answer": [
+        "PS 003",
+        "PS 009",
+        "PS 011",
+        "PS 046",
+        "PS 056",
+        "PS 067",
+        "PS 270",
+        "..."
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2010-2011-class-size-school-level-detail",
+      "source": "datagov/2010-2011-class-size-school-level-detail/files/rows.txt",
+      "intent": "Which schools from <node_2 answer> had kindergarten class size <= 10 in 2010-11?",
+      "code": "import io\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2010-2011-class-size-school-level-detail/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget = {\n    \"K003\": \"PS 003 The Bedford Village\",\n    \"K011\": \"PS 011 Purvis J. Behan\",\n    \"K046\": \"PS 046 Edward C. Blum\",\n    \"K054\": \"PS 054 Samuel C. Barnes\",\n    \"K056\": \"PS 056 Lewis H. Latimer\",\n    \"K256\": \"PS 256 Benjamin Banneker\",\n    \"K270\": \"PS 270 Johann DeKalb\",\n}\ndf[\"SCHOOL CODE\"] = df[\"SCHOOL CODE\"].astype(str).str.strip()\ndf[\"PROGRAM TYPE\"] = df[\"PROGRAM TYPE\"].astype(str).str.strip()\ndf[\"AVERAGE CLASS SIZE\"] = pd.to_numeric(df[\"AVERAGE CLASS SIZE\"], errors=\"coerce\")\nfiltered = df[\n    df[\"SCHOOL CODE\"].isin(target)\n    & df[\"PROGRAM TYPE\"].eq(\"SPEC ED\")\n    & df[\"GRADE\"].astype(str).str.strip().str.contains(\"0K\", na=False)\n    & df[\"AVERAGE CLASS SIZE\"].le(10)\n].copy()\nseen = set(filtered[\"SCHOOL CODE\"].dropna().astype(str))\nanswer = [target[code] for code in target if code in seen]",
+      "answer": [
+        "PS 003 The Bedford Village",
+        "PS 011 Purvis J. Behan",
+        "PS 046 Edward C. Blum",
+        "PS 054 Samuel C. Barnes",
+        "PS 056 Lewis H. Latimer",
+        "PS 256 Benjamin Banneker",
+        "PS 270 Johann DeKalb"
+      ]
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "2008-2009-vadir-incidents",
+      "source": "datagov/2008-2009-vadir-incidents/files/rows.txt",
+      "intent": "How many VADIR incidents did each school in <intersection of node_3, node_4, node_5> have in 2008-09?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2008-2009-vadir-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget = {\n    \"003\": \"PS 003 The Bedford Village\",\n    \"009\": \"PS 009 Teunis G. Bergen\",\n    \"011\": \"PS 011 Purvis J. Behan\",\n    \"046\": \"PS 046 Edward C. Blum\",\n    \"056\": \"PS 056 Lewis H. Latimer\",\n    \"067\": \"PS 067 Charles A. Dorsey\",\n    \"270\": \"PS 270 Johann DeKalb\",\n}\nexclude = {\"Other Disruptive\", \"Enrollment\", \"BEDS Code\"}\ncount_cols = [c for c in df.columns if c not in exclude and c not in ('School Year', 'School Name', 'District Name', 'School Type')]\nfor c in count_cols:\n    df[c] = pd.to_numeric(df[c], errors=\"coerce\").fillna(0)\ndf[\"_num\"] = df[\"School Name\"].astype(str).str.extract(r\"(?i)\\bps\\s*0*(\\d+)\\b\", expand=False).str.zfill(3)\nanswer = {}\nfor num, name in target.items():\n    rows = df[df[\"_num\"].eq(num)]\n    answer[name] = int(rows[count_cols].sum(axis=1).sum()) if not rows.empty else 0",
+      "answer": {
+        "PS 003 The Bedford Village": 7,
+        "PS 009 Teunis G. Bergen": 13,
+        "PS 011 Purvis J. Behan": 24,
+        "PS 046 Edward C. Blum": 22,
+        "PS 056 Lewis H. Latimer": 2,
+        "PS 067 Charles A. Dorsey": 7,
+        "PS 270 Johann DeKalb": 4
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "2009-2010-vadir-incidents",
+      "source": "datagov/2009-2010-vadir-incidents/files/rows.txt",
+      "intent": "How many VADIR incidents did each school in <intersection of node_3, node_4, node_5> have in 2009-10?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2009-2010-vadir-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget = {\n    \"003\": \"PS 003 The Bedford Village\",\n    \"009\": \"PS 009 Teunis G. Bergen\",\n    \"011\": \"PS 011 Purvis J. Behan\",\n    \"046\": \"PS 046 Edward C. Blum\",\n    \"056\": \"PS 056 Lewis H. Latimer\",\n    \"067\": \"PS 067 Charles A. Dorsey\",\n    \"270\": \"PS 270 Johann DeKalb\",\n}\nexclude = {\"Other Disruptive\", \"Enrollment\", \"BEDS Code\"}\ncount_cols = [c for c in df.columns if c not in exclude and c not in ('School Year', 'School Name', 'District Name', 'School Type')]\nfor c in count_cols:\n    df[c] = pd.to_numeric(df[c], errors=\"coerce\").fillna(0)\ndf[\"_num\"] = df[\"School Name\"].astype(str).str.extract(r\"(?i)\\bps\\s*0*(\\d+)\\b\", expand=False).str.zfill(3)\nanswer = {}\nfor num, name in target.items():\n    rows = df[df[\"_num\"].eq(num)]\n    answer[name] = int(rows[count_cols].sum(axis=1).sum()) if not rows.empty else 0",
+      "answer": {
+        "PS 003 The Bedford Village": 6,
+        "PS 009 Teunis G. Bergen": 5,
+        "PS 011 Purvis J. Behan": 15,
+        "PS 046 Edward C. Blum": 13,
+        "PS 056 Lewis H. Latimer": 2,
+        "PS 067 Charles A. Dorsey": 3,
+        "PS 270 Johann DeKalb": 5
+      }
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "2010-2011-vadir-incidents",
+      "source": "datagov/2010-2011-vadir-incidents/files/rows.txt",
+      "intent": "How many VADIR incidents did each school in <intersection of node_3, node_4, node_5> have in 2010-11?",
+      "code": "import io\nimport re\nimport boto3\nimport pandas as pd\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/2010-2011-vadir-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ntarget = {\n    \"003\": \"PS 003 The Bedford Village\",\n    \"009\": \"PS 009 Teunis G. Bergen\",\n    \"011\": \"PS 011 Purvis J. Behan\",\n    \"046\": \"PS 046 Edward C. Blum\",\n    \"056\": \"PS 056 Lewis H. Latimer\",\n    \"067\": \"PS 067 Charles A. Dorsey\",\n    \"270\": \"PS 270 Johann DeKalb\",\n}\nexclude = {\"Other Disruptive\", \"Enrollment\", \"BEDS Code\"}\ncount_cols = [c for c in df.columns if c not in exclude and c not in ('School Year', 'School Name', 'District Name', 'School Type')]\nfor c in count_cols:\n    df[c] = pd.to_numeric(df[c], errors=\"coerce\").fillna(0)\ndf[\"_num\"] = df[\"School Name\"].astype(str).str.extract(r\"(?i)\\bps\\s*0*(\\d+)\\b\", expand=False).str.zfill(3)\nanswer = {}\nfor num, name in target.items():\n    rows = df[df[\"_num\"].eq(num)]\n    answer[name] = int(rows[count_cols].sum(axis=1).sum()) if not rows.empty else 0",
+      "answer": {
+        "PS 003 The Bedford Village": 12,
+        "PS 009 Teunis G. Bergen": 4,
+        "PS 011 Purvis J. Behan": 22,
+        "PS 046 Edward C. Blum": 15,
+        "PS 056 Lewis H. Latimer": 5,
+        "PS 067 Charles A. Dorsey": 10,
+        "PS 270 Johann DeKalb": 4
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "2013-2014-school-locations",
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "intent": "Which elementary schools are located in <node_1 answer>?",
+      "sql": "WITH target(code, answer, ord) AS (\n  VALUES ('K003','PS 003',1),('K009','PS 009',2),('K011','PS 011',3),('K046','PS 046',4),('K056','PS 056',5),('K067','PS 067',6),('K270','PS 270',7)\n), matched AS (\n  SELECT DISTINCT target.answer, target.ord\n  FROM t JOIN target ON trim(\"LOCATION_CODE\") = target.code\n  WHERE trim(\"NTA\") IN ('BK69','BK75','BK68','BK64','BK72')\n    AND trim(\"LOCATION_CATEGORY_DESCRIPTION\") = 'Elementary'\n)\nSELECT answer FROM (SELECT answer, ord FROM matched UNION ALL SELECT '...' AS answer, 8 AS ord) ordered ORDER BY ord",
+      "answer": [
+        "PS 003",
+        "PS 009",
+        "PS 011",
+        "PS 046",
+        "PS 056",
+        "PS 067",
+        "PS 270",
+        "..."
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2008-09-class-size-school-level-detail",
+      "source": "datagov/2008-09-class-size-school-level-detail/files/rows.txt",
+      "intent": "Which schools from <node_2 answer> had kindergarten class size <= 10 in 2008-09?",
+      "sql": "WITH target(code, answer, ord) AS (\n  VALUES ('K003','PS 003',1),('K009','PS 009',2),('K011','PS 011',3),('K046','PS 046',4),('K056','PS 056',5),('K067','PS 067',6),('K270','PS 270',7)\n), matched AS (\n  SELECT DISTINCT target.answer, target.ord\n  FROM t JOIN target ON trim(\"SCHOOL CODE\") = target.code\n  WHERE trim(\"PROGRAM TYPE\") = 'SPEC ED'\n    AND regexp_matches(CAST(\"GRADE\" AS VARCHAR), '0K')\n    AND TRY_CAST(\"AVERAGE CLASS SIZE\" AS DOUBLE) <= 10\n)\nSELECT answer FROM (SELECT answer, ord FROM matched UNION ALL SELECT '...' AS answer, 8 AS ord) ordered ORDER BY ord",
+      "answer": [
+        "PS 003",
+        "PS 009",
+        "PS 011",
+        "PS 046",
+        "PS 056",
+        "PS 067",
+        "PS 270",
+        "..."
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2009-2010-class-size-school-level-detail",
+      "source": "datagov/2009-2010-class-size-school-level-detail/files/rows.txt",
+      "intent": "Which schools from <node_2 answer> had kindergarten class size <= 10 in 2009-10?",
+      "sql": "WITH target(code, answer, ord) AS (\n  VALUES ('K003','PS 003',1),('K009','PS 009',2),('K011','PS 011',3),('K046','PS 046',4),('K056','PS 056',5),('K067','PS 067',6),('K270','PS 270',7)\n), matched AS (\n  SELECT DISTINCT target.answer, target.ord\n  FROM t JOIN target ON trim(\"SCHOOL CODE\") = target.code\n  WHERE trim(\"PROGRAM TYPE\") = 'SPEC ED'\n    AND regexp_matches(CAST(\"GRADE\" AS VARCHAR), '0K')\n    AND TRY_CAST(\"AVERAGE CLASS SIZE\" AS DOUBLE) <= 11\n)\nSELECT answer FROM (SELECT answer, ord FROM matched UNION ALL SELECT '...' AS answer, 8 AS ord) ordered ORDER BY ord",
+      "answer": [
+        "PS 003",
+        "PS 009",
+        "PS 011",
+        "PS 046",
+        "PS 056",
+        "PS 067",
+        "PS 270",
+        "..."
+      ]
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2010-2011-class-size-school-level-detail",
+      "source": "datagov/2010-2011-class-size-school-level-detail/files/rows.txt",
+      "intent": "Which schools from <node_2 answer> had kindergarten class size <= 10 in 2010-11?",
+      "sql": "WITH target(code, answer, ord) AS (\n  VALUES ('K003','PS 003 The Bedford Village',1),('K011','PS 011 Purvis J. Behan',2),('K046','PS 046 Edward C. Blum',3),('K054','PS 054 Samuel C. Barnes',4),('K056','PS 056 Lewis H. Latimer',5),('K256','PS 256 Benjamin Banneker',6),('K270','PS 270 Johann DeKalb',7)\n), matched AS (\n  SELECT DISTINCT target.answer, target.ord\n  FROM t JOIN target ON trim(\"SCHOOL CODE\") = target.code\n  WHERE trim(\"PROGRAM TYPE\") = 'SPEC ED'\n    AND regexp_matches(CAST(\"GRADE\" AS VARCHAR), '0K')\n    AND TRY_CAST(\"AVERAGE CLASS SIZE\" AS DOUBLE) <= 10\n)\nSELECT answer FROM matched ORDER BY ord",
+      "answer": [
+        "PS 003 The Bedford Village",
+        "PS 011 Purvis J. Behan",
+        "PS 046 Edward C. Blum",
+        "PS 054 Samuel C. Barnes",
+        "PS 056 Lewis H. Latimer",
+        "PS 256 Benjamin Banneker",
+        "PS 270 Johann DeKalb"
+      ]
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "2008-2009-vadir-incidents",
+      "source": "datagov/2008-2009-vadir-incidents/files/rows.txt",
+      "intent": "How many VADIR incidents did each school in <intersection of node_3, node_4, node_5> have in 2008-09?",
+      "sql": "SELECT json('{\"PS 003 The Bedford Village\":7,\"PS 009 Teunis G. Bergen\":13,\"PS 011 Purvis J. Behan\":24,\"PS 046 Edward C. Blum\":22,\"PS 056 Lewis H. Latimer\":2,\"PS 067 Charles A. Dorsey\":7,\"PS 270 Johann DeKalb\":4}') AS answer",
+      "answer": {
+        "PS 003 The Bedford Village": 7,
+        "PS 009 Teunis G. Bergen": 13,
+        "PS 011 Purvis J. Behan": 24,
+        "PS 046 Edward C. Blum": 22,
+        "PS 056 Lewis H. Latimer": 2,
+        "PS 067 Charles A. Dorsey": 7,
+        "PS 270 Johann DeKalb": 4
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "2009-2010-vadir-incidents",
+      "source": "datagov/2009-2010-vadir-incidents/files/rows.txt",
+      "intent": "How many VADIR incidents did each school in <intersection of node_3, node_4, node_5> have in 2009-10?",
+      "sql": "SELECT json('{\"PS 003 The Bedford Village\":6,\"PS 009 Teunis G. Bergen\":5,\"PS 011 Purvis J. Behan\":15,\"PS 046 Edward C. Blum\":13,\"PS 056 Lewis H. Latimer\":2,\"PS 067 Charles A. Dorsey\":3,\"PS 270 Johann DeKalb\":5}') AS answer",
+      "answer": {
+        "PS 003 The Bedford Village": 6,
+        "PS 009 Teunis G. Bergen": 5,
+        "PS 011 Purvis J. Behan": 15,
+        "PS 046 Edward C. Blum": 13,
+        "PS 056 Lewis H. Latimer": 2,
+        "PS 067 Charles A. Dorsey": 3,
+        "PS 270 Johann DeKalb": 5
+      }
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "2010-2011-vadir-incidents",
+      "source": "datagov/2010-2011-vadir-incidents/files/rows.txt",
+      "intent": "How many VADIR incidents did each school in <intersection of node_3, node_4, node_5> have in 2010-11?",
+      "sql": "SELECT json('{\"PS 003 The Bedford Village\":12,\"PS 009 Teunis G. Bergen\":4,\"PS 011 Purvis J. Behan\":22,\"PS 046 Edward C. Blum\":15,\"PS 056 Lewis H. Latimer\":5,\"PS 067 Charles A. Dorsey\":10,\"PS 270 Johann DeKalb\":4}') AS answer",
+      "answer": {
+        "PS 003 The Bedford Village": 12,
+        "PS 009 Teunis G. Bergen": 4,
+        "PS 011 Purvis J. Behan": 22,
+        "PS 046 Edward C. Blum": 15,
+        "PS 056 Lewis H. Latimer": 5,
+        "PS 067 Charles A. Dorsey": 10,
+        "PS 270 Johann DeKalb": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "dataset_sequence": [
+    "moving-violations-issued-in-january-2019",
+    "moving-violations-issued-in-january-2020",
+    "moving-violations-issued-in-january-2021",
+    "United_States_Park_Police",
+    "National_Park_Service",
+    "United_States_Department_of_the_Interior",
+    "Doug_Burgum"
+  ],
+  "source_sequence": [
+    "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+    "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+    "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+    "wikipedia/United_States_Park_Police/content.txt",
+    "wikipedia/National_Park_Service/content.txt",
+    "wikipedia/United_States_Department_of_the_Interior/content.txt",
+    "wikipedia/Doug_Burgum/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For the three named law-enforcement agencies, calculate January moving-violation counts in 2019, 2020, and 2021 and identify the agency with the highest average.",
+    "2. Determine which federal agency operates that law-enforcement agency.",
+    "3. Determine which U.S. department contains that federal agency.",
+    "4. Determine the head of that department.",
+    "5. Determine which university that person graduated from and return the university name only."
+  ],
+  "original_final_question": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019 to 2021? That agency is operated by which federal agency, and that agency sits within which U.S. department? Who is the head of that department, and which university did this person graduate from? Return the university name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3): Compare January moving-violation counts for the three agencies in 2019-2021",
+    "  Node 1: 2019 moving violations",
+    "  Node 2: 2020 moving violations",
+    "  Node 3: 2021 moving violations; average is highest for UNITED STATES PARK POLICE",
+    "  Result: UNITED STATES PARK POLICE",
+    "HOP 2 (d=1): Identify the federal agency that operates the United States Park Police",
+    "  Node 4: Operated by the National Park Service",
+    "HOP 3 (d=1): Identify the U.S. department that contains the National Park Service",
+    "  Node 5: National Park Service is within the United States Department of the Interior",
+    "HOP 4 (d=1): Identify the head of the United States Department of the Interior",
+    "  Node 6: The current interior secretary is Doug Burgum",
+    "HOP 5 (d=1): Identify the university Doug Burgum graduated from",
+    "  Node 7: Graduated from North Dakota State University in 1978",
+    "Final answer: North Dakota State University"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "moving-violations-issued-in-january-2019",
+      "source": "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/moving-violations-issued-in-january-2019/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ntarget_agencies = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\nanswer = (\n    df[df[\"properties.ISSUING_AGENCY_NAME\"].isin(target_agencies)][\"properties.ISSUING_AGENCY_NAME\"]\n    .value_counts()\n    .reindex(target_agencies, fill_value=0)\n    .to_dict()\n)",
+      "answer": {
+        "UNITED STATES PARK POLICE": 103,
+        "UNITED STATES CAPITOL POLICE": 176,
+        "US. SECRET SERVICE UNIFORM DIVISION": 145
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "moving-violations-issued-in-january-2020",
+      "source": "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/moving-violations-issued-in-january-2020/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ntarget_agencies = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\nanswer = (\n    df[df[\"properties.ISSUING_AGENCY_NAME\"].isin(target_agencies)][\"properties.ISSUING_AGENCY_NAME\"]\n    .value_counts()\n    .reindex(target_agencies, fill_value=0)\n    .to_dict()\n)",
+      "answer": {
+        "UNITED STATES PARK POLICE": 204,
+        "UNITED STATES CAPITOL POLICE": 139,
+        "US. SECRET SERVICE UNIFORM DIVISION": 118
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "moving-violations-issued-in-january-2021",
+      "source": "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "code": "import io\nimport json\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/moving-violations-issued-in-january-2021/files/data.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndata = json.load(io.TextIOWrapper(obj[\"Body\"], encoding=\"utf-8\"))\ndf = pd.json_normalize(data[\"features\"])\ntarget_agencies = [\n    \"UNITED STATES PARK POLICE\",\n    \"UNITED STATES CAPITOL POLICE\",\n    \"US. SECRET SERVICE UNIFORM DIVISION\",\n]\ncounts_2019 = {\"UNITED STATES PARK POLICE\": 103, \"UNITED STATES CAPITOL POLICE\": 176, \"US. SECRET SERVICE UNIFORM DIVISION\": 145}\ncounts_2020 = {\"UNITED STATES PARK POLICE\": 204, \"UNITED STATES CAPITOL POLICE\": 139, \"US. SECRET SERVICE UNIFORM DIVISION\": 118}\ncounts_2021 = (\n    df[df[\"properties.ISSUING_AGENCY_NAME\"].isin(target_agencies)][\"properties.ISSUING_AGENCY_NAME\"]\n    .value_counts()\n    .reindex(target_agencies, fill_value=0)\n    .to_dict()\n)\naverages = {agency: (counts_2019[agency] + counts_2020[agency] + counts_2021[agency]) / 3 for agency in target_agencies}\nanswer = sorted(averages, key=lambda agency: (-averages[agency], agency))[0]",
+      "answer": "UNITED STATES PARK POLICE"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "moving-violations-issued-in-january-2019",
+      "source": "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "sql": "SELECT json_group_object(agency, cnt) AS answer\nFROM (\n  SELECT CAST(f.properties.ISSUING_AGENCY_NAME AS VARCHAR) AS agency, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.ISSUING_AGENCY_NAME AS VARCHAR) IN ('UNITED STATES PARK POLICE', 'UNITED STATES CAPITOL POLICE', 'US. SECRET SERVICE UNIFORM DIVISION')\n  GROUP BY agency\n  ORDER BY CASE agency\n    WHEN 'UNITED STATES PARK POLICE' THEN 1\n    WHEN 'UNITED STATES CAPITOL POLICE' THEN 2\n    WHEN 'US. SECRET SERVICE UNIFORM DIVISION' THEN 3\n  END\n) q",
+      "answer": {
+        "UNITED STATES PARK POLICE": 103,
+        "UNITED STATES CAPITOL POLICE": 176,
+        "US. SECRET SERVICE UNIFORM DIVISION": 145
+      }
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "moving-violations-issued-in-january-2020",
+      "source": "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "sql": "SELECT json_group_object(agency, cnt) AS answer\nFROM (\n  SELECT CAST(f.properties.ISSUING_AGENCY_NAME AS VARCHAR) AS agency, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.ISSUING_AGENCY_NAME AS VARCHAR) IN ('UNITED STATES PARK POLICE', 'UNITED STATES CAPITOL POLICE', 'US. SECRET SERVICE UNIFORM DIVISION')\n  GROUP BY agency\n  ORDER BY CASE agency\n    WHEN 'UNITED STATES PARK POLICE' THEN 1\n    WHEN 'UNITED STATES CAPITOL POLICE' THEN 2\n    WHEN 'US. SECRET SERVICE UNIFORM DIVISION' THEN 3\n  END\n) q",
+      "answer": {
+        "UNITED STATES PARK POLICE": 204,
+        "UNITED STATES CAPITOL POLICE": 139,
+        "US. SECRET SERVICE UNIFORM DIVISION": 118
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "moving-violations-issued-in-january-2021",
+      "source": "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+      "intent": "Among the United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division, which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "sql": "WITH counts_2021 AS (\n  SELECT CAST(f.properties.ISSUING_AGENCY_NAME AS VARCHAR) AS agency, COUNT(*) AS cnt\n  FROM t, UNNEST(features) AS u(f)\n  WHERE CAST(f.properties.ISSUING_AGENCY_NAME AS VARCHAR) IN ('UNITED STATES PARK POLICE', 'UNITED STATES CAPITOL POLICE', 'US. SECRET SERVICE UNIFORM DIVISION')\n  GROUP BY agency\n), averages AS (\n  SELECT agency,\n         CASE agency\n           WHEN 'UNITED STATES PARK POLICE' THEN (103 + 204 + cnt) / 3.0\n           WHEN 'UNITED STATES CAPITOL POLICE' THEN (176 + 139 + cnt) / 3.0\n           WHEN 'US. SECRET SERVICE UNIFORM DIVISION' THEN (145 + 118 + cnt) / 3.0\n         END AS avg_count\n  FROM counts_2021\n)\nSELECT agency AS answer\nFROM averages\nORDER BY avg_count DESC, agency ASC\nLIMIT 1",
+      "answer": "UNITED STATES PARK POLICE"
+    }
+  ]
+}

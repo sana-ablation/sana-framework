@@ -1,0 +1,191 @@
+{
+  "question": "Across years 2015-16 t0 2018-19, which Texas county is consistently in the top five for total lunch serves in Seamless Summer Option program? Among those counties, identify the two with the largest percentage decreases in child & adult care food program's total reimbursements from 2018-19 to 2020-21, then pick the one with the higher average child center enrollment across 2018-19 and 2019-20. For that county, what coast is its county seat located on? Return the coast name only. Your response should be in the format [Answer].",
+  "answer": "Gulf Coast",
+  "nodes": {
+    "1": {
+      "source": "datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2016/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2016/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2015-2016'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Which Texas counties were in the top five for SSO LunchTotal in every program year from 2015-2016 through 2018-2019? (Filter for this node: ProgramYear == 2015-2016; group by SiteCounty; sum LunchTotal; rank by total; keep top 5.)",
+      "answer": [
+        "Harris",
+        "Hidalgo",
+        "Dallas",
+        "Cameron",
+        "El Paso"
+      ]
+    },
+    "2": {
+      "source": "datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2017/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2017/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2016-2017'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Which Texas counties were in the top five for SSO LunchTotal in every program year from 2015-2016 through 2018-2019? (Filter for this node: ProgramYear == 2016-2017; group by SiteCounty; sum LunchTotal; rank by total; keep top 5.)",
+      "answer": [
+        "Hidalgo",
+        "Harris",
+        "Dallas",
+        "Cameron",
+        "Bexar"
+      ]
+    },
+    "3": {
+      "source": "datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2017-2018'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Which Texas counties were in the top five for SSO LunchTotal in every program year from 2015-2016 through 2018-2019? (Filter for this node: ProgramYear == 2017-2018; group by SiteCounty; sum LunchTotal; rank by total; keep top 5.)",
+      "answer": [
+        "Hidalgo",
+        "Harris",
+        "Dallas",
+        "Cameron",
+        "Bexar"
+      ]
+    },
+    "4": {
+      "source": "datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2018-2019'\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nlunch_total = pd.to_numeric(df['LunchTotal'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'LunchTotal': lunch_total})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.ne('') & county.ne('Nan')].copy()\nranked = filtered.groupby('SiteCounty', as_index=False)['LunchTotal'].sum().sort_values(['LunchTotal', 'SiteCounty'], ascending=[False, True])\nanswer = ranked['SiteCounty'].head(5).tolist()",
+      "subquestion": "Which Texas counties were in the top five for SSO LunchTotal in every program year from 2015-2016 through 2018-2019? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum LunchTotal; rank by total; keep top 5.)",
+      "answer": [
+        "Hidalgo",
+        "Harris",
+        "Dallas",
+        "Bexar",
+        "Cameron"
+      ]
+    },
+    "5": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2018-2019'\nordered_targets = ['Harris', 'Dallas', 'Hidalgo', 'Cameron']\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nreimbursement = pd.to_numeric(df['TotalMealReimbursement'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'TotalMealReimbursement': reimbursement})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.isin(ordered_targets)].copy()\ntotals = filtered.groupby('SiteCounty')['TotalMealReimbursement'].sum()\nanswer = {name: round(float(totals.get(name, 0.0)), 4) for name in ordered_targets}",
+      "subquestion": "Among {Harris, Hidalgo, Dallas, Cameron} (from hop 1), which counties had the largest percentage decrease in CACFP day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum TotalMealReimbursement.)",
+      "answer": {
+        "Harris": 8757796.13,
+        "Dallas": 2835278.75,
+        "Hidalgo": 1202699.73,
+        "Cameron": 392489.51
+      }
+    },
+    "6": {
+      "source": "datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2020-2021'\nordered_targets = ['Harris', 'Dallas', 'Hidalgo', 'Cameron']\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nreimbursement = pd.to_numeric(df['TotalMealReimbursement'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'TotalMealReimbursement': reimbursement})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.isin(ordered_targets)].copy()\ntotals = filtered.groupby('SiteCounty')['TotalMealReimbursement'].sum()\nanswer = {name: round(float(totals.get(name, 0.0)), 4) for name in ordered_targets}",
+      "subquestion": "Among {Harris, Hidalgo, Dallas, Cameron} (from hop 1), which counties had the largest percentage decrease in CACFP day care home meal reimbursements between the 2018-2019 and 2020-2021 program years? (Filter for this node: ProgramYear == 2020-2021; group by SiteCounty; sum TotalMealReimbursement.)",
+      "answer": {
+        "Harris": 7558597.77,
+        "Dallas": 2393411.26,
+        "Hidalgo": 971063.56,
+        "Cameron": 330003.06
+      }
+    },
+    "7": {
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2018-2019'\nordered_targets = ['Cameron', 'Hidalgo']\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nenrollment = pd.to_numeric(df['EnrollmentQty'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'EnrollmentQty': enrollment})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.isin(ordered_targets)].copy()\ntotals = filtered.groupby('SiteCounty')['EnrollmentQty'].sum()\nanswer = {name: int(totals.get(name, 0)) for name in ordered_targets}",
+      "subquestion": "Among {Hidalgo, Cameron} (from hop 2), which county had the higher average CACFP child-center EnrollmentQty across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2018-2019; group by SiteCounty; sum EnrollmentQty.)",
+      "answer": {
+        "Cameron": 7620183,
+        "Hidalgo": 1661128
+      }
+    },
+    "8": {
+      "source": "datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.client import Config\n\nsource = 'datagov/child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\nprogram_year = '2019-2020'\nordered_targets = ['Cameron', 'Hidalgo']\ncounty = df['SiteCounty'].astype(str).str.strip().str.title()\nenrollment = pd.to_numeric(df['EnrollmentQty'], errors='coerce')\nfiltered = pd.DataFrame({'SiteCounty': county, 'EnrollmentQty': enrollment})[df['ProgramYear'].astype(str).str.strip().eq(program_year) & county.isin(ordered_targets)].copy()\ntotals = filtered.groupby('SiteCounty')['EnrollmentQty'].sum()\nanswer = {name: int(totals.get(name, 0)) for name in ordered_targets}",
+      "subquestion": "Among {Hidalgo, Cameron} (from hop 2), which county had the higher average CACFP child-center EnrollmentQty across the 2018-2019 and 2019-2020 program years? (Filter for this node: ProgramYear == 2019-2020; group by SiteCounty; sum EnrollmentQty.)",
+      "answer": {
+        "Cameron": 1076746,
+        "Hidalgo": 1477805
+      }
+    },
+    "9": {
+      "source": "wikipedia/Cameron_County,_Texas/content.txt",
+      "fact": "Cameron County's county seat is Brownsville.",
+      "subquestion": "What is the county seat of Cameron County, Texas (from hop 3)? (Lookup: county seat statement in the Cameron County, Texas article.)",
+      "answer": "Brownsville"
+    },
+    "10": {
+      "source": "wikipedia/Brownsville,_Texas/content.txt",
+      "fact": "Brownsville is located on the western Gulf Coast in South Texas.",
+      "subquestion": "On which coast is Brownsville (from hop 4) located? (Lookup: Brownsville, Texas article location description.)",
+      "answer": "Gulf Coast"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=4, SSO LunchTotal 2015-2016 to 2018-2019 - nodes 1-4):",
+    "  Node 1 (2015-2016): top five LunchTotal counties -> {Harris, Hidalgo, Dallas, Cameron, El Paso}",
+    "  Node 2 (2016-2017): top five LunchTotal counties -> {Hidalgo, Harris, Dallas, Cameron, Bexar}",
+    "  Node 3 (2017-2018): top five LunchTotal counties -> {Hidalgo, Harris, Dallas, Cameron, Bexar}",
+    "  Node 4 (2018-2019): top five LunchTotal counties -> {Hidalgo, Harris, Dallas, Bexar, Cameron}",
+    "  Intersection: {Harris, Hidalgo, Dallas, Cameron}",
+    "",
+    "HOP 2 (d=2, CACFP day care homes reimbursements 2018-2019 vs 2020-2021 - nodes 5-6):",
+    "  Node 5 totals (2018-2019): Harris 8,757,796.13; Dallas 2,835,278.75; Hidalgo 1,202,699.73; Cameron 392,489.51",
+    "  Node 6 totals (2020-2021): Harris 7,558,597.77; Dallas 2,393,411.26; Hidalgo 971,063.56; Cameron 330,003.06",
+    "  Percent decreases: Hidalgo -19.26%, Cameron -15.92%, Dallas -15.58%, Harris -13.69% -> two largest decreases {Hidalgo, Cameron}",
+    "",
+    "HOP 3 (d=2, CACFP child centers EnrollmentQty 2018-2019 vs 2019-2020 - nodes 7-8):",
+    "  Node 7 totals (2018-2019): Cameron 7,620,183; Hidalgo 1,661,128",
+    "  Node 8 totals (2019-2020): Cameron 1,076,746; Hidalgo 1,477,805",
+    "  Average EnrollmentQty: Cameron 4,348,464.5 vs Hidalgo 1,569,466.5 -> Cameron County",
+    "",
+    "HOP 4 (d=1, Cameron County Wikipedia - node 9):",
+    "  Node 9: Cameron County seat is Brownsville",
+    "",
+    "HOP 5 (d=1, Brownsville Wikipedia - node 10):",
+    "  Node 10: Brownsville is on the Gulf Coast",
+    "  Final answer: Gulf Coast"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Brownsville,_Texas",
+    "Cameron_County,_Texas",
+    "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2018",
+    "child-and-adult-care-food-program-cacfp-child-centers-meal-reimbursement-program-year-2019",
+    "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2018",
+    "child-and-adult-care-food-programs-cacfp-day-care-homes-meal-reimbursement-program-ye-2020",
+    "summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2016",
+    "summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2017",
+    "summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2018",
+    "summer-meal-programs-seamless-summer-option-sso-meal-count-information-program-period-2019"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1 (2015-2016): top five LunchTotal counties -> {Harris, Hidalgo, Dallas, Cameron, El Paso} Node 2 (2016-2017): top five LunchTotal counties -> {Hidalgo, Harris, Dallas, Cameron, Bexar} Node 3 (2017-2018): top five LunchTotal counties -> {Hidalgo, Harris, Dallas, Cameron, Bexar} Node 4 (2018-2019): top five LunchTotal counties -> {Hidalgo, Harris, Dallas, Bexar, Cameron} Intersection: {Harris, Hidalgo, Dallas, Cameron}",
+      "answer": "{Hidalgo, Harris, Dallas, Bexar, Cameron}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5,
+        6
+      ],
+      "reasoning": "Node 5 totals (2018-2019): Harris 8,757,796.13; Dallas 2,835,278.75; Hidalgo 1,202,699.73; Cameron 392,489.51 Node 6 totals (2020-2021): Harris 7,558,597.77; Dallas 2,393,411.26; Hidalgo 971,063.56; Cameron 330,003.06 Percent decreases: Hidalgo -19.26%, Cameron -15.92%, Dallas -15.58%, Harris -13.69% -> two largest decreases {Hidalgo, Cameron}",
+      "answer": "two largest decreases {Hidalgo, Cameron}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8
+      ],
+      "reasoning": "Node 7 totals (2018-2019): Cameron 7,620,183; Hidalgo 1,661,128 Node 8 totals (2019-2020): Cameron 1,076,746; Hidalgo 1,477,805 Average EnrollmentQty: Cameron 4,348,464.5 vs Hidalgo 1,569,466.5 -> Cameron County",
+      "answer": "Cameron County"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        9
+      ],
+      "reasoning": "Node 9: Cameron County seat is Brownsville",
+      "answer": "Brownsville"
+    },
+    {
+      "hop": 5,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Node 10: Brownsville is on the Gulf Coast",
+      "answer": "Gulf Coast"
+    }
+  ]
+}

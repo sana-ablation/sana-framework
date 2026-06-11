@@ -1,0 +1,83 @@
+{
+  "question": "How many modern cities with a population of over 100k are within 0.1 degrees of ancient Roman-era cities? Write your answer as [ANSWER].",
+  "answer": "274",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-hard-7/files/roman_cities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\ndf = pd.read_csv(path)\nresult = str(len(df))\nprint(result)\n",
+      "subquestion": "How many ancient Roman-era city rows are available for coordinate matching?",
+      "answer": "1388"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-hard-7/files/worldcities.csv",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\ndf = pd.read_csv(path)\nmodern = df[df['population'] > 100000]\nresult = str(len(modern))\nprint(result)\n",
+      "subquestion": "How many modern city rows have population greater than 100,000?",
+      "answer": "5873"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-hard-7/files/worldcities.csv",
+      "fact": "import pandas as pd\nimport numpy as np\nimport re\nroman_path = 'other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv'\nworld_path = 'other-benchmarks/Kramabench/data/archeology/input/worldcities.csv'\nroman = pd.read_csv(roman_path)\nworld = pd.read_csv(world_path)\nroman_xy = roman[['Longitude (X)', 'Latitude (Y)']].to_numpy(float)\ndef match_indices(modern, radius=0.1):\n    points = modern[['lng', 'lat']].to_numpy(float)\n    good = []\n    roman_matches = []\n    for start in range(0, len(points), 512):\n        chunk = points[start:start + 512]\n        dist2 = ((chunk[:, None, :] - roman_xy[None, :, :]) ** 2).sum(axis=2)\n        mask = dist2 <= radius * radius\n        for offset, row in enumerate(mask):\n            indices = np.flatnonzero(row)\n            if len(indices):\n                good.append(start + offset)\n                roman_matches.append(indices.tolist())\n    return good, roman_matches\nmodern = world[world['population'] > 100000].reset_index(drop=True)\nmatched, _ = match_indices(modern)\nresult = str(len(matched))\nprint(result)\n",
+      "subquestion": "How many modern cities over 100,000 people are within 0.1 degrees of at least one Roman-era city?",
+      "answer": "274"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Load Roman-era city coordinates from the Roman cities table.",
+    "Node 2: Filter the modern world cities table to population greater than 100,000.",
+    "Node 3 depends on nodes 1 and 2: For each large modern city, test whether any Roman-era coordinate is within 0.1 degrees.",
+    "Final answer: 274"
+  ],
+  "datasets_used": [
+    "kramabench-archeology-hard-7"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Load Roman-era city coordinates from the Roman cities table.",
+      "answer": "1388"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Filter the modern world cities table to population greater than 100,000.",
+      "answer": "5873"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on nodes 1 and 2: For each large modern city, test whether any Roman-era coordinate is within 0.1 degrees.",
+      "answer": "274"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-hard-7",
+    "domain": "archeology",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-hard-7.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-7",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-hard-7/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/roman_cities.csv",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/worldcities.csv"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

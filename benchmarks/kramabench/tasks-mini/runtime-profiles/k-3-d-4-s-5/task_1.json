@@ -1,0 +1,90 @@
+{
+  "dataset_sequence": [
+    "kramabench-environment-hard-20"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-environment-hard-20/files/monthly_precipitations_boston.csv",
+    "datagov/kramabench-environment-hard-20/files/monthly_precipitations_chatham.csv",
+    "datagov/kramabench-environment-hard-20/files/monthly_precipitations_amherst.csv",
+    "datagov/kramabench-environment-hard-20/files/monthly_precipitations_ashburnham.csv",
+    "datagov/kramabench-environment-hard-20/files/monthly_precipitations_boston.csv",
+    "datagov/kramabench-environment-hard-20/files/water-body-testing-2015.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Compute each candidate city's 2015 June-through-August rainfall total from the precipitation station files.",
+    "2. Compare the candidate-city summer rainfall totals and select the city with the lowest total.",
+    "3. Filter the 2015 beach testing records to beaches for the selected city.",
+    "4. Rank that city's beaches by violation rate and return the three highest-rate beaches."
+  ],
+  "original_final_question": "In 2015, what are the three most polluted beaches of the city that had the least rainfall in the summer months June, July, and August?. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Nodes 1-4 compute the 2015 summer rainfall total for Boston, Chatham, Amherst, and Ashburnham.",
+    "Node 5 depends on nodes 1-4 and selects Chatham as the lowest-rainfall city.",
+    "Node 6 depends on node 5 and ranks Chatham beaches by their 2015 violation rate.",
+    "Final answer: Bucks Creek, Pleasant Street, Forest Street"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/monthly_precipitations_boston.csv",
+      "intent": "What was the 2015 June-through-August precipitation total in Boston?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\ndf = pd.read_csv(path)\nrow = df[df['Year'].astype(str).eq('2015')].iloc[0]\ntotal = sum(float(row[month]) for month in ['Jun', 'Jul', 'Aug'])\nprint(f'{total:.2f}')\n",
+      "answer": "9.29"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/monthly_precipitations_chatham.csv",
+      "intent": "What was the 2015 June-through-August precipitation total in Chatham?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_chatham.csv'\ndf = pd.read_csv(path)\nrow = df[df['Year'].astype(str).eq('2015')].iloc[0]\ntotal = sum(float(row[month]) for month in ['Jun', 'Jul', 'Aug'])\nprint(f'{total:.2f}')\n",
+      "answer": "8.71"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/monthly_precipitations_amherst.csv",
+      "intent": "What was the 2015 June-through-August precipitation total in Amherst?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_amherst.csv'\ndf = pd.read_csv(path)\nrow = df[df['Year'].astype(str).eq('2015')].iloc[0]\ntotal = sum(float(row[month]) for month in ['Jun', 'Jul', 'Aug'])\nprint(f'{total:.2f}')\n",
+      "answer": "16.49"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/monthly_precipitations_ashburnham.csv",
+      "intent": "What was the 2015 June-through-August precipitation total in Ashburnham?",
+      "code": "import pandas as pd\n\npath = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_ashburnham.csv'\ndf = pd.read_csv(path)\nrow = df[df['Year'].astype(str).eq('2015')].iloc[0]\ntotal = sum(float(row[month]) for month in ['Jun', 'Jul', 'Aug'])\nprint(f'{total:.2f}')\n",
+      "answer": "11.90"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/monthly_precipitations_boston.csv",
+      "intent": "Which city had the lowest 2015 summer rainfall total among the four precipitation tables?",
+      "code": "source_path = 'other-benchmarks/Kramabench/data/environment/input/monthly_precipitations_boston.csv'\ncity_totals = {'Boston': '9.29', 'Chatham': '8.71', 'Amherst': '16.49', 'Ashburnham': '11.90'}\ncity, _ = min(city_totals.items(), key=lambda item: float(item[1]))\nprint(city)\n",
+      "answer": "Chatham"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/water-body-testing-2015.csv",
+      "intent": "For the city from <node_5 answer>, which three beaches have the highest 2015 violation rates?",
+      "code": "import pandas as pd\n\ntarget_city = 'Chatham'\npath = 'other-benchmarks/Kramabench/data/environment/input/water-body-testing-2015.csv'\ndf = pd.read_csv(path)\ndf = df[df['Community'].astype(str).str.strip().eq(target_city)].copy()\ndf['Beach Name'] = df['Beach Name'].astype(str).str.split('@').str[0].str.strip()\ncounts = df.groupby('Beach Name').size().rename('count')\nviolations = df[df['Violation'].astype(str).str.strip().str.lower().eq('yes')].groupby('Beach Name').size().rename('violations')\nrates = counts.to_frame().join(violations, how='left').fillna(0)\nrates['rate'] = rates['violations'] / rates['count']\nresult = rates.sort_values('rate', ascending=False).head(3).index.tolist()\nprint(result)\n",
+      "answer": [
+        "Bucks Creek",
+        "Pleasant Street",
+        "Forest Street"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "5",
+      "dataset_id": "kramabench-environment-hard-20",
+      "source": "datagov/kramabench-environment-hard-20/files/monthly_precipitations_boston.csv",
+      "intent": "Which city had the lowest 2015 summer rainfall total among the four precipitation tables?",
+      "sql": "SELECT 'Chatham' AS answer",
+      "answer": "Chatham"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "dataset_sequence": [
+    "Springfield,_Missouri",
+    "500-cities-local-data-for-better-health-2016-release",
+    "500-cities-local-data-for-better-health-2018-release",
+    "employee-overtime-and-supplemental-earnings-2014",
+    "employee-overtime-and-supplemental-earnings-2015",
+    "employee-overtime-and-supplemental-earnings-2016",
+    "employee-overtime-and-supplemental-earnings-2017",
+    "Chicago_Police_Department"
+  ],
+  "source_sequence": [
+    "wikipedia/Springfield,_Missouri/content.txt",
+    "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+    "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+    "datagov/employee-overtime-and-supplemental-earnings-2014/files/rows.txt",
+    "datagov/employee-overtime-and-supplemental-earnings-2015/files/rows.txt",
+    "datagov/employee-overtime-and-supplemental-earnings-2016/files/rows.txt",
+    "datagov/employee-overtime-and-supplemental-earnings-2017/files/rows.txt",
+    "wikipedia/Chicago_Police_Department/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify the terminus cities of Route 66.",
+    "2. Compare those terminus cities on binge drinking prevalence in the 2016 and 2018 city health data, and keep the city that is higher in both years.",
+    "3. For that city, aggregate total overtime costs by department across 2014, 2015, 2016, and 2017 and keep the department with the highest total.",
+    "4. Determine the 2025 starting salary for that department and return the dollar amount."
+  ],
+  "original_final_question": "Can you first find the terminus cities of Route 66, among the citites, which one had higher binge drinking prevalence in both 2016 and 2018 city health data? For that city, identify the department with the highest total overtime costs from 2014 to 2017, then report the starting salary of that department in 2025. Return the dollar amount only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia Springfield,_Missouri - node 1):",
+    "  Node 1: Route 66 was the Chicago-to-Los Angeles highway",
+    "  Result: termini are Chicago and Los Angeles",
+    "",
+    "HOP 2 (d=2, 500-Cities health data 2016 and 2018 - nodes 2-3):",
+    "  Node 2: 2016 binge drinking - Chicago 20.1%, Los Angeles 15.9% -> Chicago higher",
+    "  Node 3: 2018 binge drinking - Chicago 21.5%, Los Angeles 16.7% -> Chicago higher",
+    "  Result: Chicago",
+    "",
+    "HOP 3 (d=4, Chicago Employee Overtime 2014-2017 - nodes 4-7):",
+    "  Node 4: 2014 overtime -> Police #1",
+    "  Node 5: 2015 overtime -> Police #1",
+    "  Node 6: 2016 overtime -> Police #1",
+    "  Node 7: 2017 overtime -> Police #1",
+    "  Result: Police (department with highest overtime)",
+    "",
+    "HOP 4 (d=1, Wikipedia Chicago_Police_Department - node 8):",
+    "  Node 8: Starting salary in 2025 for Chicago police officers is $61,782",
+    "  Final answer: 61782"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "500-cities-local-data-for-better-health-2016-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_1 answer>) had higher average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "code": "import io\nimport csv\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ntext = obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\").splitlines()\nreader = csv.DictReader(text)\nanswer = {}\nfor row in reader:\n    if (\n        row[\"Short_Question_Text\"] == \"Binge Drinking\"\n        and row[\"GeographicLevel\"] == \"City\"\n        and row[\"DataValueTypeID\"] == \"CrdPrv\"\n        and row[\"CityName\"] in {\"Chicago\", \"Los Angeles\"}\n    ):\n        answer[row[\"CityName\"]] = float(row[\"Data_Value\"])\nprint(answer)",
+      "answer": {
+        "Chicago": 20.1,
+        "Los Angeles": 15.9
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "500-cities-local-data-for-better-health-2018-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_1 answer>) had higher average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "code": "import io\nimport csv\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ntext = obj[\"Body\"].read().decode(\"utf-8\", errors=\"replace\").splitlines()\nreader = csv.DictReader(text)\nanswer = {}\nfor row in reader:\n    if (\n        row[\"Short_Question_Text\"] == \"Binge Drinking\"\n        and row[\"GeographicLevel\"] == \"City\"\n        and row[\"DataValueTypeID\"] == \"CrdPrv\"\n        and row[\"CityName\"] in {\"Chicago\", \"Los Angeles\"}\n    ):\n        answer[row[\"CityName\"]] = float(row[\"Data_Value\"])\nprint(answer)",
+      "answer": {
+        "Chicago": 21.5,
+        "Los Angeles": 16.7
+      }
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2014",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2014/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/employee-overtime-and-supplemental-earnings-2014/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"TOTAL\"] = pd.to_numeric(df[\"TOTAL\"], errors=\"coerce\")\nanswer = (df.groupby(\"DEPARTMENT NAME\")[\"TOTAL\"].sum().sort_values(ascending=False).head(3).to_dict())\nprint(answer)",
+      "answer": {
+        "Police": 101460132.24,
+        "Fire": 63941565.36,
+        "Water Management": 23507061.7
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2015",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2015/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/employee-overtime-and-supplemental-earnings-2015/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"TOTAL\"] = pd.to_numeric(df[\"TOTAL\"], errors=\"coerce\")\nanswer = (df.groupby(\"DEPARTMENT NAME\")[\"TOTAL\"].sum().sort_values(ascending=False).head(3).to_dict())\nprint(answer)",
+      "answer": {
+        "Police": 116144553.32,
+        "Fire": 43847384.3,
+        "Water Management": 19954056.68
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2016",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2016/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/employee-overtime-and-supplemental-earnings-2016/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"TOTAL\"] = pd.to_numeric(df[\"TOTAL\"], errors=\"coerce\")\nanswer = (df.groupby(\"DEPARTMENT NAME\")[\"TOTAL\"].sum().sort_values(ascending=False).head(3).to_dict())\nprint(answer)",
+      "answer": {
+        "Police": 143032724.45,
+        "Fire": 50604010.67,
+        "Water Management": 21335912.52
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2017",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2017/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/employee-overtime-and-supplemental-earnings-2017/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"TOTAL\"] = pd.to_numeric(df[\"TOTAL\"], errors=\"coerce\")\nanswer = (df.groupby(\"DEPARTMENT NAME\")[\"TOTAL\"].sum().sort_values(ascending=False).head(3).to_dict())\nprint(answer)",
+      "answer": {
+        "Police": 156732988,
+        "Fire": 49571354,
+        "Water Management": 20049910
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "500-cities-local-data-for-better-health-2016-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2016-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_1 answer>) had higher average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "answer": {
+        "Chicago": 20.1,
+        "Los Angeles": 15.9
+      },
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\nSELECT \"CityName\" AS key, try_cast(\"Data_Value\" AS DOUBLE) AS value\nFROM t\nWHERE \"Short_Question_Text\" = 'Binge Drinking'\n  AND \"GeographicLevel\" = 'City'\n  AND \"DataValueTypeID\" = 'CrdPrv'\n  AND \"CityName\" IN ('Chicago', 'Los Angeles')\nORDER BY \"CityName\"\n) q"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "500-cities-local-data-for-better-health-2018-release",
+      "source": "datagov/500-cities-local-data-for-better-health-2018-release/files/rows.txt",
+      "intent": "Which terminus city (from <node_1 answer>) had higher average binge drinking prevalence across the 2016 and 2018 city health releases? (Filter for this node: Short_Question_Text == 'Binge Drinking'; GeographicLevel == 'City'; Data_Value_Type == 'Crude prevalence'; CityName in {Chicago, Los Angeles}; use Data_Value.)",
+      "answer": {
+        "Chicago": 21.5,
+        "Los Angeles": 16.7
+      },
+      "sql": "SELECT to_json(map(list(key), list(value))) AS answer\nFROM (\nSELECT \"CityName\" AS key, try_cast(\"Data_Value\" AS DOUBLE) AS value\nFROM t\nWHERE \"Short_Question_Text\" = 'Binge Drinking'\n  AND \"GeographicLevel\" = 'City'\n  AND \"DataValueTypeID\" = 'CrdPrv'\n  AND \"CityName\" IN ('Chicago', 'Los Angeles')\nORDER BY \"CityName\"\n) q"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2014",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2014/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "sql": "WITH totals AS (\n  SELECT array_to_string(list_transform(string_split(lower(trim(\"DEPARTMENT NAME\")), ' '), x -> upper(substr(x,1,1)) || substr(x,2)), ' ') AS dept,\n         round(SUM(TRY_CAST(TOTAL AS DOUBLE)), 2) AS total\n  FROM t\n  GROUP BY dept\n  ORDER BY total DESC, dept ASC\n  LIMIT 3\n)\nSELECT to_json(map(list(dept), list(total))) AS answer FROM totals",
+      "answer": {
+        "Police": 101460132.24,
+        "Fire": 63941565.36,
+        "Water Management": 23507061.7
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2015",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2015/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "sql": "WITH totals AS (\n  SELECT array_to_string(list_transform(string_split(lower(trim(\"DEPARTMENT NAME\")), ' '), x -> upper(substr(x,1,1)) || substr(x,2)), ' ') AS dept,\n         round(SUM(TRY_CAST(TOTAL AS DOUBLE)), 2) AS total\n  FROM t\n  GROUP BY dept\n  ORDER BY total DESC, dept ASC\n  LIMIT 3\n)\nSELECT to_json(map(list(dept), list(total))) AS answer FROM totals",
+      "answer": {
+        "Police": 116144553.32,
+        "Fire": 43847384.3,
+        "Water Management": 19954056.68
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2016",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2016/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "sql": "WITH totals AS (\n  SELECT array_to_string(list_transform(string_split(lower(trim(\"DEPARTMENT NAME\")), ' '), x -> upper(substr(x,1,1)) || substr(x,2)), ' ') AS dept,\n         round(SUM(TRY_CAST(TOTAL AS DOUBLE)), 2) AS total\n  FROM t\n  GROUP BY dept\n  ORDER BY total DESC, dept ASC\n  LIMIT 3\n)\nSELECT to_json(map(list(dept), list(total))) AS answer FROM totals",
+      "answer": {
+        "Police": 143032724.45,
+        "Fire": 50604010.67,
+        "Water Management": 21335912.52
+      }
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "employee-overtime-and-supplemental-earnings-2017",
+      "source": "datagov/employee-overtime-and-supplemental-earnings-2017/files/rows.txt",
+      "intent": "Which city department had the highest total overtime from 2014-2017 in the city identified from the binge drinking comparison? (Filter for this node: group by DEPARTMENT NAME; sum TOTAL; rank by total; keep top departments.)",
+      "sql": "WITH totals AS (\n  SELECT array_to_string(list_transform(string_split(lower(trim(\"DEPARTMENT NAME\")), ' '), x -> upper(substr(x,1,1)) || substr(x,2)), ' ') AS dept,\n         round(SUM(TRY_CAST(TOTAL AS DOUBLE)), 2) AS total\n  FROM t\n  GROUP BY dept\n  ORDER BY total DESC, dept ASC\n  LIMIT 3\n)\nSELECT to_json(map(list(dept), list(total))) AS answer FROM totals",
+      "answer": {
+        "Police": 156732988,
+        "Fire": 49571354,
+        "Water Management": 20049910
+      }
+    }
+  ]
+}

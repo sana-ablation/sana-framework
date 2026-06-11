@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-wildfire-easy-13"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+    "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Reads helicopter requests by region and finds the row with the maximum request count.",
+    "2. And returns the region name."
+  ],
+  "original_final_question": "Which of the 10 NICC-defined geographic areas requested the most helicopters for firefighting? Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1 reads helicopter requests by region and finds the row with the maximum request count.",
+    "Node 2 depends on node 1 and returns the region name.",
+    "Final answer: Great Basin Area"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-13",
+      "source": "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+      "intent": "Which region row has the highest total helicopter requests, and how many requests does it have?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/cleaned_helicopter_requests_by_region.csv'\ndf = pd.read_csv(path)\nrow = df.loc[df['Total Helicopter Requests'].idxmax()]\nprint(str(row['Region']) + '|' + str(int(row['Total Helicopter Requests'])))\n",
+      "answer": "Great Basin Area|232"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-easy-13",
+      "source": "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+      "intent": "What region name should be reported for the maximum-request row?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/wildfire/input/cleaned_helicopter_requests_by_region.csv'\ndf = pd.read_csv(path)\nrow = df.loc[df['Total Helicopter Requests'].idxmax()]\nprint(str(row['Region']))\n",
+      "answer": "Great Basin Area"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-wildfire-easy-13",
+      "source": "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+      "intent": "Which region row has the highest total helicopter requests, and how many requests does it have?",
+      "answer": "Great Basin Area|232",
+      "sql": "SELECT Region || '|' || CAST(\"Total Helicopter Requests\" AS VARCHAR) AS answer FROM t ORDER BY \"Total Helicopter Requests\" DESC LIMIT 1"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-wildfire-easy-13",
+      "source": "datagov/kramabench-wildfire-easy-13/files/cleaned_helicopter_requests_by_region.csv",
+      "intent": "What region name should be reported for the maximum-request row?",
+      "answer": "Great Basin Area",
+      "sql": "SELECT Region AS answer FROM t ORDER BY \"Total Helicopter Requests\" DESC LIMIT 1"
+    }
+  ]
+}

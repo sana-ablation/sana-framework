@@ -1,0 +1,30 @@
+{
+  "question": "Define a yearly Passenger Instability-Adjusted Load (PIAL) as: annual total CTA bus passengers across all routes (from summed monthly totals) multiplied by (1 + absolute year-over-year percentage change in that annual total). For years 2006 through 2010, which year has the lowest PIAL? If there is a tie, choose the earlier year. Your response should be in the format [Answer].",
+  "answer": "2006",
+  "practical_motivation": "A transit operations analyst wants to identify the year with low passenger volume and low annual instability, not just the smallest raw total.",
+  "nodes": {
+    "1": {
+      "source": "datagov/cta-ridership-bus-routes-monthly-day-type-averages-totals/files/rows.txt",
+      "fact": "import pandas as pd\n\ndf = pd.read_csv('datagov/cta-ridership-bus-routes-monthly-day-type-averages-totals/files/rows.txt')\ndf['Month_Beginning'] = pd.to_datetime(df['Month_Beginning'], errors='coerce')\ndf['MonthTotal'] = pd.to_numeric(df['MonthTotal'], errors='coerce')\ndf['year'] = df['Month_Beginning'].dt.year\n\nannual = df[df['year'].between(2005, 2010, inclusive='both')].groupby('year', as_index=False)['MonthTotal'].sum()\nannual = annual.sort_values('year')\nannual['pct_change'] = annual['MonthTotal'].pct_change().abs()\nannual['pial'] = annual['MonthTotal'] * (1 + annual['pct_change'])\nranked = annual[annual['year'].between(2006, 2010, inclusive='both')].sort_values(['pial', 'year'], ascending=[True, True])\nresult = str(int(ranked.iloc[0]['year']))",
+      "subquestion": "For each year from 2006 through 2010, compute PIAL (Passenger Instability-Adjusted Load) as annual total CTA bus passengers across all routes times (1 + absolute year-over-year percentage change in that annual total). Which year has the lowest PIAL?",
+      "answer": "2006"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Sum monthly CTA bus passenger totals across all routes by year, compute absolute year-over-year percentage change in annual totals, then score 2006-2010 as PIAL = annual total x (1 + abs(yoy change)). The smallest PIAL is in 2006.",
+    "Final answer: 2006"
+  ],
+  "datasets_used": [
+    "cta-ridership-bus-routes-monthly-day-type-averages-totals"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Sum monthly CTA bus passenger totals across all routes by year, compute absolute year-over-year percentage change in annual totals, then score 2006-2010 as PIAL = annual total x (1 + abs(yoy change)). The smallest PIAL is in 2006. Final answer: 2006",
+      "answer": "node 1: 2006"
+    }
+  ]
+}

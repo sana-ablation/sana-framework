@@ -1,0 +1,66 @@
+{
+  "source_mirroring_required": true,
+  "note": "This smoke run records source mappings only; it does not copy answer-bearing paragraph text into the run folder.",
+  "sources": [
+    {
+      "source_id": "5a714bb35542994082a3e78f",
+      "title": "Gaetano Donizetti",
+      "target": "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/Gaetano_Donizetti.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a714bb35542994082a3e78f",
+      "title": "William Walton",
+      "target": "wikipedia/hotpotqa__5a714bb35542994082a3e78f/files/William_Walton.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a730a6b5542992359bc3210",
+      "title": "Craig Nicholls",
+      "target": "wikipedia/hotpotqa__5a730a6b5542992359bc3210/files/Craig_Nicholls.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a730a6b5542992359bc3210",
+      "title": "Norman Blake (Scottish musician)",
+      "target": "wikipedia/hotpotqa__5a730a6b5542992359bc3210/files/Norman_Blake_Scottish_musician.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a7385c45542992d56e7e359",
+      "title": "Doris Lessing",
+      "target": "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/Doris_Lessing.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a7385c45542992d56e7e359",
+      "title": "Philip K. Dick",
+      "target": "wikipedia/hotpotqa__5a7385c45542992d56e7e359/files/Philip_K_Dick.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a70eee85542994082a3e3f0",
+      "title": "Ida (sword)",
+      "target": "wikipedia/hotpotqa__5a70eee85542994082a3e3f0/files/Ida_sword.txt",
+      "raw_sentence_index": 1
+    },
+    {
+      "source_id": "5a70eee85542994082a3e3f0",
+      "title": "Yoruba people",
+      "target": "wikipedia/hotpotqa__5a70eee85542994082a3e3f0/files/Yoruba_people.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a70f0a75542994082a3e403",
+      "title": "Spettekaka",
+      "target": "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/Spettekaka.txt",
+      "raw_sentence_index": 0
+    },
+    {
+      "source_id": "5a70f0a75542994082a3e403",
+      "title": "Scanian dialect",
+      "target": "wikipedia/hotpotqa__5a70f0a75542994082a3e403/files/Scanian_dialect.txt",
+      "raw_sentence_index": 0
+    }
+  ]
+}

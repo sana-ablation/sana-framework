@@ -1,0 +1,55 @@
+{
+  "dataset_sequence": [
+    "kramabench-legal-easy-11"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+    "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv"
+  ],
+  "reasoning_chain_text": [
+    "1. Read the reports-by-type table and find the maximum Other share.",
+    "2. Compare that maximum share with one half and answer yes or no."
+  ],
+  "original_final_question": "Was there ever a year between 2001-2024 inclusive where 'Other' reports were more than half of the total reports? Answer Yes or No. No explanation needed. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read the reports-by-type table and find the maximum Other share.",
+    "Node 2 depends on node 1: Compare that maximum share with one half and answer yes or no.",
+    "Final answer: No"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-11",
+      "source": "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What year has the highest Other-report share, and what is that share rounded to three decimals?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = f'{df.loc[df['other_pct'].idxmax(), 'Year']}|{df['other_pct'].max():.3f}'\nprint(result)\n",
+      "answer": "2016|0.469"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-11",
+      "source": "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "Was Other ever more than half of total reports between 2001 and 2024 inclusive?",
+      "code": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/legal/input/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv'\ndf = pd.read_csv(path, skiprows=2).dropna()\ndf['Year'] = df['Year'].astype(int)\nfor col in df.columns[1:]:\n    df[col] = df[col].astype(str).str.replace(',', '').astype(int)\ndf['total'] = df.iloc[:, 1:].sum(axis=1)\ndf['fraud_pct'] = df['Fraud '] / df['total']\ndf['other_pct'] = df['Other '] / df['total']\nresult = 'Yes' if df['other_pct'].max() > 0.5 else 'No'\nprint(result)\n",
+      "answer": "No"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-legal-easy-11",
+      "source": "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "What year has the highest Other-report share, and what is that share rounded to three decimals?",
+      "answer": "2016|0.469",
+      "sql": "WITH rows AS (SELECT CAST(\"Number of Reports by Type\" AS INTEGER) AS year, CAST(REPLACE(column1, ',', '') AS DOUBLE) AS fraud, CAST(REPLACE(column2, ',', '') AS DOUBLE) AS identity_theft, CAST(REPLACE(column3, ',', '') AS DOUBLE) AS other_reports FROM t WHERE regexp_matches(CAST(\"Number of Reports by Type\" AS VARCHAR), '^[0-9]+$')), totals AS (SELECT *, fraud+identity_theft+other_reports AS total FROM rows) SELECT CAST(year AS VARCHAR) || '|' || printf('%.3f', other_reports / total) AS answer FROM totals ORDER BY other_reports / total DESC LIMIT 1"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-legal-easy-11",
+      "source": "datagov/kramabench-legal-easy-11/files/csn-data-book-2024-csv/CSVs/2024_CSN_Number_of_Reports_by_Type.csv",
+      "intent": "Was Other ever more than half of total reports between 2001 and 2024 inclusive?",
+      "answer": "No",
+      "sql": "WITH rows AS (SELECT CAST(\"Number of Reports by Type\" AS INTEGER) AS year, CAST(REPLACE(column1, ',', '') AS DOUBLE) AS fraud, CAST(REPLACE(column2, ',', '') AS DOUBLE) AS identity_theft, CAST(REPLACE(column3, ',', '') AS DOUBLE) AS other_reports FROM t WHERE regexp_matches(CAST(\"Number of Reports by Type\" AS VARCHAR), '^[0-9]+$')), totals AS (SELECT *, fraud+identity_theft+other_reports AS total FROM rows) SELECT CASE WHEN MAX(other_reports / total) > 0.5 THEN 'Yes' ELSE 'No' END AS answer FROM totals"
+    }
+  ]
+}

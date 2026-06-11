@@ -1,0 +1,77 @@
+{
+  "benchmark_root": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini",
+  "candidate_count": 135,
+  "samples": [
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_1.json",
+      "relative_path": "k-2-d-1/task_1.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-2",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:bridge|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-2/task_1.json",
+      "relative_path": "k-2-d-2/task_1.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_10.json",
+      "relative_path": "k-2-d-1/task_10.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_11.json",
+      "relative_path": "k-2-d-1/task_11.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_12.json",
+      "relative_path": "k-2-d-1/task_12.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_13.json",
+      "relative_path": "k-2-d-1/task_13.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_14.json",
+      "relative_path": "k-2-d-1/task_14.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_15.json",
+      "relative_path": "k-2-d-1/task_15.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_16.json",
+      "relative_path": "k-2-d-1/task_16.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    },
+    {
+      "bucket": "k-2-d-1",
+      "metadata_key": "benchmark:hotpotqa|split:dev_distractor|type:comparison|level:hard",
+      "path": "/Users/austinsenna/Documents/projects/daplab/exploratory-qa-eval/other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_17.json",
+      "relative_path": "k-2-d-1/task_17.json",
+      "signature": "_provenance:dict:6|answer:str|datasets_used:list:2|nodes:dict:2|question:str|reasoning_chain:list:3|reasoning_hops:list:2"
+    }
+  ],
+  "sampling_rule": "structural diversity first, bucket/provenance diversity second, deterministic path order fallback"
+}

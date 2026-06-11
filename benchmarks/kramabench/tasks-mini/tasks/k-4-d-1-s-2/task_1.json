@@ -1,0 +1,100 @@
+{
+  "question": "In the Maltese dataset, find the year of the most northern Neolithic sample, breaking ties by considering the later year. What is the maximum aluminum value recorded in the climate dataset in the closest year to that year? If there are multiple closest years, take the max aluminum value measured across all of them. Round your answer to 4 decimal places. Write your answer as [ANSWER].",
+  "answer": "66158.3691",
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+      "fact": "import pandas as pd\npath = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\ncarbon = pd.read_excel(path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nresult = f\"{len(homo)}|{len(neolithic)}\"\nprint(result)\n",
+      "subquestion": "How many Homo sapiens samples and Neolithic Homo sapiens samples are in the radiocarbon table?",
+      "answer": "97|70"
+    },
+    "2": {
+      "source": "datagov/kramabench-archeology-hard-5/files/radiocarbon_database_regional.xlsx",
+      "fact": "import pandas as pd\nimport numpy as np\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens'].copy()\nhomo['year'] = 1950 - homo['date']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nmost_northern = neolithic[neolithic['Latitude'] == neolithic['Latitude'].max()]\nmost_northern = most_northern[most_northern['year'] == most_northern['year'].max()]\ntarget_year = most_northern['year'].iloc[0]\nresult = f\"{most_northern['Latitude'].iloc[0]:.5f}|{int(target_year)}\"\nprint(result)\n",
+      "subquestion": "For Neolithic Homo sapiens samples, what is the northernmost latitude and later-year tie-broken sample year?",
+      "answer": "17.94668|-4460"
+    },
+    "3": {
+      "source": "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\nimport numpy as np\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens'].copy()\nhomo['year'] = 1950 - homo['date']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nmost_northern = neolithic[neolithic['Latitude'] == neolithic['Latitude'].max()]\nmost_northern = most_northern[most_northern['year'] == most_northern['year'].max()]\ntarget_year = most_northern['year'].iloc[0]\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nclosest_year = climate['year'].iloc[(np.abs(climate['year'] - target_year)).argmin()]\nresult = f\"{int(closest_year)}|{int((climate['year'] == closest_year).sum())}\"\nprint(result)\n",
+      "subquestion": "Which climate measurement year is closest to the selected Neolithic sample year, and how many rows have that year?",
+      "answer": "-4050|13"
+    },
+    "4": {
+      "source": "datagov/kramabench-archeology-hard-5/files/climateMeasurements.xlsx",
+      "fact": "import pandas as pd\nimport numpy as np\ncarbon_path = 'other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx'\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\ncarbon = pd.read_excel(carbon_path, sheet_name=0)\nhomo = carbon[carbon['Species'] == 'Homo sapiens'].copy()\nhomo['year'] = 1950 - homo['date']\nneolithic = homo[homo['Culture'] == 'Neolithic']\nmost_northern = neolithic[neolithic['Latitude'] == neolithic['Latitude'].max()]\nmost_northern = most_northern[most_northern['year'] == most_northern['year'].max()]\ntarget_year = most_northern['year'].iloc[0]\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nclosest_year = climate['year'].iloc[(np.abs(climate['year'] - target_year)).argmin()]\nclosest_rows = climate[climate['year'] == closest_year]\nresult = f\"{closest_rows['Al'].max():.4f}\"\nprint(result)\n",
+      "subquestion": "For all climate rows in the closest year, what is the maximum aluminum value rounded to four decimals?",
+      "answer": "66158.3691"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Filter the radiocarbon table to Homo sapiens samples and then to Neolithic samples.",
+    "Node 2 depends on node 1: Select the northernmost Neolithic sample, breaking latitude ties by the later calendar year.",
+    "Node 3 depends on node 2: Convert climate ages to calendar years and identify the climate year closest to the selected sample year.",
+    "Node 4 depends on node 3: Among climate rows in the closest year, take the maximum aluminum value.",
+    "Final answer: 66158.3691"
+  ],
+  "datasets_used": [
+    "radiocarbon_database_regional.xlsx",
+    "climateMeasurements.xlsx"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Filter the radiocarbon table to Homo sapiens samples and then to Neolithic samples.",
+      "answer": "97|70"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2 depends on node 1: Select the northernmost Neolithic sample, breaking latitude ties by the later calendar year.",
+      "answer": "17.94668|-4460"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3 depends on node 2: Convert climate ages to calendar years and identify the climate year closest to the selected sample year.",
+      "answer": "-4050|13"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4 depends on node 3: Among climate rows in the closest year, take the maximum aluminum value.",
+      "answer": "66158.3691"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "archeology-hard-5",
+    "domain": "archeology",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/archeology-hard-5.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "raw_data_root": "other-benchmarks/Kramabench/data/archeology/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/archeology/archeology-hard-5",
+    "s3_mirror_prefix": "datagov/kramabench-archeology-hard-5/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx",
+      "2": "other-benchmarks/Kramabench/data/archeology/input/radiocarbon_database_regional.xlsx",
+      "3": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx",
+      "4": "other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

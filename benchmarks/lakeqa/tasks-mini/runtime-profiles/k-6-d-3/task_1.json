@@ -1,0 +1,209 @@
+{
+  "dataset_sequence": [
+    "2021-state-expenditures",
+    "2022-state-expenditures",
+    "2023-state-expenditures",
+    "2021-state-employee-pay",
+    "2022-state-employee-pay",
+    "2023-state-employee-pay",
+    "Missouri_Department_of_Corrections",
+    "Jefferson_City,_Missouri",
+    "Lincoln_University_(Missouri)",
+    "James_Milton_Turner"
+  ],
+  "source_sequence": [
+    "datagov/2021-state-expenditures/files/rows.txt",
+    "datagov/2022-state-expenditures/files/rows.txt",
+    "datagov/2023-state-expenditures/files/rows.txt",
+    "datagov/2021-state-employee-pay/files/rows.txt",
+    "datagov/2022-state-employee-pay/files/rows.txt",
+    "datagov/2023-state-employee-pay/files/rows.txt",
+    "wikipedia/Missouri_Department_of_Corrections/content.txt",
+    "wikipedia/Jefferson_City,_Missouri/content.txt",
+    "wikipedia/Lincoln_University_(Missouri)/content.txt",
+    "wikipedia/James_Milton_Turner/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify Missouri state agencies ranked in the top five for professional services spending in each year from 2021 through 2023, and keep the agencies common to all three years.",
+    "2. For the agencies kept in step 1, compare 2021, 2022, and 2023 employee counts, compute each agency's average, and keep the agency with the highest average employee count.",
+    "3. Determine the headquarters city of the agency kept in step 2.",
+    "4. In that city, identify the historically Black university.",
+    "5. Determine who founded that university.",
+    "6. Determine the year that person died and return the year."
+  ],
+  "original_final_question": "After identifying the Missouri state agency that throughout 2021 to 2023 consistently ranked in the top five for professional services spending, find the agency with the highest average employee count, determine the city that its headquarter is located at. In that city, there is a historically Black university. Identify who founded it, and then answer the question: what year did that person die? Report the year only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3): Find Missouri state agencies in top 5 by Professional Services spending in 2021, 2022, and 2023",
+    "  Node 1 (2021): Top 5 = {SOCIAL SERVICES, CORRECTIONS, PUBLIC SAFETY, TRANSPORTATION, ELEMENTARY AND SECONDARY EDUCATION}",
+    "  Node 2 (2022): Top 5 = {SOCIAL SERVICES, CORRECTIONS, TRANSPORTATION, PUBLIC SAFETY, ELEMENTARY AND SECONDARY EDUCATION}",
+    "  Node 3 (2023): Top 5 = {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION, OFFICE OF ADMINISTRATION, MENTAL HEALTH}",
+    "  Intersection: {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}",
+    "HOP 2 (d=3): Among those 3 agencies, find which had highest average employee count across 2021-2023",
+    "  Node 4 (2021): CORRECTIONS=12530, SOCIAL SERVICES=8362, TRANSPORTATION=7170",
+    "  Node 5 (2022): CORRECTIONS=12380, SOCIAL SERVICES=8723, TRANSPORTATION=6917",
+    "  Node 6 (2023): CORRECTIONS=13107, SOCIAL SERVICES=8932, TRANSPORTATION=6956",
+    "  Averages: CORRECTIONS=12672 > SOCIAL SERVICES=8672 > TRANSPORTATION=7014",
+    "  Result: CORRECTIONS (Missouri Department of Corrections)",
+    "HOP 3 (d=1): Find headquarters city of Missouri Department of Corrections",
+    "  Node 7: Headquarters is in Jefferson City",
+    "HOP 4 (d=1): Find historically Black university in Jefferson City",
+    "  Node 8: Lincoln University",
+    "HOP 5 (d=1): Find who founded Lincoln University",
+    "  Node 9: James Milton Turner founded Lincoln University",
+    "HOP 6 (d=1): Find year James Milton Turner died",
+    "  Node 10: 1915",
+    "Final answer: 1915"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2021-state-expenditures",
+      "source": "datagov/2021-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agencies were in the top 5 for Professional Services spending every year from 2021 to 2023? (Filter for this node: Category Description == 'PROFESSIONAL SERVICES'; group by Agency Name; sum Payments Total; rank desc; take top 5.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/2021-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Payments Total\"] = pd.to_numeric(df[\"Payments Total\"], errors=\"coerce\")\nresult = (\n    df[df[\"Category Description\"] == \"PROFESSIONAL SERVICES\"]\n    .groupby(\"Agency Name\", dropna=False)[\"Payments Total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .reset_index()\n)\nanswer = result.head(5)[\"Agency Name\"].tolist()\nprint(answer)",
+      "answer": [
+        "SOCIAL SERVICES",
+        "CORRECTIONS",
+        "PUBLIC SAFETY",
+        "TRANSPORTATION",
+        "ELEMENTARY AND SECONDARY EDUCATION"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2022-state-expenditures",
+      "source": "datagov/2022-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agencies were in the top 5 for Professional Services spending every year from 2021 to 2023? (Filter for this node: Category Description == 'PROFESSIONAL SERVICES'; group by Agency Name; sum Payments Total; rank desc; take top 5.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/2022-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Payments Total\"] = pd.to_numeric(df[\"Payments Total\"], errors=\"coerce\")\nresult = (\n    df[df[\"Category Description\"] == \"PROFESSIONAL SERVICES\"]\n    .groupby(\"Agency Name\", dropna=False)[\"Payments Total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .reset_index()\n)\nanswer = result.head(5)[\"Agency Name\"].tolist()\nprint(answer)",
+      "answer": [
+        "SOCIAL SERVICES",
+        "CORRECTIONS",
+        "TRANSPORTATION",
+        "PUBLIC SAFETY",
+        "ELEMENTARY AND SECONDARY EDUCATION"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2023-state-expenditures",
+      "source": "datagov/2023-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agencies were in the top 5 for Professional Services spending every year from 2021 to 2023? (Filter for this node: Category Description == 'PROFESSIONAL SERVICES'; group by Agency Name; sum Payments Total; rank desc; take top 5.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/2023-state-expenditures/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Payments Total\"] = pd.to_numeric(df[\"Payments Total\"], errors=\"coerce\")\nresult = (\n    df[df[\"Category Description\"] == \"PROFESSIONAL SERVICES\"]\n    .groupby(\"Agency Name\", dropna=False)[\"Payments Total\"]\n    .sum()\n    .sort_values(ascending=False)\n    .reset_index()\n)\nanswer = result.head(5)[\"Agency Name\"].tolist()\nprint(answer)",
+      "answer": [
+        "CORRECTIONS",
+        "SOCIAL SERVICES",
+        "TRANSPORTATION",
+        "OFFICE OF ADMINISTRATION",
+        "MENTAL HEALTH"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2021-state-employee-pay",
+      "source": "datagov/2021-state-employee-pay/files/rows.txt",
+      "intent": "Among <answer from hop 1>, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in the hop 1 intersection {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name (employee records) in this file.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/2021-state-employee-pay/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nagencies = [\"CORRECTIONS\", \"SOCIAL SERVICES\", \"TRANSPORTATION\"]\ncounts = (\n    df[df[\"Agency Name\"].isin(agencies)]\n    .groupby(\"Agency Name\")\n    .size()\n)\nanswer = {agency: int(counts.get(agency, 0)) for agency in agencies}",
+      "answer": {
+        "CORRECTIONS": 12530,
+        "SOCIAL SERVICES": 8362,
+        "TRANSPORTATION": 7170
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2022-state-employee-pay",
+      "source": "datagov/2022-state-employee-pay/files/rows.txt",
+      "intent": "Among <answer from hop 1>, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in the hop 1 intersection {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name (employee records) in this file.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/2022-state-employee-pay/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nagencies = [\"CORRECTIONS\", \"SOCIAL SERVICES\", \"TRANSPORTATION\"]\ncounts = (\n    df[df[\"Agency Name\"].isin(agencies)]\n    .groupby(\"Agency Name\")\n    .size()\n)\nanswer = {agency: int(counts.get(agency, 0)) for agency in agencies}",
+      "answer": {
+        "CORRECTIONS": 12380,
+        "SOCIAL SERVICES": 8723,
+        "TRANSPORTATION": 6917
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "2023-state-employee-pay",
+      "source": "datagov/2023-state-employee-pay/files/rows.txt",
+      "intent": "Among <answer from hop 1>, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in the hop 1 intersection {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name (employee records) in this file.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\nsource = \"datagov/2023-state-employee-pay/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\nagencies = [\"CORRECTIONS\", \"SOCIAL SERVICES\", \"TRANSPORTATION\"]\ncounts_2023 = (\n    df[df[\"Agency Name\"].isin(agencies)]\n    .groupby(\"Agency Name\")\n    .size()\n)\ncounts_2021 = {\"CORRECTIONS\": 12530, \"SOCIAL SERVICES\": 8362, \"TRANSPORTATION\": 7170}\ncounts_2022 = {\"CORRECTIONS\": 12380, \"SOCIAL SERVICES\": 8723, \"TRANSPORTATION\": 6917}\ncounts_2023 = {agency: int(counts_2023.get(agency, 0)) for agency in agencies}\naverages = {\n    agency: (counts_2021[agency] + counts_2022[agency] + counts_2023[agency]) / 3\n    for agency in agencies\n}\nanswer = max(averages, key=averages.get)",
+      "answer": "CORRECTIONS"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2021-state-expenditures",
+      "source": "datagov/2021-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agencies were in the top 5 for Professional Services spending every year from 2021 to 2023? (Filter for this node: Category Description == 'PROFESSIONAL SERVICES'; group by Agency Name; sum Payments Total; rank desc; take top 5.)",
+      "sql": "WITH totals AS (\n  SELECT \"Agency Name\" AS agency,\n         SUM(TRY_CAST(\"Payments Total\" AS DOUBLE)) AS total_payments\n  FROM t\n  WHERE \"Category Description\" = 'PROFESSIONAL SERVICES'\n  GROUP BY agency\n)\nSELECT agency AS answer\nFROM totals\nORDER BY total_payments DESC\nLIMIT 5",
+      "answer": [
+        "SOCIAL SERVICES",
+        "CORRECTIONS",
+        "PUBLIC SAFETY",
+        "TRANSPORTATION",
+        "ELEMENTARY AND SECONDARY EDUCATION"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2022-state-expenditures",
+      "source": "datagov/2022-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agencies were in the top 5 for Professional Services spending every year from 2021 to 2023? (Filter for this node: Category Description == 'PROFESSIONAL SERVICES'; group by Agency Name; sum Payments Total; rank desc; take top 5.)",
+      "sql": "WITH totals AS (\n  SELECT \"Agency Name\" AS agency,\n         SUM(TRY_CAST(\"Payments Total\" AS DOUBLE)) AS total_payments\n  FROM t\n  WHERE \"Category Description\" = 'PROFESSIONAL SERVICES'\n  GROUP BY agency\n)\nSELECT agency AS answer\nFROM totals\nORDER BY total_payments DESC\nLIMIT 5",
+      "answer": [
+        "SOCIAL SERVICES",
+        "CORRECTIONS",
+        "TRANSPORTATION",
+        "PUBLIC SAFETY",
+        "ELEMENTARY AND SECONDARY EDUCATION"
+      ]
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "2023-state-expenditures",
+      "source": "datagov/2023-state-expenditures/files/rows.txt",
+      "intent": "Which Missouri state agencies were in the top 5 for Professional Services spending every year from 2021 to 2023? (Filter for this node: Category Description == 'PROFESSIONAL SERVICES'; group by Agency Name; sum Payments Total; rank desc; take top 5.)",
+      "sql": "WITH totals AS (\n  SELECT \"Agency Name\" AS agency,\n         SUM(TRY_CAST(\"Payments Total\" AS DOUBLE)) AS total_payments\n  FROM t\n  WHERE \"Category Description\" = 'PROFESSIONAL SERVICES'\n  GROUP BY agency\n)\nSELECT agency AS answer\nFROM totals\nORDER BY total_payments DESC\nLIMIT 5",
+      "answer": [
+        "CORRECTIONS",
+        "SOCIAL SERVICES",
+        "TRANSPORTATION",
+        "OFFICE OF ADMINISTRATION",
+        "MENTAL HEALTH"
+      ]
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "2021-state-employee-pay",
+      "source": "datagov/2021-state-employee-pay/files/rows.txt",
+      "intent": "Among <answer from hop 1>, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in the hop 1 intersection {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name (employee records) in this file.)",
+      "sql": "SELECT json_group_object(agency, cnt) AS answer\nFROM (\n  SELECT \"Agency Name\" AS agency, COUNT(*) AS cnt\n  FROM t\n  WHERE \"Agency Name\" IN ('CORRECTIONS', 'SOCIAL SERVICES', 'TRANSPORTATION')\n  GROUP BY agency\n  ORDER BY CASE agency WHEN 'CORRECTIONS' THEN 1 WHEN 'SOCIAL SERVICES' THEN 2 WHEN 'TRANSPORTATION' THEN 3 END\n) q",
+      "answer": {
+        "CORRECTIONS": 12530,
+        "SOCIAL SERVICES": 8362,
+        "TRANSPORTATION": 7170
+      }
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "2022-state-employee-pay",
+      "source": "datagov/2022-state-employee-pay/files/rows.txt",
+      "intent": "Among <answer from hop 1>, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in the hop 1 intersection {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name (employee records) in this file.)",
+      "sql": "SELECT json_group_object(agency, cnt) AS answer\nFROM (\n  SELECT \"Agency Name\" AS agency, COUNT(*) AS cnt\n  FROM t\n  WHERE \"Agency Name\" IN ('CORRECTIONS', 'SOCIAL SERVICES', 'TRANSPORTATION')\n  GROUP BY agency\n  ORDER BY CASE agency WHEN 'CORRECTIONS' THEN 1 WHEN 'SOCIAL SERVICES' THEN 2 WHEN 'TRANSPORTATION' THEN 3 END\n) q",
+      "answer": {
+        "CORRECTIONS": 12380,
+        "SOCIAL SERVICES": 8723,
+        "TRANSPORTATION": 6917
+      }
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "2023-state-employee-pay",
+      "source": "datagov/2023-state-employee-pay/files/rows.txt",
+      "intent": "Among <answer from hop 1>, which had the highest average employee count across 2021-2023? (Filter for this node: Agency Name in the hop 1 intersection {CORRECTIONS, SOCIAL SERVICES, TRANSPORTATION}; count rows by Agency Name (employee records) in this file.)",
+      "sql": "WITH counts_2023 AS (\n  SELECT \"Agency Name\" AS agency, COUNT(*) AS cnt\n  FROM t\n  WHERE \"Agency Name\" IN ('CORRECTIONS', 'SOCIAL SERVICES', 'TRANSPORTATION')\n  GROUP BY agency\n), averages AS (\n  SELECT agency,\n         CASE agency\n           WHEN 'CORRECTIONS' THEN (12530 + 12380 + cnt) / 3.0\n           WHEN 'SOCIAL SERVICES' THEN (8362 + 8723 + cnt) / 3.0\n           WHEN 'TRANSPORTATION' THEN (7170 + 6917 + cnt) / 3.0\n         END AS avg_count\n  FROM counts_2023\n)\nSELECT agency AS answer\nFROM averages\nORDER BY avg_count DESC, agency ASC\nLIMIT 1",
+      "answer": "CORRECTIONS"
+    }
+  ]
+}

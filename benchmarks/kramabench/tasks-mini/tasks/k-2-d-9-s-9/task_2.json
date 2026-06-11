@@ -1,0 +1,161 @@
+{
+  "question": "Which Boston Harbor beaches met swimming standards 100 percent of the time between 2020 and 2024 inclusive, where a sample meets the standard if it contains fewer than 104 counts of Enterococcus per 100 milliliters of water?. Write your answer as [ANSWER].",
+  "answer": [
+    "Pleasure Bay Beach",
+    "Castle Island Beach",
+    "City Point Beach"
+  ],
+  "nodes": {
+    "1": {
+      "source": "datagov/kramabench-environment-hard-9/files/boston-harbor-beaches.txt",
+      "fact": "path = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nwith open(path, encoding='utf-8') as f:\n    beaches = [line.strip() for line in f if line.strip()]\nprint(beaches)\n",
+      "subquestion": "Which beaches are listed as Boston Harbor beaches?",
+      "answer": [
+        "Constitution Beach",
+        "Castle Island Beach",
+        "Pleasure Bay Beach",
+        "City Point Beach",
+        "M Street Beach",
+        "Carson Beach",
+        "Malibu Beach",
+        "Tenean Beach",
+        "Wollaston Beach"
+      ]
+    },
+    "2": {
+      "source": "datagov/kramabench-environment-hard-9/files/constitution_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv'\nbeach_names = ['Constitution Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within Constitution Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": []
+    },
+    "3": {
+      "source": "datagov/kramabench-environment-hard-9/files/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv'\nbeach_names = ['Pleasure Bay Beach', 'Castle Island Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within Pleasure Bay Beach|Castle Island Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": [
+        "Pleasure Bay Beach",
+        "Castle Island Beach"
+      ]
+    },
+    "4": {
+      "source": "datagov/kramabench-environment-hard-9/files/city_point_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/city_point_beach_datasheet.csv'\nbeach_names = ['City Point Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within City Point Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": [
+        "City Point Beach"
+      ]
+    },
+    "5": {
+      "source": "datagov/kramabench-environment-hard-9/files/m_street_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/m_street_beach_datasheet.csv'\nbeach_names = ['M Street Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within M Street Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": []
+    },
+    "6": {
+      "source": "datagov/kramabench-environment-hard-9/files/carson_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/carson_beach_datasheet.csv'\nbeach_names = ['Carson Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within Carson Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": []
+    },
+    "7": {
+      "source": "datagov/kramabench-environment-hard-9/files/malibu_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/malibu_beach_datasheet.csv'\nbeach_names = ['Malibu Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within Malibu Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": []
+    },
+    "8": {
+      "source": "datagov/kramabench-environment-hard-9/files/tenean_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/tenean_beach_datasheet.csv'\nbeach_names = ['Tenean Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within Tenean Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": []
+    },
+    "9": {
+      "source": "datagov/kramabench-environment-hard-9/files/wollaston_beach_datasheet.csv",
+      "fact": "import pandas as pd\n\ndef prepare_beach_datasheet(path):\n    df = pd.read_csv(path, skiprows=1, header=[0, 1])\n    cols = df.columns.to_frame()\n    cols[0] = cols[0].replace(r'^Unnamed.*', None, regex=True).ffill()\n    df.columns = ['_'.join(parts) for col in cols.itertuples(index=False, name=None) for parts in [[str(part).strip() for part in col if part is not None and str(part).strip().lower() not in ('nan', '')]]]\n    value_cols = [col for col in df.columns if 'Tag' in col or 'Enterococcus' in col]\n    id_cols = [col for col in df.columns if col not in value_cols]\n    long_df = df.melt(id_vars=id_cols, value_vars=value_cols, var_name='Variable', value_name='Value')\n    long_df['Location'] = long_df['Variable'].str.split('_').str[0]\n    long_df['Measure'] = long_df['Variable'].str.split('_').str[1]\n    tidy = long_df.pivot(index=id_cols + ['Location'], columns='Measure', values='Value').reset_index()\n    tidy.columns.name = None\n    for col in tidy.columns:\n        if col not in id_cols + ['Location', 'Tag']:\n            tidy[col] = pd.to_numeric(tidy[col], errors='coerce')\n    return tidy\n\npath = 'other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv'\nbeach_names = ['Wollaston Beach']\ndf = prepare_beach_datasheet(path)\nyears = df['Date'].astype(str).str.extract(r'(\\d{4})$')[0].astype(int)\nrecent = df[(years >= 2020) & (years <= 2024)].copy()\n\ndef matches_location(beach_name, location):\n    location = str(location).lower()\n    if beach_name == 'Pleasure Bay Beach':\n        return 'pleasure bay' in location\n    if beach_name == 'Castle Island Beach':\n        return 'castle island' in location\n    if beach_name == 'City Point Beach':\n        return 'city point' in location\n    if beach_name == 'M Street Beach':\n        return 'm. street' in location or 'm street' in location\n    if beach_name == 'Carson Beach':\n        return location in ['i street', 'mccormack bathhouse'] or 'carson' in location\n    if beach_name == 'Constitution Beach':\n        return location in ['north', 'middle', 'south'] or 'constitution' in location\n    if beach_name == 'Tenean Beach':\n        return location == 'middle' or 'tenean' in location\n    if beach_name == 'Wollaston Beach':\n        return location in ['channing street', 'milton road', 'rice road', 'sachem street'] or 'wollaston' in location\n    return beach_name.replace(' Beach', '').lower() in location\n\nclean = []\nfor beach_name in beach_names:\n    mask = recent['Location'].apply(lambda value: matches_location(beach_name, value))\n    beach_rows = recent[mask]\n    if len(beach_rows) and int((beach_rows['Enterococcus'] > 104).sum()) == 0:\n        clean.append(beach_name)\nprint(clean)\n",
+      "subquestion": "Within Wollaston Beach, which listed beaches had no Enterococcus values above 104 between 2020 and 2024 inclusive?",
+      "answer": []
+    },
+    "10": {
+      "source": "datagov/kramabench-environment-hard-9/files/boston-harbor-beaches.txt",
+      "fact": "source_path = 'other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt'\nclean_lists = [[], ['Pleasure Bay Beach', 'Castle Island Beach'], ['City Point Beach'], [], [], [], [], []]\nresult = []\nfor values in clean_lists:\n    for beach in values:\n        if beach not in result:\n            result.append(beach)\nprint(result)\n",
+      "subquestion": "Combining <node_2 answer> through <node_9 answer> in datasheet order, which beaches met standards 100% of the time from 2020 through 2024?",
+      "answer": [
+        "Pleasure Bay Beach",
+        "Castle Island Beach",
+        "City Point Beach"
+      ]
+    }
+  },
+  "reasoning_chain": [
+    "Node 1 reads the ordered Boston Harbor beach list.",
+    "Nodes 2-9 inspect each Boston Harbor datasheet and identify listed beaches with no samples above 104 Enterococcus counts from 2020 through 2024.",
+    "Node 10 depends on nodes 2-9 and combines the qualifying beaches in datasheet order.",
+    "Final answer: Pleasure Bay Beach, Castle Island Beach, City Point Beach"
+  ],
+  "datasets_used": [
+    "kramabench-environment-hard-9"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Read the beach list and independently identify no-exceedance beaches in each datasheet.",
+      "answer": "per-datasheet no-exceedance beach lists"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        10
+      ],
+      "reasoning": "Combine the per-datasheet lists in datasheet order.",
+      "answer": [
+        "Pleasure Bay Beach",
+        "Castle Island Beach",
+        "City Point Beach"
+      ]
+    }
+  ],
+  "_provenance": {
+    "benchmark": "kramabench",
+    "split": "main",
+    "source_id": "environment-hard-9",
+    "domain": "environment",
+    "difficulty": "hard",
+    "promoted_from": "tasks-mini-kramabench/candidates/environment-hard-9.json",
+    "candidate_list": "tasks-mini-kramabench/candidate_list.json",
+    "candidate_selection": {
+      "candidate_set": "kramabench_raw_all_main_workload",
+      "filters": {}
+    },
+    "workload_path": "other-benchmarks/Kramabench/workload/environment.json",
+    "solution_path": "other-benchmarks/Kramabench/solutions/environment/environment-hard-9.py",
+    "raw_data_root": "other-benchmarks/Kramabench/data/environment/input",
+    "source_mode": "full_domain_data",
+    "dr_input_bundle": "other-benchmarks/Kramabench/dr-input/environment/environment-hard-9",
+    "s3_mirror_prefix": "datagov/kramabench-environment-hard-9/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt",
+      "2": "other-benchmarks/Kramabench/data/environment/input/constitution_beach_datasheet.csv",
+      "3": "other-benchmarks/Kramabench/data/environment/input/pleasure_bay_and_castle_island_beach_datasheet.csv",
+      "4": "other-benchmarks/Kramabench/data/environment/input/city_point_beach_datasheet.csv",
+      "5": "other-benchmarks/Kramabench/data/environment/input/m_street_beach_datasheet.csv",
+      "6": "other-benchmarks/Kramabench/data/environment/input/carson_beach_datasheet.csv",
+      "7": "other-benchmarks/Kramabench/data/environment/input/malibu_beach_datasheet.csv",
+      "8": "other-benchmarks/Kramabench/data/environment/input/tenean_beach_datasheet.csv",
+      "9": "other-benchmarks/Kramabench/data/environment/input/wollaston_beach_datasheet.csv",
+      "10": "other-benchmarks/Kramabench/data/environment/input/boston-harbor-beaches.txt"
+    },
+    "promotion_status": "verified",
+    "promotion_rule": "curated_kramabench_raw_all_batch_v1"
+  }
+}

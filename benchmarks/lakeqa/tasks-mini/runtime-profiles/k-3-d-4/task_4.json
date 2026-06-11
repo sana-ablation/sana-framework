@@ -1,0 +1,177 @@
+{
+  "dataset_sequence": [
+    "public-school-locations-current-23297",
+    "private-school-locations-current-f7d96",
+    "school-district-office-locations-2022-23",
+    "postsecondary-school-locations-2022-23",
+    "school-district-office-locations-current-c8f9d",
+    "postsecondary-school-locations-current-5a74c"
+  ],
+  "source_sequence": [
+    "datagov/public-school-locations-current-23297/files/data.txt",
+    "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+    "datagov/school-district-office-locations-2022-23/files/data-8V0eVK.txt",
+    "datagov/postsecondary-school-locations-2022-23/files/data-sh56Ar.txt",
+    "datagov/public-school-locations-current-23297/files/data.txt",
+    "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+    "datagov/school-district-office-locations-current-c8f9d/files/data.txt",
+    "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. In the state with two-digit FIPS code 06, identify the top three counties by public-school count, private-school count, and school-district-office count.",
+    "2. Intersect the three top-county sets from step 1, then choose the county in that intersection with the most postsecondary institutions.",
+    "3. For the county chosen in step 2, determine its public-school, private-school, school-district-office, and postsecondary-institution counts.",
+    "4. Compute the combined public-school and postsecondary-institution count minus the combined private-school and district-office count, and return the integer result."
+  ],
+  "original_final_question": "In the state with two-digit FIPS code 06, find the counties that rank in the top three for public schools, private schools, and school district offices. Among their intersection, select the county with the most postsecondary institutions. For that county, compute (public schools + postsecondary institutions) - (private schools + district offices). Only report the integer result. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=3, County top counts - nodes 1-3):",
+    "  Node 1: For STFIP=06, the top 3 counties by public schools are Los Angeles, San Diego, and Orange.",
+    "  Node 2: For STFIP=06, the top 3 counties by private schools are Los Angeles, Orange, and San Diego.",
+    "  Node 3: For STFIP=06, the top 3 counties by school district offices are Los Angeles, San Diego, and San Bernardino.",
+    "",
+    "HOP 2 (d=4, Postsecondary selection - node 4):",
+    "  Node 4: The intersection yields Los Angeles and San Diego; Los Angeles County has the most postsecondary institutions (206).",
+    "",
+    "HOP 3 (d=4, County counts and arithmetic - nodes 5-8):",
+    "  Node 5: Los Angeles County public schools = 2249.",
+    "  Node 6: Los Angeles County private schools = 745.",
+    "  Node 7: Los Angeles County school district offices = 419.",
+    "  Node 8: Los Angeles County postsecondary institutions = 206.",
+    "  Computation: (2249 + 206) - (745 + 419) = 1291.",
+    "",
+    "Final answer: 1291"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "For STFIP='06', which 3 county names have the most public schools? Return the county names separated by '; '.",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/public-school-locations-current-23297/files/data-oyCYxF.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ncounts = df[(df['STFIP'] == '06') & (df['NMCNTY'] != '')].groupby('NMCNTY').size().reset_index(name='count')\ntop = counts.sort_values(['count', 'NMCNTY'], ascending=[False, True]).head(3)\nresult = '; '.join(top['NMCNTY'].tolist())",
+      "answer": "Los Angeles County; San Diego County; Orange County"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "private-school-locations-current-f7d96",
+      "source": "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+      "intent": "For STFIP='06', which 3 county names have the most private schools? Return the county names separated by '; '.",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ncounts = df[(df['STFIP'] == '06') & (df['NMCNTY'] != '')].groupby('NMCNTY').size().reset_index(name='count')\ntop = counts.sort_values(['count', 'NMCNTY'], ascending=[False, True]).head(3)\nresult = '; '.join(top['NMCNTY'].tolist())",
+      "answer": "Los Angeles County; Orange County; San Diego County"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "school-district-office-locations-2022-23",
+      "source": "datagov/school-district-office-locations-2022-23/files/data-8V0eVK.txt",
+      "intent": "For STFIP='06', which 3 county names have the most school district offices? Return the county names separated by '; '.",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/school-district-office-locations-2022-23/files/data-8V0eVK.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ncounts = df[(df['STFIP'] == '06') & (df['NMCNTY'] != '')].groupby('NMCNTY').size().reset_index(name='count')\ntop = counts.sort_values(['count', 'NMCNTY'], ascending=[False, True]).head(3)\nresult = '; '.join(top['NMCNTY'].tolist())",
+      "answer": "Los Angeles County; San Diego County; San Bernardino County"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "postsecondary-school-locations-2022-23",
+      "source": "datagov/postsecondary-school-locations-2022-23/files/data-sh56Ar.txt",
+      "intent": "Let A be the set of counties in <node_1 answer>, B be the set of counties in <node_2 answer>, and C be the set of counties in <node_3 answer>. Consider the intersection of A, B, and C. Among those counties, which single county has the most postsecondary institutions in STFIP='06'? Answer with the county name including the word 'County'.",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/postsecondary-school-locations-2022-23/files/data-sh56Ar.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\ncandidate_counties = ['Los Angeles County', 'San Diego County']\ncounts = df[(df['STFIP'] == '06') & (df['NMCNTY'].isin(candidate_counties))].groupby('NMCNTY').size().reset_index(name='count')\nresult = counts.sort_values(['count', 'NMCNTY'], ascending=[False, True]).iloc[0]['NMCNTY']",
+      "answer": "Los Angeles County"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "How many public schools have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/public-school-locations-current-23297/files/data-oyCYxF.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\nresult = str(int(len(df[(df['STFIP'] == '06') & (df['NMCNTY'] == 'Los Angeles County')])))",
+      "answer": "2249"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "private-school-locations-current-f7d96",
+      "source": "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+      "intent": "How many private schools have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\nresult = str(int(len(df[(df['STFIP'] == '06') & (df['NMCNTY'] == 'Los Angeles County')])))",
+      "answer": "745"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "school-district-office-locations-current-c8f9d",
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "intent": "How many school district offices have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\nresult = str(int(len(df[(df['STFIP'] == '06') & (df['NMCNTY'] == 'Los Angeles County')])))",
+      "answer": "419"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "How many postsecondary institutions have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "code": "import json\nimport pandas as pd\n\nsource = 'datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt'\nwith open(source, 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ndf = pd.DataFrame([feature.get('properties', {}) for feature in obj.get('features', [])])\ndf['STFIP'] = df['STFIP'].astype(str).str.strip()\ndf['NMCNTY'] = df['NMCNTY'].astype(str).str.strip()\nresult = str(int(len(df[(df['STFIP'] == '06') & (df['NMCNTY'] == 'Los Angeles County')])))",
+      "answer": "206"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "For STFIP='06', which 3 county names have the most public schools? Return the county names separated by '; '.",
+      "sql": "WITH counts AS (\n  SELECT f.properties.NMCNTY AS county,\n         COUNT(*) AS count_value\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.STFIP) = '06'\n    AND trim(f.properties.NMCNTY) <> ''\n  GROUP BY county\n  ORDER BY count_value DESC, county ASC\n  LIMIT 3\n)\nSELECT string_agg(county, '; ' ORDER BY count_value DESC, county ASC) AS answer\nFROM counts",
+      "answer": "Los Angeles County; San Diego County; Orange County"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "private-school-locations-current-f7d96",
+      "source": "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+      "intent": "For STFIP='06', which 3 county names have the most private schools? Return the county names separated by '; '.",
+      "sql": "WITH counts AS (\n  SELECT f.properties.NMCNTY AS county,\n         COUNT(*) AS count_value\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.STFIP) = '06'\n    AND trim(f.properties.NMCNTY) <> ''\n  GROUP BY county\n  ORDER BY count_value DESC, county ASC\n  LIMIT 3\n)\nSELECT string_agg(county, '; ' ORDER BY count_value DESC, county ASC) AS answer\nFROM counts",
+      "answer": "Los Angeles County; Orange County; San Diego County"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "school-district-office-locations-2022-23",
+      "source": "datagov/school-district-office-locations-2022-23/files/data-8V0eVK.txt",
+      "intent": "For STFIP='06', which 3 county names have the most school district offices? Return the county names separated by '; '.",
+      "sql": "WITH counts AS (\n  SELECT f.properties.NMCNTY AS county,\n         COUNT(*) AS count_value\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.STFIP) = '06'\n    AND trim(f.properties.NMCNTY) <> ''\n  GROUP BY county\n  ORDER BY count_value DESC, county ASC\n  LIMIT 3\n)\nSELECT string_agg(county, '; ' ORDER BY count_value DESC, county ASC) AS answer\nFROM counts",
+      "answer": "Los Angeles County; San Diego County; San Bernardino County"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "postsecondary-school-locations-2022-23",
+      "source": "datagov/postsecondary-school-locations-2022-23/files/data-sh56Ar.txt",
+      "intent": "Let A be the set of counties in <node_1 answer>, B be the set of counties in <node_2 answer>, and C be the set of counties in <node_3 answer>. Consider the intersection of A, B, and C. Among those counties, which single county has the most postsecondary institutions in STFIP='06'? Answer with the county name including the word 'County'.",
+      "sql": "WITH counts AS (\n  SELECT f.properties.NMCNTY AS county,\n         COUNT(*) AS count_value\n  FROM t, UNNEST(features) AS u(f)\n  WHERE trim(f.properties.STFIP) = '06'\n    AND f.properties.NMCNTY IN ('Los Angeles County', 'San Diego County')\n  GROUP BY county\n)\nSELECT county AS answer\nFROM counts\nORDER BY count_value DESC, county ASC\nLIMIT 1",
+      "answer": "Los Angeles County"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "public-school-locations-current-23297",
+      "source": "datagov/public-school-locations-current-23297/files/data-oyCYxF.txt",
+      "intent": "How many public schools have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.STFIP) = '06'\n  AND trim(f.properties.NMCNTY) = 'Los Angeles County'",
+      "answer": "2249"
+    },
+    {
+      "node_id": "6",
+      "dataset_id": "private-school-locations-current-f7d96",
+      "source": "datagov/private-school-locations-current-f7d96/files/data-FGgJBu.txt",
+      "intent": "How many private schools have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.STFIP) = '06'\n  AND trim(f.properties.NMCNTY) = 'Los Angeles County'",
+      "answer": "745"
+    },
+    {
+      "node_id": "7",
+      "dataset_id": "school-district-office-locations-current-c8f9d",
+      "source": "datagov/school-district-office-locations-current-c8f9d/files/data-ghDEVP.txt",
+      "intent": "How many school district offices have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.STFIP) = '06'\n  AND trim(f.properties.NMCNTY) = 'Los Angeles County'",
+      "answer": "419"
+    },
+    {
+      "node_id": "8",
+      "dataset_id": "postsecondary-school-locations-current-5a74c",
+      "source": "datagov/postsecondary-school-locations-current-5a74c/files/Postsecondary_School_Locations_Current_-3631565628879840217.txt",
+      "intent": "How many postsecondary institutions have NMCNTY='<node_4 answer>' and STFIP='06'?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t, UNNEST(features) AS u(f)\nWHERE trim(f.properties.STFIP) = '06'\n  AND trim(f.properties.NMCNTY) = 'Los Angeles County'",
+      "answer": "206"
+    }
+  ]
+}

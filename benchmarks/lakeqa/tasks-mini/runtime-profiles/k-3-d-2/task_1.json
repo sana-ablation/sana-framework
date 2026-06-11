@@ -1,0 +1,82 @@
+{
+  "dataset_sequence": [
+    "Austin,_Texas",
+    "apd-searches-by-type",
+    "apd-computer-aided-dispatch-incidents",
+    "apd-use-of-force"
+  ],
+  "source_sequence": [
+    "wikipedia/Austin,_Texas/content.txt",
+    "datagov/apd-searches-by-type/files/rows.txt",
+    "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+    "datagov/apd-use-of-force/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Determine Austin's incorporation year for the per-century calculation.",
+    "2. In 2023 APD search records, identify the patrol sector excluding Unknown with the most searches.",
+    "3. Within the sector from step 2, find the Austin City Council district with the most 2023 dispatch-system incident records.",
+    "4. Count 2023 APD incident records in the district from step 3 where officers applied force and tasers were used, convert that count to an average per century using the year from step 1, and return the rounded integer."
+  ],
+  "original_final_question": "I'm trying to estimate how many taser-use incidents per century Austin has using 2023 data. Find the Austin Police Department sector (excluding Unknown) with the most searches, then within that sector find the council district with the most dispatch-system incident records in 2023. Count the 2023 incidents in that district where officers applied force and tasers were used, then use Austin's incorporation year to compute the average per century. Please return only the rounded integer in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: Austin founding year -> 1839.",
+    "Node 2: 2023 APD sector with the most searches (excluding Unknown) -> Charlie (445).",
+    "Node 3 depends on node 2: In 2023 CAD incidents, within sector Charlie, the council district with the most incidents -> 1 (21038).",
+    "Node 4 depends on node 3: In 2023 APD use-of-force data, incidents in council district 1 with Used Taser(s) > 0 = 59.",
+    "Compute Austin age in 2023: 2023 - 1839 = 184 years = 1.84 centuries.",
+    "Compute incidents per century: 59 / 1.84 \u2248 32.07.",
+    "Round to nearest whole number: 32.",
+    "Final answer: 32"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "apd-searches-by-type",
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "intent": "In 2023 APD searches-by-type data (excluding Sector = \"Unknown\"), which sector has the most searches?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-searches-by-type/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nyear = pd.to_numeric(df[\"Occurred Year\"], errors=\"coerce\")\nsector = df[\"Sector\"].astype(str).str.strip()\nfiltered = df[\n    year.eq(2023)\n    & sector.ne(\"\")\n    & sector.str.lower().ne(\"unknown\")\n]\nanswer = str(filtered[\"Sector\"].astype(str).str.strip().value_counts().index[0])",
+      "answer": "Charlie"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "apd-computer-aided-dispatch-incidents",
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "intent": "In 2023 APD computer-aided-dispatch incidents data, within sector <node_2 answer>, which council district has the most incidents?",
+      "code": "import pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-computer-aided-dispatch-incidents/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\nnode_2_answer = \"Charlie\"\n\ncounts = {}\nfor chunk in pd.read_csv(\n    obj[\"Body\"],\n    usecols=[\"Response Year\", \"Sector\", \"Council District\"],\n    dtype=str,\n    chunksize=500000,\n    low_memory=False,\n):\n    filtered = chunk[\n        pd.to_numeric(chunk[\"Response Year\"], errors=\"coerce\").eq(2023)\n        & chunk[\"Sector\"].astype(str).str.strip().str.lower().eq(node_2_answer.lower())\n    ]\n    vc = filtered[\"Council District\"].astype(str).str.strip().replace(\"\", pd.NA).dropna().value_counts()\n    for district, cnt in vc.items():\n        counts[district] = counts.get(district, 0) + int(cnt)\n\nanswer = str(max(counts, key=counts.get)).strip()",
+      "answer": "1"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "apd-use-of-force",
+      "source": "datagov/apd-use-of-force/files/rows.txt",
+      "intent": "In 2023 APD use-of-force data, how many incidents with Used Taser(s) > 0 occurred in council district <node_3 answer>?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/apd-use-of-force/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nnode_3_answer = \"1\"\n\nfiltered = df[df[\"Occurred Date\"].astype(str).str.contains(\"2023\", na=False)].copy()\nfiltered[\"Council District Numeric\"] = pd.to_numeric(filtered[\"Council District\"], errors=\"coerce\")\nfiltered = filtered[filtered[\"Council District Numeric\"].eq(pd.to_numeric(node_3_answer, errors=\"coerce\"))]\nused_taser = pd.to_numeric(filtered[\"Used Taser(s)\"], errors=\"coerce\").fillna(0)\nanswer = str(int((used_taser > 0).sum()))",
+      "answer": "59"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "apd-searches-by-type",
+      "source": "datagov/apd-searches-by-type/files/rows.txt",
+      "intent": "In 2023 APD searches-by-type data (excluding Sector = \"Unknown\"), which sector has the most searches?",
+      "sql": "SELECT trim(CAST(Sector AS VARCHAR)) AS answer\nFROM t\nWHERE TRY_CAST(\"Occurred Year\" AS INTEGER) = 2023\n  AND trim(CAST(Sector AS VARCHAR)) <> ''\n  AND lower(trim(CAST(Sector AS VARCHAR))) <> 'unknown'\nGROUP BY answer\nORDER BY COUNT(*) DESC, answer ASC\nLIMIT 1",
+      "answer": "Charlie"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "apd-computer-aided-dispatch-incidents",
+      "source": "datagov/apd-computer-aided-dispatch-incidents/files/rows.txt",
+      "intent": "In 2023 APD computer-aided-dispatch incidents data, within sector <node_2 answer>, which council district has the most incidents?",
+      "answer": "Cannot execute SQL: file is too big (1377 MB >= 500 MB limit)."
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "apd-use-of-force",
+      "source": "datagov/apd-use-of-force/files/rows.txt",
+      "intent": "In 2023 APD use-of-force data, how many incidents with Used Taser(s) > 0 occurred in council district <node_3 answer>?",
+      "sql": "SELECT CAST(COUNT(*) AS VARCHAR) AS answer\nFROM t\nWHERE CAST(\"Occurred Date\" AS VARCHAR) LIKE '%2023%'\n  AND TRY_CAST(\"Council District\" AS DOUBLE) = 1\n  AND COALESCE(TRY_CAST(\"Used Taser(s)\" AS DOUBLE), 0) > 0",
+      "answer": "59"
+    }
+  ]
+}

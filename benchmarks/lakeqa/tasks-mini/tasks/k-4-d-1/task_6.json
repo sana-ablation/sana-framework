@@ -1,0 +1,90 @@
+{
+  "question": "In Pittsburgh, identify the largest airport; in its March 2019 scheduled traffic report, find the destination with the most seats and map it to its city and state. What is the largest land area (SQMI) among ZIP codes in that destination city/state? Please return the land area only. Your response should be in the format [Answer].",
+  "answer": "45.68",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/Pittsburgh/content.txt",
+      "fact": "Pittsburgh International Airport is the largest airport in Pittsburgh.",
+      "subquestion": "What is the largest airport in Pittsburgh?",
+      "answer": "Pittsburgh International Airport"
+    },
+    "2": {
+      "source": "datagov/pittsburgh-international-airport-scheduled-passenger-traffic/files/pittsburgh-international-traffic-report-march-2019.txt",
+      "fact": "import csv\nfrom collections import defaultdict\n\nwith open('datagov/pittsburgh-international-airport-scheduled-passenger-traffic/files/pittsburgh-international-traffic-report-march-2019.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ntotals = defaultdict(float)\nnames = {}\nfor r in rows:\n    code = (r.get('Destination Code') or '').strip()\n    dest = (r.get('Destination') or '').strip()\n    if not code:\n        continue\n    try:\n        seats = float((r.get('Seats March 2019') or '').replace(',', '').strip())\n    except (TypeError, ValueError):\n        continue\n    totals[code] += seats\n    names[code] = dest\n\ncode, _ = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[0]\nresult = f\"{names[code]} ({code})\"",
+      "subquestion": "For Pittsburgh International Airport, which destination had the most scheduled seats in March 2019? (Filter for this node: group by Destination Code; sum Seats March 2019; select max.)",
+      "answer": "Atlanta (ATL)"
+    },
+    "3": {
+      "source": "datagov/airports-5e97a/files/rows.txt",
+      "fact": "import csv\n\nwith open('datagov/airports-5e97a/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nresult = None\nfor r in rows:\n    if (r.get('Loc_Id') or '').strip().upper() == 'ATL':\n        city = (r.get('City') or '').strip().title()\n        state = (r.get('State_Post') or '').strip().upper()\n        result = f\"{city}, {state}\"\n        break",
+      "subquestion": "In the airports dataset, what city and state correspond to the destination airport code from hop 2? (Filter for this node: Loc_Id == <destination code from hop 2>; read City and State_Post.)",
+      "answer": "Atlanta, GA"
+    },
+    "4": {
+      "source": "datagov/boundaries-us-zip-codes/files/rows.txt",
+      "fact": "import csv\n\nwith open('datagov/boundaries-us-zip-codes/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\nareas = []\nfor r in rows:\n    city = (r.get('CITY') or '').strip().upper()\n    state = (r.get('STATE') or '').strip().upper()\n    if city != 'ATLANTA' or state != 'GA':\n        continue\n    try:\n        sqmi = float((r.get('SQMI') or '').strip())\n    except (TypeError, ValueError):\n        continue\n    areas.append(sqmi)\n\nresult = f\"{max(areas):.2f}\" if areas else None",
+      "subquestion": "In the ZIP code boundaries dataset, what is the largest land area (SQMI) among ZIP codes in the city and state from hop 3? (Filter for this node: CITY == Atlanta; STATE == GA; rank by SQMI; return max SQMI.)",
+      "answer": "45.68"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=1): Identify the largest airport in Pittsburgh",
+    "  Node 1: Pittsburgh International Airport is the largest airport in Pittsburgh",
+    "  Result: Pittsburgh International Airport",
+    "",
+    "HOP 2 (d=1): Find the top March 2019 destination by seats",
+    "  Node 2: Atlanta (ATL) has the most seats (44,912)",
+    "  Result: Atlanta (ATL)",
+    "",
+    "HOP 3 (d=1): Map the destination airport code to its city and state",
+    "  Node 3: Loc_Id ATL -> Atlanta, GA",
+    "  Result: Atlanta, GA",
+    "",
+    "HOP 4 (d=1): Find the largest land area (SQMI) among ZIP codes in that city/state",
+    "  Node 4: Atlanta, GA -> largest land area is 45.68",
+    "  Result: 45.68",
+    "",
+    "Final answer: 45.68"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "Pittsburgh",
+    "pittsburgh-international-airport-scheduled-passenger-traffic",
+    "airports-5e97a",
+    "boundaries-us-zip-codes"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1
+      ],
+      "reasoning": "Node 1: Pittsburgh International Airport is the largest airport in Pittsburgh Result: Pittsburgh International Airport",
+      "answer": "Pittsburgh International Airport"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        2
+      ],
+      "reasoning": "Node 2: Atlanta (ATL) has the most seats (44,912) Result: Atlanta (ATL)",
+      "answer": "Atlanta (ATL)"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        3
+      ],
+      "reasoning": "Node 3: Loc_Id ATL -> Atlanta, GA Result: Atlanta, GA",
+      "answer": "Atlanta, GA"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        4
+      ],
+      "reasoning": "Node 4: Atlanta, GA -> largest land area is 45.68 Result: 45.68",
+      "answer": "45.68"
+    }
+  ]
+}

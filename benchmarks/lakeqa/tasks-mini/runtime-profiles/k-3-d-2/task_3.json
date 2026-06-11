@@ -1,0 +1,87 @@
+{
+  "dataset_sequence": [
+    "2006-2007-school-progress-report",
+    "2007-2008-school-progress-report",
+    "List_of_Bronx_High_School_of_Science_alumni",
+    "Marvin_Minsky"
+  ],
+  "source_sequence": [
+    "datagov/2006-2007-school-progress-report/files/rows.txt",
+    "datagov/2007-2008-school-progress-report/files/rows.txt",
+    "wikipedia/List_of_Bronx_High_School_of_Science_alumni/content.txt",
+    "wikipedia/Marvin_Minsky/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. For NYC district 10 high schools in school year 2006-07, identify the schools in the top group by overall score and record their additional-credit values.",
+    "2. For NYC district 10 high schools in school year 2007-08, identify the schools in the top group by overall score, keep those also found in step 1, and select the school with the lowest average additional credits across the two years.",
+    "3. Using the alumni information for the selected high school, identify the alumnus who first received the Turing Award.",
+    "4. For the alumnus from step 3, determine which university awarded the person's PhD and return that university."
+  ],
+  "original_final_question": "Can you find the NYC high school in district 10 that are in top 6 by high school's overall score from school year 2006-07 to school year 2007-08, and has the lowest average additional credits. In this high school, find the alumni who first received the Turing award and report which University this person obtained his PhD from. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, nodes 1): Top 6 NYC high schools by overall score 2006-07; filter to top 6 in 2007-08; lowest avg additional credits → Bronx High School of Science",
+    "HOP 2 (d=1, nodes 2): First Turing Award alumnus → Marvin Minsky",
+    "HOP 3 (d=1, nodes 3): PhD university → Princeton University",
+    "Final answer: Princeton University"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "2006-2007-school-progress-report",
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools in District 10 were in the top 6 by overall score in 2006-07?",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/2006-2007-school-progress-report/files/rows.txt')\ndf.columns = [c.strip() for c in df.columns]\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['OVERALL SCORE'] = pd.to_numeric(df['OVERALL SCORE'], errors='coerce')\n\nfiltered = df[(df['DISTRICT'] == 10) & (df['PROGRESS REPORT TYPE'] == 'HS')].copy()\nranked = filtered.sort_values(['OVERALL SCORE', 'SCHOOL'], ascending=[False, True])\nresult = ranked.head(5)['SCHOOL'].tolist()",
+      "answer": [
+        "MARBLE HILL HIGH SCHOOL FOR INTERNATIONAL STUDIES",
+        "HIGH SCHOOL OF AMERICAN STUDIES AT LEHMAN COLLEGE",
+        "RIVERDALE/KINGSBRIDGE ACADEMY (MS/HS 141)",
+        "BRONX SCHOOL OF LAW AND FINANCE",
+        "UNIVERSITY HEIGHTS SECONDARY SCHOOL AT BRONX COMMU"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools in District 10 were in the top 6 by overall score in 2007-08?",
+      "code": "import pandas as pd\n\ndf = pd.read_csv('datagov/2007-2008-school-progress-report/files/rows.txt')\ndf.columns = [c.strip() for c in df.columns]\ndf['DISTRICT'] = pd.to_numeric(df['DISTRICT'], errors='coerce')\ndf['OVERALL SCORE'] = pd.to_numeric(df['OVERALL SCORE'], errors='coerce')\n\nfiltered = df[(df['DISTRICT'] == 10) & (df['PROGRESS REPORT TYPE'] == 'HS')].copy()\nranked = filtered.sort_values(['OVERALL SCORE', 'SCHOOL'], ascending=[False, True])\nresult = ranked.head(5)['SCHOOL'].tolist()",
+      "answer": [
+        "MARBLE HILL HIGH SCHOOL FOR INTERNATIONAL STUDIES",
+        "MARIE CURIE HIGH SCHOOL FOR NURSING, MEDICINE, AND ALLIED HEALTH PROFE",
+        "RIVERDALE / KINGSBRIDGE ACADEMY (MIDDLE SCHOOL / HIGH SCHOOL 141)",
+        "BRONX HIGH SCHOOL FOR MEDICAL SCIENCE",
+        "BRONX HIGH SCHOOL OF SCIENCE"
+      ]
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "2006-2007-school-progress-report",
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools in District 10 were in the top 6 by overall score in 2006-07?",
+      "sql": "SELECT SCHOOL AS answer\nFROM t\nWHERE TRY_CAST(DISTRICT AS INTEGER) = 10\n  AND \"PROGRESS REPORT TYPE\" = 'HS'\nORDER BY TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) DESC, SCHOOL ASC\nLIMIT 5",
+      "answer": [
+        "MARBLE HILL HIGH SCHOOL FOR INTERNATIONAL STUDIES",
+        "HIGH SCHOOL OF AMERICAN STUDIES AT LEHMAN COLLEGE",
+        "RIVERDALE/KINGSBRIDGE ACADEMY (MS/HS 141)",
+        "BRONX SCHOOL OF LAW AND FINANCE",
+        "UNIVERSITY HEIGHTS SECONDARY SCHOOL AT BRONX COMMU"
+      ]
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "2007-2008-school-progress-report",
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "intent": "Which NYC high schools in District 10 were in the top 6 by overall score in 2007-08?",
+      "sql": "SELECT SCHOOL AS answer\nFROM t\nWHERE TRY_CAST(DISTRICT AS INTEGER) = 10\n  AND \"PROGRESS REPORT TYPE\" = 'HS'\nORDER BY TRY_CAST(\"OVERALL SCORE\" AS DOUBLE) DESC, SCHOOL ASC\nLIMIT 5",
+      "answer": [
+        "MARBLE HILL HIGH SCHOOL FOR INTERNATIONAL STUDIES",
+        "MARIE CURIE HIGH SCHOOL FOR NURSING, MEDICINE, AND ALLIED HEALTH PROFE",
+        "RIVERDALE / KINGSBRIDGE ACADEMY (MIDDLE SCHOOL / HIGH SCHOOL 141)",
+        "BRONX HIGH SCHOOL FOR MEDICAL SCIENCE",
+        "BRONX HIGH SCHOOL OF SCIENCE"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "question": "Who is older Craig Nicholls or Norman Blake? Write your answer as [ANSWER].",
+  "answer": "Norman Blake",
+  "nodes": {
+    "1": {
+      "source": "wikipedia/hotpotqa__5a730a6b5542992359bc3210/files/Craig_Nicholls.txt",
+      "fact": "Craig Robert Nicholls (born 31 August 1977) is an Australian musician, best known as the lead singer, songwriter, and guitarist of the Australian alternative rock band The Vines, of which he is the only mainstay member.",
+      "subquestion": "What evidence from supporting page 1 is needed for the comparison?",
+      "answer": "<text evidence>"
+    },
+    "2": {
+      "source": "wikipedia/hotpotqa__5a730a6b5542992359bc3210/files/Norman_Blake_Scottish_musician.txt",
+      "fact": "Norman Blake (born 20 October 1965, Bellshill, North Lanarkshire, Scotland) is a singer, instrumentalist and songwriter in the Glasgow based band Teenage Fanclub.",
+      "subquestion": "What evidence from supporting page 2 is needed for the comparison?",
+      "answer": "Norman Blake"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Read the first supporting page for the evidence needed by the question.",
+    "Node 2: Read the second supporting page for the evidence needed by the question.",
+    "Final answer: derive the answer from the supporting evidence."
+  ],
+  "datasets_used": [
+    "wikipedia/hotpotqa__5a730a6b5542992359bc3210",
+    "wikipedia/hotpotqa__5a730a6b5542992359bc3210"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2
+      ],
+      "reasoning": "Compare the two supporting evidence items and answer the question.",
+      "answer": "Norman Blake"
+    }
+  ],
+  "_provenance": {
+    "benchmark": "hotpotqa",
+    "split": "dev_distractor",
+    "source_id": "5a730a6b5542992359bc3210",
+    "type": "comparison",
+    "level": "hard",
+    "promoted_from": "other-benchmarks/tasks-hotpotqa-mini/k-2-d-1/task_2.json",
+    "raw_source": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json",
+    "source_mode": "raw_context_supporting_facts",
+    "s3_mirror_prefix": "wikipedia/hotpotqa__5a730a6b5542992359bc3210/files/",
+    "local_authoring_source": {
+      "1": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a730a6b5542992359bc3210:Craig Nicholls:0",
+      "2": "other-benchmarks/raw/hotpotqa/hotpot_dev_distractor_v1.json#5a730a6b5542992359bc3210:Norman Blake (Scottish musician):0"
+    },
+    "promotion_status": "smoke_converted",
+    "promotion_rule": "generated_hotpotqa_lakeqa_transform_five_import_smoke_v1"
+  }
+}

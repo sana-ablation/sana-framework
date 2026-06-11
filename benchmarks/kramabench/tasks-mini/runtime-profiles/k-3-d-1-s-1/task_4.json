@@ -1,0 +1,71 @@
+{
+  "dataset_sequence": [
+    "kramabench-archeology-hard-2"
+  ],
+  "source_sequence": [
+    "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+    "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+    "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx"
+  ],
+  "reasoning_chain_text": [
+    "1. Read and clean the climate measurements table as the source script does.",
+    "2. For each row, compare the nearest earlier and later wet-dry index values and count increases.",
+    "3. Divide the increasing count by all evaluated rows and express it as a percentage."
+  ],
+  "original_final_question": "Across the years, what was the percent of years the wet-dry index was increasing? Give your answer in percentage, round your answer to 2 decimal places. Write your answer as [ANSWER].",
+  "original_reasoning_chain": [
+    "Node 1: Read and clean the climate measurements table as the source script does.",
+    "Node 2 depends on node 1: For each row, compare the nearest earlier and later wet-dry index values and count increases.",
+    "Node 3 depends on node 2: Divide the increasing count by all evaluated rows and express it as a percentage.",
+    "Final answer: 37.95"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-hard-2",
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "intent": "After cleaning the climate measurements table as in the source script, how many rows are evaluated?",
+      "code": "import pandas as pd\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\nresult = str(len(climate))\nprint(result)\n",
+      "answer": "8360"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-hard-2",
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "intent": "Using the source-script previous/next-year comparison, how many rows have an increasing wet-dry index?",
+      "code": "import pandas as pd\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\ndef is_increasing(row):\n    year = row['year']\n    previous_year = climate[climate['year'] < year].sort_values('year', ascending=False).head(1)\n    next_year = climate[climate['year'] > year].sort_values('year', ascending=True).head(1)\n    try:\n        previous_year = previous_year.iloc[0]\n        last_wet = previous_year['ODP 967 wet-dry index']\n    except IndexError:\n        last_wet = 0\n    try:\n        next_year = next_year.iloc[0]\n        next_wet = next_year['ODP 967 wet-dry index']\n    except IndexError:\n        next_wet = last_wet\n    return 1 if next_wet - last_wet > 0 else 0\nflags = climate.apply(is_increasing, axis=1)\nresult = str(int(flags.sum()))\nprint(result)\n",
+      "answer": "3173"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-hard-2",
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "intent": "What percent of evaluated rows have an increasing wet-dry index, rounded to two decimals?",
+      "code": "import pandas as pd\nclimate_path = 'other-benchmarks/Kramabench/data/archeology/input/climateMeasurements.xlsx'\nclimate = pd.read_excel(climate_path, sheet_name=0, header=0, skiprows=5).dropna(how='all').dropna(axis=1, how='all')\nclimate['year'] = 1950 - climate['Age_ky.1'].round(0) * 1000\ndef is_increasing(row):\n    year = row['year']\n    previous_year = climate[climate['year'] < year].sort_values('year', ascending=False).head(1)\n    next_year = climate[climate['year'] > year].sort_values('year', ascending=True).head(1)\n    try:\n        previous_year = previous_year.iloc[0]\n        last_wet = previous_year['ODP 967 wet-dry index']\n    except IndexError:\n        last_wet = 0\n    try:\n        next_year = next_year.iloc[0]\n        next_wet = next_year['ODP 967 wet-dry index']\n    except IndexError:\n        next_wet = last_wet\n    return 1 if next_wet - last_wet > 0 else 0\nflags = climate.apply(is_increasing, axis=1)\nresult = f\"{flags.mean() * 100:.2f}\"\nprint(result)\n",
+      "answer": "37.95"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "kramabench-archeology-hard-2",
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "intent": "After cleaning the climate measurements table as in the source script, how many rows are evaluated?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "kramabench-archeology-hard-2",
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "intent": "Using the source-script previous/next-year comparison, how many rows have an increasing wet-dry index?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "kramabench-archeology-hard-2",
+      "source": "datagov/kramabench-archeology-hard-2/files/climateMeasurements.xlsx",
+      "intent": "What percent of evaluated rows have an increasing wet-dry index, rounded to two decimals?",
+      "answer": "Cannot execute SQL: query_file cannot query XLSX workbook sources. Download the file and use execute_ideal/download-style Python to parse the workbook."
+    }
+  ]
+}

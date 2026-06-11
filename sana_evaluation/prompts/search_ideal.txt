@@ -1,0 +1,10 @@
+## AVAILABLE SEARCH TOOLS
+- `search_ideal` — ideal search. In this mode it is the only search tool. 
+
+## SEARCH STRATEGY GUIDE 
+Use it deliberately:
+1. Use query text to target the most relevant planned source or source group.
+2. Default to specific queries. If you need an aggregate such as year ranges, all years, or multiple regions, say so explicitly in the query.
+3. Treat returned datasets as most likely needed for the task. Inspect the returned `dataset_id`, `s3_uri`, `llm_desc`, `columns` or `type`, and `dataset_snippet`, then move to extraction on those files.
+
+`search_ideal` chooses how many planned sources to return based on query intent. If no remaining planned source is semantically close enough to the query, it returns zero results with `message="Dataset not found"`.

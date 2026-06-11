@@ -1,0 +1,112 @@
+{
+  "dataset_sequence": [
+    "crime-data-from-2010-to-2019",
+    "arrest-data-from-2010-to-2019",
+    "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present",
+    "crime-data-from-2020-to-present"
+  ],
+  "source_sequence": [
+    "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+    "datagov/arrest-data-from-2010-to-2019/files/rows.txt",
+    "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+    "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+    "datagov/crime-data-from-2020-to-present/files/rows.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. In Los Angeles crime records from 2010-2019, determine the year with the most identity-theft incidents and record the crime code for that offense.",
+    "2. For that year, determine which LAPD area had the most arrests for moving traffic violations.",
+    "3. Map the LAPD area from step 2 to its numeric area identifier in LAPD stop records.",
+    "4. Count 2020 identity-theft incidents for the area identifier from step 3."
+  ],
+  "original_final_question": "I'm analyzing identity theft trends in Los Angeles. First, identify the year between 2010 and 2019 that had the highest number of identity theft incidents. In that same year, which neighborhood had the most arrests for moving traffic violations? Focusing on that specific area, report the number of identity theft incidents occurred there in 2020. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "Node 1: In 2010 to 2019 LA crime records, the year with the most THEFT OF IDENTITY incidents -> 2016.",
+    "Node 2 depends on node 1: In 2016 arrests, the area with the most Moving Traffic Violations arrests -> Van Nuys.",
+    "Node 3 depends on node 2: In LAPD RIPA stop-incident records, Van Nuys corresponds to Area ID 9.",
+    "Node 4: In Los Angeles crime records, THEFT OF IDENTITY corresponds to crime code 354.",
+    "Node 5 depends on nodes 3-4: In 2020 crime records for Area ID 9, incident count where Crm Cd = 354 -> 761.",
+    "Final answer: 761"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "1",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "From 2010 to 2019, which year has the most Los Angeles incidents with crime description \"THEFT OF IDENTITY\"?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-data-from-2010-to-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf = df[df[\"Crm Cd Desc\"] == \"THEFT OF IDENTITY\"].copy()\ndf[\"DATE OCC\"] = pd.to_datetime(df[\"DATE OCC\"], errors=\"coerce\")\ndf = df[df[\"DATE OCC\"].dt.year.between(2010, 2019, inclusive=\"both\")]\nanswer = (\n    df.groupby(df[\"DATE OCC\"].dt.year)\n      .size()\n      .sort_values(ascending=False)\n      .index[0]\n)\nprint(answer)\nanswer = str(answer)",
+      "answer": "2016"
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "arrest-data-from-2010-to-2019",
+      "source": "datagov/arrest-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In <node_1 answer> Los Angeles arrest records, which area has the most arrests in the charge group \"Moving Traffic Violations\"?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/arrest-data-from-2010-to-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"Arrest Date\"] = pd.to_datetime(df[\"Arrest Date\"], errors=\"coerce\")\ndf = df[\n    (df[\"Arrest Date\"].dt.year == 2016)\n    & (df[\"Charge Group Description\"] == \"Moving Traffic Violations\")\n]\nanswer = (\n    df.groupby(\"Area Name\")\n      .size()\n      .sort_values(ascending=False)\n      .index[0]\n)\nprint(answer)",
+      "answer": "Van Nuys"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present",
+      "source": "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+      "intent": "Using LAPD stop-incident records collected under California's RIPA program, what numeric Area ID corresponds to area name <node_2 answer> (answer as an integer)?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf = df[df[\"Area Name\"] == \"Van Nuys\"].copy()\narea_ids = df[\"Area ID\"].dropna().astype(str)\nanswer = int(area_ids.str.extract(r\"(\\d+)\")[0].mode().iloc[0])\nprint(answer)\nanswer = str(answer)",
+      "answer": "9"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In Los Angeles crime records, what crime code corresponds to the crime description \"THEFT OF IDENTITY\"? Answer with the crime code only.",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-data-from-2010-to-2019/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf = df[df[\"Crm Cd Desc\"] == \"THEFT OF IDENTITY\"].copy()\nanswer = df[\"Crm Cd\"].mode().iloc[0]\nprint(int(answer) if pd.notna(answer) else answer)\nanswer = str(answer)",
+      "answer": "354"
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "crime-data-from-2020-to-present",
+      "source": "datagov/crime-data-from-2020-to-present/files/rows.txt",
+      "intent": "Using the 2020 to present Los Angeles crime records, in 2020 how many incidents with crime code <node_4 answer> occurred in Area ID <node_3 answer>?",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = \"datagov/crime-data-from-2020-to-present/files/rows.txt\"\nbucket = \"lakeqa-yc4103-datalake\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n\ndf[\"DATE OCC\"] = pd.to_datetime(df[\"DATE OCC\"], errors=\"coerce\")\ndf = df[\n    (df[\"DATE OCC\"].dt.year == 2020)\n    & (df[\"AREA\"] == 9)\n    & (df[\"Crm Cd\"] == 354)\n]\nanswer = len(df)\nprint(answer)\nanswer = str(answer)",
+      "answer": "761"
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "1",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "From 2010 to 2019, which year has the most Los Angeles incidents with crime description \"THEFT OF IDENTITY\"?",
+      "answer": "Cannot execute SQL: file is too big (505.31 MB >= 500 MB limit)."
+    },
+    {
+      "node_id": "2",
+      "dataset_id": "arrest-data-from-2010-to-2019",
+      "source": "datagov/arrest-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In <node_1 answer> Los Angeles arrest records, which area has the most arrests in the charge group \"Moving Traffic Violations\"?",
+      "sql": "SELECT \"Area Name\" AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"Arrest Date\" AS DATE)) = 2016\n  AND \"Charge Group Description\" = 'Moving Traffic Violations'\nGROUP BY \"Area Name\"\nORDER BY count(*) DESC\nLIMIT 1",
+      "answer": "Van Nuys"
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present",
+      "source": "datagov/lapd-ripa-ab-953-stop-incident-details-from-7-1-2018-to-present/files/rows.txt",
+      "intent": "Using LAPD stop-incident records collected under California's RIPA program, what numeric Area ID corresponds to area name <node_2 answer> (answer as an integer)?",
+      "sql": "SELECT CAST(\"Area ID\" AS INTEGER) AS answer\nFROM t\nWHERE \"Area Name\" = 'Van Nuys'\nGROUP BY \"Area ID\"\nORDER BY count(*) DESC\nLIMIT 1",
+      "answer": "9"
+    },
+    {
+      "node_id": "4",
+      "dataset_id": "crime-data-from-2010-to-2019",
+      "source": "datagov/crime-data-from-2010-to-2019/files/rows.txt",
+      "intent": "In Los Angeles crime records, what crime code corresponds to the crime description \"THEFT OF IDENTITY\"? Answer with the crime code only.",
+      "answer": "Cannot execute SQL: file is too big (505.31 MB >= 500 MB limit)."
+    },
+    {
+      "node_id": "5",
+      "dataset_id": "crime-data-from-2020-to-present",
+      "source": "datagov/crime-data-from-2020-to-present/files/rows.txt",
+      "intent": "Using the 2020 to present Los Angeles crime records, in 2020 how many incidents with crime code <node_4 answer> occurred in Area ID <node_3 answer>?",
+      "sql": "SELECT count(*) AS answer\nFROM t\nWHERE EXTRACT(year FROM TRY_CAST(\"DATE OCC\" AS DATE)) = 2020\n  AND AREA = 9\n  AND \"Crm Cd\" = 354",
+      "answer": "761"
+    }
+  ]
+}

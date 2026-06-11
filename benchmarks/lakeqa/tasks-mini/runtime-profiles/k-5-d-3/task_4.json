@@ -1,0 +1,101 @@
+{
+  "dataset_sequence": [
+    "List_of_counties_in_Texas",
+    "fy-2020-disability-compensation-recipients-by-county",
+    "fy-2023-disability-compensation-recipients-by-county",
+    "Harris_County,_Texas",
+    "Houston",
+    "University_of_Houston",
+    "University_of_Houston–Clear_Lake",
+    "University_of_Houston–Downtown"
+  ],
+  "source_sequence": [
+    "wikipedia/List_of_counties_in_Texas/content.txt",
+    "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+    "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+    "wikipedia/Harris_County,_Texas/content.txt",
+    "wikipedia/Houston/content.txt",
+    "wikipedia/University_of_Houston/content.txt",
+    "wikipedia/University_of_Houston–Clear_Lake/content.txt",
+    "wikipedia/University_of_Houston–Downtown/content.txt"
+  ],
+  "reasoning_chain_text": [
+    "1. Identify the two most populous Texas counties in 2024.",
+    "2. For those counties, compare veterans disability compensation recipient counts in 2020 and 2023 and keep the county with the larger increase.",
+    "3. Determine that county's county seat.",
+    "4. In that city, identify UHouston System universities.",
+    "5. Determine each of those universities' founding years and return the name of the university founded earliest."
+  ],
+  "original_final_question": "Among the two most populous Texas counties in 2024, which of those had a larger increase in veterans disability compensation recipients from 2020 to 2023? What is that county's seat, and which UHouston System university in that city was founded earliest? Return the university name only. Your response should be in the format [Answer].",
+  "original_reasoning_chain": [
+    "HOP 1 (d=1, Wikipedia List_of_counties_in_Texas - node 1):",
+    "  Node 1: Two most populous counties in 2024 -> Harris, Dallas",
+    "",
+    "HOP 2 (d=2, Disability compensation recipients 2020 and 2023 - nodes 2-3):",
+    "  Node 2: 2020 recipients -> Harris 49,804; Dallas 26,317",
+    "  Node 3: 2023 recipients -> Harris 54,266; Dallas 25,704",
+    "  Change: Harris +4,462; Dallas -613 -> Harris has larger increase",
+    "  Result: Harris County",
+    "",
+    "HOP 3 (d=1, Wikipedia Harris_County,_Texas - node 4):",
+    "  Node 4: County seat of Harris County -> Houston",
+    "",
+    "HOP 4 (d=1, Wikipedia Houston - node 5):",
+    "  Node 5: UH System universities in Houston -> {University of Houston, University of Houston–Clear Lake, University of Houston–Downtown}",
+    "",
+    "HOP 5 (d=3, Wikipedia university pages - nodes 6-8):",
+    "  Node 6: University of Houston established in 1927",
+    "  Node 7: University of Houston–Clear Lake established in 1971",
+    "  Node 8: University of Houston–Downtown established in 1974",
+    "  Earliest founding year: 1927 -> University of Houston",
+    "  Final answer: University of Houston"
+  ],
+  "ideal_code": [
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2020-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "For the two counties from <node_1 answer>, what were the disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name in {Harris, Dallas}; use Total: Disability Compensation Recipients.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\nanswer = (\n    df[\n        (df['State'] == 'Texas')\n        & (df['County Name'].isin(['Harris', 'Dallas']))\n    ][['County Name', 'Total: Disability Compensation Recipients']]\n    .set_index('County Name')['Total: Disability Compensation Recipients']\n    .astype(int)\n    .to_dict()\n)",
+      "answer": {
+        "Harris": 49804,
+        "Dallas": 26317
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "For the two counties from <node_1 answer>, what were the disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name in {Harris, Dallas}; use Total: Disability Compensation Recipients.)",
+      "code": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nsource = 'datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt'\nbucket = 'lakeqa-yc4103-datalake'\nobj = boto3.client('s3', config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\ndf = pd.read_csv(io.BytesIO(obj['Body'].read()), low_memory=False)\n\ndf['Total: Disability Compensation Recipients'] = pd.to_numeric(df['Total: Disability Compensation Recipients'], errors='coerce')\nanswer = (\n    df[\n        (df['State'] == 'Texas')\n        & (df['County Name'].isin(['Harris', 'Dallas']))\n    ][['County Name', 'Total: Disability Compensation Recipients']]\n    .set_index('County Name')['Total: Disability Compensation Recipients']\n    .astype(int)\n    .to_dict()\n)",
+      "answer": {
+        "Harris": 54266,
+        "Dallas": 25704
+      }
+    }
+  ],
+  "ideal_query": [
+    {
+      "node_id": "2",
+      "dataset_id": "fy-2020-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2020-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "For the two counties from <node_1 answer>, what were the disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name in {Harris, Dallas}; use Total: Disability Compensation Recipients.)",
+      "sql": "SELECT json_group_object(\"County Name\", TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER)) AS answer\nFROM t\nWHERE \"State\" = 'Texas'\n  AND \"County Name\" IN ('Harris', 'Dallas')",
+      "answer": {
+        "Harris": 49804,
+        "Dallas": 26317
+      }
+    },
+    {
+      "node_id": "3",
+      "dataset_id": "fy-2023-disability-compensation-recipients-by-county",
+      "source": "datagov/fy-2023-disability-compensation-recipients-by-county/files/rows.txt",
+      "intent": "For the two counties from <node_1 answer>, what were the disability compensation recipient counts in 2020 and 2023? (Filter for this node: State == Texas; County Name in {Harris, Dallas}; use Total: Disability Compensation Recipients.)",
+      "sql": "SELECT json_group_object(\"County Name\", TRY_CAST(\"Total: Disability Compensation Recipients\" AS INTEGER)) AS answer\nFROM t\nWHERE \"State\" = 'Texas'\n  AND \"County Name\" IN ('Harris', 'Dallas')",
+      "answer": {
+        "Harris": 54266,
+        "Dallas": 25704
+      }
+    }
+  ]
+}

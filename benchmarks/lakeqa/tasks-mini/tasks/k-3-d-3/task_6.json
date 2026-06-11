@@ -1,0 +1,175 @@
+{
+  "question": "Across January 2019-2021, identify the issuing agencies that consistently ranked in the top 20 by total parking-violation fines. From those, keep only the U.S. national law-enforcement bodies and find which had the highest average number of January moving violations from 2019-2021. Which federal agency operates that law-enforcement body? Return the agency name only. Your response should be in the format [Answer].",
+  "answer": "National Park Service",
+  "nodes": {
+    "1": {
+      "source": "datagov/parking-violations-issued-in-january-2019/files/data.txt",
+      "fact": "import json\nfrom collections import defaultdict\n\nwith open('datagov/parking-violations-issued-in-january-2019/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ntotals = defaultdict(float)\nfor feature in obj.get('features', []):\n    props = feature.get('properties') or {}\n    agency = (props.get('ISSUING_AGENCY_NAME') or '').strip()\n    if not agency:\n        continue\n    try:\n        fine = float(props.get('FINE_AMOUNT') or 0)\n    except (TypeError, ValueError):\n        continue\n    totals[agency] += fine\n\nranked = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[:20]\nresult = [agency for agency, _ in ranked]",
+      "subquestion": "Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? (Filter for this node: group by ISSUING_AGENCY_NAME; sum FINE_AMOUNT; rank desc; take top 20.)",
+      "answer": [
+        "DEPARTMENT OF PUBLIC WORKS",
+        "METROPOLITAN POLICE DPT-DISTRICT 2",
+        "METROPOLITAN POLICE DPT-DISTRICT 1",
+        "METROPOLITAN POLICE DPT-DISTRICT 4",
+        "METROPOLITAN POLICE DPT-DISTRICT 5",
+        "METROPOLITAN POLICE DPT-DISTRICT 7",
+        "D.C. HOUSING AUTHORITY",
+        "METROPOLITAN POLICE DPT-DISTRICT 3",
+        "METROPOLITAN POLICE DPT-DISTRICT 6",
+        "SPECIAL OPERATION DIV & TRAFFIC DIV",
+        "UNITED STATES CAPITOL POLICE",
+        "METRO POLICE",
+        "DDOT",
+        "PROTECTIVE SERVICES DEPT (DC GOVT)",
+        "SPECIAL INSPECTION DIVISION",
+        "MPD RESERVE CORPS",
+        "UNVRSTY OF THE D.C. SECURITY POLICE",
+        "TAXI COMMISSION",
+        "US. SECRET SERVICE UNIFORM DIVISION",
+        "UNITED STATES PARK POLICE"
+      ]
+    },
+    "2": {
+      "source": "datagov/parking-violations-issued-in-january-2020/files/data.txt",
+      "fact": "import json\nfrom collections import defaultdict\n\nwith open('datagov/parking-violations-issued-in-january-2020/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ntotals = defaultdict(float)\nfor feature in obj.get('features', []):\n    props = feature.get('properties') or {}\n    agency = (props.get('ISSUING_AGENCY_NAME') or '').strip()\n    if not agency:\n        continue\n    try:\n        fine = float(props.get('FINE_AMOUNT') or 0)\n    except (TypeError, ValueError):\n        continue\n    totals[agency] += fine\n\nranked = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[:20]\nresult = [agency for agency, _ in ranked]",
+      "subquestion": "Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? (Filter for this node: group by ISSUING_AGENCY_NAME; sum FINE_AMOUNT; rank desc; take top 20.)",
+      "answer": [
+        "DEPARTMENT OF PUBLIC WORKS",
+        "METROPOLITAN POLICE DPT-DISTRICT 2",
+        "D.C. HOUSING AUTHORITY",
+        "METROPOLITAN POLICE DPT-DISTRICT 6",
+        "METROPOLITAN POLICE DPT-DISTRICT 7",
+        "METROPOLITAN POLICE DPT-DISTRICT 4",
+        "DDOT",
+        "METROPOLITAN POLICE DPT-DISTRICT 3",
+        "METROPOLITAN POLICE DPT-DISTRICT 1",
+        "METROPOLITAN POLICE DPT-DISTRICT 5",
+        "METRO POLICE",
+        "SPECIAL OPERATION DIV & TRAFFIC DIV",
+        "UNITED STATES PARK POLICE",
+        "UNITED STATES CAPITOL POLICE",
+        "TAXI COMMISSION",
+        "SPECIAL INSPECTION DIVISION",
+        "PROTECTIVE SERVICES DEPT (DC GOVT)",
+        "US. SECRET SERVICE UNIFORM DIVISION",
+        "BOLLING AFB",
+        "US. GOVERNMENT PRINTING OFFICE"
+      ]
+    },
+    "3": {
+      "source": "datagov/parking-violations-issued-in-january-2021/files/data.txt",
+      "fact": "import json\nfrom collections import defaultdict\n\nwith open('datagov/parking-violations-issued-in-january-2021/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ntotals = defaultdict(float)\nfor feature in obj.get('features', []):\n    props = feature.get('properties') or {}\n    agency = (props.get('ISSUING_AGENCY_NAME') or '').strip()\n    if not agency:\n        continue\n    try:\n        fine = float(props.get('FINE_AMOUNT') or 0)\n    except (TypeError, ValueError):\n        continue\n    totals[agency] += fine\n\nranked = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[:20]\nresult = [agency for agency, _ in ranked]",
+      "subquestion": "Which agencies were in the top 20 for total January parking-violation fine amount in 2019-2021? (Filter for this node: group by ISSUING_AGENCY_NAME; sum FINE_AMOUNT; rank desc; take top 20.)",
+      "answer": [
+        "DEPARTMENT OF PUBLIC WORKS",
+        "METROPOLITAN POLICE DPT-DISTRICT 7",
+        "METROPOLITAN POLICE DPT-DISTRICT 3",
+        "METROPOLITAN POLICE DPT-DISTRICT 6",
+        "METROPOLITAN POLICE DPT-DISTRICT 1",
+        "METROPOLITAN POLICE DPT-DISTRICT 2",
+        "METROPOLITAN POLICE DPT-DISTRICT 4",
+        "METROPOLITAN POLICE DPT-DISTRICT 5",
+        "SPECIAL OPERATION DIV & TRAFFIC DIV",
+        "D.C. HOUSING AUTHORITY",
+        "UNITED STATES PARK POLICE",
+        "METRO POLICE",
+        "TAXI COMMISSION",
+        "UNITED STATES CAPITOL POLICE",
+        "MPD RESERVE CORPS",
+        "US. SECRET SERVICE UNIFORM DIVISION",
+        "PROTECTIVE SERVICES DEPT (DC GOVT)",
+        "DPT. OF GENERAL SERVICES GUARDS",
+        "US. GOVERNMENT PRINTING OFFICE",
+        "OTHER"
+      ]
+    },
+    "4": {
+      "source": "datagov/moving-violations-issued-in-january-2019/files/data.txt",
+      "fact": "import json\nfrom collections import Counter\n\nagencies = [\n    'UNITED STATES PARK POLICE',\n    'UNITED STATES CAPITOL POLICE',\n    'US. SECRET SERVICE UNIFORM DIVISION',\n]\n\nwith open('datagov/moving-violations-issued-in-january-2019/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ncounts = Counter()\nfor feature in obj.get('features', []):\n    props = feature.get('properties') or {}\n    agency = (props.get('ISSUING_AGENCY_NAME') or '').strip()\n    if agency in agencies:\n        counts[agency] += 1\n\nresult = {agency: counts[agency] for agency in agencies}",
+      "subquestion": "Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "answer": {
+        "UNITED STATES PARK POLICE": 103,
+        "UNITED STATES CAPITOL POLICE": 176,
+        "US. SECRET SERVICE UNIFORM DIVISION": 145
+      }
+    },
+    "5": {
+      "source": "datagov/moving-violations-issued-in-january-2020/files/data.txt",
+      "fact": "import json\nfrom collections import Counter\n\nagencies = [\n    'UNITED STATES PARK POLICE',\n    'UNITED STATES CAPITOL POLICE',\n    'US. SECRET SERVICE UNIFORM DIVISION',\n]\n\nwith open('datagov/moving-violations-issued-in-january-2020/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ncounts = Counter()\nfor feature in obj.get('features', []):\n    props = feature.get('properties') or {}\n    agency = (props.get('ISSUING_AGENCY_NAME') or '').strip()\n    if agency in agencies:\n        counts[agency] += 1\n\nresult = {agency: counts[agency] for agency in agencies}",
+      "subquestion": "Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "answer": {
+        "UNITED STATES PARK POLICE": 204,
+        "UNITED STATES CAPITOL POLICE": 139,
+        "US. SECRET SERVICE UNIFORM DIVISION": 118
+      }
+    },
+    "6": {
+      "source": "datagov/moving-violations-issued-in-january-2021/files/data.txt",
+      "fact": "import json\nfrom collections import Counter\n\nagencies = [\n    'UNITED STATES PARK POLICE',\n    'UNITED STATES CAPITOL POLICE',\n    'US. SECRET SERVICE UNIFORM DIVISION',\n]\nprior_counts = {\n    'UNITED STATES PARK POLICE': [103, 204],\n    'UNITED STATES CAPITOL POLICE': [176, 139],\n    'US. SECRET SERVICE UNIFORM DIVISION': [145, 118],\n}\n\nwith open('datagov/moving-violations-issued-in-january-2021/files/data.txt', 'r', encoding='utf-8') as f:\n    obj = json.load(f)\n\ncounts_2021 = Counter()\nfor feature in obj.get('features', []):\n    props = feature.get('properties') or {}\n    agency = (props.get('ISSUING_AGENCY_NAME') or '').strip()\n    if agency in agencies:\n        counts_2021[agency] += 1\n\naverages = {agency: (sum(prior_counts[agency]) + counts_2021[agency]) / 3 for agency in agencies}\nresult = sorted(averages.items(), key=lambda x: (-x[1], x[0]))[0][0]",
+      "subquestion": "Among the hop 1 intersection agencies that are U.S. national law-enforcement bodies (United States Park Police, United States Capitol Police, and U.S. Secret Service Uniform Division), which had the highest average number of January moving violations from 2019-2021? (Filter for this node: ISSUING_AGENCY_NAME in {UNITED STATES PARK POLICE, UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION}; count rows by ISSUING_AGENCY_NAME.)",
+      "answer": "UNITED STATES PARK POLICE"
+    },
+    "7": {
+      "source": "wikipedia/United_States_Park_Police/content.txt",
+      "fact": "The United States Park Police is an operation of the National Park Service.",
+      "subquestion": "Which federal agency operates the United States Park Police (from hop 2)?",
+      "answer": "National Park Service"
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3): Find agencies in the top 20 for total January parking-violation fines in 2019-2021 and keep the intersection",
+    "  Node 1: 2019 top 20 agencies by fine total",
+    "  Node 2: 2020 top 20 agencies by fine total",
+    "  Node 3: 2021 top 20 agencies by fine total",
+    "  Intersection: {DEPARTMENT OF PUBLIC WORKS, METROPOLITAN POLICE DPT-DISTRICT 2, METROPOLITAN POLICE DPT-DISTRICT 1, METROPOLITAN POLICE DPT-DISTRICT 4, METROPOLITAN POLICE DPT-DISTRICT 5, METROPOLITAN POLICE DPT-DISTRICT 7, D.C. HOUSING AUTHORITY, METROPOLITAN POLICE DPT-DISTRICT 3, METROPOLITAN POLICE DPT-DISTRICT 6, SPECIAL OPERATION DIV & TRAFFIC DIV, UNITED STATES CAPITOL POLICE, METRO POLICE, PROTECTIVE SERVICES DEPT (DC GOVT), TAXI COMMISSION, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}",
+    "  Subset rule: keep the U.S. national law-enforcement bodies -> {UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}",
+    "HOP 2 (d=3): Compare January moving-violation counts for the subset in 2019-2021",
+    "  Node 4: 2019 moving violations",
+    "  Node 5: 2020 moving violations",
+    "  Node 6: 2021 moving violations; average is highest for UNITED STATES PARK POLICE",
+    "  Result: UNITED STATES PARK POLICE",
+    "HOP 3 (d=1): Identify the federal agency that operates the United States Park Police",
+    "  Node 7: Operated by the National Park Service",
+    "Final answer: National Park Service"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "United_States_Park_Police",
+    "moving-violations-issued-in-january-2019",
+    "moving-violations-issued-in-january-2020",
+    "moving-violations-issued-in-january-2021",
+    "parking-violations-issued-in-january-2019",
+    "parking-violations-issued-in-january-2020",
+    "parking-violations-issued-in-january-2021"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1: 2019 top 20 agencies by fine total Node 2: 2020 top 20 agencies by fine total Node 3: 2021 top 20 agencies by fine total Intersection: {DEPARTMENT OF PUBLIC WORKS, METROPOLITAN POLICE DPT-DISTRICT 2, METROPOLITAN POLICE DPT-DISTRICT 1, METROPOLITAN POLICE DPT-DISTRICT 4, METROPOLITAN POLICE DPT-DISTRICT 5, METROPOLITAN POLICE DPT-DISTRICT 7, D.C. HOUSING AUTHORITY, METROPOLITAN POLICE DPT-DISTRICT 3, METROPOLITAN POLICE DPT-DISTRICT 6, SPECIAL OPERATION DIV & TRAFFIC DIV, UNITED STATES CAPITOL POLICE, METRO POLICE, PROTECTIVE SERVICES DEPT (DC GOVT), TAXI COMMISSION, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE} Subset rule: keep the U.S. national law-enforcement bodies -> {UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}",
+      "answer": "{UNITED STATES CAPITOL POLICE, US. SECRET SERVICE UNIFORM DIVISION, UNITED STATES PARK POLICE}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Node 4: 2019 moving violations Node 5: 2020 moving violations Node 6: 2021 moving violations; average is highest for UNITED STATES PARK POLICE Result: UNITED STATES PARK POLICE",
+      "answer": "UNITED STATES PARK POLICE"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7: Operated by the National Park Service",
+      "answer": "National Park Service"
+    }
+  ]
+}
