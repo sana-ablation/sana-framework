@@ -370,7 +370,7 @@ def main() -> None:
     # Mode axes
     parser.add_argument(
         "--search_tool",
-        choices=["naive", "preloaded", "standard", "ideal"],
+        choices=["naive", "preloaded", "standard", "ideal", "web"],
         default=None,
         help="Search tool quality axis.",
     )

@@ -124,7 +124,7 @@ except ImportError:
 # Mode composition (inlined in this module)
 # ---------------------------------------------------------------------------
 
-_MODES = {"naive", "standard", "ideal", "preloaded"}
+_MODES = {"naive", "standard", "ideal", "preloaded", "web"}
 _RESULT_MODES = {"naive", "ideal"}
 _COMPUTATION_MODES = {"standard", "ideal"}
 
@@ -165,14 +165,66 @@ def _normalize_computation_mode(value: Optional[str], default: str = "standard")
     return mode
 
 
+def _validate_search_mode_combination(
+    *,
+    search_tool_mode: str,
+    search_results_mode: str,
+    profile_mode: str,
+    computation_tool_mode: str,
+) -> None:
+    """Reject axis combinations that would make a web-search run unmeasurable.
+
+    Every ideal axis is backed by the task's runtime profile, which is authored
+    against data-lake sources. Combining any of them with web search produces a
+    run whose result is independent of what web search actually returned:
+
+    - computation_tool=ideal: execute_ideal/query_ideal return the authored
+      ``record.answer`` for a semantically matching record, and _records_for_target
+      falls back to *all* records when the submitted source matches none. The
+      agent is handed gold node answers no matter what it retrieved.
+    - profile=ideal: the gold reasoning chain is injected into the prompt.
+    - search_results=ideal: reshape_search_payload expects lake-shaped result
+      fields that web results do not carry.
+    """
+    if search_tool_mode != "web":
+        return
+
+    conflicts = [
+        ("--computation_tool ideal", computation_tool_mode == "ideal"),
+        ("--profile ideal", profile_mode == "ideal"),
+        ("--search_results ideal", search_results_mode == "ideal"),
+    ]
+    active = [label for label, hit in conflicts if hit]
+    if active:
+        raise ValueError(
+            "search_tool=web cannot be combined with "
+            + ", ".join(active)
+            + ". Ideal axes are backed by data-lake runtime profiles, so the run's "
+            "outcome would not depend on what web search retrieved. Use "
+            "--search_results naive --profile naive|standard --computation_tool standard."
+        )
+
+
 def build_search(
     mode: str,
     *,
     task_context: Optional[Dict[str, Any]] = None,
     search_lessguide: bool = False,
+    fixed_k: Optional[int] = None,
 ) -> List[DecoratedFunctionTool]:
     """Return the base search tool surface for a mode."""
     search_mode = _normalize_mode(mode, "standard", "search_tool")
+
+    if search_mode == "web":
+        # Web search is not reshaped by the results axis (see search_wrapper._WEB_TOOLS),
+        # so --k has to be applied here rather than by build_results.
+        from sana_evaluation.tools.external.search_web_tools import (
+            search_web,
+            set_max_results,
+        )
+
+        set_max_results(fixed_k)
+        return [search_web]
 
     if search_mode == "naive":
         if not _NAIVE_SEARCH_TOOLS_AVAILABLE:
@@ -290,10 +342,18 @@ def build_mode_bundle(
     if search_tool_mode == "ideal" or profile_mode == "ideal" or computation_tool_mode == "ideal":
         set_ideal_profile_task_context(task_context or {})
 
+    _validate_search_mode_combination(
+        search_tool_mode=search_tool_mode,
+        search_results_mode=search_results_mode,
+        profile_mode=profile_mode,
+        computation_tool_mode=computation_tool_mode,
+    )
+
     raw_search_tools = build_search(
         search_tool_mode,
         task_context=task_context,
         search_lessguide=bool(run_config.search_lessguide),
+        fixed_k=run_config.search_k,
     )
     search_tools = build_results(
         search_results_mode,

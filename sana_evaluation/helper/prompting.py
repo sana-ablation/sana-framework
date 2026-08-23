@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _PROMPTS_DIR = _REPO_ROOT / "sana_evaluation" / "prompts"
-_MODES = {"naive", "standard", "ideal", "preloaded"}
+_MODES = {"naive", "standard", "ideal", "preloaded", "web"}
 _DEBUG_MODES = {"decision_notes"}
 
 _PLAN_AGENT_SKILL = "sana_evaluation/tools/skills/plan-agent"
@@ -153,6 +153,8 @@ def discover_skill_path(search_tool_mode: Optional[str]) -> str:
     mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
     if mode == "preloaded":
         raise ValueError("Preloaded mode does not use a discover-data skill.")
+    if mode == "web":
+        raise ValueError("Web mode does not use a discover-data skill.")
     return _DISCOVER_SKILL_PATHS[mode]
 
 
@@ -161,7 +163,8 @@ def skill_paths_for_modes(
     profile_mode: Optional[str],
 ) -> List[str]:
     mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
-    if mode == "preloaded":
+    # Neither mode does lake discovery, so neither gets a discover-data skill.
+    if mode in {"preloaded", "web"}:
         return [
             planning_skill_path(profile_mode),
             _QUERY_DATA_SKILL,

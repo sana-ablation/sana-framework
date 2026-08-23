@@ -17,7 +17,11 @@ from sana_evaluation.tools.external.description_rows import reject_forbidden_des
 
 _QUERY_TOOLS = {"search_value", "search_schema", "search_reranked", "search_ideal"}
 _PREFIX_TOOLS = {"search_prefix"}
-_SEARCH_TOOL_NAMES = _QUERY_TOOLS | _PREFIX_TOOLS
+# Web search returns open-web pages, not lake datasets, so it is counted as a search
+# tool for budgeting/--search-free but is deliberately left out of _QUERY_TOOLS: the
+# fixed-k and payload-reshaping wrappers assume a lake-shaped (query, top_k) tool.
+_WEB_TOOLS = {"search_web"}
+_SEARCH_TOOL_NAMES = _QUERY_TOOLS | _PREFIX_TOOLS | _WEB_TOOLS
 
 _IDEAL_SNIPPET_WORDS = 100
 
