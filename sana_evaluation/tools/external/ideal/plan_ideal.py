@@ -1,8 +1,18 @@
 """Ideal planning helpers and tool surface.
 
 In ideal management mode, the gold reasoning chain is preloaded into the
-system prompt before the first model turn. The `plan_ideal` tool then saves
+system prompt before the first model turn. The `plan_ideal` tool then records
 the agent-written execution plan so it persists across turns.
+
+The saved plan is deliberately NOT written into ``agent.system_prompt``.
+Strands re-reads the system prompt on every event-loop iteration, so mutating
+it mid-run invalidates the provider's cached prefix from token 0 for every
+remaining turn. Returning the plan as a tool result appends to the end of the
+message list instead, which leaves the cacheable prefix intact.
+
+``inject_reasoning_chain_prompt`` still composes prompt text, but it is applied
+once during bundle construction (into ``ModeBundle.task_trailer``) before the
+first model call, not mid-run.
 """
 
 from __future__ import annotations
@@ -10,9 +20,10 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 from strands import tool
-from strands.types.tools import ToolContext
 
-_BASE_PROMPT: str = ""
+# Heading kept identical to the previous system-prompt section so prompts,
+# traces, and analysis that grep for it keep working.
+IDEAL_PLAN_SECTION_HEADING = "## IDEAL EXECUTION PLAN"
 
 
 def format_reasoning_chain(reasoning_chain: Any) -> str:
@@ -50,21 +61,18 @@ def inject_reasoning_chain_prompt(
     return system_prompt.rstrip() + section
 
 
-@tool(context=True)
-def plan_ideal(plan_text: str, tool_context: ToolContext) -> str:
+@tool
+def plan_ideal(plan_text: str) -> str:
     """Save the current ideal execution plan so it persists across turns."""
-    global _BASE_PROMPT
-
-    agent = tool_context.agent
-    current = agent.system_prompt
-    if not _BASE_PROMPT or "\n\n## IDEAL EXECUTION PLAN\n" not in current:
-        _BASE_PROMPT = current
-    agent.system_prompt = _BASE_PROMPT + "\n\n## IDEAL EXECUTION PLAN\n" + str(plan_text).strip()
-    return "Ideal execution plan recorded."
+    body = str(plan_text or "").strip()
+    if not body:
+        return "Ideal execution plan not recorded: plan_text was empty."
+    return f"Ideal execution plan recorded.\n\n{IDEAL_PLAN_SECTION_HEADING}\n{body}"
 
 
 __all__ = [
     "plan_ideal",
     "format_reasoning_chain",
     "inject_reasoning_chain_prompt",
+    "IDEAL_PLAN_SECTION_HEADING",
 ]

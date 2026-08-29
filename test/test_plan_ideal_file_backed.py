@@ -321,33 +321,38 @@ class TestPlanIdealFileBacked(unittest.TestCase):
             self.assertEqual(plan.ideal_query[0].payload, "")
             self.assertIn("Query_file", plan.ideal_query[0].answer)
 
-    def test_plan_ideal_records_execution_plan_and_preserves_gold_chain(self):
+    def test_plan_ideal_returns_the_plan_as_the_tool_result(self):
+        plan_text = "1. Find the dataset | search_ideal\n2. Run the aggregation | query_file"
+        msg = plan_ideal(plan_text)
+
+        self.assertIn("Ideal execution plan recorded.", msg)
+        self.assertIn("## IDEAL EXECUTION PLAN", msg)
+        self.assertIn(plan_text, msg)
+
+    def test_plan_ideal_leaves_the_system_prompt_untouched(self):
+        """The cacheable prefix must survive a mid-run plan call.
+
+        Strands re-reads agent.system_prompt every event-loop iteration, so any
+        mutation here invalidates the provider's cached prefix from token 0.
+        """
         gold_prompt = inject_reasoning_chain_prompt("BASE", "1. Gold step.")
         fake_agent = _FakeAgent(gold_prompt)
-        fake_ctx = _FakeToolContext(fake_agent)
 
-        plan_text = "1. Find the dataset | search_ideal\n2. Run the aggregation | query_file"
-        msg = plan_ideal(plan_text, tool_context=fake_ctx)
+        plan_ideal("1. First pass | search_ideal")
+        plan_ideal("1. Revised pass | query_file")
 
-        self.assertEqual("Ideal execution plan recorded.", msg)
+        self.assertEqual(gold_prompt, fake_agent.system_prompt)
+        self.assertNotIn("## IDEAL EXECUTION PLAN", fake_agent.system_prompt)
         self.assertIn("## GOLD REASONING CHAIN", fake_agent.system_prompt)
         self.assertIn("1. Gold step.", fake_agent.system_prompt)
-        self.assertIn("## IDEAL EXECUTION PLAN", fake_agent.system_prompt)
-        self.assertIn(plan_text, fake_agent.system_prompt)
 
-    def test_plan_ideal_overwrites_only_execution_plan_section(self):
-        gold_prompt = inject_reasoning_chain_prompt("BASE", "1. Gold step.")
-        fake_agent = _FakeAgent(gold_prompt)
-        fake_ctx = _FakeToolContext(fake_agent)
+    def test_plan_ideal_accepts_no_tool_context(self):
+        """The tool no longer needs agent access; context=True was removed."""
+        spec_input = plan_ideal.tool_spec["inputSchema"]["json"]
+        self.assertEqual(["plan_text"], list(spec_input["properties"]))
 
-        plan_ideal("1. First pass | search_ideal", tool_context=fake_ctx)
-        plan_ideal("1. Revised pass | query_file", tool_context=fake_ctx)
-
-        self.assertEqual(1, fake_agent.system_prompt.count("## GOLD REASONING CHAIN"))
-        self.assertEqual(1, fake_agent.system_prompt.count("## IDEAL EXECUTION PLAN"))
-        self.assertIn("1. Gold step.", fake_agent.system_prompt)
-        self.assertIn("1. Revised pass | query_file", fake_agent.system_prompt)
-        self.assertNotIn("1. First pass | search_ideal", fake_agent.system_prompt)
+    def test_plan_ideal_rejects_empty_plan_text(self):
+        self.assertIn("not recorded", plan_ideal("   "))
 
 
 if __name__ == "__main__":
