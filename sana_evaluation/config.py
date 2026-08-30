@@ -61,6 +61,7 @@ class RunConfig:
     profile_skills_enabled: bool = False
     search_free: bool = False
     search_lessguide: bool = False
+    no_s3: bool = False
     benchmark: Optional[str] = None
 
 

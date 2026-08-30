@@ -77,6 +77,7 @@ from sana_evaluation.tools.agent_tools_v2 import (
     set_sandbox_dir,
 )
 from sana_evaluation.tools.agent_tools import download
+from sana_evaluation.tools.external.web_fetch_tools import download_web
 from sana_evaluation.tools.external.plan_tools import plan
 from sana_evaluation.tools.external.ideal.plan_ideal import (
     inject_reasoning_chain_prompt,
@@ -171,6 +172,7 @@ def _validate_search_mode_combination(
     search_results_mode: str,
     profile_mode: str,
     computation_tool_mode: str,
+    no_s3: bool = False,
 ) -> None:
     """Reject axis combinations that would make a web-search run unmeasurable.
 
@@ -186,6 +188,13 @@ def _validate_search_mode_combination(
     - search_results=ideal: reshape_search_payload expects lake-shaped result
       fields that web results do not carry.
     """
+    if no_s3 and search_tool_mode != "web":
+        raise ValueError(
+            "--no-s3 removes every data-lake tool, so it is only meaningful with "
+            f"--search_tool web (got '{search_tool_mode}'). Without lake tools and "
+            "without web search the agent has no retrieval path at all."
+        )
+
     if search_tool_mode != "web":
         return
 
@@ -263,6 +272,7 @@ def build_management(
     task_context: Optional[Dict[str, Any]],
     profile_skills_enabled: bool = False,
     benchmark: str = "lakeqa",
+    no_s3: bool = False,
 ) -> tuple[str, List[Any], bool, bool, str]:
     """Return stable system prompt, management tools, behavior toggles, and a task-specific trailer.
 
@@ -287,7 +297,7 @@ def build_management(
     if management_mode == "naive":
         if benchmark_name == "kramabench":
             return compose_kramabench_prompt(search_tool_mode, include_skills=False), [], False, False, task_trailer
-        return compose_baseline_prompt(search_tool_mode), [], False, False, task_trailer
+        return compose_baseline_prompt(search_tool_mode, no_s3=no_s3), [], False, False, task_trailer
 
     if benchmark_name == "kramabench":
         prompt = compose_kramabench_prompt(
@@ -298,6 +308,7 @@ def build_management(
         prompt = compose_managed_prompt(
             search_tool_mode,
             include_skills=bool(profile_skills_enabled),
+            no_s3=no_s3,
         )
     if management_mode == "standard":
         return prompt, [plan], bool(profile_skills_enabled), True, task_trailer
@@ -320,6 +331,28 @@ def build_results(
         fixed_k=fixed_k,
         results_mode=results_mode,
     )
+
+
+_S3_DATA_TOOLS = (
+    "list_files", "peek_file", "peek_multiple", "read_file", "grep_file",
+    "parse_xml_records", "query_file",
+)
+
+
+def build_data_tools(*, no_s3: bool = False) -> List[Any]:
+    """Return the core data-manipulation tool surface.
+
+    Under ``no_s3`` every S3-backed tool is dropped rather than left in place to
+    fail at call time, and ``download`` is swapped for the web fetcher gated by
+    the search_web allowlist. What remains is fetch-then-compute.
+    """
+    if no_s3:
+        return [download_web, execute_code, submit_answer]
+    return [
+        list_files, peek_file, peek_multiple, read_file, grep_file,
+        parse_xml_records, query_file, download, execute_code,
+        submit_answer,
+    ]
 
 
 def build_mode_bundle(
@@ -347,6 +380,7 @@ def build_mode_bundle(
         search_results_mode=search_results_mode,
         profile_mode=profile_mode,
         computation_tool_mode=computation_tool_mode,
+        no_s3=bool(getattr(run_config, "no_s3", False)),
     )
 
     raw_search_tools = build_search(
@@ -366,6 +400,7 @@ def build_mode_bundle(
         task_context=task_context,
         profile_skills_enabled=bool(run_config.profile_skills_enabled),
         benchmark=benchmark,
+        no_s3=bool(getattr(run_config, "no_s3", False)),
     )
     system_prompt = inject_debug_prompt(system_prompt, run_config.debug_mode)
     system_prompt = _inject_computation_file_family_prompt(
@@ -685,11 +720,9 @@ class DataLakeAgent:
                 raise RuntimeError("Naive sparse search tools are unavailable (import failed).")
 
         # Core data-manipulation tools shared across all conditions
-        _data_tools = [
-            list_files, peek_file, peek_multiple, read_file, grep_file,
-            parse_xml_records, query_file, download, execute_code,
-            submit_answer,
-        ]
+        _data_tools = build_data_tools(
+            no_s3=bool(getattr(self.run_config, "no_s3", False)),
+        )
 
         task_trailer = ""
         if mode_overrides_enabled:

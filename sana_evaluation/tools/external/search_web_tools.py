@@ -167,7 +167,18 @@ def search_web(search_queries: List[str], objective: str = "") -> Dict[str, Any]
                    to establish, used to rank and select excerpts.
     """
     try:
-        return search_parallel(search_queries, objective)
+        result = search_parallel(search_queries, objective)
+        # Record what search offered so `download` can gate on it under --no-s3.
+        # Best-effort: a failure here must never break search itself.
+        try:
+            from sana_evaluation.tools.external.web_fetch_tools import record_search_urls
+
+            record_search_urls(
+                item.get("url") for item in (result.get("results") or []) if item.get("url")
+            )
+        except Exception as record_exc:  # noqa: BLE001
+            logger.warning("could not record search_web URLs: %s", record_exc)
+        return result
     except Exception as exc:  # noqa: BLE001 - surfaced to the agent, mirrors sibling tools
         logger.warning("search_web failed: %s: %s", type(exc).__name__, exc)
         return {

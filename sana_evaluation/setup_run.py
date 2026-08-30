@@ -125,6 +125,13 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Hide search_ideal plan_exhausted guidance fields from tool payloads.",
     )
     common.add_argument(
+        "--no-s3",
+        "--no_s3",
+        dest="no_s3",
+        action="store_true",
+        help="Drop data-lake tools; download fetches search_web URLs. Requires --search web.",
+    )
+    common.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -332,6 +339,8 @@ def _build_run_mode_command(args: argparse.Namespace, cwd: Path) -> tuple[list[s
         command.append("--search-free")
     if args.search_lessguide:
         command.append("--search-lessguide")
+    if args.no_s3:
+        command.append("--no-s3")
     if args.verbose:
         command.append("--verbose")
 

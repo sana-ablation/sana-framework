@@ -53,13 +53,22 @@ def load_prompt_text(path: str | Path) -> str:
     return prompt_path.read_text()
 
 
+def search_overlay_name(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
+    """Return the overlay stem for a search mode. --no-s3 rewrites the web overlay."""
+    mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
+    if no_s3 and mode == "web":
+        return "web_nos3"
+    return mode
+
+
 def _compose_search_overlay_prompt(
     base_prompt_path: str | Path,
     search_tool_mode: Optional[str],
     *,
     benchmark: str = "lakeqa",
+    no_s3: bool = False,
 ) -> str:
-    mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
+    mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
     base_prompt = load_prompt_text(base_prompt_path).rstrip()
     benchmark_name = (benchmark or "lakeqa").strip().lower()
     benchmark_overlay = _PROMPTS_DIR / f"search_{mode}_{benchmark_name}.txt"
@@ -96,10 +105,16 @@ def _remove_skill_references(prompt: str) -> str:
     return "\n".join(lines).strip()
 
 
-def compose_managed_prompt(search_tool_mode: Optional[str], *, include_skills: bool = True) -> str:
+def compose_managed_prompt(
+    search_tool_mode: Optional[str],
+    *,
+    include_skills: bool = True,
+    no_s3: bool = False,
+) -> str:
     prompt = _compose_search_overlay_prompt(
         _PROMPTS_DIR / "managed.txt",
         search_tool_mode,
+        no_s3=no_s3,
     )
     if not include_skills:
         prompt = _remove_skill_references(prompt)
@@ -117,10 +132,11 @@ def compose_kramabench_prompt(search_tool_mode: Optional[str], *, include_skills
     return prompt
 
 
-def compose_baseline_prompt(search_tool_mode: Optional[str]) -> str:
+def compose_baseline_prompt(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
     return _compose_search_overlay_prompt(
         _PROMPTS_DIR / "baseline.txt",
         search_tool_mode,
+        no_s3=no_s3,
     )
 
 

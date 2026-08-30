@@ -59,6 +59,7 @@ def _variant_condition_label(
     search_free: bool = False,
     search_lessguide: bool = False,
     profile_skills_enabled: bool = False,
+    no_s3: bool = False,
 ) -> str:
     parts = [
         f"search_{search_tool}",
@@ -74,6 +75,8 @@ def _variant_condition_label(
         parts.append("free")
     if search_lessguide:
         parts.append("lessguide")
+    if no_s3:
+        parts.append("nos3")
     parts.append("skills_on" if profile_skills_enabled else "skills_off")
     return "__".join(parts)
 
@@ -366,6 +369,16 @@ def main() -> None:
         action="store_true",
         help="Hide search_ideal plan_exhausted guidance fields from tool payloads.",
     )
+    parser.add_argument(
+        "--no-s3",
+        "--no_s3",
+        dest="no_s3",
+        action="store_true",
+        help=(
+            "Drop every data-lake tool and give the agent `download` (http(s) URLs "
+            "returned by search_web) plus execute_code. Requires --search_tool web."
+        ),
+    )
 
     # Mode axes
     parser.add_argument(
@@ -454,6 +467,7 @@ def main() -> None:
         search_free=args.search_free,
         search_lessguide=args.search_lessguide,
         profile_skills_enabled=args.skills == "on",
+        no_s3=args.no_s3,
     )
     variant_condition = _with_debug_suffix(variant_condition, args.debug_mode)
     condition_label = f"modes/{safe_model_name}/{variant_condition}"
@@ -484,6 +498,7 @@ def main() -> None:
         profile_skills_enabled=args.skills == "on",
         search_free=args.search_free,
         search_lessguide=args.search_lessguide,
+        no_s3=args.no_s3,
         benchmark=args.benchmark,
         condition_config=ConditionConfig(
             condition=condition_label,

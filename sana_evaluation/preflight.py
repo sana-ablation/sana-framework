@@ -41,17 +41,21 @@ def _prompt_files_for_modes(
     profile_mode: str,
     *,
     benchmark: str = "lakeqa",
+    no_s3: bool = False,
 ) -> List[Path]:
+    from sana_evaluation.helper.prompting import search_overlay_name
+
+    overlay_mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
     if benchmark == "kramabench":
         base_path = _PROMPTS_DIR / "managed_kramabench.txt"
-        overlay_name = f"search_{search_tool_mode}_kramabench.txt"
+        overlay_name = f"search_{overlay_mode}_kramabench.txt"
         overlay_path = _PROMPTS_DIR / overlay_name
         if not overlay_path.is_file():
-            overlay_path = _PROMPTS_DIR / f"search_{search_tool_mode}.txt"
+            overlay_path = _PROMPTS_DIR / f"search_{overlay_mode}.txt"
         return [base_path, overlay_path]
 
     base_name = "baseline.txt" if profile_mode == "naive" else "managed.txt"
-    overlay_name = f"search_{search_tool_mode}.txt"
+    overlay_name = f"search_{overlay_mode}.txt"
     return [_PROMPTS_DIR / base_name, _PROMPTS_DIR / overlay_name]
 
 
@@ -71,7 +75,7 @@ def _check_lance_db(path: Path) -> PreflightCheck:
     return PreflightCheck(label, True, f"found: {lakeqa}")
 
 
-def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str) -> PreflightCheck:
+def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str, no_s3: bool = False) -> PreflightCheck:
     """Fail fast on axis combos that would make the run unmeasurable.
 
     Without this the guard in build_mode_bundle only fires inside each task
@@ -86,10 +90,13 @@ def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str) -> Prefli
             search_results_mode=sr,
             profile_mode=pm,
             computation_tool_mode=ct,
+            no_s3=no_s3,
         )
     except ValueError as exc:
         return PreflightCheck(label, False, str(exc))
-    return PreflightCheck(label, True, f"search={st} results={sr} profile={pm} compute={ct}")
+    return PreflightCheck(
+        label, True, f"search={st} results={sr} profile={pm} compute={ct} no_s3={no_s3}"
+    )
 
 
 def _check_web_search_credentials() -> PreflightCheck:
@@ -436,12 +443,13 @@ def run_preflight(
 
     checks: List[PreflightCheck] = []
 
-    checks.append(_check_search_mode_combination(st, sr, pm, ct))
+    no_s3 = bool(getattr(run_config, "no_s3", False))
+    checks.append(_check_search_mode_combination(st, sr, pm, ct, no_s3))
 
     if st == "web":
         checks.append(_check_web_search_credentials())
 
-    for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark):
+    for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark, no_s3=no_s3):
         checks.append(_check_file_exists(prompt_path, f"prompt:{prompt_path.name}"))
 
     if st in {"standard", "naive"}:
