@@ -6,6 +6,7 @@ model/API call, so missing or corrupt dependencies fail loudly and cheaply.
 
 from __future__ import annotations
 
+import os
 import sys
 import json
 from dataclasses import dataclass
@@ -68,6 +69,38 @@ def _check_lance_db(path: Path) -> PreflightCheck:
     if not lakeqa.exists():
         return PreflightCheck(label, False, f"missing table: {lakeqa}")
     return PreflightCheck(label, True, f"found: {lakeqa}")
+
+
+def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str) -> PreflightCheck:
+    """Fail fast on axis combos that would make the run unmeasurable.
+
+    Without this the guard in build_mode_bundle only fires inside each task
+    worker, so a bad combination burns one crash per task instead of one upfront.
+    """
+    from sana_evaluation.agent_with_mode import _validate_search_mode_combination
+
+    label = f"mode_combination:search={st}"
+    try:
+        _validate_search_mode_combination(
+            search_tool_mode=st,
+            search_results_mode=sr,
+            profile_mode=pm,
+            computation_tool_mode=ct,
+        )
+    except ValueError as exc:
+        return PreflightCheck(label, False, str(exc))
+    return PreflightCheck(label, True, f"search={st} results={sr} profile={pm} compute={ct}")
+
+
+def _check_web_search_credentials() -> PreflightCheck:
+    label = "web_search:PARALLEL_API_KEY"
+    if os.getenv("PARALLEL_API_KEY"):
+        return PreflightCheck(label, True, "found")
+    return PreflightCheck(
+        label,
+        False,
+        "PARALLEL_API_KEY is not set; search_tool=web cannot reach the Parallel Search API.",
+    )
 
 
 def _check_desc_cache_for_enrichment() -> PreflightCheck:
@@ -402,6 +435,11 @@ def run_preflight(
     _pp._PROFILES_LOADED = False
 
     checks: List[PreflightCheck] = []
+
+    checks.append(_check_search_mode_combination(st, sr, pm, ct))
+
+    if st == "web":
+        checks.append(_check_web_search_credentials())
 
     for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark):
         checks.append(_check_file_exists(prompt_path, f"prompt:{prompt_path.name}"))

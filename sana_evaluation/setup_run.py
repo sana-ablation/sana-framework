@@ -12,7 +12,7 @@ from typing import Callable, Optional, Sequence
 
 from sana_evaluation.env import load_repo_dotenv
 
-_SEARCH_MODE_CHOICES = ("naive", "preloaded", "standard", "ideal")
+_SEARCH_MODE_CHOICES = ("naive", "preloaded", "standard", "ideal", "web")
 _MANAGEMENT_MODE_CHOICES = ("naive", "standard", "ideal")
 _RESULT_MODE_CHOICES = ("naive", "ideal")
 _COMPUTATION_MODE_CHOICES = ("standard", "ideal")

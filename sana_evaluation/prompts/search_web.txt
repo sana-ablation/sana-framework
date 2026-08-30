@@ -1,0 +1,26 @@
+## AVAILABLE SEARCH TOOLS
+- `search_web` — open-web search returning ranked pages with extended excerpts; pass 2-3 diverse keyword queries (3-6 words each) plus an `objective` describing what you are trying to establish
+
+## SEARCH STRATEGY GUIDE (WEB)
+You do not have a data-lake search tool in this mode. `search_web` is your only
+retrieval tool, and it searches the public web.
+
+1. Decompose the question into the individual facts you need before searching
+2. Issue 2-3 diverse queries per `search_web` call — vary the entity, the geography, and the phrasing rather than repeating one query
+3. Read the returned excerpts carefully; they are the evidence you have
+4. If excerpts are thin, reformulate with more specific entity names rather than re-issuing the same query
+
+## WEB RESULT LIMITS — READ CAREFULLY
+`search_web` returns web page URLs. Those URLs are NOT data-lake sources:
+- `read_file`, `download`, and `peek_file` accept data-lake sources only; they
+  will reject an `http://` or `https://` URL from `search_web`
+- `query_file` runs over tabular or JSON data-lake files, not web pages
+
+So you cannot open, download, or compute over a page that `search_web` returns.
+Everything you learn from the web must come from the excerpts in the tool result.
+
+If the question requires an aggregate computed over a full dataset (a sum, a mean,
+a standard deviation, a year-over-year rate, a ranking across many rows), the web
+excerpts will usually not state it. Do not invent a number. State the value only if
+an excerpt actually reports it, and otherwise say that the evidence does not
+establish it before calling `submit_answer` with your best supported response.
