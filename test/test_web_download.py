@@ -129,21 +129,30 @@ def _read_allowlist_in_child(queue, sandbox_dir: str) -> None:
 
 
 class TestDownloadGating(_SandboxTestCase):
-    def test_rejects_a_url_search_web_never_returned(self) -> None:
+    def test_fetches_a_url_search_web_never_returned(self) -> None:
+        # download is deliberately unrestricted; provenance is recorded, not enforced.
         web_fetch_tools.record_search_urls([_URL])
 
-        result = web_fetch_tools._download_web_impl([{"url": _OTHER_URL}])
+        with patch.object(web_fetch_tools.requests, "get", return_value=_get_response([b"a,b\n"])):
+            result = web_fetch_tools._download_web_impl([{"url": _OTHER_URL}])
 
-        self.assertEqual(result["download_count"], 0)
-        self.assertIn("errors", result)
-        self.assertIn("search_web", result["errors"][0]["error"])
+        self.assertEqual(result["download_count"], 1, result)
 
-    def test_rejection_names_the_urls_that_are_allowed(self) -> None:
+    def test_records_that_a_search_returned_url_came_from_search(self) -> None:
         web_fetch_tools.record_search_urls([_URL])
 
-        result = web_fetch_tools._download_web_impl([{"url": _OTHER_URL}])
+        with patch.object(web_fetch_tools.requests, "get", return_value=_get_response([b"a,b\n"])):
+            result = web_fetch_tools._download_web_impl([{"url": _URL}])
 
-        self.assertIn(_URL, json.dumps(result["errors"][0]))
+        self.assertTrue(result["downloaded"][0]["from_search"])
+
+    def test_records_that_an_unsearched_url_did_not_come_from_search(self) -> None:
+        web_fetch_tools.record_search_urls([_URL])
+
+        with patch.object(web_fetch_tools.requests, "get", return_value=_get_response([b"a,b\n"])):
+            result = web_fetch_tools._download_web_impl([{"url": _OTHER_URL}])
+
+        self.assertFalse(result["downloaded"][0]["from_search"])
 
     def test_rejects_s3_uris_under_no_s3(self) -> None:
         result = web_fetch_tools._download_web_impl(
@@ -254,10 +263,12 @@ class TestToolSurface(unittest.TestCase):
         self.assertIn("query_file", names)
         self.assertIn("peek_file", names)
 
-    def test_no_s3_download_is_the_web_fetcher(self) -> None:
+    def test_no_s3_download_is_the_web_fetcher_not_the_s3_one(self) -> None:
         tools = {t.tool_spec["name"]: t for t in build_data_tools(no_s3=True)}
+        description = tools["download"].tool_spec["description"]
 
-        self.assertIn("search_web", tools["download"].tool_spec["description"])
+        self.assertIn("http(s) URL", description)
+        self.assertNotIn("S3", description)
 
 
 class TestNoS3Validation(unittest.TestCase):

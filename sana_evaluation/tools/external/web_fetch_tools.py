@@ -1,19 +1,18 @@
 """Web download tool for `--no-s3` runs, gated by the search_web URL allowlist.
 
 Under `--no-s3` the agent loses every S3-backed file tool and keeps only this
-`download` plus `execute_code`. A URL is fetchable ONLY if a prior `search_web`
-call in the same task returned it, so the arm measures what web search actually
-retrieved rather than URLs the model memorised during pretraining.
+`download` plus `execute_code`. Any http(s) URL may be fetched.
 
-The allowlist is written to `<sandbox>/.web_urls.json` rather than held in
-module state on purpose: `download` runs through
+What `search_web` returned is still recorded, at `<sandbox>/.web_urls.json`, and
+each download is tagged `from_search`. That is provenance, not permission: it
+lets analysis separate pages the agent found by searching from URLs it already
+knew, without constraining what it can reach.
+
+The record is a file rather than module state because `download` runs through
 ``agent_tools._run_tool_with_timeout``, which uses a *spawned* subprocess, so
-nothing in the parent's memory reaches it. The file doubles as a per-task audit
-record of what search offered versus what the agent chose to fetch.
-
-The sandbox is created and deleted per task (``agent_with_mode`` builds one via
-``_create_isolated_sandbox`` and removes it in its ``finally``), so the
-allowlist needs no explicit reset between tasks.
+nothing in the parent's memory reaches it. The sandbox is created and deleted
+per task (``agent_with_mode`` builds one via ``_create_isolated_sandbox`` and
+removes it in its ``finally``), so it needs no explicit reset between tasks.
 """
 
 from __future__ import annotations
@@ -45,7 +44,6 @@ _MAX_FILES_PER_CALL = 5
 _MAX_DOWNLOAD_BYTES = 50 * 1024 * 1024
 _CHUNK_BYTES = 64 * 1024
 _TIMEOUT_SECONDS = 60
-_MAX_LISTED_URLS = 20
 _MAX_NAME_CHARS = 120
 
 # Only used when the URL path carries no usable extension of its own.
@@ -188,8 +186,7 @@ def _download_web_impl(files: List[Any]) -> Dict[str, Any]:
         )}
 
     sandbox = _get_sandbox_dir()
-    allowed = allowed_urls()
-    allowed_set = set(allowed)
+    allowed_set = set(allowed_urls())
 
     downloaded: List[Dict[str, Any]] = []
     errors: List[Dict[str, Any]] = []
@@ -219,17 +216,6 @@ def _download_web_impl(files: List[Any]) -> Dict[str, Any]:
             })
             continue
 
-        if url not in allowed_set:
-            errors.append({
-                "error": (
-                    "That URL was not returned by `search_web` in this task, so it cannot be "
-                    "downloaded. Search first, then download a URL from the results."
-                ),
-                "url": url,
-                "allowed_urls": allowed[:_MAX_LISTED_URLS],
-            })
-            continue
-
         try:
             outcome = _fetch_to_sandbox(url, sandbox)
         except Exception as exc:  # noqa: BLE001 - surfaced to the agent, mirrors the S3 tool
@@ -240,6 +226,9 @@ def _download_web_impl(files: List[Any]) -> Dict[str, Any]:
         if "error" in outcome:
             errors.append(outcome)
         else:
+            # Not a gate: lets analysis separate "found by search" from
+            # "URL the model already knew" after the fact.
+            outcome["from_search"] = url in allowed_set
             downloaded.append(outcome)
 
     manifest = (
@@ -263,9 +252,8 @@ def _download_web_impl(files: List[Any]) -> Dict[str, Any]:
 
 _DOWNLOAD_DESCRIPTION = """Download web pages or files to the local sandbox so you can compute over them.
 
-Only URLs that `search_web` returned earlier in THIS task can be downloaded.
-Search first, then pass URLs from the results. There is no data lake in this
-run: dataset_id / file_path / s3_uri are not accepted.
+Any http(s) URL can be downloaded. There is no data lake in this run:
+dataset_id / file_path / s3_uri are not accepted.
 
     CORRECT:
         download(files=[{"url": "https://data.example.gov/rows.csv"}])
