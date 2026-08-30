@@ -69,6 +69,30 @@ queries gave one sub-question 0 of 5 slots). Every arm runs at its own default.
 
 6. **Subset choice.** `subset20`, not `subset20b` — the two overlap by only 4 of 20.
 
+8. **The 600s timeout is not enforced; the ideal arm lost 4 tasks to it.**
+   `invoke_with_watchdog` computes `hard_deadline` correctly, but its
+   `threading.Timer` fired ~40 min late on two tasks: `k-3-d-2/task_11` and
+   `task_12` each ran 3000s against a 630s deadline, and `k-3-d-1/task_1`
+   completed at 1272s without ever being cancelled. Those two 3000s tasks were
+   in the same directory batch, i.e. concurrent — consistent with a provider-side
+   hang inside `agent(prompt)` with no client-side HTTP timeout, not a logic
+   error in the deadline math.
+
+   Consequence: ideal scored 11/20 with 4 tasks returning no answer at all, so
+   the web-vs-ideal comparison (60% vs 55%) is confounded — if two of the four
+   killed tasks would have been correct, ideal leads. Ideal's 3.6 h of task time
+   vs web's 64 min is likewise inflated; compare medians (418s vs 167s) instead.
+   Needs its own investigation before these numbers go in the paper.
+
+9. **Some web-arm "errors" are snapshot drift, not reasoning failures.**
+   `k-5-d-3/task_15` expected 2705988 and the agent computed 2,700,968 (0.19%
+   off); `k-4-d-2/task_15` expected 2941 and got 2923.59. The agent aggregated a
+   *live* open-data API against a gold answer derived from the lake's frozen
+   snapshot. This is structural for any live-data arm and independent of model
+   quality. Two further failures were honest abstentions ("Insufficient
+   evidence"), which the prompt asks for. So web's 8 failures read as: 2 drift,
+   2 abstain, 4 genuinely wrong.
+
 7. **The sandbox network block is incomplete.** `execute_code` patches
    `socket.socket` in-process, but the agent has `subprocess` (it uses `pdftotext`),
    and a subprocess gets its own sockets. Grep runs for `curl|wget|urlopen` to

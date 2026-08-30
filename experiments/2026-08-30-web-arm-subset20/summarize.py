@@ -50,7 +50,8 @@ def main():
             print(f"{name:<10}{'--- no results yet ---':>40}")
             continue
         n = len(rows)
-        exact = sum(1 for r in rows if str(r.get("exact_match", "")).strip().lower() in {"true", "1"})
+        # exact_match is written as a float ("1.0"/"0.0"), not a bool string.
+        exact = sum(1 for r in rows if _num(r.get("exact_match")) >= 1.0)
         f1 = sum(_num(r.get("f1_score")) for r in rows) / n
         cycles = sum(_num(r.get("cycle_count")) for r in rows) / n
         cost = sum(_num(r.get("cost_usd")) for r in rows)
