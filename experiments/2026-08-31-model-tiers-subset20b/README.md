@@ -23,13 +23,14 @@ accuracy *drop* from each degradation localises the bottleneck.
 | cell | `--search_tool` | `--profile` | `--computation_tool` |
 |---|---|---|---|
 | REFERENCE | ideal | ideal | ideal |
-| search=naive | **naive** | ideal | ideal |
-| search=standard | **standard** | ideal | ideal |
-| profile=naive | ideal | **naive** | ideal |
-| profile=standard | ideal | **standard** | ideal |
+| search=naive (BM25) | **naive** | ideal | ideal |
+| search=standard (PNEUMA) | **standard** | ideal | ideal |
+| search=preloaded | **preloaded** | ideal | ideal |
+| profile=naive (No Plan) | ideal | **naive** | ideal |
+| profile=standard (Default) | ideal | **standard** | ideal |
 | compute=standard | ideal | ideal | **standard** |
 
-**6 cells × 3 models × 20 tasks = 360 runs.**
+**7 cells × 3 models × 20 tasks = 420 runs.**
 
 `computation_tool` has only `{standard, ideal}` — there is no `naive` for that
 axis — so the compute ablation is a single cell rather than two.
@@ -42,21 +43,64 @@ Variant directory names will therefore match the historical ones
 (`search_i_results_i_plani_computei_k5_skills_off` and friends), which keeps
 `sana_analysis` and any downstream tooling working unchanged.
 
-## What the ablation already shows at gpt-5-mini
+## Metric: semantic match, not exact match
 
-From the historical 135-task runs, same axes, same `k`:
+The paper figures report **`semantic_match`**, produced by the
+`semantic-eval-auditor` agent skill and written into a parallel
+`results_semantic/` tree. It is consistently 2-5pp above raw `exact_match`
+because it accepts answers that are equivalent but not string-identical.
 
-| cell | EM | drop vs reference |
+Verified: `semantic_match` over `results_semantic/modes/` reproduces all 14
+values in figure A2.0 exactly, for both models. Raw `exact_match` does not
+(e.g. mini reference is 71.9% EM vs 76.3% semantic).
+
+**This run is therefore a two-stage pipeline**, and stage 2 has a dependency
+that is not in this repo — see "Required before running" item 1.
+
+## Axis labels
+
+Figure labels map onto CLI flags as:
+
+| figure | axis | flag |
 |---|---|---|
-| REFERENCE | 72% | — |
-| compute=standard | 56% | **−16pp** |
-| search=standard | 59% | −13pp |
-| search=naive | 60% | −12pp |
-| profile=naive | 60% | −12pp |
-| profile=standard | 63% | −9pp |
+| Plan: No Plan / Default / Ideal | plan | `--profile naive` / `standard` / `ideal` |
+| Search: BM25 / PNEUMA / Ideal / Preloaded | search | `--search_tool naive` / `standard` / `ideal` / `preloaded` |
+| Data Analysis: Standard / Ideal | execution | `--computation_tool standard` / `ideal` |
 
-Execution is the largest single bottleneck at mini, search second, planning
-smallest. **Whether that ordering survives at gpt-5.2 is the point of this run.**
+## Baseline: what the ablation shows at 135 tasks
+
+Semantic match. Figure convention: gain relative to the weakest option in each
+axis, holding the other two axes at ideal.
+
+| cell | nano | mini |
+|---|---|---|
+| REFERENCE (all ideal) | 37.0% | 76.3% |
+| Plan: No Plan | 34.1% | 66.7% |
+| Plan: Default | 31.1% (-3.0) | 66.7% (+0.0) |
+| Search: BM25 | 23.0% | 63.0% |
+| Search: PNEUMA | 26.7% (+3.7) | 61.5% (-1.5) |
+| Search: Preloaded | 51.9% (+28.9) | 77.0% (+14.1) |
+| Data Analysis: Standard | 28.9% | 57.8% |
+
+Gain from ideal-ising each axis:
+
+| axis | nano | mini |
+|---|---|---|
+| Plan | +3.0pp | +9.6pp |
+| Search | +14.1pp | +13.3pp |
+| Data Analysis | +8.1pp | **+18.5pp** |
+
+**The bottleneck ranking is already model-dependent.** At nano, search dominates
+(+14.1) and execution is second (+8.1). At mini they invert: execution dominates
+(+18.5) and search is second (+13.3). Planning barely matters at nano (+3.0) but
+is substantial at mini (+9.6).
+
+That inversion is the reason to run gpt-5.2. If the trend continues, execution
+should dominate further; if it reverses, retrieval is the durable bottleneck.
+
+Two anomalies worth noting: `Preloaded` beats the all-ideal reference at mini
+(77.0% vs 76.3%), and `PNEUMA` is *below* `BM25` at mini (61.5% vs 63.0%) — the
+hybrid index underperforms plain BM25 there.
 
 ## Corpus
 
@@ -106,55 +150,74 @@ They overlap by only 4 of 20 tasks.
 
 ## Cost — read this before launching
 
-Projected from `gpt-5-mini`'s **measured** per-task cost in the historical runs
-at this exact configuration, using `total_cost_with_all_subagents_usd` (the
-ideal axes spawn judge and repair subagents that roughly double main-agent cost).
+Projected from `gpt-5-mini`'s **measured** per-task
+`total_cost_with_all_subagents_usd` in the historical runs at this exact
+configuration. The ideal axes spawn semantic-judge and repair subagents that
+roughly double main-agent cost, so this is not a token-count estimate.
 
-| model | 6-cell grid, 20 tasks |
+| cell | mini, 20 tasks |
 |---|---|
-| `gpt-5.4-nano` | ~$8.50 |
-| `gpt-5-mini` | ~$10.70 (measured basis) |
-| `gpt-5.2` | **$75 – $120** |
-| **total** | **$94 – $139** |
+| REFERENCE | $1.92 |
+| Plan: No Plan | $1.82 |
+| Plan: Default | $1.90 |
+| Search: BM25 | $2.14 |
+| Search: PNEUMA | $2.08 |
+| Search: Preloaded | $1.80 |
+| Data Analysis: Standard | $0.82 |
+| **total** | **$12.48** |
 
-`gpt-5.2` is exactly **7× mini** on every token class (1.75/0.25 input,
-14/2 output, 0.175/0.025 cached), so there is no cache-driven discount to hope
-for. The $120 figure assumes 2.5× output tokens from reasoning.
+| model | 7-cell grid |
+|---|---|
+| `gpt-5.4-nano` | ~$10 |
+| `gpt-5-mini` | ~$12.50 (measured basis) |
+| `gpt-5.2` | **$87 – $140** |
+| **total** | **$110 – $162** |
 
-Two things make this far pricier than a naive estimate:
+`gpt-5.2` is exactly **7× mini** on every token class (1.75/0.25 in, 14/2 out,
+0.175/0.025 cached), so no cache behaviour reduces it. The upper figure assumes
+2.5× output tokens from reasoning.
 
-1. **Ideal subagents.** `compute=ideal` cells cost ~$1.92/20 tasks at mini vs
-   $0.82 for `compute=standard` — the semantic judge and repair agents more than
-   double it. Five of six cells run `compute=ideal`.
-2. **Ideal-compute runs are longer.** ~400k input tokens/task vs ~220k at
-   `compute=standard`.
+Note `Data Analysis: Standard` is the cheapest cell by far ($0.82 vs ~$1.9) —
+it is the only cell that does not run ideal computation, so it skips the judge
+and repair subagents entirely.
 
-**If $139 is too much**, the cheapest meaningful reductions, in order:
-- Run `gpt-5.2` on REFERENCE + `compute=standard` only (2 cells, ~$25). That is
-  the largest ablation signal and answers "does a frontier model close the
-  execution gap?" — the single most interesting question here.
-- Add `--reasoning-effort low` for `gpt-5.2`; output tokens dominate its cost.
-- Keep nano and mini at all 6 cells regardless; together they are ~$19.
+**If $162 is too much**, in order of value retained:
+- Run `gpt-5.2` on REFERENCE + `Data Analysis: Standard` only (~$25). That single
+  contrast is the largest effect at mini (+18.5pp) and directly tests whether a
+  frontier model closes the execution gap.
+- Add REFERENCE + `Search: BM25` (~$40 total) to also get the search contrast,
+  which is the axis that dominates at nano.
+- Add `--reasoning-effort low` for gpt-5.2; output tokens drive its cost.
+- Keep nano and mini at all 7 cells regardless — together ~$22.
 
 Runtime: mini's historical median was ~250s/task. At `--parallel 8`, ~15 min per
-cell, so **~3-5 h for the full grid**, longer for gpt-5.2.
+cell, so **~4-6 h** for the full grid, longer for gpt-5.2.
 
 ## Required before running
 
-1. **Fix the timeout.** The web-arm run found `invoke_with_watchdog`'s
+1. **Semantic scoring is a separate stage, and its tooling is not in this repo.**
+   The runs emit raw `results/` with `exact_match`; the paper metric comes from
+   the `semantic-eval-auditor` agent skill, which rewrites a parallel
+   `results_semantic/` tree adding `semantic_match` / `semantic_reason` /
+   `semantic_bucket`. That skill lives in `.agents/skills/semantic-eval-auditor/`
+   — gitignored, present only in `exploratory-qa-eval`, absent here. It is why
+   `test_semantic_eval_auditor.py` and 8 sibling tests cannot run in this repo.
+   Plan for it: either copy `.agents/` onto the box, or pull raw results back and
+   score locally. Without this stage the numbers are not comparable to figure A2.0.
+2. **Fix the timeout.** The web-arm run found `invoke_with_watchdog`'s
    `threading.Timer` firing ~40 min late: two tasks ran 3000s against a 630s
    deadline, a third finished at 1272s uncancelled. At gpt-5.2 prices a hung task
    is expensive. Run with `--timeout 900 --submit-grace-seconds 60` **and** set a
    client-side HTTP timeout (`client_args={"timeout": ...}` reaches
    `OpenAICachedUsageModel` through `extra_model_kwargs`; no CLI flag exists today).
-2. **Materialize the subset** with `inputs/materialize_subset.py`. The tree must
+3. **Materialize the subset** with `inputs/materialize_subset.py`. The tree must
    keep the `benchmarks/lakeqa/tasks-mini/tasks` path segment or runtime-profile
    lookup silently resolves to a wrong path (`runtime_profile_store.py:74`).
-3. **`HYBRID_TORCH_DTYPE=float32`** on CPU-only Linux for the two `search` cells.
+4. **`HYBRID_TORCH_DTYPE=float32`** on CPU-only Linux for the two `search` cells.
    PyTorch emulates float16 on x86: measured 73 ms/query at float32 vs 143 ms at
    float16. **No GPU needed** — embedding totals ~3s across a 20-task run.
-4. **Copy `lance_data/` (760 MB)** — needed by `search=standard`/`naive`.
-5. **`.env`** with `OPENAI_API_KEY` + AWS credentials. Azure cannot use an IAM
+5. **Copy `lance_data/` (760 MB)** — needed by `search=standard`/`naive`.
+6. **`.env`** with `OPENAI_API_KEY` + AWS credentials. Azure cannot use an IAM
    instance role, so scope the AWS keys read-only to the bucket.
 
 ## Caveats

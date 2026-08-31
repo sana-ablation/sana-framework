@@ -4,9 +4,10 @@
 # Leave-one-out: every axis at the oracle, then one axis degraded per cell.
 # The accuracy DROP from each degradation localises the bottleneck.
 #
-#   REFERENCE          search=ideal    profile=ideal    compute=ideal
-#   search=naive       search=naive    profile=ideal    compute=ideal
-#   search=standard    search=standard profile=ideal    compute=ideal
+#   REFERENCE          search=ideal     profile=ideal    compute=ideal
+#   search=naive       search=naive     profile=ideal    compute=ideal   (figure: BM25)
+#   search=standard    search=standard  profile=ideal    compute=ideal   (figure: PNEUMA)
+#   search=preloaded   search=preloaded profile=ideal    compute=ideal   (figure: Preloaded)
 #   profile=naive      search=ideal    profile=naive    compute=ideal
 #   profile=standard   search=ideal    profile=standard compute=ideal
 #   compute=standard   search=ideal    profile=ideal    compute=standard
@@ -17,6 +18,10 @@
 # --k 5 and --search_results ideal match the original 135-task experiments, so
 # variant directory names line up with the historical runs and sana_analysis
 # keeps working unchanged.
+#
+# METRIC: these runs emit raw exact_match. The paper metric is semantic_match,
+# produced afterwards by the semantic-eval-auditor agent skill into a parallel
+# results_semantic/ tree. See README "Required before running" item 1.
 set -u
 
 PY=${PY:-.venv/bin/python}
@@ -47,6 +52,7 @@ CELLS=(
   "reference|ideal|ideal|ideal"
   "search-naive|naive|ideal|ideal"
   "search-standard|standard|ideal|ideal"
+  "search-preloaded|preloaded|ideal|ideal"
   "profile-naive|ideal|naive|ideal"
   "profile-standard|ideal|standard|ideal"
   "compute-standard|ideal|ideal|standard"
