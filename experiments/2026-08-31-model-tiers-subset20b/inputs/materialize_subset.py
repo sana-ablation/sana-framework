@@ -63,7 +63,11 @@ def main() -> int:
 
     written = sorted(dst_root.glob("*/task_*.json"))
     print(f"materialized {len(written)} tasks under {dst_root}")
-    print(f"pass to the runner as:  --task-set {dst_root.relative_to(REPO)}")
+    try:
+        task_set = dst_root.relative_to(Path.cwd())
+    except ValueError:
+        task_set = dst_root
+    print(f"pass to the runner as:  --task-set {task_set}")
     return 0
 
 
