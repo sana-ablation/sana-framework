@@ -34,10 +34,10 @@ say "2/6 shipping code (git archive; no git needed on remote)"
 git -C "$ROOT" archive --format=tar HEAD | gzip \
   | "${SSH[@]}" "$HOST" "tar xzf - -C $DIR"
 
-say "3/6 shipping .env and .agents (gitignored, so not in the archive)"
+say "3/6 shipping .env (gitignored, so not in the archive)"
 "${SCP[@]}" "$ROOT/.env" "$HOST:$DIR/.env"
-# .agents holds the semantic-eval-auditor that produces semantic_match.
-tar czf - -C "$ROOT" --exclude='__pycache__' .agents | "${SSH[@]}" "$HOST" "tar xzf - -C $DIR"
+# .agents is deliberately NOT shipped: the semantic auditor is a standalone
+# OpenAI-API script, so it runs locally against pulled results (./audit_semantic.sh).
 
 say "4/6 shipping lance_data (~759 MB, cannot be rebuilt remotely)"
 tar czf - -C "$ROOT" lance_data | "${SSH[@]}" "$HOST" "tar xzf - -C $DIR"
@@ -74,9 +74,5 @@ for st, no_s3 in [('web', True), ('ideal', False), ('standard', False), ('naive'
     except PreflightError as e:
         print(f'  FAIL search={st}: {str(e).strip().splitlines()[-1][:120]}')
 PY"
-
-say "verifying the semantic judge landed"
-"${SSH[@]}" "$HOST" "ls $DIR/.agents/skills/semantic-eval-auditor/scripts/ 2>/dev/null \
-  || echo 'ABSENT — semantic_match cannot be produced without it'"
 
 say "done. next: ./run_remote.sh"

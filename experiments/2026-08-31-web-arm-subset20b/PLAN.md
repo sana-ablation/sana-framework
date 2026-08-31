@@ -84,20 +84,23 @@ confirm nothing routed around `download`.
 ## 5. Pipeline
 
 1. **Run** — `run_mode_eval` per arm → `eval_results.csv`, `agent_results.jsonl`, traces
-2. **Semantic audit** — on the box, after the sweep:
+2. **Semantic audit** — **locally**, after pulling: `./audit_semantic.sh`
 
-   ```bash
-   .venv/bin/python .agents/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py \
-     --source experiments/2026-08-31-web-arm-subset20b/results \
-     --model gpt-5.2-codex --reasoning-effort medium
-   ```
+   The auditor (`.agents/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py`)
+   is standalone: stdlib plus `from openai import OpenAI`, importing nothing from
+   this repo. It needs only the pulled `results/` and `logs/` and an
+   `OPENAI_API_KEY`, so the eval box never needs `.agents/` and bootstrap does
+   not ship it.
 
-   Inserts `semantic_match`, `semantic_reason`, `semantic_bucket` after
-   `exact_match` and writes a sibling `results_semantic/` tree, preserving the
-   lexical `exact_match`. **Judge model `gpt-5.2-codex` at reasoning-effort
-   medium is part of the measurement and must be reported.** The skill forbids
-   deterministic string normalisation as the primary classifier — judgment is
-   per row, from the model.
+   It inserts `semantic_match`, `semantic_reason`, `semantic_bucket`,
+   `log_error_bucket` and `log_error_evidence`, writing a sibling
+   `results_semantic/` tree and preserving the lexical `exact_match`. It reads
+   log *tails* to classify errors, which is why `logs/` must be pulled too.
+
+   **The judge model is part of the measurement and must be reported.** Default
+   `gpt-5.2-codex` at reasoning-effort medium; override with
+   `MODEL=... ./audit_semantic.sh`. The skill forbids deterministic string
+   normalisation as the primary classifier — judgment is per row, from the model.
 3. **Analyse** — `sana_analysis/run_mode_analysis_semantic.py`, which also needs
    `log_error_bucket` and `log_error_evidence`
 4. **Pull** — `scripts/remote_pull_outputs.sh`
@@ -113,6 +116,7 @@ Three scripts in this directory, run against `sana-framework` directly:
 | `run_remote.sh` | launches all four arms sequentially in one detached tmux session |
 | `watch_and_pull.sh` | polls the driver log and pulls results **after every arm**, printing a summary each time, so progress is visible without waiting for all four |
 | `pull_remote.sh` | one-shot pull of `results/` + `logs/` |
+| `audit_semantic.sh` | **local** semantic scoring of pulled results -> `results_semantic/` |
 
 All three take `REMOTE_HOST`, `REMOTE_IDENTITY`, `REMOTE_DIR` from the
 environment.
@@ -151,9 +155,10 @@ another's latency.
 
 5. **RESOLVED — the semantic auditor.** It was in the old repo at
    `~/Documents/projects/daplab/exploratory-qa-eval/.agents/`, and is now copied
-   into this checkout (536 KB, 18 skills). It stays gitignored, so
-   `bootstrap_remote.sh` ships it separately alongside `.env`. Judge pinned to
-   `gpt-5.2-codex`, reasoning-effort medium.
+   into this checkout (536 KB, 18 skills). It runs **locally** against pulled
+   results and is deliberately not shipped to the box: it is a standalone
+   OpenAI-API script with no repo imports, so the remote has no use for it.
+   Judge pinned to `gpt-5.2-codex`, reasoning-effort medium.
 
    Side effect: restoring `.agents/` took the local suite from 549 to 587
    passing, since `task-quality-auditor`, `plan-verifier` and
