@@ -1,0 +1,25 @@
+[1/4] Auditing /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results/modes/openai_gpt-5-mini/search_ideal__results_naive__profile_standard__compute_standard__skills_off/eval_results.csv -> /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results_semantic/modes/openai_gpt-5-mini/search_ideal__results_naive__profile_standard__compute_standard__skills_off/eval_results.csv
+[2/4] Auditing /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results/modes/openai_gpt-5-mini/search_naive__results_naive__profile_standard__compute_standard__skills_off/eval_results.csv -> /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results_semantic/modes/openai_gpt-5-mini/search_naive__results_naive__profile_standard__compute_standard__skills_off/eval_results.csv
+[3/4] Auditing /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results/modes/openai_gpt-5-mini/search_standard__results_naive__profile_standard__compute_standard__skills_off/eval_results.csv -> /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results_semantic/modes/openai_gpt-5-mini/search_standard__results_naive__profile_standard__compute_standard__skills_off/eval_results.csv
+[4/4] Auditing /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results/modes/openai_gpt-5-mini/search_web__results_naive__profile_standard__compute_standard__nos3__skills_off/eval_results.csv -> /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results_semantic/modes/openai_gpt-5-mini/search_web__results_naive__profile_standard__compute_standard__nos3__skills_off/eval_results.csv
+Audited 80 rows across 4 files into /Users/austinsenna/Documents/projects/daplab/sana-framework/experiments/2026-08-31-web-arm-subset20b/results_semantic
+Semantic buckets: {'answer_unknown_blank': 1, 'semantic_correct': 36, 'semantic_incorrect': 43}
+
+judged with: gpt-5.4 (effort=medium)
+arm          n  semantic   exact  cycles  tools  med_rt    cost$  blank
+-----------------------------------------------------------------------
+web         20    35.0%   30.0%    26.2   25.2     199    1.002      0
+ideal       20    50.0%   45.0%    22.2   21.8     124    0.601      0
+standard    20    50.0%   45.0%    29.2   28.2     142    0.937      0
+naive       20    45.0%   45.0%    27.8   26.8     131    0.827      0
+  web        semantic_correct=7  semantic_incorrect=12  answer_unknown_blank=1
+  ideal      semantic_correct=10  semantic_incorrect=10  answer_unknown_blank=0
+  standard   semantic_correct=10  semantic_incorrect=10  answer_unknown_blank=0
+  naive      semantic_correct=9  semantic_incorrect=11  answer_unknown_blank=0
+
+--- web arm specifics ---
+  search_web   : 202
+  download     : 81
+  execute_code : 173
+  bypass       : {'urlopen': 3, 'requests.get': 4}
+EXIT=0
