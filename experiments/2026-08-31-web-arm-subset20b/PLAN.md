@@ -1,6 +1,6 @@
 # Plan — web-search arm vs data-lake arms, subset20b, semantic-scored
 
-Status: **not yet run.** Blockers in §7 must be resolved first.
+Status: **ready to run.** All blockers in §7 are resolved; §7 is kept as a record.
 Supersedes the 2026-08-30 pilot (`../2026-08-30-web-arm-subset20/`), which ran
 locally on subset20 and is treated as a pilot, not a result.
 
@@ -18,7 +18,7 @@ outcome would not depend on what was retrieved — so every arm is pinned to
 |---|---|---|
 | task set | subset20 | **subset20b** (overlaps subset20 by 4 of 20) |
 | primary metric | exact_match / F1 | **semantic_match** |
-| execution | local, `nohup` | **remote EC2, tmux** |
+| execution | local, `nohup` | **remote Azure VM (`sana`), tmux** |
 | completeness | web + ideal done, standard 10/20, naive 0/20 | all four arms, all 20 tasks |
 
 ### Why F1 is dropped
@@ -84,9 +84,20 @@ confirm nothing routed around `download`.
 ## 5. Pipeline
 
 1. **Run** — `run_mode_eval` per arm → `eval_results.csv`, `agent_results.jsonl`, traces
-2. **Semantic audit** — `.agents/skills/semantic-eval-auditor/rewrite_semantic_eval_results.py`
-   inserts `semantic_match`, `semantic_reason`, `semantic_bucket` after
-   `exact_match`, writing the `*_semantic/` tree
+2. **Semantic audit** — on the box, after the sweep:
+
+   ```bash
+   .venv/bin/python .agents/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py \
+     --source experiments/2026-08-31-web-arm-subset20b/results \
+     --model gpt-5.2-codex --reasoning-effort medium
+   ```
+
+   Inserts `semantic_match`, `semantic_reason`, `semantic_bucket` after
+   `exact_match` and writes a sibling `results_semantic/` tree, preserving the
+   lexical `exact_match`. **Judge model `gpt-5.2-codex` at reasoning-effort
+   medium is part of the measurement and must be reported.** The skill forbids
+   deterministic string normalisation as the primary classifier — judgment is
+   per row, from the model.
 3. **Analyse** — `sana_analysis/run_mode_analysis_semantic.py`, which also needs
    `log_error_bucket` and `log_error_evidence`
 4. **Pull** — `scripts/remote_pull_outputs.sh`
@@ -121,9 +132,11 @@ another's latency.
 
 ## 7. Blockers — resolve before running
 
-1. **SSH host and key.** Needed to run any of the three scripts. The old
-   wrapper defaulted to `asw2215.pem`, which is not in this repo; only
-   `sana-eval_key.pem` is. Set `REMOTE_HOST` / `REMOTE_IDENTITY`.
+1. **RESOLVED — SSH access.** Documented in `../README.md`: Azure VM
+   `52.186.168.61` (`sana-eval`), user `asw2215`, key `sana-eval_key.pem`, via
+   the `sana` alias in `~/.ssh/config`. Verified reachable: Ubuntu 24.04,
+   python3 3.12.3, tar, tmux, 122 GB free. The remote home is empty, so
+   `bootstrap_remote.sh` provisions from scratch.
 
 2. **RESOLVED — repo path.** No longer a blocker: `REMOTE_DIR` defaults to
    `~/sana-framework` and `bootstrap_remote.sh` creates it. Nothing needs to
@@ -136,10 +149,16 @@ another's latency.
    `inputs/`, so they ride in the `git archive` tarball. (`tmp/` is gitignored,
    which is the trap that left subset20 out of PR 2 entirely.)
 
-5. **The semantic auditor is not in this checkout.** `.agents/` is gitignored
-   and absent locally, which is why 9 tests error. Must confirm it exists on the
-   remote, and pin which model it judges with — the judge is part of the
-   measurement and belongs in the provenance record.
+5. **RESOLVED — the semantic auditor.** It was in the old repo at
+   `~/Documents/projects/daplab/exploratory-qa-eval/.agents/`, and is now copied
+   into this checkout (536 KB, 18 skills). It stays gitignored, so
+   `bootstrap_remote.sh` ships it separately alongside `.env`. Judge pinned to
+   `gpt-5.2-codex`, reasoning-effort medium.
+
+   Side effect: restoring `.agents/` took the local suite from 549 to 587
+   passing, since `task-quality-auditor`, `plan-verifier` and
+   `author-ideal-plans` live there too. The remaining 8 failures / 4 errors need
+   `other-benchmarks/`, also gitignored.
 
 6. **RESOLVED — the pilot's "timeouts" were the laptop sleeping.** Earlier
    diagnosis in this file said the watchdog was firing late and blamed a
