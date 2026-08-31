@@ -85,34 +85,46 @@ confirm nothing routed around `download`.
 
 ## 6. Execution (remote)
 
-`scripts/remote_setup_run.sh` starts a detached tmux session per arm and tees to
-`run_logs/<session>.log`. Detached matters: the pilot's local run was killed
-twice mid-sweep, once losing an in-flight arm.
+Three scripts in this directory, run against `sana-framework` directly:
 
-Run arms **sequentially**, not concurrently — the pilot's two worst stalls were
-concurrent tasks in the same batch, and parallel arms would confound the
-timeout behaviour further.
+| script | does |
+|---|---|
+| `bootstrap_remote.sh` | provisions a bare box: prereq check, `git archive` -> tarball, `.env`, `lance_data`, venv, four-arm preflight, semantic-judge check |
+| `run_remote.sh` | launches all four arms sequentially in one detached tmux session |
+| `pull_remote.sh` | tars `results/` + `logs/` back into this directory |
+
+All three take `REMOTE_HOST`, `REMOTE_IDENTITY`, `REMOTE_DIR` from the
+environment.
+
+**`scripts/remote_setup_run.sh` is deliberately not used.** It only wraps ssh +
+tmux + `setup_run.py`, its defaults point at a different repo
+(`~/eval_eqa/exploratory-qa-eval`), and the thing it wraps is the problem:
+`setup_run.py` hardcodes `_DEFAULT_TASK_SET` with no override, so it cannot
+target subset20b at all. `run_mode_eval` already accepts `--task-set`
+(`run_mode_eval.py:225`), so calling it directly removes the wrapper, the repo
+path mismatch, and the need to add a flag.
+
+The remote needs **no git** — `git archive` runs locally and ships a tarball.
+
+Run arms **sequentially**, not concurrently, so one arm's load cannot distort
+another's latency.
 
 ## 7. Blockers — resolve before running
 
-1. **SSH identity is missing.** `remote_setup_run.sh` defaults to
-   `asw2215.pem`; the repo has only `sana-eval_key.pem`. Need the correct key
-   and host, or `REMOTE_HOST` / `REMOTE_IDENTITY` set.
+1. **SSH host and key.** Needed to run any of the three scripts. The old
+   wrapper defaulted to `asw2215.pem`, which is not in this repo; only
+   `sana-eval_key.pem` is. Set `REMOTE_HOST` / `REMOTE_IDENTITY`.
 
-2. **Remote repo path is a different repo.** Default is
-   `~/eval_eqa/exploratory-qa-eval`, but this repo is `sana-framework`. Need to
-   confirm the remote checkout path and that it is on a branch containing
-   `--no-s3` (`exp/web-arm-subset20`, commits `c7d1d77` + `3ca3c7e`).
+2. **RESOLVED — repo path.** No longer a blocker: `REMOTE_DIR` defaults to
+   `~/sana-framework` and `bootstrap_remote.sh` creates it. Nothing needs to
+   pre-exist on the box, and it needs no git.
 
-3. **`setup_run.py` cannot target a task subset.** `_DEFAULT_TASK_SET` is
-   hardcoded with no override flag, and `remote_setup_run.sh` calls
-   `setup_run.py`. Either add `--task-set` to `setup_run.py` (small, testable)
-   or invoke `run_mode_eval` directly on the remote. **Recommend adding the
-   flag** — the wrapper gives tmux, logging, and resume for free.
+3. **RESOLVED — task subset.** No longer a blocker: `run_mode_eval` already
+   takes `--task-set`, so dropping `setup_run.py` removes the need to add a flag.
 
-4. **subset20b exists only in local `tmp/`, which is gitignored.** Its 20 task
-   files must be committed (`inputs/`) or rsynced to the remote. This is the
-   same trap that left subset20 out of PR 2 entirely.
+4. **RESOLVED — subset20b portability.** Its 20 task files are committed under
+   `inputs/`, so they ride in the `git archive` tarball. (`tmp/` is gitignored,
+   which is the trap that left subset20 out of PR 2 entirely.)
 
 5. **The semantic auditor is not in this checkout.** `.agents/` is gitignored
    and absent locally, which is why 9 tests error. Must confirm it exists on the

@@ -1,4 +1,4 @@
-# Model tiers on LakeQA — nano vs mini vs gpt-5.2, 20-task subset
+# Model tiers x per-axis ablation — LakeQA subset20b
 
 Run date: planned 2026-08-31 (Azure)
 Code: branch `exp/web-arm-subset20` or later (must include `fix/eval-runtime-fixes`)
@@ -6,52 +6,70 @@ Status: **planned, not yet run**
 
 ## Question
 
-How much does model capability move LakeQA accuracy, and does it move retrieval
-and execution equally? Nobody has run a frontier model on this benchmark — the
-only existing LakeQA results are `gpt-5.4-nano` and `gpt-5-mini`. The practical
-ask is "when someone asks how a big model does on this, what do we say?"
+How much does model capability move LakeQA accuracy, and **does it move each
+SANA axis equally?** No frontier model has been run on this benchmark — the only
+existing results are `gpt-5.4-nano` and `gpt-5-mini`.
 
-Secondary: whether the SANA bottleneck story (oracle retrieval beats real
-retrieval by a wide margin) survives at a larger model, or whether a stronger
-model closes the retrieval gap on its own.
+The interesting question is not the headline number but whether the bottleneck
+*ranking* is model-invariant. If `gpt-5.2` closes the compute gap but not the
+search gap, that says the retrieval stage is the durable bottleneck; if it closes
+everything, the benchmark is capability-limited rather than pipeline-limited.
 
-## Conditions
+## Design — leave-one-out ablation
 
-Grid: **3 models × 3 search arms = 9 cells × 20 tasks = 180 runs.**
+Every axis is held at the oracle, then **one axis at a time is degraded**. The
+accuracy *drop* from each degradation localises the bottleneck.
 
-Held fixed across every cell:
-`search_results=naive, profile=standard, computation_tool=standard, skills=off`.
+| cell | `--search_tool` | `--profile` | `--computation_tool` |
+|---|---|---|---|
+| REFERENCE | ideal | ideal | ideal |
+| search=naive | **naive** | ideal | ideal |
+| search=standard | **standard** | ideal | ideal |
+| profile=naive | ideal | **naive** | ideal |
+| profile=standard | ideal | **standard** | ideal |
+| compute=standard | ideal | ideal | **standard** |
 
-| axis | values |
-|---|---|
-| `--model-name` | `openai/gpt-5.4-nano`, `openai/gpt-5-mini`, `openai/gpt-5.2` |
-| `--search_tool` | `ideal` (profile oracle), `standard` (hybrid LanceDB), `naive` (BM25/FTS) |
+**6 cells × 3 models × 20 tasks = 360 runs.**
 
-These are deliberately the **same fixed axes** as
-`experiments/2026-08-30-web-arm-subset20`, so the two experiments compose into
-one grid: that one gives `mini × {web, ideal, standard, naive}`, this one gives
-`{nano, mini, 5.2} × {ideal, standard, naive}`. The shared
-`mini × {ideal, standard, naive}` cells appear in both — on different subsets,
-which makes them a direct measurement of the subset effect (see Caveats 1).
+`computation_tool` has only `{standard, ideal}` — there is no `naive` for that
+axis — so the compute ablation is a single cell rather than two.
 
-`computation_tool=standard`, not `ideal`: `execute_ideal`/`query_ideal` return the
-authored `record.answer` regardless of what was retrieved, so an ideal-compute
-cell measures the oracle, not the model. It also keeps this comparable to the
-web arm, where ideal compute is impossible.
+Held fixed everywhere: `--search_results ideal --k 5 --skills off`.
+These match the original 135-task experiments exactly, so the historical
+`gpt-5-mini` numbers below are a direct baseline for the same configuration.
 
-No `--k`: every arm runs at its own default, matching the web-arm experiment.
+Variant directory names will therefore match the historical ones
+(`search_i_results_i_plani_computei_k5_skills_off` and friends), which keeps
+`sana_analysis` and any downstream tooling working unchanged.
+
+## What the ablation already shows at gpt-5-mini
+
+From the historical 135-task runs, same axes, same `k`:
+
+| cell | EM | drop vs reference |
+|---|---|---|
+| REFERENCE | 72% | — |
+| compute=standard | 56% | **−16pp** |
+| search=standard | 59% | −13pp |
+| search=naive | 60% | −12pp |
+| profile=naive | 60% | −12pp |
+| profile=standard | 63% | −9pp |
+
+Execution is the largest single bottleneck at mini, search second, planning
+smallest. **Whether that ordering survives at gpt-5.2 is the point of this run.**
 
 ## Corpus
 
-- Tasks: 20, listed in `inputs/subset20b-manifest.json`, drawn from `benchmarks/lakeqa/tasks-mini/tasks`
+- Tasks: 20, listed in `inputs/subset20b-manifest.json`
 - S3: `lakeqa-yc4103-datalake`, folders `wikipedia`, `datagov`
-- Index: `lance_data/` (`lakeqa.lance`, `lakeqa_schema.lance`) — `standard`/`naive` only
-- Ideal enrichment: `benchmarks/lakeqa/tasks-mini/artifacts/descriptions.jsonl`
+- Index: `lance_data/` — `search=standard`/`naive` only
+- Runtime profiles: `benchmarks/lakeqa/tasks-mini/runtime-profiles` — every
+  ideal axis reads these, so all 6 cells depend on them
 
-### Why subset20b and not subset20
+### Why subset20b
 
-`subset20b` is stratified on **both** node count and historical solve rate;
-`subset20` was stratified on node count alone and came out materially easier.
+`subset20b` is stratified jointly on node count and historical solve rate;
+`subset20` was stratified on node count alone and landed materially easier.
 
 | split | mean solve rate | mean nodes |
 |---|---|---|
@@ -59,13 +77,7 @@ No `--k`: every arm runs at its own default, matching the web-arm experiment.
 | **`subset20b`** | **42.8%** | **7.10** |
 | full 135 (target) | 44.7% | 7.07 |
 
-The two overlap by only 4 of 20 tasks. Since this experiment exists to produce a
-number people will quote, it uses the split that is within 2pp of the full
-benchmark rather than 11pp above it.
-
-Historical solve rate = mean `exact_match` over ~18 prior runs per task
-(`../exploratory-qa-eval/results/modes/`), across mixed models and variants. It
-measures difficulty *under the modes already run*, so it is a proxy, not ground truth.
+They overlap by only 4 of 20 tasks.
 
 ### Tasks
 
@@ -92,69 +104,79 @@ measures difficulty *under the modes already run*, so it is a proxy, not ground 
 | `k-6-d-2/task_2` | 10 | 6 | 4 | 66.7% |
 | `k-6-d-3/task_1` | 10 | 4 | 6 | 66.7% |
 
-## Cost and runtime
+## Cost — read this before launching
 
-Projected from `gpt-5-mini`'s **measured** token counts in the web-arm run at
-`compute=standard` (not from an ideal-compute run, which has a different shape).
+Projected from `gpt-5-mini`'s **measured** per-task cost in the historical runs
+at this exact configuration, using `total_cost_with_all_subagents_usd` (the
+ideal axes spawn judge and repair subagents that roughly double main-agent cost).
 
-| arm | nano | mini | gpt-5.2 (same tokens) | gpt-5.2 (2.5× output) |
-|---|---|---|---|---|
-| ideal | $0.30 | $0.43 | $2.99 | $5.60 |
-| standard | $0.37 | $0.51 | $3.54 | $5.84 |
-| naive | ~$0.37 | ~$0.51 | ~$3.54 | ~$5.84 |
+| model | 6-cell grid, 20 tasks |
+|---|---|
+| `gpt-5.4-nano` | ~$8.50 |
+| `gpt-5-mini` | ~$10.70 (measured basis) |
+| `gpt-5.2` | **$75 – $120** |
+| **total** | **$94 – $139** |
 
-**Total: ~$8–13.** The 2.5× output column is the realistic one for gpt-5.2,
-which emits reasoning tokens.
+`gpt-5.2` is exactly **7× mini** on every token class (1.75/0.25 input,
+14/2 output, 0.175/0.025 cached), so there is no cache-driven discount to hope
+for. The $120 figure assumes 2.5× output tokens from reasoning.
 
-Runtime: mini's median task was 418s (ideal) / 186s (standard). At
-`--parallel 8` expect ~20-35 min per cell, so **4-6 h for the full grid**.
-The Azure VM at ~$0.38/h will cost more than the API calls — deallocate when done.
+Two things make this far pricier than a naive estimate:
+
+1. **Ideal subagents.** `compute=ideal` cells cost ~$1.92/20 tasks at mini vs
+   $0.82 for `compute=standard` — the semantic judge and repair agents more than
+   double it. Five of six cells run `compute=ideal`.
+2. **Ideal-compute runs are longer.** ~400k input tokens/task vs ~220k at
+   `compute=standard`.
+
+**If $139 is too much**, the cheapest meaningful reductions, in order:
+- Run `gpt-5.2` on REFERENCE + `compute=standard` only (2 cells, ~$25). That is
+  the largest ablation signal and answers "does a frontier model close the
+  execution gap?" — the single most interesting question here.
+- Add `--reasoning-effort low` for `gpt-5.2`; output tokens dominate its cost.
+- Keep nano and mini at all 6 cells regardless; together they are ~$19.
+
+Runtime: mini's historical median was ~250s/task. At `--parallel 8`, ~15 min per
+cell, so **~3-5 h for the full grid**, longer for gpt-5.2.
 
 ## Required before running
 
-1. **Raise the timeout and add a client-side HTTP timeout.** The web-arm run found
-   that `invoke_with_watchdog`'s `threading.Timer` does not reliably fire: two
-   tasks ran 3000s against a 630s deadline and a third completed at 1272s without
-   being cancelled. Consistent with a provider-side hang inside `agent(prompt)`
-   with no client-side HTTP timeout. Without a fix, gpt-5.2 cells can silently
-   burn hours. Run with `--timeout 900 --submit-grace-seconds 60`, and set a
-   request timeout on the OpenAI client (`client_args={"timeout": ...}` reaches
-   `OpenAICachedUsageModel` via `extra_model_kwargs`; there is no CLI flag today).
-2. **Materialize the subset** with `inputs/materialize_subset.py` — the task tree
-   must keep the `benchmarks/lakeqa/tasks-mini/tasks` path segment or runtime
-   profile lookup silently resolves to a wrong path (`runtime_profile_store.py:74`).
-3. **`HYBRID_TORCH_DTYPE=float32`** for `standard`/`naive` on a CPU-only Linux box.
-   The `qwen3_0_6b` preset hardcodes float16, which PyTorch emulates on x86 —
-   measured 73 ms/query at float32 vs 143 ms at float16 on CPU. No GPU needed:
-   embedding is ~3s across a whole 20-task run.
-4. **Copy `lance_data/` (760 MB)** to the box — `standard`/`naive` need it.
-   `ideal` does not, but `--db-path` must still point at an existing directory.
-5. **`.env`** with `OPENAI_API_KEY` plus AWS credentials. Azure cannot use an IAM
-   instance role, so these are real keys — scope them read-only to the bucket.
+1. **Fix the timeout.** The web-arm run found `invoke_with_watchdog`'s
+   `threading.Timer` firing ~40 min late: two tasks ran 3000s against a 630s
+   deadline, a third finished at 1272s uncancelled. At gpt-5.2 prices a hung task
+   is expensive. Run with `--timeout 900 --submit-grace-seconds 60` **and** set a
+   client-side HTTP timeout (`client_args={"timeout": ...}` reaches
+   `OpenAICachedUsageModel` through `extra_model_kwargs`; no CLI flag exists today).
+2. **Materialize the subset** with `inputs/materialize_subset.py`. The tree must
+   keep the `benchmarks/lakeqa/tasks-mini/tasks` path segment or runtime-profile
+   lookup silently resolves to a wrong path (`runtime_profile_store.py:74`).
+3. **`HYBRID_TORCH_DTYPE=float32`** on CPU-only Linux for the two `search` cells.
+   PyTorch emulates float16 on x86: measured 73 ms/query at float32 vs 143 ms at
+   float16. **No GPU needed** — embedding totals ~3s across a 20-task run.
+4. **Copy `lance_data/` (760 MB)** — needed by `search=standard`/`naive`.
+5. **`.env`** with `OPENAI_API_KEY` + AWS credentials. Azure cannot use an IAM
+   instance role, so scope the AWS keys read-only to the bucket.
 
-## Caveats that will affect interpretation
+## Caveats
 
-1. **Cross-experiment comparison is confounded by subset.** The shared
-   `mini × {ideal, standard, naive}` cells run on `subset20` there and
-   `subset20b` here. Any difference is subset + code drift, not model. This is
-   also the cleanest available estimate of how much the subset choice matters —
-   worth reporting as such rather than treating as noise.
-2. **Historical solve rate was computed from runs that used `compute=ideal`.**
-   The stratification is therefore anchored to a slightly different task
-   difficulty than this experiment measures. Directionally fine, not exact.
-3. **20 tasks is a small sample.** A single task flipping is 5pp. Differences
-   under ~10pp between adjacent model tiers should not be read as real.
+1. **20 tasks means one task = 5pp.** The historical drops span 9-16pp, so the
+   ablation *ordering* may not be resolvable at n=20 even though it is clear at
+   n=135. Treat gaps under ~10pp as unresolved.
+2. **The historical baseline is 135 tasks, this run is 20.** Absolute numbers are
+   not directly comparable to the table above; the within-run drops are.
+3. **Solve-rate stratification came from ideal-compute runs**, which is the
+   configuration here — so unlike the web-arm experiment, the stratification and
+   the measurement are aligned.
 4. **The FTS index still lacks positions.** Phrase queries degrade to keyword
-   search via the fallback in `fix/eval-runtime-fixes` rather than erroring, but
-   `standard`/`naive` are running against a slightly weaker index than intended.
-5. **Cost projections assume gpt-5.2's token profile resembles mini's.** If it
-   reasons substantially longer, the output-token term dominates and the real
-   figure lands above the 2.5× column.
+   search via the fallback rather than erroring, so `search=standard`/`naive` run
+   against a slightly weaker index than intended.
+5. **gpt-5.2 cost assumes mini's token profile.** If it reasons much longer, the
+   output term dominates and the real figure exceeds the $120 column.
 
 ## Layout
 
-- `inputs/` — task manifest, materializer, exact run script
-- `results/` — per-cell `eval_results.csv`, `tools_breakdown.csv`, JSONL traces
+- `inputs/` — manifest, materializer, run script
+- `results/` — per-cell `eval_results.csv`, `tools_breakdown.csv`, traces
 - `logs/` — per-cell stdout and per-task logs
-- `archive.sh` — copy scratch output from `tmp/` into here (tmp/ is gitignored)
-- `summarize.py` — model × arm table
+- `archive.sh` — copy scratch output from `tmp/` (gitignored) into here
+- `summarize.py` — model × cell table with ablation drops
