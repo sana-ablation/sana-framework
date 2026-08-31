@@ -16,6 +16,9 @@ KEY="${REMOTE_IDENTITY:-}"
 DIR="${REMOTE_DIR:-~/sana-framework}"
 SESSION="${SESSION:-webarm-$(date +%Y%m%d-%H%M%S)}"
 MODEL="${MODEL:-openai/gpt-5-mini}"
+# Pilot default was 30 and 4/20 web + 4/17 standard tasks hit it. Raise to 50 if
+# the cap should stop being a binding constraint; kept at 30 to match the pilot.
+MAXTOOLS="${MAXTOOLS:-30}"
 
 SSH=(ssh); [[ -n "$KEY" ]] && SSH=(ssh -i "$KEY")
 
@@ -32,10 +35,13 @@ run_arm () {
   echo "=================================================================="
   $PY -m sana_evaluation.run_mode_eval \
     --all-tasks --only-new --task-set "$TASKSET" \
+    --benchmark lakeqa \
     --model-name "__MODEL__" \
     --search_results naive --profile standard --computation_tool standard \
     --parallel 4 \
     --db-path lance_data \
+    --max-tool-calls __MAXTOOLS__ \
+    --timeout 600 --submit-grace-seconds 30 \
     --results-output-dir "$OUT/results" \
     --logs-output-dir "$OUT/logs" \
     --openai-prompt-cache-retention 24h \
@@ -52,6 +58,7 @@ echo "ALL ARMS COMPLETE $(date -u +%H:%M:%S)Z"
 INNER
 
 SWEEP="${SWEEP//__MODEL__/$MODEL}"
+SWEEP="${SWEEP//__MAXTOOLS__/$MAXTOOLS}"
 
 "${SSH[@]}" "$HOST" "set -e
   cd $DIR

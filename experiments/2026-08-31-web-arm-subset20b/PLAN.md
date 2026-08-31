@@ -62,8 +62,17 @@ default.
 `{semantic_correct, semantic_incorrect, answer_unknown_blank}`.
 
 **Secondary:** `exact_match` (kept for continuity with earlier sweeps),
-`cycle_count`, `cost_usd`, `input_tokens`, **median** `runtime_seconds`
-(not mean — the pilot's mean was dominated by a single 3000s stall).
+`cycle_count`, `tool_calls_total`, `cost_usd`, **median** `runtime_seconds`
+(not mean — the pilot's mean was dominated by a single 3000s sleep stall), and a
+count of blank predictions.
+
+**Tool-call cap.** `--max-tool-calls` defaults to 30 and the pilot hit it:
+4/20 web, 1/20 ideal, 4/17 standard tasks reached the cap. Web is structurally
+more exposed — its loop is `search_web -> download -> execute_code`, three calls
+per source, against the lake arms' `search -> query_file`. Kept at 30 here to
+match the pilot rather than silently change the experiment; `MAXTOOLS=50
+./run_remote.sh` raises it. Report the at-cap count per arm either way, since a
+truncated task is not a wrong answer.
 
 **Dropped:** `f1_score`. Retained in the CSV since `_write_main_csv` emits it,
 but not reported.
@@ -91,7 +100,8 @@ Three scripts in this directory, run against `sana-framework` directly:
 |---|---|
 | `bootstrap_remote.sh` | provisions a bare box: prereq check, `git archive` -> tarball, `.env`, `lance_data`, venv, four-arm preflight, semantic-judge check |
 | `run_remote.sh` | launches all four arms sequentially in one detached tmux session |
-| `pull_remote.sh` | tars `results/` + `logs/` back into this directory |
+| `watch_and_pull.sh` | polls the driver log and pulls results **after every arm**, printing a summary each time, so progress is visible without waiting for all four |
+| `pull_remote.sh` | one-shot pull of `results/` + `logs/` |
 
 All three take `REMOTE_HOST`, `REMOTE_IDENTITY`, `REMOTE_DIR` from the
 environment.
