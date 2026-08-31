@@ -119,21 +119,23 @@ timeout behaviour further.
    remote, and pin which model it judges with — the judge is part of the
    measurement and belongs in the provenance record.
 
-6. **The 600s watchdog does not hold.** In the pilot `threading.Timer` fired up
-   to 40 min late: ideal lost 4 of 20 tasks (two at 3000s against a 630s
-   deadline), standard lost 1 (2306s), web lost 0 (max 443s). The deadline math
-   in `invoke_with_watchdog` is correct, so this looks like a provider-side hang
-   inside `agent(prompt)` with no client-side HTTP timeout.
+6. **RESOLVED — the pilot's "timeouts" were the laptop sleeping.** Earlier
+   diagnosis in this file said the watchdog was firing late and blamed a
+   provider-side hang. That was wrong. `pmset -g log` shows the machine entered
+   sleep at 20:21:17 on 2026-08-30 and again 20:38-20:47, 20:48-21:03,
+   21:06-21:21. The web arm ran 18:23-19:12, entirely before the first sleep,
+   and took 0 timeouts; ideal ran 19:12-21:36 straight through four sleep
+   windows and took 4; standard ran 21:36-22:39 and took 1.
 
-   This is not cosmetic: it hits the lake arms and not web, so it systematically
-   handicaps exactly the arms web is being compared against. **Recommend fixing
-   before this run** — otherwise any web win is uninterpretable. Semantic
-   scoring reduces but does not remove the damage, since a killed task still
-   lands in `answer_unknown_blank` rather than being excluded.
+   `threading.Timer` waits on a monotonic clock, which does not advance during
+   macOS sleep, while `runtime_seconds` uses wall-clock `time.time()`. So the
+   timer fired after exactly 630s of *awake* time, as designed, while wall clock
+   showed 3000s. `invoke_with_watchdog` is correct and needs no change.
 
-   Decide: (a) fix the HTTP client timeout and rerun everything, (b) run as-is
-   and exclude `answer_unknown_blank` from the denominator, or (c) run as-is and
-   report it as a limitation.
+   The pilot's arm comparison is still unusable, but as a scheduling artifact
+   rather than an infrastructure fault: web happened to get the pre-sleep slot.
+   Running on an always-on remote removes this entirely. If ever running locally
+   again, wrap the sweep in `caffeinate -dimsu`.
 
 ## 8. Confounds to carry into the write-up
 
