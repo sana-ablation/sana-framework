@@ -35,9 +35,9 @@ MODELS=${MODELS:-"openai/gpt-5.4-nano openai/gpt-5-mini openai/gpt-5.2"}
 # cells embed a query locally. No GPU required either way.
 export HYBRID_TORCH_DTYPE=${HYBRID_TORCH_DTYPE:-float32}
 
-# The web-arm run observed invoke_with_watchdog's threading.Timer firing ~40 min
-# late (3000s against a 630s deadline). 900s is headroom, not a fix - see
-# README "Required before running" for the client-side HTTP timeout.
+# 900s is headroom for gpt-5.2's longer reasoning, not a workaround. The
+# "late timer" seen locally was the laptop sleeping (monotonic clock stops during
+# macOS sleep); on the always-on box an 80-run sweep had zero timeouts.
 TIMEOUT=${TIMEOUT:-900}
 GRACE=${GRACE:-60}
 

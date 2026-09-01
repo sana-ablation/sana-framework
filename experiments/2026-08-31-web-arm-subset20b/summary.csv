@@ -1,0 +1,5 @@
+arm,n,semantic_correct,semantic_pct,exact_correct,exact_pct,semantic_incorrect,answer_unknown_blank,mean_cycles,mean_tool_calls,at_tool_cap,acc_under_cap,acc_at_cap,median_runtime_s,total_cost_usd,sources_used,sources_required,source_coverage_pct
+web,20,7,35.0,6,30.0,12,1,26.2,25.2,8,6/12,1/8,199.0,1.002,0,137,0.0
+ideal,20,10,50.0,9,45.0,10,0,22.2,21.8,5,9/15,1/5,124.0,0.601,107,137,78.1
+standard,20,10,50.0,9,45.0,10,0,29.2,28.2,11,7/9,3/11,142.0,0.937,93,137,67.9
+naive,20,9,45.0,9,45.0,11,0,27.8,26.8,9,6/11,3/9,131.0,0.827,96,137,70.1

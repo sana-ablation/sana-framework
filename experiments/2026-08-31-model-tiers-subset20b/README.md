@@ -195,7 +195,16 @@ cell, so **~4-6 h** for the full grid, longer for gpt-5.2.
 
 ## Required before running
 
-1. **Semantic scoring is a separate stage, and its tooling is not in this repo.**
+1. **RESOLVED — semantic scoring tooling is now present.** `.agents/` has been
+   copied in from `exploratory-qa-eval` and verified end-to-end on 80 rows
+   (judge `gpt-5.4`, effort medium). Two stale defaults had to be patched to make
+   it run at all: its `gpt-5.2-codex` default is listed by `/models` but 404s on
+   `/responses`, and it passed `temperature=0`, which every gpt-5 reasoning model
+   rejects. A patched copy is vendored at
+   `../2026-08-31-web-arm-subset20b/vendored-auditor-patched.py` because
+   `.agents/` is gitignored. Original note follows.
+
+   **Semantic scoring is a separate stage, and its tooling is not in this repo.**
    The runs emit raw `results/` with `exact_match`; the paper metric comes from
    the `semantic-eval-auditor` agent skill, which rewrites a parallel
    `results_semantic/` tree adding `semantic_match` / `semantic_reason` /
@@ -204,12 +213,20 @@ cell, so **~4-6 h** for the full grid, longer for gpt-5.2.
    `test_semantic_eval_auditor.py` and 8 sibling tests cannot run in this repo.
    Plan for it: either copy `.agents/` onto the box, or pull raw results back and
    score locally. Without this stage the numbers are not comparable to figure A2.0.
-2. **Fix the timeout.** The web-arm run found `invoke_with_watchdog`'s
-   `threading.Timer` firing ~40 min late: two tasks ran 3000s against a 630s
-   deadline, a third finished at 1272s uncancelled. At gpt-5.2 prices a hung task
-   is expensive. Run with `--timeout 900 --submit-grace-seconds 60` **and** set a
-   client-side HTTP timeout (`client_args={"timeout": ...}` reaches
-   `OpenAICachedUsageModel` through `extra_model_kwargs`; no CLI flag exists today).
+2. ~~**Fix the timeout.**~~ **RESOLVED — there is no timeout bug.** This item
+   was written from a wrong diagnosis. The late `threading.Timer` firings were
+   the *laptop sleeping*: `pmset -g log` shows the machine entering sleep at
+   20:21:17 on 2026-08-30 and three more times before 21:21. `threading.Timer`
+   waits on a monotonic clock that does not advance during macOS sleep, while
+   `runtime_seconds` is wall-clock — so the timer fired after exactly 630s of
+   *awake* time, as designed, while wall clock read 3000s. `invoke_with_watchdog`
+   is correct.
+
+   Confirmed empirically: the 2026-08-31 subset20b web-arm sweep ran all four
+   arms, 80 task-runs, on the always-on Azure box with **zero timeouts and zero
+   blanks**. No client-side HTTP timeout is needed and none should be built.
+   `--timeout 900 --submit-grace-seconds 60` remains reasonable headroom for
+   gpt-5.2's longer reasoning, but as headroom, not as a workaround.
 3. **Materialize the subset** with `inputs/materialize_subset.py`. The tree must
    keep the `benchmarks/lakeqa/tasks-mini/tasks` path segment or runtime-profile
    lookup silently resolves to a wrong path (`runtime_profile_store.py:74`).
