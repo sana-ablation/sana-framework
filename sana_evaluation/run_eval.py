@@ -111,15 +111,31 @@ def run_evaluation(
     only_new: bool = False,
     parallel: int = 6,
     tasks_per_dir: Optional[int] = None,
+    task_files: Optional[list] = None,
 ) -> dict:
-    """Run evaluation on a task directory and return {model_id -> {summary, results}}."""
+    """Run evaluation on a task directory and return {model_id -> {summary, results}}.
+
+    ``task_files`` overrides the per-directory glob. Passing an explicit list lets
+    a caller pool every task across all ``k-*-d-*`` directories into ONE worker
+    pool. Without it, ``--all-tasks`` calls this once per directory and each call
+    builds its own pool, so directories run sequentially and concurrency is capped
+    by the largest directory rather than by ``parallel``.
+
+    The paths are used verbatim: runtime-profile lookup keys off the path suffix
+    after ``benchmarks/<bench>/tasks-mini/tasks``, so the ``k-*-d-*`` segment must
+    survive. Pooling the file list rather than flattening the tree preserves it,
+    and keeps colliding basenames distinct.
+    """
     cond = run_config.condition_config
     condition_label = cond.condition
     safe_model = _display_name(agent_config)
     output_dir = _results_dir(run_config, agent_config)
     os.makedirs(output_dir, exist_ok=True)
 
-    task_files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
+    if task_files is None:
+        task_files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
+    else:
+        task_files = list(task_files)
     if not task_files:
         logger.info(f"No task files found in {task_dir}")
         return {}

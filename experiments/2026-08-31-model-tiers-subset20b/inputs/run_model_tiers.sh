@@ -64,8 +64,12 @@ run_cell () {
   echo "=================================================================="
   echo ">>> $MODEL  $NAME (search=$SEARCH profile=$PROFILE compute=$COMPUTE)  $(date +%H:%M:%S)"
   echo "=================================================================="
+  # --pool-tasks: one worker pool for all 20 tasks. Without it run_mode_eval
+  # builds a pool per k-*-d-* directory and runs them in sequence, so subset20b's
+  # 11 uneven directories cap concurrency near 1.3 regardless of --parallel.
+  # --only-new makes a restart cheap: completed tasks are skipped.
   $PY -m sana_evaluation.run_mode_eval \
-    --all-tasks --task-set "$TASKSET" \
+    --all-tasks --pool-tasks --only-new --task-set "$TASKSET" \
     --model-name "$MODEL" \
     --search_tool "$SEARCH" \
     --profile "$PROFILE" \

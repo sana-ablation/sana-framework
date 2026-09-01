@@ -135,6 +135,52 @@ def _default_task_set_for_benchmark(benchmark: str) -> str:
     return _DEFAULT_TASK_SET
 
 
+def _run_all_tasks_pooled(
+    *,
+    task_set: str,
+    agent_config,
+    run_config,
+    verbose: bool,
+    only_new: bool,
+    parallel: int,
+    tasks_per_dir: Optional[int],
+) -> None:
+    """Run every task across all directories through ONE worker pool.
+
+    The per-directory path builds a separate pool per `k-*-d-*` directory and
+    runs them in sequence, so concurrency is capped by the largest directory. On
+    a 20-task subset spread over 11 directories that is ~1.3-way concurrency no
+    matter what `--parallel` says.
+
+    Paths are passed through untouched: runtime-profile lookup keys off the
+    suffix after `benchmarks/<bench>/tasks-mini/tasks`, so the `k-*-d-*` segment
+    has to survive. Pooling the file list rather than flattening the tree keeps
+    it, and keeps colliding basenames (subset20b has `task_6` three times)
+    distinct.
+    """
+    task_dirs = base_eval.find_all_task_dirs(task_set)
+    logger.info("Found %d task directories in '%s'", len(task_dirs), task_set)
+
+    pooled: list[str] = []
+    for task_dir in task_dirs:
+        files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
+        if tasks_per_dir is not None:
+            files = files[:tasks_per_dir]
+        pooled.extend(files)
+
+    logger.info("Pooling %d tasks into one pool of %d workers", len(pooled), parallel)
+    results = base_eval.run_evaluation(
+        task_dir=task_set,
+        agent_config=agent_config,
+        run_config=run_config,
+        verbose=verbose,
+        only_new=only_new,
+        parallel=parallel,
+        task_files=pooled,
+    )
+    base_eval.print_comparison_table(results)
+
+
 def _collect_task_files(args) -> list[str]:
     """Resolve the full task-file list the run will cover, before preflight.
 
@@ -416,6 +462,15 @@ def main() -> None:
     # Execution
     parser.add_argument("--parallel", type=int, default=6, help="Number of parallel worker processes")
     parser.add_argument("--only-new", action="store_true", help="Skip tasks already present in the results CSV")
+    parser.add_argument(
+        "--pool-tasks",
+        action="store_true",
+        help=(
+            "With --all-tasks, run every task through one worker pool instead of "
+            "one pool per k-*-d-* directory. Directory batching otherwise caps "
+            "concurrency at the largest directory regardless of --parallel."
+        ),
+    )
     parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
@@ -534,6 +589,16 @@ def main() -> None:
 
     if args.task_continue:
         _run_continue(args, agent_config, run_config)
+    elif args.all_tasks and args.pool_tasks:
+        _run_all_tasks_pooled(
+            task_set=args.task_set,
+            agent_config=agent_config,
+            run_config=run_config,
+            verbose=args.verbose,
+            only_new=args.only_new,
+            parallel=args.parallel,
+            tasks_per_dir=args.tasks_per_dir,
+        )
     elif args.all_tasks:
         task_dirs = base_eval.find_all_task_dirs(args.task_set)
         logger.info("Found %d task directories in '%s'", len(task_dirs), args.task_set)
