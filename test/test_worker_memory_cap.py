@@ -27,6 +27,14 @@ from sana_evaluation import agent_with_mode as awm
 
 
 class WorkerMemoryCapTests(unittest.TestCase):
+    def test_disabled_by_default(self):
+        """RLIMIT_DATA counts virtual reservations, so a cap fires during import."""
+        import os
+        env = dict(os.environ)
+        env.pop("SANA_WORKER_MEMORY_CAP_GB", None)
+        with patch.dict("os.environ", env, clear=True):
+            self.assertIsNone(awm._apply_worker_memory_cap())
+
     def test_disabled_when_env_is_empty(self):
         with patch.dict("os.environ", {"SANA_WORKER_MEMORY_CAP_GB": ""}, clear=False):
             self.assertIsNone(awm._apply_worker_memory_cap())

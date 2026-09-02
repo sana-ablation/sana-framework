@@ -1050,11 +1050,22 @@ class DataLakeAgent:
 # also preserves the traceback naming the allocation site, which an OOM kill
 # destroys -- that is the evidence every previous diagnosis lacked.
 #
-# The legitimate working set is ~1.6 GB (0.71 GB imports + 0.89 GB artifact
-# caches), so the default clears it by 5x. Linux only: RLIMIT_DATA covers
-# anonymous mmap there (>= 4.7), while on macOS it does not and would be both
-# ineffective and risky for local development.
-_DEFAULT_WORKER_MEMORY_CAP_GB = "8" if sys.platform.startswith("linux") else ""
+# DISABLED BY DEFAULT -- RLIMIT_DATA is the wrong instrument here.
+#
+# On Linux it counts anonymous mmap *reservations*, i.e. virtual address space,
+# not resident memory. torch, DuckDB and lance reserve enormous arenas: the
+# OOM-killed process showed total-vm 179 GB against 27.5 GB resident, and a
+# healthy worker is not far off. An 8 GB cap therefore fires during module
+# import, before the task does any work.
+#
+# Measured: with the cap at 8 GB, up to 13 of 20 tasks per cell failed with
+# MemoryError inside `from ... import OpenAICachedUsageModel`. It corrupted
+# results rather than containing anything.
+#
+# Bounding resident memory needs a cgroup (systemd-run -p MemoryMax=...), not an
+# rlimit. Until that exists, supervise_grid.sh handles crashes instead. Set
+# SANA_WORKER_MEMORY_CAP_GB explicitly to re-enable, knowing the above.
+_DEFAULT_WORKER_MEMORY_CAP_GB = ""
 
 
 def _apply_worker_memory_cap() -> Optional[int]:
