@@ -11,6 +11,8 @@ that wires together:
 import concurrent.futures
 import json
 import os
+import resource
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -1033,6 +1035,49 @@ class DataLakeAgent:
 # Worker function (must be module-level for ProcessPoolExecutor pickling)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Worker memory cap
+# ---------------------------------------------------------------------------
+
+# Three grid runs were killed by the kernel OOM killer; twice a single process
+# reached ~27.5 GB while the pool workers sat at 0.58 GB each on a 31 GB box.
+# The allocation is unidentified -- DuckDB's limit, result materialisation,
+# execute_ideal, the artifact caches, the JSON reader and the failing SQL were
+# each measured and ruled out.
+#
+# Capping the worker heap converts that kill into a MemoryError in one task,
+# which the existing handler reports as a task error, so the grid survives. It
+# also preserves the traceback naming the allocation site, which an OOM kill
+# destroys -- that is the evidence every previous diagnosis lacked.
+#
+# The legitimate working set is ~1.6 GB (0.71 GB imports + 0.89 GB artifact
+# caches), so the default clears it by 5x. Linux only: RLIMIT_DATA covers
+# anonymous mmap there (>= 4.7), while on macOS it does not and would be both
+# ineffective and risky for local development.
+_DEFAULT_WORKER_MEMORY_CAP_GB = "8" if sys.platform.startswith("linux") else ""
+
+
+def _apply_worker_memory_cap() -> Optional[int]:
+    """Cap this process's heap. Returns the cap in bytes, or None if not applied."""
+    raw = os.getenv("SANA_WORKER_MEMORY_CAP_GB", _DEFAULT_WORKER_MEMORY_CAP_GB)
+    try:
+        gb = float(str(raw).strip())
+    except (TypeError, ValueError):
+        return None
+    if gb <= 0:
+        return None
+
+    cap = int(gb * 1024**3)
+    try:
+        resource.setrlimit(resource.RLIMIT_DATA, (cap, cap))
+    except (OSError, ValueError, AttributeError) as exc:
+        # A restricted sandbox may forbid this. Losing the cap is worse than
+        # nothing, but far better than refusing to run the task.
+        logger.warning("Could not apply worker memory cap: %s", exc)
+        return None
+    return cap
+
+
 def _run_task_worker(
     task: Dict[str, Any],
     task_index: int,
@@ -1047,6 +1092,7 @@ def _run_task_worker(
     `agent_class` lets callers swap in a DataLakeAgent subclass (e.g. for SANA).
     Defaults to `DataLakeAgent`.
     """
+    _apply_worker_memory_cap()
     from sana_evaluation.helper.metrics import compute_exact_match, compute_f1_score, normalize_text
 
     log_model_name = agent_config.model_name or agent_config.model_id
