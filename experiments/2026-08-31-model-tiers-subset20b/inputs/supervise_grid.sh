@@ -21,7 +21,10 @@ export TASKSET=${TASKSET:-experiments/2026-08-31-web-arm-subset20b/inputs/benchm
 export RESULTS=${RESULTS:-$EXP/results}
 export LOGS=${LOGS:-$EXP/logs}
 export PARALLEL=${PARALLEL:-8}
-export SANA_WORKER_MEMORY_CAP_GB=${SANA_WORKER_MEMORY_CAP_GB:-8}
+# Deliberately NOT setting SANA_WORKER_MEMORY_CAP_GB. RLIMIT_DATA counts
+# virtual reservations, so any cap fires during module import and fails the
+# task -- see _apply_worker_memory_cap. Forcing it here also silently
+# overrode that helper's disabled default.
 
 rows_done () {
   find "$RESULTS" -name eval_results.csv 2>/dev/null \
