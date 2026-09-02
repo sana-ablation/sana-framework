@@ -119,9 +119,28 @@ def _s3_read_bounded(s3, key: str, size_bytes: int, max_bytes: int) -> bytes:
     return _s3_range_get(s3, key, 0, size_bytes - 1)
 
 
+# DuckDB defaults memory_limit to 80% of system RAM and threads to every core --
+# PER CONNECTION. On the 31 GiB eval box that is 25 GiB and 8 threads each, so one
+# task querying a large S3 CSV could OOM the machine on its own, and 8 concurrent
+# workers made it certain. Past its limit DuckDB spills to disk instead of dying.
+_DUCKDB_MEMORY_LIMIT_DEFAULT = "3GB"
+_DUCKDB_THREADS_DEFAULT = "2"
+
+
 def _duckdb_connection() -> duckdb.DuckDBPyConnection:
-    """Create a fresh in-memory DuckDB connection with httpfs and AWS credentials."""
+    """Create a fresh in-memory DuckDB connection with httpfs and AWS credentials.
+
+    The connection is deliberately bounded: several of these run concurrently,
+    one per eval worker, and DuckDB's defaults assume it is the only process on
+    the machine.
+    """
+    # Read per call, not at import: workers are spawned processes that may set
+    # these after this module is first imported.
+    mem = os.getenv("SANA_DUCKDB_MEMORY_LIMIT", _DUCKDB_MEMORY_LIMIT_DEFAULT)
+    threads = os.getenv("SANA_DUCKDB_THREADS", _DUCKDB_THREADS_DEFAULT)
     conn = duckdb.connect(":memory:")
+    conn.execute(f"SET memory_limit='{mem}'")
+    conn.execute(f"SET threads={threads}")
     conn.execute("INSTALL httpfs")
     conn.execute("LOAD httpfs")
     region = os.getenv("AWS_DEFAULT_REGION", REGION)
