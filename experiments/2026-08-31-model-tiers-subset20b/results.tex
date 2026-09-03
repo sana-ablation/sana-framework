@@ -120,13 +120,14 @@ the other two tiers.
   \centering
   \begin{tikzpicture}
     \begin{axis}[
-      width=\columnwidth, height=7.2cm,
-      xbar, y=0.42cm, bar width=0.24cm,
+      width=\columnwidth, height=7.6cm,
+      xbar, y=0.44cm, bar width=0.26cm,
+      y dir=reverse,
       xlabel={Effect relative to reference (pp)},
-      xmin=-26, xmax=26,
+      xmin=-27, xmax=27,
       xtick={-20,-10,0,10,20},
-      enlarge y limits={abs=0.4cm},
-      ytick=data,
+      enlarge y limits={abs=0.5cm},
+      ytick={0,1,2,3,4,5,6,7,8,9,10,11},
       yticklabels={%
         {BM25 (nano)},{PNEUMA (nano)},{Preloaded (nano)},{No Plan (nano)},{Default (nano)},{Std.\ An.\ (nano)},%
         {BM25 (mini)},{PNEUMA (mini)},{Preloaded (mini)},{No Plan (mini)},{Default (mini)},{Std.\ An.\ (mini)}},
@@ -136,23 +137,32 @@ the other two tiers.
       axis line style={draw=black!45},
       tick style={draw=black!45},
       xmajorgrids, grid style={draw=black!12},
-      nodes near coords, nodes near coords style={font=\tiny},
-      point meta=explicit symbolic,
+      nodes near coords, nodes near coords style={font=\tiny, /pgf/number format/fixed,
+        /pgf/number format/precision=1, /pgf/number format/print sign},
+      legend style={font=\scriptsize, at={(0.5,-0.16)}, anchor=north, legend columns=2, draw=none, /tikz/every even column/.append style={column sep=10pt}},
+      legend cell align=left,
     ]
-      % +-7.1pp replicate noise band
-      \fill[black!10] (axis cs:-7.1,-1) rectangle (axis cs:7.1,12);
-      \draw[black!35] (axis cs:0,-1) -- (axis cs:0,12);
-      \addplot[draw=none, fill=black!62] coordinates {
-        (-20.0,0) [$-20.0$] (-7.5,1) [$-7.5$] (5.0,2) [$+5.0$]
-        (-2.5,3) [$-2.5$]  (0.0,4) [$0.0$]   (-7.5,5) [$-7.5$]
-        (-10.0,6)[$-10.0$] (-20.0,7)[$-20.0$] (7.5,8) [$+7.5$]
-        (-10.0,9)[$-10.0$] (-12.5,10)[$-12.5$] (-2.5,11)[$-2.5$]
+      % +-7.1 pp replicate noise band, drawn behind the bars
+      \fill[black!9] (axis cs:-7.1,-1) rectangle (axis cs:7.1,12);
+      \draw[black!30, dashed] (axis cs:-7.1,-1) -- (axis cs:-7.1,12);
+      \draw[black!30, dashed] (axis cs:7.1,-1)  -- (axis cs:7.1,12);
+      \draw[black!45] (axis cs:0,-1) -- (axis cs:0,12);
+
+      \addplot[draw=none, fill=black!68] coordinates {
+        (-20.0,0) (-10.0,6) (-20.0,7) (7.5,8) (-10.0,9) (-12.5,10)
       };
+      \addlegendentry{clears the noise floor}
+
+      \addplot[draw=none, fill=black!25] coordinates {
+        (-7.5,1) (5.0,2) (-2.5,3) (0.0,4) (-7.5,5) (-2.5,11)
+      };
+      \addlegendentry{inside the noise ($|\delta|\le 7.1$\,pp)}
     \end{axis}
   \end{tikzpicture}
   \caption{Ablation effects for the two replicated tiers, plotted against the
   $\pm7.1$\,pp replicate noise floor (shaded). Bars contained within the shaded
-  region are not distinguishable from run-to-run variance at $n=20$. Only the
-  two $-20$\,pp search effects clear it by more than a factor of two.}
+  region are not distinguishable from run-to-run variance at $n=20$; only the
+  two $-20$\,pp search effects clear it by more than a factor of two.
+  \texttt{gpt-5.2} is omitted, having no replicate.}
   \label{fig:tier-noise}
 \end{figure}
