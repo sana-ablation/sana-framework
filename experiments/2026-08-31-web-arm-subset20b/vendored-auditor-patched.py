@@ -7,7 +7,7 @@ import argparse
 import csv
 import json
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -319,7 +319,14 @@ def extract_output_text(response: Any) -> str:
     return "\n".join(chunks)
 
 
-def validate_row_audit(result: RowAuditResult, *, log_required: bool) -> None:
+def validate_row_audit(result: RowAuditResult, *, log_required: bool) -> RowAuditResult:
+    """Validate a judged row, returning it (possibly normalised).
+
+    Genuine contradictions still raise. The one exception is evidence with no
+    bucket, which the judge emits intermittently and which carries no
+    information: it is cleared rather than fatal. Raising on it killed two
+    700-row audits at row 1 of 21.
+    """
     if result.semantic_bucket not in SEMANTIC_BUCKETS:
         raise ValueError(f"Unexpected semantic bucket: {result.semantic_bucket}")
     if result.log_error_bucket not in LOG_ERROR_BUCKETS:
@@ -328,8 +335,12 @@ def validate_row_audit(result: RowAuditResult, *, log_required: bool) -> None:
         raise ValueError("semantic_correct rows must set semantic_match=1")
     if result.semantic_bucket in {"semantic_incorrect", "answer_unknown_blank"} and result.semantic_match != 0:
         raise ValueError("Incorrect or blank rows must set semantic_match=0")
+    # The judge intermittently returns evidence with no bucket. Evidence without a
+    # bucket carries no information, so drop it rather than failing the whole run:
+    # this raised on row 1 of 21 and killed a 700-row audit twice.
     if not result.log_error_bucket and result.log_error_evidence:
-        raise ValueError("Rows without a log_error_bucket must leave log_error_evidence blank")
+        return replace(result, log_error_evidence="")
+    return result
 
 
 class OpenAIResponsesJudge:
@@ -483,8 +494,7 @@ class OpenAIResponsesJudge:
             log_error_bucket=str(payload["log_error_bucket"]),
             log_error_evidence=sanitize_text(payload["log_error_evidence"]),
         )
-        validate_row_audit(result, log_required=log_required)
-        return result
+        return validate_row_audit(result, log_required=log_required)
 
 
 class SemanticEvalAuditor:
