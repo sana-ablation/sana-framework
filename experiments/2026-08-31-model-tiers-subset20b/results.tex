@@ -1,0 +1,158 @@
+% =====================================================================
+% Model-tier x per-axis ablation on LakeQA subset20b, with replicate.
+%
+% Generated from experiments/2026-08-31-model-tiers-subset20b/
+%   results/       run 1   (nano, mini, gpt-5.2)
+%   results-rep2/  run 2   (nano, mini)
+% Reproduce the numbers with compare_runs.py.
+%
+% Requires: booktabs, multirow, pgfplots (for Figure~\ref{fig:tier-noise}).
+% Column conventions follow Table~\ref{tab:sana-lakeqa}.
+% Metric is exact_match; the semantic audit has not been run on this grid.
+% =====================================================================
+
+\subsection{Replicate variance on the ablation grid}
+\label{sec:tier-noise}
+
+We ran the leave-one-out ablation over three model tiers on
+\textsc{subset20b}, a 20-task split of LakeQA stratified jointly on node count
+and historical solve rate. Every axis is held at the oracle and one axis is
+degraded per cell, giving seven cells per model. To establish whether the
+resulting drops are measurable at this sample size, the two smaller tiers were
+run a second time under identical configuration.
+
+The replicate is the central result. Across the 14 paired cells the mean
+absolute difference between runs is \textbf{7.1\,pp} (median 5.0\,pp, maximum
+20.0\,pp). Since a single task is worth 5\,pp at $n=20$, this places the
+resolution of the design near 15--20\,pp rather than the 9--16\,pp range the
+ablation was expected to produce. Table~\ref{tab:tier-ablation} reports both
+runs; Figure~\ref{fig:tier-noise} plots each effect against the noise floor.
+
+Three consequences follow. First, the apparent advantage of \textsc{Preloaded}
+over the all-ideal reference ($+10$\,pp at \texttt{gpt-5.4-nano} and $+15$\,pp
+at \texttt{gpt-5-mini} on run~1 alone) does not survive replication, falling to
+$+5.0$ and $+7.5$\,pp respectively. Second, one cell moved 20\,pp between
+identical runs (\texttt{gpt-5.4-nano}, \textsc{Plan: No Plan}, 25\%~$\to$~45\%),
+so no single-run reading of that condition is interpretable. Third, only two
+effects clear the floor by a comfortable margin: the search axis at
+$-20$\,pp for BM25 at \texttt{gpt-5.4-nano} and $-20$\,pp for PNEUMA at
+\texttt{gpt-5-mini}.
+
+\texttt{gpt-5.2} was run once and therefore carries no error bar. Its search
+axis is notably flat ($-5$\,pp for BM25, against $-10$ to $-20$\,pp for the
+smaller tiers), which would indicate that retrieval quality matters less as
+model capability rises; we report it as an observation rather than a finding,
+since a single run at $n=20$ cannot separate it from the variance measured on
+the other two tiers.
+
+% ---------------------------------------------------------------------
+\begin{table}[h]
+  \centering
+  \caption{Leave-one-out ablation across model tiers on LakeQA
+  \textsc{subset20b} (20 tasks per cell, exact match). R1 and R2 are two runs
+  under identical configuration; $|\Delta|$ is their absolute difference and
+  estimates the measurement error. $\bar{x}$ is their mean, and $\delta$ the
+  effect relative to that model's reference cell. Effects exceeding the
+  7.1\,pp replicate noise floor are set in bold. \texttt{gpt-5.2} was run once
+  ($\dagger$) and its effects therefore have no error bar.}
+  \label{tab:tier-ablation}
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{0.95}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{llrrrrr}
+    \toprule
+    Model & Condition & R1 (\%) & R2 (\%) & $|\Delta|$ & $\bar{x}$ (\%) & $\delta$ (pp) \\
+    \midrule
+    \multirow{7}{*}{\texttt{gpt-5.4-nano}}
+      & Reference (all ideal) & 35 & 40 & 5  & 37.5 & --- \\
+      & Search: BM25          & 20 & 15 & 5  & 17.5 & \textbf{$-20.0$} \\
+      & Search: PNEUMA        & 30 & 30 & 0  & 30.0 & $-7.5$ \\
+      & Search: Preloaded     & 45 & 40 & 5  & 42.5 & $+5.0$ \\
+      & Plan: No Plan         & 25 & 45 & 20 & 35.0 & $-2.5$ \\
+      & Plan: Default         & 40 & 35 & 5  & 37.5 & $0.0$ \\
+      & Data An.: Standard    & 35 & 25 & 10 & 30.0 & $-7.5$ \\
+    \midrule
+    \multirow{7}{*}{\texttt{gpt-5-mini}}
+      & Reference (all ideal) & 65 & 70 & 5  & 67.5 & --- \\
+      & Search: BM25          & 50 & 65 & 15 & 57.5 & \textbf{$-10.0$} \\
+      & Search: PNEUMA        & 45 & 50 & 5  & 47.5 & \textbf{$-20.0$} \\
+      & Search: Preloaded     & 80 & 70 & 10 & 75.0 & $+7.5$ \\
+      & Plan: No Plan         & 60 & 55 & 5  & 57.5 & \textbf{$-10.0$} \\
+      & Plan: Default         & 55 & 55 & 0  & 55.0 & \textbf{$-12.5$} \\
+      & Data An.: Standard    & 60 & 70 & 10 & 65.0 & $-2.5$ \\
+    \midrule
+    \multirow{7}{*}{\texttt{gpt-5.2}$^{\dagger}$}
+      & Reference (all ideal) & 60 & --- & --- & 60.0 & --- \\
+      & Search: BM25          & 55 & --- & --- & 55.0 & $-5.0$ \\
+      & Search: PNEUMA        & 60 & --- & --- & 60.0 & $0.0$ \\
+      & Search: Preloaded     & 80 & --- & --- & 80.0 & $+20.0$ \\
+      & Plan: No Plan         & 70 & --- & --- & 70.0 & $+10.0$ \\
+      & Plan: Default         & 55 & --- & --- & 55.0 & $-5.0$ \\
+      & Data An.: Standard    & 65 & --- & --- & 65.0 & $+5.0$ \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
+% ---------------------------------------------------------------------
+\begin{table}[h]
+  \centering
+  \caption{Replicate noise floor, computed over the 14 cells run twice
+  (\texttt{gpt-5.4-nano} and \texttt{gpt-5-mini}, seven cells each). One task is
+  worth 5\,pp at $n=20$, so the median disagreement between identical runs is a
+  single task and the maximum is four.}
+  \label{tab:tier-noise-floor}
+  \small
+  \begin{tabular}{lr}
+    \toprule
+    Statistic over $|R1 - R2|$ & Value (pp) \\
+    \midrule
+    Mean            & 7.1 \\
+    Median          & 5.0 \\
+    Maximum         & 20.0 \\
+    Paired cells    & 14 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ---------------------------------------------------------------------
+\begin{figure}[h]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      width=\columnwidth, height=7.2cm,
+      xbar, y=0.42cm, bar width=0.24cm,
+      xlabel={Effect relative to reference (pp)},
+      xmin=-26, xmax=26,
+      xtick={-20,-10,0,10,20},
+      enlarge y limits={abs=0.4cm},
+      ytick=data,
+      yticklabels={%
+        {BM25 (nano)},{PNEUMA (nano)},{Preloaded (nano)},{No Plan (nano)},{Default (nano)},{Std.\ An.\ (nano)},%
+        {BM25 (mini)},{PNEUMA (mini)},{Preloaded (mini)},{No Plan (mini)},{Default (mini)},{Std.\ An.\ (mini)}},
+      yticklabel style={font=\tiny},
+      xticklabel style={font=\tiny},
+      xlabel style={font=\scriptsize},
+      axis line style={draw=black!45},
+      tick style={draw=black!45},
+      xmajorgrids, grid style={draw=black!12},
+      nodes near coords, nodes near coords style={font=\tiny},
+      point meta=explicit symbolic,
+    ]
+      % +-7.1pp replicate noise band
+      \fill[black!10] (axis cs:-7.1,-1) rectangle (axis cs:7.1,12);
+      \draw[black!35] (axis cs:0,-1) -- (axis cs:0,12);
+      \addplot[draw=none, fill=black!62] coordinates {
+        (-20.0,0) [$-20.0$] (-7.5,1) [$-7.5$] (5.0,2) [$+5.0$]
+        (-2.5,3) [$-2.5$]  (0.0,4) [$0.0$]   (-7.5,5) [$-7.5$]
+        (-10.0,6)[$-10.0$] (-20.0,7)[$-20.0$] (7.5,8) [$+7.5$]
+        (-10.0,9)[$-10.0$] (-12.5,10)[$-12.5$] (-2.5,11)[$-2.5$]
+      };
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Ablation effects for the two replicated tiers, plotted against the
+  $\pm7.1$\,pp replicate noise floor (shaded). Bars contained within the shaded
+  region are not distinguishable from run-to-run variance at $n=20$. Only the
+  two $-20$\,pp search effects clear it by more than a factor of two.}
+  \label{fig:tier-noise}
+\end{figure}
