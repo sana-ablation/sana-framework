@@ -199,19 +199,17 @@ def main() -> int:
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{lrrrrrrrrr}")
+    A(r"  \begin{tabular}{lrrrrrr}")
     A(r"    \toprule")
-    A(r"    Arm & R1 & R2 & R3 & $\bar{x}$ (\%) & $\sigma$ & Blank & Cap & "
+    A(r"    Arm & $\bar{x}$ (\%) & $\sigma$ & Blank & Cap & "
       r"$D_{ret}$ (\%) & $D_{acc}$ (\%) \\")
     A(r"    \midrule")
     for t in table:
-        v = t["vals"] + [None] * (3 - len(t["vals"]))
-        cols = " & ".join("---" if x is None else f"{x:.0f}" for x in v)
         sd = "---" if t["sd"] is None else f"{t['sd']:.1f}"
         dr = "n/a" if t["dret"] is None else f"{t['dret']:.1f}"
         da = "n/a" if t["dacc"] is None else f"{t['dacc']:.1f}"
         mean = f"\\textbf{{{t['mean']:.1f}}}" if t is best_lake else f"{t['mean']:.1f}"
-        A(f"    {t['label']} & {cols} & {mean} & {sd} & {t['blank']} & "
+        A(f"    {t['label']} & {mean} & {sd} & {t['blank']} & "
           f"{t['cap']:.1f} & {dr} & {da} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")

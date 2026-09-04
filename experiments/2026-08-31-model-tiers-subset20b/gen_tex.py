@@ -172,7 +172,7 @@ def main() -> int:
     A(r"\begin{table}[h]")
     A(r"  \centering")
     A(r"  \caption{Leave-one-out ablation across model tiers on LakeQA")
-    A(r"  \textsc{subset20b} (20 tasks per cell, " + metric_name + r", three")
+    A(r"  \textsc{subset20b} (20 tasks per cell, " + metric_name + r", mean over three")
     A(r"  replicate rounds under identical configuration). $\bar{x}$ is the mean")
     A(r"  over rounds and $\sigma$ their standard deviation; $\delta$ is the effect")
     A(r"  relative to that model's reference cell. Effects exceeding the")
@@ -182,9 +182,9 @@ def main() -> int:
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{llrrrrrr}")
+    A(r"  \begin{tabular}{llrrr}")
     A(r"    \toprule")
-    A(r"    Model & Condition & R1 & R2 & R3 & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) \\")
+    A(r"    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) \\")
     A(r"    \midrule")
     for i, model in enumerate([m for m in MODELS if m in data]):
         if i:
@@ -192,15 +192,13 @@ def main() -> int:
         rows = data[model]
         A(f"    \\multirow{{{len(rows)}}}{{*}}{{{TEX_NAME[model]}}}")
         for r in rows:
-            v = r["vals"] + [None] * (3 - len(r["vals"]))
-            cols = " & ".join("---" if x is None else f"{x:.0f}" for x in v)
             sd = "---" if r["sd"] is None else f"{r['sd']:.1f}"
             if r.get("delta") is None:
                 dl = "---"
             else:
                 txt = f"${r['delta']:+.1f}$"
                 dl = f"\\textbf{{{txt}}}" if abs(r["delta"]) > thresh else txt
-            A(f"      & {r['label']} & {cols} & {r['mean']:.1f} & {sd} & {dl} \\\\")
+            A(f"      & {r['label']} & {r['mean']:.1f} & {sd} & {dl} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")
     A(r"\end{table}")
@@ -247,9 +245,16 @@ def main() -> int:
         body.append(f"    \\node[anchor=east, font=\\scriptsize] at ({LBL:.2f},{y:.2f}) {{{r['label']}}};")
         if abs(d) > 0.02:
             body.append(f"    \\fill[{'black!70' if big else 'black!22'}] (0,{y-0.15:.2f}) rectangle ({x:.3f},{y+0.15:.2f});")
-        anc, off = ("east", -0.10) if d < 0 else ("west", 0.10)
+        # A long bar pushes its value label into the row label; put it inside
+        # the bar instead, in white, so the two never collide.
         w = r"\bfseries" if big else ""
-        body.append(f"    \\node[anchor={anc}, font=\\scriptsize{w}, inner sep=1pt] at ({x+off:.3f},{y:.2f}) {{${d:+.1f}$}};")
+        if abs(d) * XS > abs(LBL) - 0.55:
+            body.append(f"    \\node[anchor={'west' if d < 0 else 'east'}, font=\\scriptsize{w}, "
+                        f"text=white, inner sep=2pt] at ({x + (0.08 if d < 0 else -0.08):.3f},{y:.2f}) "
+                        f"{{${d:+.1f}$}};")
+        else:
+            anc, off = ("east", -0.10) if d < 0 else ("west", 0.10)
+            body.append(f"    \\node[anchor={anc}, font=\\scriptsize{w}, inner sep=1pt] at ({x+off:.3f},{y:.2f}) {{${d:+.1f}$}};")
     ybot = y - 0.34
 
     grid = []

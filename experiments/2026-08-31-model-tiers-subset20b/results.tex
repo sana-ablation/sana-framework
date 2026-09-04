@@ -36,7 +36,7 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
 \begin{table}[h]
   \centering
   \caption{Leave-one-out ablation across model tiers on LakeQA
-  \textsc{subset20b} (20 tasks per cell, semantic match, three
+  \textsc{subset20b} (20 tasks per cell, semantic match, mean over three
   replicate rounds under identical configuration). $\bar{x}$ is the mean
   over rounds and $\sigma$ their standard deviation; $\delta$ is the effect
   relative to that model's reference cell. Effects exceeding the
@@ -46,36 +46,36 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{0.95}
   \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{llrrrrrr}
+  \begin{tabular}{llrrr}
     \toprule
-    Model & Condition & R1 & R2 & R3 & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) \\
+    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.4-nano}}
-      & Reference (all ideal) & 40 & 45 & 40 & 41.7 & 2.9 & --- \\
-      & Search: BM25 & 25 & 20 & 5 & 16.7 & 10.4 & \textbf{$-25.0$} \\
-      & Search: PNEUMA & 35 & 35 & 20 & 30.0 & 8.7 & $-11.7$ \\
-      & Search: Preloaded & 50 & 45 & 35 & 43.3 & 7.6 & $+1.7$ \\
-      & Plan: No Plan & 30 & 45 & 40 & 38.3 & 7.6 & $-3.3$ \\
-      & Plan: Default & 40 & 40 & 15 & 31.7 & 14.4 & $-10.0$ \\
-      & Data An.: Standard & 40 & 25 & 35 & 33.3 & 7.6 & $-8.3$ \\
+      & Reference (all ideal) & 41.7 & 2.9 & --- \\
+      & Search: BM25 & 16.7 & 10.4 & \textbf{$-25.0$} \\
+      & Search: PNEUMA & 30.0 & 8.7 & $-11.7$ \\
+      & Search: Preloaded & 43.3 & 7.6 & $+1.7$ \\
+      & Plan: No Plan & 38.3 & 7.6 & $-3.3$ \\
+      & Plan: Default & 31.7 & 14.4 & $-10.0$ \\
+      & Data An.: Standard & 33.3 & 7.6 & $-8.3$ \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5-mini}}
-      & Reference (all ideal) & 70 & 75 & 75 & 73.3 & 2.9 & --- \\
-      & Search: BM25 & 55 & 65 & 50 & 56.7 & 7.6 & \textbf{$-16.7$} \\
-      & Search: PNEUMA & 50 & 60 & 65 & 58.3 & 7.6 & \textbf{$-15.0$} \\
-      & Search: Preloaded & 85 & 75 & 75 & 78.3 & 5.8 & $+5.0$ \\
-      & Plan: No Plan & 65 & 60 & 60 & 61.7 & 2.9 & $-11.7$ \\
-      & Plan: Default & 65 & 60 & 65 & 63.3 & 2.9 & $-10.0$ \\
-      & Data An.: Standard & 65 & 75 & 65 & 68.3 & 5.8 & $-5.0$ \\
+      & Reference (all ideal) & 73.3 & 2.9 & --- \\
+      & Search: BM25 & 56.7 & 7.6 & \textbf{$-16.7$} \\
+      & Search: PNEUMA & 58.3 & 7.6 & \textbf{$-15.0$} \\
+      & Search: Preloaded & 78.3 & 5.8 & $+5.0$ \\
+      & Plan: No Plan & 61.7 & 2.9 & $-11.7$ \\
+      & Plan: Default & 63.3 & 2.9 & $-10.0$ \\
+      & Data An.: Standard & 68.3 & 5.8 & $-5.0$ \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.2}}
-      & Reference (all ideal) & 60 & 80 & 75 & 71.7 & 10.4 & --- \\
-      & Search: BM25 & 60 & 55 & 55 & 56.7 & 2.9 & \textbf{$-15.0$} \\
-      & Search: PNEUMA & 65 & 65 & 50 & 60.0 & 8.7 & $-11.7$ \\
-      & Search: Preloaded & 85 & 75 & 80 & 80.0 & 5.0 & $+8.3$ \\
-      & Plan: No Plan & 75 & 65 & 60 & 66.7 & 7.6 & $-5.0$ \\
-      & Plan: Default & 60 & 45 & 50 & 51.7 & 7.6 & \textbf{$-20.0$} \\
-      & Data An.: Standard & 75 & 55 & 55 & 61.7 & 11.5 & $-10.0$ \\
+      & Reference (all ideal) & 71.7 & 10.4 & --- \\
+      & Search: BM25 & 56.7 & 2.9 & \textbf{$-15.0$} \\
+      & Search: PNEUMA & 60.0 & 8.7 & $-11.7$ \\
+      & Search: Preloaded & 80.0 & 5.0 & $+8.3$ \\
+      & Plan: No Plan & 66.7 & 7.6 & $-5.0$ \\
+      & Plan: Default & 51.7 & 7.6 & \textbf{$-20.0$} \\
+      & Data An.: Standard & 61.7 & 11.5 & $-10.0$ \\
     \bottomrule
   \end{tabular}}
 \end{table}
@@ -118,7 +118,7 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
     \draw[black!55, line width=0.5pt] (0,0.16) -- (0,-11.46);
     \node[anchor=east, font=\scriptsize] at (-7.00,-0.56) {Search: BM25};
     \fill[black!70] (0,-0.71) rectangle (-6.500,-0.41);
-    \node[anchor=east, font=\scriptsize\bfseries, inner sep=1pt] at (-6.600,-0.56) {$-25.0$};
+    \node[anchor=west, font=\scriptsize\bfseries, text=white, inner sep=2pt] at (-6.420,-0.56) {$-25.0$};
     \node[anchor=east, font=\scriptsize] at (-7.00,-1.12) {Search: PNEUMA};
     \fill[black!22] (0,-1.27) rectangle (-3.033,-0.97);
     \node[anchor=east, font=\scriptsize, inner sep=1pt] at (-3.133,-1.12) {$-11.7$};
