@@ -39,25 +39,23 @@ read a gold source.
   \centering
   \caption{Retrieval-source comparison on LakeQA \textsc{subset20b}
   (\texttt{gpt-5-mini}, 20 tasks per arm, three replicate rounds, semantic match).
-  $\bar{x}$ is the mean over rounds and $\sigma$ their standard deviation.
-  \emph{R} is the number of replicate rounds and \emph{Turns} the mean
-  agent cycles per task. Cost is over completed rows; \$/correct divides
-  an arm's spend by the answers it got right, so it prices the outcome
-  rather than the attempt. $D_{ret}$ and $D_{acc}$ are
+  $\bar{x}$ is the mean over the three rounds, \emph{Rounds/task} the mean
+  number of agent cycles a task took, and cost the mean spend per task over
+  completed rows. $D_{ret}$ and $D_{acc}$ are
   retrieval and access recall of gold datasets, undefined for the web arm.}
   \label{tab:web-arm}
   \scriptsize
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{0.95}
   \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{lrrrrrrrr}
+  \begin{tabular}{lrrrrr}
     \toprule
-    Arm & $\bar{x}$ (\%) & $\sigma$ & R & Turns & \$/task & \$/correct & $D_{ret}$ (\%) & $D_{acc}$ (\%) \\
+    Arm & $\bar{x}$ (\%) & Rounds/task & \$/task & $D_{ret}$ (\%) & $D_{acc}$ (\%) \\
     \midrule
-    Ideal & \textbf{56.7} & 7.6 & 3 & 23.1 & 0.0327 & 0.0577 & 82.5 & 79.1 \\
-    Standard & 51.7 & 2.9 & 3 & 27.6 & 0.0426 & 0.0824 & 84.1 & 67.9 \\
-    Naive & 56.7 & 10.4 & 3 & 27.2 & 0.0432 & 0.0763 & 85.6 & 69.9 \\
-    Web & 38.3 & 2.9 & 3 & 25.4 & 0.0502 & 0.1310 & n/a & n/a \\
+    Ideal & \textbf{56.7} & 23.1 & 0.0327 & 82.5 & 79.1 \\
+    Standard & 51.7 & 27.6 & 0.0426 & 84.1 & 67.9 \\
+    Naive & 56.7 & 27.2 & 0.0432 & 85.6 & 69.9 \\
+    Web & 38.3 & 25.4 & 0.0502 & n/a & n/a \\
     \bottomrule
   \end{tabular}}
 \end{table}

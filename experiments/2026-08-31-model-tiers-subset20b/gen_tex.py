@@ -112,18 +112,20 @@ def collect(key):
             sd = statistics.stdev(vals) if len(vals) > 1 else None
             if sd is not None:
                 sds.append(sd)
-            cost = n = correct = 0
+            cost = turns = n = 0
             for tree in ROUNDS:
                 got = cell_rows(tree, model, pattern, key)
                 if not got:
                     continue
                 n += len(got)
-                correct += sum(1 for r in got if _num(r.get(key)) >= 1)
                 cost += sum(_num(r.get("cost_usd")) for r in got)
+                turns += sum(_num(r.get("cycle_count")) for r in got)
+            # sd is kept even though it is no longer printed: the bold threshold
+            # in the table is two of these standard deviations.
             rows.append({"label": label, "vals": vals, "rounds": len(vals),
                          "mean": statistics.mean(vals), "sd": sd,
-                         "per_task": cost / n if n else None,
-                         "per_correct": cost / correct if correct else None})
+                         "turns": turns / n if n else None,
+                         "per_task": cost / n if n else None})
         if rows:
             ref = rows[0]["mean"]
             for r in rows:
@@ -214,23 +216,22 @@ def main() -> int:
     A(r"  \centering")
     A(r"  \caption{Leave-one-out ablation across model tiers on LakeQA")
     A(r"  \textsc{subset20b} (20 tasks per cell, " + metric_name + r", mean over the")
-    A(r"  replicate rounds in column \emph{R}, run under identical")
-    A(r"  configuration). $\bar{x}$ is the mean")
-    A(r"  over rounds and $\sigma$ their standard deviation; $\delta$ is the effect")
-    A(r"  relative to that model's reference cell. Effects exceeding the")
-    A(f"  $\\pm{thresh:.0f}$\\,pp two-sigma threshold are set in bold.")
-    A(r"  \emph{R} is how many replicate rounds back the row. Cost is over")
-    A(r"  completed rows: \$/correct divides that cell's spend by the answers it")
-    A(r"  got right, so it prices the outcome rather than the attempt.}")
+    A(r"  replicate rounds each row has, run under identical configuration).")
+    A(r"  $\bar{x}$ is the mean over those rounds and $\delta$ the effect relative")
+    A(r"  to that model's reference cell; effects exceeding the")
+    A(f"  $\\pm{thresh:.0f}$\\,pp two-sigma threshold of")
+    A(r"  Table~\ref{tab:tier-noise-floor} are set in bold. \emph{Rounds/task} is")
+    A(r"  the mean number of agent cycles a task took, and cost is the mean spend")
+    A(r"  per task over completed rows.}")
     A(r"  \label{tab:tier-ablation}")
     A(r"  \scriptsize")
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{llrrrrrr}")
+    A(r"  \begin{tabular}{llrrrr}")
     A(r"    \toprule")
-    A(r"    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) & R & "
-      r"\$/task & \$/correct \\")
+    A(r"    Model & Condition & $\bar{x}$ (\%) & $\delta$ (pp) & "
+      r"Rounds/task & \$/task \\")
     A(r"    \midrule")
     for i, model in enumerate([m for m in MODELS if m in data]):
         if i:
@@ -238,16 +239,14 @@ def main() -> int:
         rows = data[model]
         A(f"    \\multirow{{{len(rows)}}}{{*}}{{{TEX_NAME[model]}}}")
         for r in rows:
-            sd = "---" if r["sd"] is None else f"{r['sd']:.1f}"
             if r.get("delta") is None:
                 dl = "---"
             else:
                 txt = f"${r['delta']:+.1f}$"
                 dl = f"\\textbf{{{txt}}}" if abs(r["delta"]) > thresh else txt
             pt = "---" if r["per_task"] is None else f"{r['per_task']:.4f}"
-            pc = "---" if r["per_correct"] is None else f"{r['per_correct']:.4f}"
-            A(f"      & {r['label']} & {r['mean']:.1f} & {sd} & {dl} & "
-              f"{r['rounds']} & {pt} & {pc} \\\\")
+            tn = "---" if r["turns"] is None else f"{r['turns']:.1f}"
+            A(f"      & {r['label']} & {r['mean']:.1f} & {dl} & {tn} & {pt} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")
     A(r"\end{table}")

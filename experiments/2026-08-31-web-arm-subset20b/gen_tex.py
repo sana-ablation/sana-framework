@@ -219,32 +219,27 @@ def main() -> int:
     A(r"  \centering")
     A(r"  \caption{Retrieval-source comparison on LakeQA \textsc{subset20b}")
     A(r"  (\texttt{gpt-5-mini}, 20 tasks per arm, three replicate rounds, " + metric + r").")
-    A(r"  $\bar{x}$ is the mean over rounds and $\sigma$ their standard deviation.")
-    A(r"  \emph{R} is the number of replicate rounds and \emph{Turns} the mean")
-    A(r"  agent cycles per task. Cost is over completed rows; \$/correct divides")
-    A(r"  an arm's spend by the answers it got right, so it prices the outcome")
-    A(r"  rather than the attempt. $D_{ret}$ and $D_{acc}$ are")
+    A(r"  $\bar{x}$ is the mean over the three rounds, \emph{Rounds/task} the mean")
+    A(r"  number of agent cycles a task took, and cost the mean spend per task over")
+    A(r"  completed rows. $D_{ret}$ and $D_{acc}$ are")
     A(r"  retrieval and access recall of gold datasets, undefined for the web arm.}")
     A(r"  \label{tab:web-arm}")
     A(r"  \scriptsize")
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{lrrrrrrrr}")
+    A(r"  \begin{tabular}{lrrrrr}")
     A(r"    \toprule")
-    A(r"    Arm & $\bar{x}$ (\%) & $\sigma$ & R & Turns & \$/task & \$/correct & "
+    A(r"    Arm & $\bar{x}$ (\%) & Rounds/task & \$/task & "
       r"$D_{ret}$ (\%) & $D_{acc}$ (\%) \\")
     A(r"    \midrule")
     for t in table:
-        sd = "---" if t["sd"] is None else f"{t['sd']:.1f}"
         dr = "n/a" if t["dret"] is None else f"{t['dret']:.1f}"
         da = "n/a" if t["dacc"] is None else f"{t['dacc']:.1f}"
         mean = f"\\textbf{{{t['mean']:.1f}}}" if t is best_lake else f"{t['mean']:.1f}"
         c = costs_by_label.get(t["label"], {})
         pt = "---" if c.get("per_task") is None else f"{c['per_task']:.4f}"
-        pc = "---" if c.get("per_correct") is None else f"{c['per_correct']:.4f}"
-        A(f"    {t['label']} & {mean} & {sd} & {t['rounds']} & {t['cyc']:.1f} & "
-          f"{pt} & {pc} & {dr} & {da} \\\\")
+        A(f"    {t['label']} & {mean} & {t['cyc']:.1f} & {pt} & {dr} & {da} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")
     A(r"\end{table}")

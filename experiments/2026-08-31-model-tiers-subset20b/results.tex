@@ -37,58 +37,57 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
   \centering
   \caption{Leave-one-out ablation across model tiers on LakeQA
   \textsc{subset20b} (20 tasks per cell, exact match, mean over the
-  replicate rounds in column \emph{R}, run under identical
-  configuration). $\bar{x}$ is the mean
-  over rounds and $\sigma$ their standard deviation; $\delta$ is the effect
-  relative to that model's reference cell. Effects exceeding the
-  $\pm13$\,pp two-sigma threshold are set in bold.
-  \emph{R} is how many replicate rounds back the row. Cost is over
-  completed rows: \$/correct divides that cell's spend by the answers it
-  got right, so it prices the outcome rather than the attempt.}
+  replicate rounds each row has, run under identical configuration).
+  $\bar{x}$ is the mean over those rounds and $\delta$ the effect relative
+  to that model's reference cell; effects exceeding the
+  $\pm13$\,pp two-sigma threshold of
+  Table~\ref{tab:tier-noise-floor} are set in bold. \emph{Rounds/task} is
+  the mean number of agent cycles a task took, and cost is the mean spend
+  per task over completed rows.}
   \label{tab:tier-ablation}
   \scriptsize
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{0.95}
   \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{llrrrrrr}
+  \begin{tabular}{llrrrr}
     \toprule
-    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) & R & \$/task & \$/correct \\
+    Model & Condition & $\bar{x}$ (\%) & $\delta$ (pp) & Rounds/task & \$/task \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.4-nano}}
-      & Reference (all ideal) & 36.7 & 2.9 & --- & 3 & 0.0132 & 0.0360 \\
-      & Search: BM25 & 13.3 & 7.6 & \textbf{$-23.3$} & 3 & 0.0179 & 0.1342 \\
-      & Search: PNEUMA & 26.7 & 5.8 & $-10.0$ & 3 & 0.0175 & 0.0657 \\
-      & Search: Preloaded & 40.0 & 5.0 & $+3.3$ & 3 & 0.0154 & 0.0385 \\
-      & Plan: No Plan & 35.0 & 10.0 & $-1.7$ & 3 & 0.0110 & 0.0316 \\
-      & Plan: Default & 30.0 & 13.2 & $-6.7$ & 3 & 0.0128 & 0.0428 \\
-      & Data An.: Standard & 30.0 & 5.0 & $-6.7$ & 3 & 0.0152 & 0.0507 \\
+      & Reference (all ideal) & 36.7 & --- & 20.5 & 0.0132 \\
+      & Search: BM25 & 13.3 & \textbf{$-23.3$} & 21.0 & 0.0179 \\
+      & Search: PNEUMA & 26.7 & $-10.0$ & 20.9 & 0.0175 \\
+      & Search: Preloaded & 40.0 & $+3.3$ & 20.0 & 0.0154 \\
+      & Plan: No Plan & 35.0 & $-1.7$ & 18.9 & 0.0110 \\
+      & Plan: Default & 30.0 & $-6.7$ & 22.2 & 0.0128 \\
+      & Data An.: Standard & 30.0 & $-6.7$ & 21.9 & 0.0152 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5-mini}}
-      & Reference (all ideal) & 68.3 & 2.9 & --- & 3 & 0.0319 & 0.0467 \\
-      & Search: BM25 & 53.3 & 10.4 & \textbf{$-15.0$} & 3 & 0.0559 & 0.1048 \\
-      & Search: PNEUMA & 51.7 & 7.6 & \textbf{$-16.7$} & 3 & 0.0516 & 0.0998 \\
-      & Search: Preloaded & 73.3 & 5.8 & $+5.0$ & 3 & 0.0266 & 0.0363 \\
-      & Plan: No Plan & 56.7 & 2.9 & $-11.7$ & 3 & 0.0328 & 0.0579 \\
-      & Plan: Default & 56.7 & 2.9 & $-11.7$ & 3 & 0.0338 & 0.0597 \\
-      & Data An.: Standard & 63.3 & 5.8 & $-5.0$ & 3 & 0.0321 & 0.0506 \\
+      & Reference (all ideal) & 68.3 & --- & 23.1 & 0.0319 \\
+      & Search: BM25 & 53.3 & \textbf{$-15.0$} & 29.0 & 0.0559 \\
+      & Search: PNEUMA & 51.7 & \textbf{$-16.7$} & 27.2 & 0.0516 \\
+      & Search: Preloaded & 73.3 & $+5.0$ & 16.7 & 0.0266 \\
+      & Plan: No Plan & 56.7 & $-11.7$ & 21.3 & 0.0328 \\
+      & Plan: Default & 56.7 & $-11.7$ & 23.7 & 0.0338 \\
+      & Data An.: Standard & 63.3 & $-5.0$ & 22.4 & 0.0321 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.2}}
-      & Reference (all ideal) & 68.3 & 7.6 & --- & 3 & 0.0931 & 0.1362 \\
-      & Search: BM25 & 51.7 & 2.9 & \textbf{$-16.7$} & 3 & 0.1453 & 0.2813 \\
-      & Search: PNEUMA & 55.0 & 8.7 & \textbf{$-13.3$} & 3 & 0.1543 & 0.2805 \\
-      & Search: Preloaded & 73.3 & 5.8 & $+5.0$ & 3 & 0.0728 & 0.0992 \\
-      & Plan: No Plan & 61.7 & 7.6 & $-6.7$ & 3 & 0.0651 & 0.1055 \\
-      & Plan: Default & 46.7 & 7.6 & \textbf{$-21.7$} & 3 & 0.0746 & 0.1599 \\
-      & Data An.: Standard & 55.0 & 8.7 & \textbf{$-13.3$} & 3 & 0.0915 & 0.1663 \\
+      & Reference (all ideal) & 68.3 & --- & 17.3 & 0.0931 \\
+      & Search: BM25 & 51.7 & \textbf{$-16.7$} & 19.7 & 0.1453 \\
+      & Search: PNEUMA & 55.0 & \textbf{$-13.3$} & 19.0 & 0.1543 \\
+      & Search: Preloaded & 73.3 & $+5.0$ & 12.3 & 0.0728 \\
+      & Plan: No Plan & 61.7 & $-6.7$ & 12.9 & 0.0651 \\
+      & Plan: Default & 46.7 & \textbf{$-21.7$} & 16.1 & 0.0746 \\
+      & Data An.: Standard & 55.0 & \textbf{$-13.3$} & 16.7 & 0.0915 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.6-luna}}
-      & Reference (all ideal) & 65.0 & --- & --- & 1 & 0.0094 & 0.0145 \\
-      & Search: BM25 & 55.0 & --- & $-10.0$ & 1 & 0.0130 & 0.0236 \\
-      & Search: PNEUMA & 60.0 & --- & $-5.0$ & 1 & 0.0143 & 0.0239 \\
-      & Search: Preloaded & 75.0 & --- & $+10.0$ & 1 & 0.0075 & 0.0100 \\
-      & Plan: No Plan & 65.0 & --- & $+0.0$ & 1 & 0.0060 & 0.0092 \\
-      & Plan: Default & 65.0 & --- & $+0.0$ & 1 & 0.0073 & 0.0113 \\
-      & Data An.: Standard & 65.0 & --- & $+0.0$ & 1 & 0.0079 & 0.0122 \\
+      & Reference (all ideal) & 65.0 & --- & 11.6 & 0.0094 \\
+      & Search: BM25 & 55.0 & $-10.0$ & 11.8 & 0.0130 \\
+      & Search: PNEUMA & 60.0 & $-5.0$ & 13.7 & 0.0143 \\
+      & Search: Preloaded & 75.0 & $+10.0$ & 8.5 & 0.0075 \\
+      & Plan: No Plan & 65.0 & $+0.0$ & 7.4 & 0.0060 \\
+      & Plan: Default & 65.0 & $+0.0$ & 10.3 & 0.0073 \\
+      & Data An.: Standard & 65.0 & $+0.0$ & 9.8 & 0.0079 \\
     \bottomrule
   \end{tabular}}
 \end{table}
