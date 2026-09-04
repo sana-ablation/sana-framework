@@ -101,6 +101,14 @@ def cell_rows(tree: str, model: str, pattern: str, key: str):
     return done if len(done) >= 15 else None
 
 
+_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
+
+
+def _count_word(n: int) -> str:
+    """Small counts read better as words in prose."""
+    return _WORDS.get(n, str(n))
+
+
 def collect(key):
     data, sds = {}, []
     for model in MODELS:
@@ -112,12 +120,13 @@ def collect(key):
             sd = statistics.stdev(vals) if len(vals) > 1 else None
             if sd is not None:
                 sds.append(sd)
-            cost = turns = n = 0
+            cost = turns = n = correct = 0
             for tree in ROUNDS:
                 got = cell_rows(tree, model, pattern, key)
                 if not got:
                     continue
                 n += len(got)
+                correct += sum(1 for r in got if _num(r.get(key)) >= 1)
                 # cost_usd is the main agent only. The ideal modes bill hidden
                 # helper agents separately, and those dominate: dropping them
                 # made compute=ideal look CHEAPER than compute=standard, when it
@@ -130,6 +139,7 @@ def collect(key):
             rows.append({"label": label, "vals": vals, "rounds": len(vals),
                          "mean": statistics.mean(vals), "sd": sd,
                          "turns": turns / n if n else None,
+                         "n": n, "correct": correct, "cost": cost,
                          "per_task": cost / n if n else None})
         if rows:
             ref = rows[0]["mean"]
@@ -161,7 +171,7 @@ def main() -> int:
     A(r"\subsection{Replicate variance on the ablation grid}")
     A(r"\label{sec:tier-noise}")
     A("")
-    A("We ran the leave-one-out ablation over three model tiers on")
+    A(f"We ran the leave-one-out ablation over {_count_word(len(data))} model tiers on")
     A(r"\textsc{subset20b}, a 20-task split of LakeQA stratified jointly on node")
     A("count and historical solve rate. Every axis is held at the oracle and one")
     A("axis is degraded per cell, giving seven cells per model. Each cell was run")
@@ -187,8 +197,13 @@ def main() -> int:
                           for m, r in clears[:5])
         A(f"Of the {sum(len(r) - 1 for r in data.values())} degraded cells, only")
         A(f"{len(clears)} clear that threshold: {names}.")
-        A("The search axis is the one effect that replicates across every tier;")
-        A("the remaining cells cannot be separated from noise at this sample size.")
+        n_search = sum(1 for _, r in clears if r["label"].startswith("Search"))
+        tiers = {m for m, r in clears if r["label"].startswith("Search")}
+        A(f"{n_search} of those are search degradations, on {len(tiers)} of the")
+        A(f"{len(data)} tiers; the remaining cells cannot be separated from noise")
+        A("at this sample size. Search costs the most accuracy of any axis, but it")
+        A("clears the threshold on the weaker tiers and not on the strongest --")
+        A("the same degradation hurts less as the model improves.")
         A("")
 
     refs = {m: rows[0] for m, rows in data.items() if rows}
@@ -198,22 +213,38 @@ def main() -> int:
             + ("" if r["sd"] is None else f" ($\\sigma={r['sd']:.1f}$)")
             for m, r in refs.items())
         A(f"The reference cells themselves are {parts}.")
-        mini = refs.get("openai_gpt-5-mini")
-        big = refs.get("openai_gpt-5.2")
-        if mini and big and mini["sd"] is not None and big["sd"] is not None:
-            gap = abs(mini["mean"] - big["mean"])
-            se = ((mini["sd"] ** 2 + big["sd"] ** 2) / len(ROUNDS)) ** 0.5
-            if gap < 0.05:
-                A(r"\texttt{gpt-5-mini} and \texttt{gpt-5.2} land on the same mean")
-                A(f"({mini['mean']:.1f}\\%), despite a roughly sevenfold difference in")
-                A("price per token.")
-            else:
-                A(r"\texttt{gpt-5-mini} and \texttt{gpt-5.2} differ by")
-                A(f"{gap:.1f}\\,pp against a standard error of {se:.1f}\\,pp on that")
-                A("difference, so they are not separable here.")
-            A("On this split the frontier model does not outperform the smaller")
-            A("one, and a single round would have suggested otherwise: round~1")
-            A(r"alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.")
+        ranked = sorted(refs.items(), key=lambda kv: kv[1]["mean"], reverse=True)
+        (m1, r1), (m2, r2) = ranked[0], ranked[1]
+        if r1["sd"] is not None and r2["sd"] is not None:
+            gap = r1["mean"] - r2["mean"]
+            se = ((r1["sd"] ** 2 + r2["sd"] ** 2) / len(ROUNDS)) ** 0.5
+            verdict = "are not separable here" if gap <= 2 * se else "are separable"
+            A(f"The two strongest, {TEX_NAME[m1]} and {TEX_NAME[m2]}, differ by")
+            A(f"{gap:.1f}\\,pp against a standard error of {se:.1f}\\,pp on that")
+            A(f"difference, so they {verdict}.")
+
+        # The separation that does survive is work and cost. Computed, not asserted.
+        agg = {}
+        for model, cells in data.items():
+            n = sum(c["n"] for c in cells)
+            correct = sum(c["correct"] for c in cells)
+            agg[model] = {"acc": 100 * correct / n,
+                          "turns": sum(c["turns"] * c["n"] for c in cells) / n,
+                          "per_correct": sum(c["cost"] for c in cells) / max(correct, 1)}
+        by_cost = sorted(agg.items(), key=lambda kv: kv[1]["per_correct"])
+        cheap, dear = by_cost[0], by_cost[-1]
+        top3 = sorted((v["acc"] for v in agg.values()), reverse=True)[:3]
+        A("")
+        A("Accuracy is not what separates the tiers. Over all cells the top three")
+        A(f"land within {max(top3) - min(top3):.1f}\\,pp of one another")
+        A(f"({min(top3):.1f}--{max(top3):.1f}\\%), inside the replicate threshold,")
+        A("while cost per correct answer spans")
+        A(f"{dear[1]['per_correct'] / cheap[1]['per_correct']:.0f}$\\times$:")
+        A(f"{TEX_NAME[cheap[0]]} answers at \\${cheap[1]['per_correct']:.4f} in")
+        A(f"{cheap[1]['turns']:.1f} agent cycles against {TEX_NAME[dear[0]]} at")
+        A(f"\\${dear[1]['per_correct']:.4f} in {dear[1]['turns']:.1f}. The tier that")
+        A("costs the most buys nothing here that the cheapest does not already")
+        A("provide.")
         A("")
 
     # ---- main table

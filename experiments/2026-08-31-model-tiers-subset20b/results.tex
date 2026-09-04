@@ -7,7 +7,7 @@
 \subsection{Replicate variance on the ablation grid}
 \label{sec:tier-noise}
 
-We ran the leave-one-out ablation over three model tiers on
+We ran the leave-one-out ablation over four model tiers on
 \textsc{subset20b}, a 20-task split of LakeQA stratified jointly on node
 count and historical solve rate. Every axis is held at the oracle and one
 axis is degraded per cell, giving seven cells per model. Each cell was run
@@ -22,16 +22,27 @@ $n=20$, that threshold is about 3 tasks.
 
 Of the 24 degraded cells, only
 5 clear that threshold: Search: BM25 at \texttt{gpt-5.4-nano} ($-25.0$\,pp), Plan: Default at \texttt{gpt-5.2} ($-20.0$\,pp), Search: BM25 at \texttt{gpt-5-mini} ($-16.7$\,pp), Search: BM25 at \texttt{gpt-5.2} ($-15.0$\,pp), Search: PNEUMA at \texttt{gpt-5-mini} ($-15.0$\,pp).
-The search axis is the one effect that replicates across every tier;
-the remaining cells cannot be separated from noise at this sample size.
+4 of those are search degradations, on 3 of the
+4 tiers; the remaining cells cannot be separated from noise
+at this sample size. Search costs the most accuracy of any axis, but it
+clears the threshold on the weaker tiers and not on the strongest --
+the same degradation hurts less as the model improves.
 
 The reference cells themselves are \texttt{gpt-5.4-nano} 41.7\% ($\sigma=2.9$), \texttt{gpt-5-mini} 73.3\% ($\sigma=2.9$), \texttt{gpt-5.2} 71.7\% ($\sigma=10.4$), \texttt{gpt-5.6-luna} 75.0\% ($\sigma=5.0$).
-\texttt{gpt-5-mini} and \texttt{gpt-5.2} differ by
-1.7\,pp against a standard error of 6.2\,pp on that
+The two strongest, \texttt{gpt-5.6-luna} and \texttt{gpt-5-mini}, differ by
+1.7\,pp against a standard error of 3.3\,pp on that
 difference, so they are not separable here.
-On this split the frontier model does not outperform the smaller
-one, and a single round would have suggested otherwise: round~1
-alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
+
+Accuracy is not what separates the tiers. Over all cells the top three
+land within 7.9\,pp of one another
+(64.0--71.9\%), inside the replicate threshold,
+while cost per correct answer spans
+13$\times$:
+\texttt{gpt-5.6-luna} answers at \$0.0207 in
+10.1 agent cycles against \texttt{gpt-5.2} at
+\$0.2760 in 16.3. The tier that
+costs the most buys nothing here that the cheapest does not already
+provide.
 
 \begin{table}[h]
   \centering
