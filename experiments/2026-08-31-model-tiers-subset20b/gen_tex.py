@@ -29,10 +29,14 @@ CELLS = [
     ("Plan: Default",         r"search_ideal.*profile_standard__compute_ideal"),
     ("Data An.: Standard",    r"search_ideal.*profile_ideal__compute_standard"),
 ]
-MODELS = ["openai_gpt-5.4-nano", "openai_gpt-5-mini", "openai_gpt-5.2"]
+# A model absent from the result trees is skipped, so listing one before its
+# runs land is harmless.
+MODELS = ["openai_gpt-5.4-nano", "openai_gpt-5-mini", "openai_gpt-5.2",
+          "openai_gpt-5.6-luna"]
 TEX_NAME = {"openai_gpt-5.4-nano": r"\texttt{gpt-5.4-nano}",
             "openai_gpt-5-mini": r"\texttt{gpt-5-mini}",
-            "openai_gpt-5.2": r"\texttt{gpt-5.2}"}
+            "openai_gpt-5.2": r"\texttt{gpt-5.2}",
+            "openai_gpt-5.6-luna": r"\texttt{gpt-5.6-luna}"}
 
 
 def _num(v, d=0.0):
@@ -133,8 +137,11 @@ def main() -> int:
     A("")
 
     # which effects clear
+    # A cell run once has no spread of its own, so it cannot be said to clear a
+    # threshold that is defined by spread; it is reported but never counted here.
     clears = [(m, r) for m, rows in data.items() for r in rows
-              if r.get("delta") is not None and abs(r["delta"]) > thresh]
+              if r.get("delta") is not None and r["sd"] is not None
+              and abs(r["delta"]) > thresh]
     clears.sort(key=lambda t: t[1]["delta"])
     if clears:
         names = ", ".join(f"{r['label']} at {TEX_NAME[m]} (${r['delta']:+.1f}$\\,pp)"
@@ -147,12 +154,14 @@ def main() -> int:
 
     refs = {m: rows[0] for m, rows in data.items() if rows}
     if len(refs) >= 2:
-        parts = ", ".join(f"{TEX_NAME[m]} {r['mean']:.1f}\\% ($\\sigma={r['sd']:.1f}$)"
-                          for m, r in refs.items())
+        parts = ", ".join(
+            f"{TEX_NAME[m]} {r['mean']:.1f}\\%"
+            + ("" if r["sd"] is None else f" ($\\sigma={r['sd']:.1f}$)")
+            for m, r in refs.items())
         A(f"The reference cells themselves are {parts}.")
         mini = refs.get("openai_gpt-5-mini")
         big = refs.get("openai_gpt-5.2")
-        if mini and big:
+        if mini and big and mini["sd"] is not None and big["sd"] is not None:
             gap = abs(mini["mean"] - big["mean"])
             se = ((mini["sd"] ** 2 + big["sd"] ** 2) / len(ROUNDS)) ** 0.5
             if gap < 0.05:
@@ -226,66 +235,24 @@ def main() -> int:
     A(r"\end{table}")
     A("")
 
-    # ---- figure: explicit TikZ, so bars cannot drift from their labels
-    XS, RH = 0.26, 0.56
-    LBL, XMAX = -7.0, 25 * XS
-    body, y, tops = [], 0.0, {}
-    plotted = [(m, r) for m in MODELS if m in data for r in data[m][1:]]
-    prev_model = None
-    for m, r in plotted:
-        if m != prev_model:
-            if prev_model is not None:
-                y -= 0.52
-            tops[m] = y + 0.10
-            prev_model = m
-        y -= RH
-        d = r["delta"]
-        big = abs(d) > thresh
-        x = d * XS
-        body.append(f"    \\node[anchor=east, font=\\scriptsize] at ({LBL:.2f},{y:.2f}) {{{r['label']}}};")
-        if abs(d) > 0.02:
-            body.append(f"    \\fill[{'black!70' if big else 'black!22'}] (0,{y-0.15:.2f}) rectangle ({x:.3f},{y+0.15:.2f});")
-        # A long bar pushes its value label into the row label; put it inside
-        # the bar instead, in white, so the two never collide.
-        w = r"\bfseries" if big else ""
-        if abs(d) * XS > abs(LBL) - 0.55:
-            body.append(f"    \\node[anchor={'west' if d < 0 else 'east'}, font=\\scriptsize{w}, "
-                        f"text=white, inner sep=2pt] at ({x + (0.08 if d < 0 else -0.08):.3f},{y:.2f}) "
-                        f"{{${d:+.1f}$}};")
-        else:
-            anc, off = ("east", -0.10) if d < 0 else ("west", 0.10)
-            body.append(f"    \\node[anchor={anc}, font=\\scriptsize{w}, inner sep=1pt] at ({x+off:.3f},{y:.2f}) {{${d:+.1f}$}};")
-    ybot = y - 0.34
-
-    grid = []
-    for v in (-20, -10, 10, 20):
-        grid.append(f"    \\draw[black!12] ({v*XS:.2f},0.16) -- ({v*XS:.2f},{ybot:.2f});")
-    for v in (-20, -10, 0, 10, 20):
-        grid.append(f"    \\node[font=\\scriptsize, text=black!55, anchor=north] at ({v*XS:.2f},{ybot:.2f}) {{${v:+d}$}};")
-
+    # ---- figure: per-axis panels, matching the paper's fig21b family.
+    # Drawn by make_axis_delta_figure.py into fig-axis-delta.pdf rather than
+    # inline TikZ, so this figure and the paper's share one implementation of
+    # the geometry and palette and cannot drift apart.
     A(r"\begin{figure}[h]")
     A(r"  \centering")
-    A(r"  \begin{tikzpicture}[x=1cm, y=1cm]")
-    A(f"    \\fill[black!8] ({-thresh*XS:.3f},0.16) rectangle ({thresh*XS:.3f},{ybot:.2f});")
-    for sgn in (-1, 1):
-        A(f"    \\draw[black!32, dashed, line width=0.4pt] ({sgn*thresh*XS:.3f},0.16) -- ({sgn*thresh*XS:.3f},{ybot:.2f});")
-    L.extend(grid)
-    A(f"    \\draw[black!55, line width=0.5pt] (0,0.16) -- (0,{ybot:.2f});")
-    L.extend(body)
-    for m, ty in tops.items():
-        A(f"    \\node[anchor=west, font=\\scriptsize\\bfseries] at ({LBL-1.62:.2f},{ty:.2f}) {{{TEX_NAME[m]}}};")
-    A(f"    \\node[font=\\scriptsize, anchor=north] at (0,{ybot-0.34:.2f}) {{Effect relative to reference (pp)}};")
-    A(f"    \\fill[black!70] ({-XMAX:.2f},{ybot-1.02:.2f}) rectangle ({-XMAX+0.26:.2f},{ybot-0.86:.2f});")
-    A(f"    \\node[anchor=west, font=\\scriptsize] at ({-XMAX+0.36:.2f},{ybot-0.94:.2f}) {{clears $\\pm{thresh:.0f}$\\,pp (2$\\sigma$)}};")
-    A(f"    \\fill[black!22] (0.55,{ybot-1.02:.2f}) rectangle (0.81,{ybot-0.86:.2f});")
-    A(f"    \\node[anchor=west, font=\\scriptsize] at (0.91,{ybot-0.94:.2f}) {{inside the noise band (shaded)}};")
-    A(r"  \end{tikzpicture}")
-    A(r"  \caption{Ablation effects across three replicate rounds. Each bar is the")
-    A(r"  change from that model's all-ideal reference when one axis is degraded;")
-    A(f"  the shaded column is the $\\pm{thresh:.0f}$\\,pp two-sigma noise band. Bars")
-    A(r"  ending inside it cannot be distinguished from run-to-run variance at")
-    A(r"  $n=20$, where one task is worth 5\,pp.}")
-    A(r"  \label{fig:tier-noise}")
+    A(r"  \includegraphics[width=\columnwidth]{fig-axis-delta}")
+    A(r"  \caption{Per-axis ablation across model tiers on LakeQA")
+    A(r"  \textsc{subset20b}. Rows are models, columns are the three SANA axes,")
+    A(r"  and each bar is one mode of that axis with the other two held at")
+    A(r"  \emph{Ideal}. The label gives the " + metric_name + r" and its change")
+    A(r"  against the panel's baseline -- the weakest mode of that axis, the top")
+    A(r"  row of each panel. Bars are means over the replicate rounds; colour")
+    A(r"  repeats the sign of the printed delta rather than carrying it alone.")
+    A(f"  Against the $\\pm{thresh:.0f}$\\,pp two-sigma replicate threshold of")
+    A(r"  Table~\ref{tab:tier-noise-floor}, only the Search panel moves any model")
+    A(r"  further than run-to-run variance.}")
+    A(r"  \label{fig:tier-axis-delta}")
     A(r"\end{figure}")
 
     out = "\n".join(L) + "\n"

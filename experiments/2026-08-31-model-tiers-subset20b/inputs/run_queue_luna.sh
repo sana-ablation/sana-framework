@@ -15,10 +15,13 @@ EXP=experiments/2026-08-31-model-tiers-subset20b
 SUP=./$EXP/inputs/supervise_grid.sh
 PARALLEL=${PARALLEL:-4}
 MODEL=${MODEL:-openai/gpt-5.6-luna}
+# Which replicate rounds to run. Round 1 was completed separately, so a
+# resumed sweep is launched as ROUNDS="2 3".
+ROUNDS=${ROUNDS:-"1 2 3"}
 
 log () { echo "[luna $(date -u +%H:%M:%SZ)] $*"; }
 
-for ROUND in 1 2 3; do
+for ROUND in $ROUNDS; do
   if [ "$ROUND" = 1 ]; then R=$EXP/results; L=$EXP/logs
   else R=$EXP/results-rep$ROUND; L=$EXP/logs-rep$ROUND; fi
   mkdir -p "$L"
