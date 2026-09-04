@@ -60,6 +60,22 @@ read a gold source.
   \end{tabular}}
 \end{table}
 
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\columnwidth]{fig-search-axis}
+  \caption{Retrieval source as an axis. Arms are ordered by how much of
+  the lake they can see, so the baseline row is the open web and each
+  delta is what moving into the lake buys. The right two panels are
+  baselined on BM25, the weakest arm with a defined recall. Reading them
+  together is the point: $D_{ret}$ is flat across the three lake arms --
+  oracle search surfaces slightly \emph{less} gold than BM25 -- while
+  $D_{acc}$ rises with accuracy. What separates the arms is not what
+  search returns but how much of it the agent reads. The web arm touches
+  no lake dataset by construction, so its recall is undefined rather than
+  zero.}
+  \label{fig:web-arm-axis}
+\end{figure}
+
 \paragraph{What the web arm actually measures.}
 \texttt{download} accepts any URL, and the model routinely constructs one
 from pretrained knowledge rather than following a search result: live

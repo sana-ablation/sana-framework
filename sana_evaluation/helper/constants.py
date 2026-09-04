@@ -72,12 +72,14 @@ MODEL_PRICING = {
         "gpt-5-mini": {"input": 0.25, "cache_read_input": 0.025, "output": 2.00},
         "gpt-5.4": {"input": 2.50, "cache_read_input": 0.25, "output": 15.00},
         "gpt-5.4-nano": {"input": 0.20, "cache_read_input": 0.02, "output": 1.25},
+        "gpt-5.6-luna": {"input": 0.20, "cache_read_input": 0.02, "output": 1.20},
         # Alias keys for provider-prefixed model_name values
         "openai/gpt-5.2": {"input": 1.75, "cache_read_input": 0.175, "output": 14.00},
         "openai/gpt-5-nano": {"input": 0.05, "cache_read_input": 0.005, "output": 0.40},
         "openai/gpt-5-mini": {"input": 0.25, "cache_read_input": 0.025, "output": 2.00},
         "openai/gpt-5.4": {"input": 2.50, "cache_read_input": 0.25, "output": 15.00},
         "openai/gpt-5.4-nano": {"input": 0.20, "cache_read_input": 0.02, "output": 1.25},
+        "openai/gpt-5.6-luna": {"input": 0.20, "cache_read_input": 0.02, "output": 1.20},
 
         # Google Gemini API
         "gemini/gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50},

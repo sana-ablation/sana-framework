@@ -213,6 +213,26 @@ def main() -> int:
     A(r"  \end{tabular}}")
     A(r"\end{table}")
     A("")
+
+    # ---- figure: same construction as the tier figure and the paper's fig21b,
+    # drawn by make_search_axis_figure.py. Outcome first, then the two recall
+    # measures that explain it.
+    A(r"\begin{figure}[h]")
+    A(r"  \centering")
+    A(r"  \includegraphics[width=\columnwidth]{fig-search-axis}")
+    A(r"  \caption{Retrieval source as an axis. Arms are ordered by how much of")
+    A(r"  the lake they can see, so the baseline row is the open web and each")
+    A(r"  delta is what moving into the lake buys. The right two panels are")
+    A(r"  baselined on BM25, the weakest arm with a defined recall. Reading them")
+    A(r"  together is the point: $D_{ret}$ is flat across the three lake arms --")
+    A(r"  oracle search surfaces slightly \emph{less} gold than BM25 -- while")
+    A(r"  $D_{acc}$ rises with accuracy. What separates the arms is not what")
+    A(r"  search returns but how much of it the agent reads. The web arm touches")
+    A(r"  no lake dataset by construction, so its recall is undefined rather than")
+    A(r"  zero.}")
+    A(r"  \label{fig:web-arm-axis}")
+    A(r"\end{figure}")
+    A("")
     A(r"\paragraph{What the web arm actually measures.}")
     A(r"\texttt{download} accepts any URL, and the model routinely constructs one")
     A("from pretrained knowledge rather than following a search result: live")
