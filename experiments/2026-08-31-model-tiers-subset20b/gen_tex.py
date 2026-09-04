@@ -118,7 +118,12 @@ def collect(key):
                 if not got:
                     continue
                 n += len(got)
-                cost += sum(_num(r.get("cost_usd")) for r in got)
+                # cost_usd is the main agent only. The ideal modes bill hidden
+                # helper agents separately, and those dominate: dropping them
+                # made compute=ideal look CHEAPER than compute=standard, when it
+                # is roughly twice the price.
+                cost += sum(_num(r.get("total_cost_with_all_subagents_usd"))
+                            or _num(r.get("cost_usd")) for r in got)
                 turns += sum(_num(r.get("cycle_count")) for r in got)
             # sd is kept even though it is no longer printed: the bold threshold
             # in the table is two of these standard deviations.
@@ -221,8 +226,10 @@ def main() -> int:
     A(r"  to that model's reference cell; effects exceeding the")
     A(f"  $\\pm{thresh:.0f}$\\,pp two-sigma threshold of")
     A(r"  Table~\ref{tab:tier-noise-floor} are set in bold. \emph{Rounds/task} is")
-    A(r"  the mean number of agent cycles a task took, and cost is the mean spend")
-    A(r"  per task over completed rows.}")
+    A(r"  the mean number of agent cycles a task took. Cost is the mean spend per")
+    A(r"  task over completed rows, including the hidden helper agents the ideal")
+    A(r"  modes delegate to -- these outweigh the visible agent, so a cost counted")
+    A(r"  on the main agent alone would rank the oracle tools as the cheap ones.}")
     A(r"  \label{tab:tier-ablation}")
     A(r"  \scriptsize")
     A(r"  \setlength{\tabcolsep}{4pt}")

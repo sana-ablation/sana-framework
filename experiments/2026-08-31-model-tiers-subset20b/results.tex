@@ -42,8 +42,10 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
   to that model's reference cell; effects exceeding the
   $\pm13$\,pp two-sigma threshold of
   Table~\ref{tab:tier-noise-floor} are set in bold. \emph{Rounds/task} is
-  the mean number of agent cycles a task took, and cost is the mean spend
-  per task over completed rows.}
+  the mean number of agent cycles a task took. Cost is the mean spend per
+  task over completed rows, including the hidden helper agents the ideal
+  modes delegate to -- these outweigh the visible agent, so a cost counted
+  on the main agent alone would rank the oracle tools as the cheap ones.}
   \label{tab:tier-ablation}
   \scriptsize
   \setlength{\tabcolsep}{4pt}
@@ -54,40 +56,40 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
     Model & Condition & $\bar{x}$ (\%) & $\delta$ (pp) & Rounds/task & \$/task \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.4-nano}}
-      & Reference (all ideal) & 36.7 & --- & 20.5 & 0.0132 \\
-      & Search: BM25 & 13.3 & \textbf{$-23.3$} & 21.0 & 0.0179 \\
-      & Search: PNEUMA & 26.7 & $-10.0$ & 20.9 & 0.0175 \\
-      & Search: Preloaded & 40.0 & $+3.3$ & 20.0 & 0.0154 \\
-      & Plan: No Plan & 35.0 & $-1.7$ & 18.9 & 0.0110 \\
-      & Plan: Default & 30.0 & $-6.7$ & 22.2 & 0.0128 \\
-      & Data An.: Standard & 30.0 & $-6.7$ & 21.9 & 0.0152 \\
+      & Reference (all ideal) & 36.7 & --- & 20.5 & 0.0351 \\
+      & Search: BM25 & 13.3 & \textbf{$-23.3$} & 21.0 & 0.0345 \\
+      & Search: PNEUMA & 26.7 & $-10.0$ & 20.9 & 0.0364 \\
+      & Search: Preloaded & 40.0 & $+3.3$ & 20.0 & 0.0391 \\
+      & Plan: No Plan & 35.0 & $-1.7$ & 18.9 & 0.0348 \\
+      & Plan: Default & 30.0 & $-6.7$ & 22.2 & 0.0369 \\
+      & Data An.: Standard & 30.0 & $-6.7$ & 21.9 & 0.0177 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5-mini}}
-      & Reference (all ideal) & 68.3 & --- & 23.1 & 0.0319 \\
-      & Search: BM25 & 53.3 & \textbf{$-15.0$} & 29.0 & 0.0559 \\
-      & Search: PNEUMA & 51.7 & \textbf{$-16.7$} & 27.2 & 0.0516 \\
-      & Search: Preloaded & 73.3 & $+5.0$ & 16.7 & 0.0266 \\
-      & Plan: No Plan & 56.7 & $-11.7$ & 21.3 & 0.0328 \\
-      & Plan: Default & 56.7 & $-11.7$ & 23.7 & 0.0338 \\
-      & Data An.: Standard & 63.3 & $-5.0$ & 22.4 & 0.0321 \\
+      & Reference (all ideal) & 68.3 & --- & 23.1 & 0.0781 \\
+      & Search: BM25 & 53.3 & \textbf{$-15.0$} & 29.0 & 0.0927 \\
+      & Search: PNEUMA & 51.7 & \textbf{$-16.7$} & 27.2 & 0.0987 \\
+      & Search: Preloaded & 73.3 & $+5.0$ & 16.7 & 0.0595 \\
+      & Plan: No Plan & 56.7 & $-11.7$ & 21.3 & 0.0784 \\
+      & Plan: Default & 56.7 & $-11.7$ & 23.7 & 0.0817 \\
+      & Data An.: Standard & 63.3 & $-5.0$ & 22.4 & 0.0399 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.2}}
-      & Reference (all ideal) & 68.3 & --- & 17.3 & 0.0931 \\
-      & Search: BM25 & 51.7 & \textbf{$-16.7$} & 19.7 & 0.1453 \\
-      & Search: PNEUMA & 55.0 & \textbf{$-13.3$} & 19.0 & 0.1543 \\
-      & Search: Preloaded & 73.3 & $+5.0$ & 12.3 & 0.0728 \\
-      & Plan: No Plan & 61.7 & $-6.7$ & 12.9 & 0.0651 \\
-      & Plan: Default & 46.7 & \textbf{$-21.7$} & 16.1 & 0.0746 \\
-      & Data An.: Standard & 55.0 & \textbf{$-13.3$} & 16.7 & 0.0915 \\
+      & Reference (all ideal) & 68.3 & --- & 17.3 & 0.1916 \\
+      & Search: BM25 & 51.7 & \textbf{$-16.7$} & 19.7 & 0.2275 \\
+      & Search: PNEUMA & 55.0 & \textbf{$-13.3$} & 19.0 & 0.2251 \\
+      & Search: Preloaded & 73.3 & $+5.0$ & 12.3 & 0.1420 \\
+      & Plan: No Plan & 61.7 & $-6.7$ & 12.9 & 0.1615 \\
+      & Plan: Default & 46.7 & \textbf{$-21.7$} & 16.1 & 0.1701 \\
+      & Data An.: Standard & 55.0 & \textbf{$-13.3$} & 16.7 & 0.1194 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.6-luna}}
-      & Reference (all ideal) & 65.0 & --- & 11.6 & 0.0094 \\
-      & Search: BM25 & 55.0 & $-10.0$ & 11.8 & 0.0130 \\
-      & Search: PNEUMA & 60.0 & $-5.0$ & 13.7 & 0.0143 \\
-      & Search: Preloaded & 75.0 & $+10.0$ & 8.5 & 0.0075 \\
-      & Plan: No Plan & 65.0 & $+0.0$ & 7.4 & 0.0060 \\
-      & Plan: Default & 65.0 & $+0.0$ & 10.3 & 0.0073 \\
-      & Data An.: Standard & 65.0 & $+0.0$ & 9.8 & 0.0079 \\
+      & Reference (all ideal) & 65.0 & --- & 11.6 & 0.0163 \\
+      & Search: BM25 & 55.0 & $-10.0$ & 11.8 & 0.0196 \\
+      & Search: PNEUMA & 60.0 & $-5.0$ & 13.7 & 0.0206 \\
+      & Search: Preloaded & 75.0 & $+10.0$ & 8.5 & 0.0134 \\
+      & Plan: No Plan & 65.0 & $+0.0$ & 7.4 & 0.0121 \\
+      & Plan: Default & 65.0 & $+0.0$ & 10.3 & 0.0144 \\
+      & Data An.: Standard & 65.0 & $+0.0$ & 9.8 & 0.0094 \\
     \bottomrule
   \end{tabular}}
 \end{table}

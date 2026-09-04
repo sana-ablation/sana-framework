@@ -98,7 +98,10 @@ def cost_rows(semantic, key):
             continue
         n = len(rows)
         correct = sum(1 for r in rows if _num(r.get(key)) >= 1)
-        cost = sum(_num(r.get("cost_usd")) for r in rows)
+        # Subagent-inclusive: cost_usd covers the visible agent only, and the
+        # ideal modes delegate to hidden helper agents that outweigh it.
+        cost = sum(_num(r.get("total_cost_with_all_subagents_usd"))
+                   or _num(r.get("cost_usd")) for r in rows)
         out.append({
             "label": label, "rounds": rounds, "n": n,
             "tin": sum(_num(r.get("input_tokens")) for r in rows) / n,
@@ -221,7 +224,7 @@ def main() -> int:
     A(r"  (\texttt{gpt-5-mini}, 20 tasks per arm, three replicate rounds, " + metric + r").")
     A(r"  $\bar{x}$ is the mean over the three rounds, \emph{Rounds/task} the mean")
     A(r"  number of agent cycles a task took, and cost the mean spend per task over")
-    A(r"  completed rows. $D_{ret}$ and $D_{acc}$ are")
+    A(r"  completed rows, including any hidden helper agents. $D_{ret}$ and $D_{acc}$ are")
     A(r"  retrieval and access recall of gold datasets, undefined for the web arm.}")
     A(r"  \label{tab:web-arm}")
     A(r"  \scriptsize")
