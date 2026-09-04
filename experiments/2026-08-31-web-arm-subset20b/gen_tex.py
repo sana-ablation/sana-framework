@@ -80,6 +80,34 @@ def discovery(variant):
     return 100 * agg.get("D_ret", 0), 100 * agg.get("D_acc", 0)
 
 
+def cost_rows(semantic, key):
+    """Per-arm cost and effort over completed rows, plus how many rounds exist.
+
+    Completed rows only: an errored row never called the model, so counting it
+    would divide a real cost by an inflated denominator.
+    """
+    out = []
+    for label, variant in ARMS:
+        rows, rounds = [], 0
+        for tree in ROUNDS:
+            got = rows_for(tree, variant, semantic)
+            if got:
+                rounds += 1
+                rows += got
+        if not rows:
+            continue
+        n = len(rows)
+        correct = sum(1 for r in rows if _num(r.get(key)) >= 1)
+        cost = sum(_num(r.get("cost_usd")) for r in rows)
+        out.append({
+            "label": label, "rounds": rounds, "n": n,
+            "tin": sum(_num(r.get("input_tokens")) for r in rows) / n,
+            "tout": sum(_num(r.get("output_tokens")) for r in rows) / n,
+            "per_task": cost / n,
+            "per_correct": cost / correct if correct else None,
+        })
+    return out
+
 def main() -> int:
     semantic = all_audited()
     key = "semantic_match" if semantic else "exact_match"
@@ -213,6 +241,34 @@ def main() -> int:
     A(r"  \end{tabular}}")
     A(r"\end{table}")
     A("")
+
+    # ---- cost and effort
+    costs = cost_rows(semantic, key)
+    if costs:
+        A(r"\begin{table}[h]")
+        A(r"  \centering")
+        A(r"  \caption{Cost and effort per arm, over completed rows across the three")
+        A(r"  replicate rounds. Token counts are means per task. Cost per correct")
+        A(r"  answer divides total spend by answers scored correct, so it prices the")
+        A(r"  outcome rather than the attempt: the web arm is the most expensive")
+        A(r"  place to buy a right answer here, since it both reads more and")
+        A(r"  succeeds less.}")
+        A(r"  \label{tab:web-arm-cost}")
+        A(r"  \scriptsize")
+        A(r"  \setlength{\tabcolsep}{4pt}")
+        A(r"  \renewcommand{\arraystretch}{0.95}")
+        A(r"  \begin{tabular}{lrrrrrr}")
+        A(r"    \toprule")
+        A(r"    Arm & Rounds & Tasks & In (k) & Out (k) & \$/task & \$/correct \\")
+        A(r"    \midrule")
+        for c in costs:
+            pc = "---" if c["per_correct"] is None else f"{c['per_correct']:.4f}"
+            A(f"    {c['label']} & {c['rounds']} & {c['n']} & {c['tin']/1000:.0f} & "
+              f"{c['tout']/1000:.1f} & {c['per_task']:.4f} & {pc} \\\\")
+        A(r"    \bottomrule")
+        A(r"  \end{tabular}")
+        A(r"\end{table}")
+        A("")
 
     # ---- figure: same construction as the tier figure and the paper's fig21b,
     # drawn by make_search_axis_figure.py. Outcome first, then the two recall

@@ -79,6 +79,41 @@ def cell_pct(tree: str, model: str, pattern: str, key: str):
     return 100 * sum(1 for r in done if _num(r.get(key)) >= 1) / len(done)
 
 
+def cost_rows(key):
+    """Per-model cost and effort over completed rows, plus how many rounds exist.
+
+    Reported over completed rows only: an errored row never called the model, so
+    counting it would divide a real cost by an inflated denominator.
+    """
+    out = []
+    for model in MODELS:
+        rows, rounds = [], 0
+        for tree in ROUNDS:
+            root = HERE / tree / "modes" / model
+            if not root.is_dir():
+                continue
+            got = []
+            for path in root.rglob("eval_results.csv"):
+                with open(path, newline="") as f:
+                    got += [r for r in csv.DictReader(f) if not (r.get("error") or "").strip()]
+            if got:
+                rounds += 1
+                rows += got
+        if not rows:
+            continue
+        n = len(rows)
+        correct = sum(1 for r in rows if _num(r.get(key)) >= 1)
+        cost = sum(_num(r.get("cost_usd")) for r in rows)
+        out.append({
+            "model": model, "rounds": rounds, "n": n,
+            "turns": sum(_num(r.get("cycle_count")) for r in rows) / n,
+            "tin": sum(_num(r.get("input_tokens")) for r in rows) / n,
+            "tout": sum(_num(r.get("output_tokens")) for r in rows) / n,
+            "per_task": cost / n,
+            "per_correct": cost / correct if correct else None,
+        })
+    return out
+
 def collect(key):
     data, sds = {}, []
     for model in MODELS:
@@ -234,6 +269,39 @@ def main() -> int:
     A(r"  \end{tabular}")
     A(r"\end{table}")
     A("")
+
+    # ---- cost and effort
+    costs = cost_rows(key)
+    if costs:
+        cheapest = min((c for c in costs if c["per_correct"]), key=lambda c: c["per_correct"], default=None)
+        A(r"\begin{table}[h]")
+        A(r"  \centering")
+        A(r"  \caption{Cost and effort per model, over completed rows across the")
+        A(r"  replicate rounds each model has. \emph{Rounds} is how many replicates")
+        A(r"  back that model's numbers; \emph{Turns} is mean agent cycles per task,")
+        A(r"  and token counts are means per task. Cost per correct answer divides")
+        A(r"  total spend by answers scored correct, so it prices the outcome rather")
+        A(r"  than the attempt.}")
+        A(r"  \label{tab:tier-cost}")
+        A(r"  \scriptsize")
+        A(r"  \setlength{\tabcolsep}{4pt}")
+        A(r"  \renewcommand{\arraystretch}{0.95}")
+        A(r"  \resizebox{\columnwidth}{!}{%")
+        A(r"  \begin{tabular}{lrrrrrrr}")
+        A(r"    \toprule")
+        A(r"    Model & Rounds & Tasks & Turns & In (k) & Out (k) & "
+          r"\$/task & \$/correct \\")
+        A(r"    \midrule")
+        for c in costs:
+            pc = "---" if c["per_correct"] is None else f"{c['per_correct']:.4f}"
+            if cheapest is not None and c is cheapest:
+                pc = f"\\textbf{{{pc}}}"
+            A(f"    {TEX_NAME[c['model']]} & {c['rounds']} & {c['n']} & {c['turns']:.1f} & "
+              f"{c['tin']/1000:.0f} & {c['tout']/1000:.1f} & {c['per_task']:.4f} & {pc} \\\\")
+        A(r"    \bottomrule")
+        A(r"  \end{tabular}}")
+        A(r"\end{table}")
+        A("")
 
     # ---- figure: per-axis panels, matching the paper's fig21b family.
     # Drawn by make_axis_delta_figure.py into fig-axis-delta.pdf rather than

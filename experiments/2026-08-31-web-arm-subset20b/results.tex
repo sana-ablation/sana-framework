@@ -60,6 +60,30 @@ read a gold source.
   \end{tabular}}
 \end{table}
 
+\begin{table}[h]
+  \centering
+  \caption{Cost and effort per arm, over completed rows across the three
+  replicate rounds. Token counts are means per task. Cost per correct
+  answer divides total spend by answers scored correct, so it prices the
+  outcome rather than the attempt: the web arm is the most expensive
+  place to buy a right answer here, since it both reads more and
+  succeeds less.}
+  \label{tab:web-arm-cost}
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{0.95}
+  \begin{tabular}{lrrrrrr}
+    \toprule
+    Arm & Rounds & Tasks & In (k) & Out (k) & \$/task & \$/correct \\
+    \midrule
+    Ideal & 3 & 60 & 340 & 8.0 & 0.0327 & 0.0577 \\
+    Standard & 3 & 60 & 495 & 8.5 & 0.0426 & 0.0824 \\
+    Naive & 3 & 60 & 513 & 7.9 & 0.0432 & 0.0763 \\
+    Web & 3 & 60 & 580 & 10.5 & 0.0502 & 0.1310 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
 \begin{figure}[h]
   \centering
   \includegraphics[width=\columnwidth]{fig-search-axis}

@@ -109,6 +109,31 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
   \end{tabular}
 \end{table}
 
+\begin{table}[h]
+  \centering
+  \caption{Cost and effort per model, over completed rows across the
+  replicate rounds each model has. \emph{Rounds} is how many replicates
+  back that model's numbers; \emph{Turns} is mean agent cycles per task,
+  and token counts are means per task. Cost per correct answer divides
+  total spend by answers scored correct, so it prices the outcome rather
+  than the attempt.}
+  \label{tab:tier-cost}
+  \scriptsize
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{0.95}
+  \resizebox{\columnwidth}{!}{%
+  \begin{tabular}{lrrrrrrr}
+    \toprule
+    Model & Rounds & Tasks & Turns & In (k) & Out (k) & \$/task & \$/correct \\
+    \midrule
+    \texttt{gpt-5.4-nano} & 3 & 420 & 20.8 & 290 & 2.3 & 0.0147 & 0.0487 \\
+    \texttt{gpt-5-mini} & 3 & 420 & 23.3 & 456 & 7.7 & 0.0378 & 0.0625 \\
+    \texttt{gpt-5.2} & 3 & 420 & 16.3 & 236 & 1.7 & 0.0995 & 0.1692 \\
+    \texttt{gpt-5.6-luna} & 1 & 140 & 10.5 & 141 & 2.3 & 0.0093 & \textbf{0.0145} \\
+    \bottomrule
+  \end{tabular}}
+\end{table}
+
 \begin{figure}[h]
   \centering
   \includegraphics[width=\columnwidth]{fig-axis-delta}
