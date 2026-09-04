@@ -190,18 +190,17 @@ def main() -> int:
     A(r"  \caption{Retrieval-source comparison on LakeQA \textsc{subset20b}")
     A(r"  (\texttt{gpt-5-mini}, 20 tasks per arm, three replicate rounds, " + metric + r").")
     A(r"  $\bar{x}$ is the mean over rounds and $\sigma$ their standard deviation.")
-    A(r"  \emph{Blank} counts answers the judge classified as honest abstentions")
-    A(r"  rather than wrong answers. \emph{Cap} is the mean number of tasks per")
-    A(r"  round reaching the 30-call tool budget. $D_{ret}$ and $D_{acc}$ are")
+    A(r"  \emph{Turns} is the mean agent cycles per task, averaged over the three")
+    A(r"  rounds. $D_{ret}$ and $D_{acc}$ are")
     A(r"  retrieval and access recall of gold datasets, undefined for the web arm.}")
     A(r"  \label{tab:web-arm}")
     A(r"  \scriptsize")
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{lrrrrrr}")
+    A(r"  \begin{tabular}{lrrrrr}")
     A(r"    \toprule")
-    A(r"    Arm & $\bar{x}$ (\%) & $\sigma$ & Blank & Cap & "
+    A(r"    Arm & $\bar{x}$ (\%) & $\sigma$ & Turns & "
       r"$D_{ret}$ (\%) & $D_{acc}$ (\%) \\")
     A(r"    \midrule")
     for t in table:
@@ -209,8 +208,7 @@ def main() -> int:
         dr = "n/a" if t["dret"] is None else f"{t['dret']:.1f}"
         da = "n/a" if t["dacc"] is None else f"{t['dacc']:.1f}"
         mean = f"\\textbf{{{t['mean']:.1f}}}" if t is best_lake else f"{t['mean']:.1f}"
-        A(f"    {t['label']} & {mean} & {sd} & {t['blank']} & "
-          f"{t['cap']:.1f} & {dr} & {da} \\\\")
+        A(f"    {t['label']} & {mean} & {sd} & {t['cyc']:.1f} & {dr} & {da} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")
     A(r"\end{table}")

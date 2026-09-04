@@ -49,6 +49,11 @@ MODEL_REGISTRY: Dict[str, Tuple[str, str]] = {
     "openai/gpt-5-mini":           ("openai", "gpt-5-mini"),
     "openai/gpt-5.4":              ("openai", "gpt-5.4"),
     "openai/gpt-5.4-nano":         ("openai", "gpt-5.4-nano"),
+    # Pinned to the -luna variant: bare "gpt-5.6" resolves to gpt-5.6-sol,
+    # a different model. Never abbreviate this key.
+    # openai_responses, not openai: this model rejects function tools on
+    # /v1/chat/completions whenever reasoning is active.
+    "openai/gpt-5.6-luna":         ("openai_responses", "gpt-5.6-luna"),
 
     # Google Gemini API
     "gemini/gemini-3.1-flash-lite": ("gemini", "gemini-3.1-flash-lite"),

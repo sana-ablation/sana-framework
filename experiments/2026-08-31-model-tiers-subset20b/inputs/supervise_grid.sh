@@ -36,8 +36,10 @@ for attempt in $(seq 1 "$MAX_RESTARTS"); do
   before=$(rows_done)
   echo "=== supervisor attempt $attempt/$MAX_RESTARTS  rows_done=$before  $(date -u +%H:%M:%SZ) ==="
 
-  ./$EXP/inputs/run_model_tiers.sh
-  rc=$?
+  # tee: the completion marker below is grepped out of driver.log, and
+  # run_model_tiers.sh writes it to stdout.
+  ./$EXP/inputs/run_model_tiers.sh 2>&1 | tee -a "$LOGS/driver.log"
+  rc=${PIPESTATUS[0]}
 
   after=$(rows_done)
   echo "=== attempt $attempt ended rc=$rc  rows_done=$before -> $after  $(date -u +%H:%M:%SZ) ==="

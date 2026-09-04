@@ -40,23 +40,22 @@ read a gold source.
   \caption{Retrieval-source comparison on LakeQA \textsc{subset20b}
   (\texttt{gpt-5-mini}, 20 tasks per arm, three replicate rounds, semantic match).
   $\bar{x}$ is the mean over rounds and $\sigma$ their standard deviation.
-  \emph{Blank} counts answers the judge classified as honest abstentions
-  rather than wrong answers. \emph{Cap} is the mean number of tasks per
-  round reaching the 30-call tool budget. $D_{ret}$ and $D_{acc}$ are
+  \emph{Turns} is the mean agent cycles per task, averaged over the three
+  rounds. $D_{ret}$ and $D_{acc}$ are
   retrieval and access recall of gold datasets, undefined for the web arm.}
   \label{tab:web-arm}
   \scriptsize
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{0.95}
   \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{lrrrrrr}
+  \begin{tabular}{lrrrrr}
     \toprule
-    Arm & $\bar{x}$ (\%) & $\sigma$ & Blank & Cap & $D_{ret}$ (\%) & $D_{acc}$ (\%) \\
+    Arm & $\bar{x}$ (\%) & $\sigma$ & Turns & $D_{ret}$ (\%) & $D_{acc}$ (\%) \\
     \midrule
-    Ideal & \textbf{56.7} & 7.6 & 2 & 6.0 & 82.5 & 79.1 \\
-    Standard & 51.7 & 2.9 & 0 & 10.7 & 84.1 & 67.9 \\
-    Naive & 56.7 & 10.4 & 0 & 9.7 & 85.6 & 69.9 \\
-    Web & 38.3 & 2.9 & 5 & 7.7 & n/a & n/a \\
+    Ideal & \textbf{56.7} & 7.6 & 23.1 & 82.5 & 79.1 \\
+    Standard & 51.7 & 2.9 & 27.6 & 84.1 & 67.9 \\
+    Naive & 56.7 & 10.4 & 27.2 & 85.6 & 69.9 \\
+    Web & 38.3 & 2.9 & 25.4 & n/a & n/a \\
     \bottomrule
   \end{tabular}}
 \end{table}

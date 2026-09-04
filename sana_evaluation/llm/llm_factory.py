@@ -4,7 +4,9 @@ LLM Factory - Creates Strands model objects from an AgentConfig.
 Supported providers (set AgentConfig.provider to one of these strings):
     "bedrock"       Amazon Bedrock — needs AWS credentials in env
     "anthropic"     Anthropic API — needs ANTHROPIC_API_KEY
-    "openai"        OpenAI API — needs OPENAI_API_KEY
+    "openai"        OpenAI API (chat completions) — needs OPENAI_API_KEY
+    "openai_responses"  OpenAI API over /v1/responses — same key; required by
+                    models that reject function tools on chat completions
     "gemini"        Google Gemini — needs GEMINI_API_KEY
     "ollama"        Ollama local server — needs ollama running at ollama_host
     "llamaapi"      LlamaAPI — needs LLAMA_API_KEY
@@ -38,6 +40,7 @@ def build_model(config: AgentConfig) -> Any:
         "bedrock":    _build_bedrock,
         "anthropic":  _build_anthropic,
         "openai":     _build_openai,
+        "openai_responses": _build_openai_responses,
         "gemini":     _build_gemini,
         "ollama":     _build_ollama,
         "llamaapi":   _build_llamaapi,
@@ -103,10 +106,13 @@ def _build_anthropic(c: AgentConfig) -> Any:
     return AnthropicModel(**kwargs)
 
 
-def _build_openai(c: AgentConfig) -> Any:
+def _build_openai(c: AgentConfig, *, responses: bool = False) -> Any:
     # Requires: OPENAI_API_KEY env var (or AgentConfig.openai_api_key)
     # Optional: AgentConfig.openai_base_url for Azure / vLLM / other compatible APIs
-    from sana_evaluation.llm.openai_cached_model import OpenAICachedUsageModel
+    from sana_evaluation.llm.openai_cached_model import (
+        OpenAICachedUsageModel,
+        OpenAIResponsesCachedUsageModel,
+    )
 
     # OpenAIModel expects request fields under `params` and transport/auth fields
     # under `client_args`. Passing raw top-level keys is ignored by Strands.
@@ -151,17 +157,28 @@ def _build_openai(c: AgentConfig) -> Any:
     # caller sets a non-default value.
     if "temperature" not in params and c.temperature not in (None, 0.0):
         params["temperature"] = c.temperature
-    if (
-        "max_completion_tokens" not in params
-        and "max_tokens" not in params
-        and c.max_tokens is not None
-    ):
-        params["max_completion_tokens"] = c.max_tokens
 
-    # Convenience alias: accept Responses-style reasoning dict and map to chat param.
-    reasoning = params.get("reasoning")
-    if isinstance(reasoning, dict) and "reasoning_effort" not in params and "effort" in reasoning:
-        params["reasoning_effort"] = reasoning["effort"]
+    if responses:
+        # /v1/responses names the output budget differently and takes reasoning as
+        # a nested dict, so the chat-shaped keys are translated rather than sent.
+        if "max_output_tokens" not in params and c.max_tokens is not None:
+            params["max_output_tokens"] = c.max_tokens
+        params.pop("max_completion_tokens", None)
+        effort = params.pop("reasoning_effort", None)
+        if effort is not None and "reasoning" not in params:
+            params["reasoning"] = {"effort": effort}
+    else:
+        if (
+            "max_completion_tokens" not in params
+            and "max_tokens" not in params
+            and c.max_tokens is not None
+        ):
+            params["max_completion_tokens"] = c.max_tokens
+
+        # Convenience alias: accept Responses-style reasoning dict and map to chat param.
+        reasoning = params.get("reasoning")
+        if isinstance(reasoning, dict) and "reasoning_effort" not in params and "effort" in reasoning:
+            params["reasoning_effort"] = reasoning["effort"]
 
     # OpenAI prompt caching is automatic for matching prefixes. These optional
     # request fields improve routing and opt into longer retention when desired.
@@ -181,13 +198,25 @@ def _build_openai(c: AgentConfig) -> Any:
     if c.openai_base_url and "base_url" not in client_args:
         client_args["base_url"] = c.openai_base_url
 
+    cls = OpenAIResponsesCachedUsageModel if responses else OpenAICachedUsageModel
     kwargs: dict[str, Any] = {"model_id": c.model_id}
     if params:
         kwargs["params"] = params
 
     if client_args:
-        return OpenAICachedUsageModel(client_args=client_args, **kwargs)
-    return OpenAICachedUsageModel(**kwargs)
+        return cls(client_args=client_args, **kwargs)
+    return cls(**kwargs)
+
+
+def _build_openai_responses(c: AgentConfig) -> Any:
+    """OpenAI over /v1/responses.
+
+    Required by models that reject function tools on /v1/chat/completions while
+    reasoning is active. gpt-5.6-luna answers such a request with HTTP 400
+    ("use /v1/responses or set reasoning_effort to 'none'"), and setting the
+    effort to none would switch off the reasoning the experiment is measuring.
+    """
+    return _build_openai(c, responses=True)
 
 
 def _build_gemini(c: AgentConfig) -> Any:

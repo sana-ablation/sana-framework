@@ -17,6 +17,7 @@ construct one. Both run_mode_eval and run_sana_eval do this at module load.
 
 import csv
 import glob
+import hashlib
 import json
 import logging
 import os
@@ -56,6 +57,27 @@ def _display_name(agent_config) -> str:
     return slug
 
 
+# OpenAI caps prompt_cache_key at 64 characters. /v1/chat/completions accepts
+# longer values silently; /v1/responses rejects them with HTTP 400.
+_MAX_PROMPT_CACHE_KEY = 64
+
+
+def _bounded_cache_key(raw: str) -> str:
+    """Fit a cache key into OpenAI's 64-character limit without losing identity.
+
+    Plain truncation would collide, because these variant labels are a shared
+    prefix followed by the axis settings that distinguish them -- the tail is
+    exactly the part that differs. Keeping a prefix and appending a digest of the
+    whole label stays under the cap, stays stable across rounds (so the router
+    still lands repeat requests on the same shard), and keeps distinct variants
+    distinct.
+    """
+    if len(raw) <= _MAX_PROMPT_CACHE_KEY:
+        return raw
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:10]
+    return f"{raw[: _MAX_PROMPT_CACHE_KEY - len(digest) - 1]}-{digest}"
+
+
 def _maybe_autoset_openai_cache_key(agent_config, variant_label: str) -> None:
     """Auto-derive a variant-stable OpenAI prompt_cache_key when none was provided.
 
@@ -67,7 +89,9 @@ def _maybe_autoset_openai_cache_key(agent_config, variant_label: str) -> None:
         return
     if os.getenv("OPENAI_PROMPT_CACHE_KEY"):
         return
-    agent_config.openai_prompt_cache_key = f"{_display_name(agent_config)}:{variant_label}"
+    agent_config.openai_prompt_cache_key = _bounded_cache_key(
+        f"{_display_name(agent_config)}:{variant_label}"
+    )
 
 
 def _results_root(run_config: RunConfig) -> str:
