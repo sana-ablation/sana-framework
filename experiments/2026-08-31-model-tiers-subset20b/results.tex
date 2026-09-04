@@ -36,55 +36,59 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
 \begin{table}[h]
   \centering
   \caption{Leave-one-out ablation across model tiers on LakeQA
-  \textsc{subset20b} (20 tasks per cell, exact match, mean over three
-  replicate rounds under identical configuration). $\bar{x}$ is the mean
+  \textsc{subset20b} (20 tasks per cell, exact match, mean over the
+  replicate rounds in column \emph{R}, run under identical
+  configuration). $\bar{x}$ is the mean
   over rounds and $\sigma$ their standard deviation; $\delta$ is the effect
   relative to that model's reference cell. Effects exceeding the
-  $\pm13$\,pp two-sigma threshold are set in bold.}
+  $\pm13$\,pp two-sigma threshold are set in bold.
+  \emph{R} is how many replicate rounds back the row. Cost is over
+  completed rows: \$/correct divides that cell's spend by the answers it
+  got right, so it prices the outcome rather than the attempt.}
   \label{tab:tier-ablation}
   \scriptsize
   \setlength{\tabcolsep}{4pt}
   \renewcommand{\arraystretch}{0.95}
   \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{llrrr}
+  \begin{tabular}{llrrrrrr}
     \toprule
-    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) \\
+    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) & R & \$/task & \$/correct \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.4-nano}}
-      & Reference (all ideal) & 36.7 & 2.9 & --- \\
-      & Search: BM25 & 13.3 & 7.6 & \textbf{$-23.3$} \\
-      & Search: PNEUMA & 26.7 & 5.8 & $-10.0$ \\
-      & Search: Preloaded & 40.0 & 5.0 & $+3.3$ \\
-      & Plan: No Plan & 35.0 & 10.0 & $-1.7$ \\
-      & Plan: Default & 30.0 & 13.2 & $-6.7$ \\
-      & Data An.: Standard & 30.0 & 5.0 & $-6.7$ \\
+      & Reference (all ideal) & 36.7 & 2.9 & --- & 3 & 0.0132 & 0.0360 \\
+      & Search: BM25 & 13.3 & 7.6 & \textbf{$-23.3$} & 3 & 0.0179 & 0.1342 \\
+      & Search: PNEUMA & 26.7 & 5.8 & $-10.0$ & 3 & 0.0175 & 0.0657 \\
+      & Search: Preloaded & 40.0 & 5.0 & $+3.3$ & 3 & 0.0154 & 0.0385 \\
+      & Plan: No Plan & 35.0 & 10.0 & $-1.7$ & 3 & 0.0110 & 0.0316 \\
+      & Plan: Default & 30.0 & 13.2 & $-6.7$ & 3 & 0.0128 & 0.0428 \\
+      & Data An.: Standard & 30.0 & 5.0 & $-6.7$ & 3 & 0.0152 & 0.0507 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5-mini}}
-      & Reference (all ideal) & 68.3 & 2.9 & --- \\
-      & Search: BM25 & 53.3 & 10.4 & \textbf{$-15.0$} \\
-      & Search: PNEUMA & 51.7 & 7.6 & \textbf{$-16.7$} \\
-      & Search: Preloaded & 73.3 & 5.8 & $+5.0$ \\
-      & Plan: No Plan & 56.7 & 2.9 & $-11.7$ \\
-      & Plan: Default & 56.7 & 2.9 & $-11.7$ \\
-      & Data An.: Standard & 63.3 & 5.8 & $-5.0$ \\
+      & Reference (all ideal) & 68.3 & 2.9 & --- & 3 & 0.0319 & 0.0467 \\
+      & Search: BM25 & 53.3 & 10.4 & \textbf{$-15.0$} & 3 & 0.0559 & 0.1048 \\
+      & Search: PNEUMA & 51.7 & 7.6 & \textbf{$-16.7$} & 3 & 0.0516 & 0.0998 \\
+      & Search: Preloaded & 73.3 & 5.8 & $+5.0$ & 3 & 0.0266 & 0.0363 \\
+      & Plan: No Plan & 56.7 & 2.9 & $-11.7$ & 3 & 0.0328 & 0.0579 \\
+      & Plan: Default & 56.7 & 2.9 & $-11.7$ & 3 & 0.0338 & 0.0597 \\
+      & Data An.: Standard & 63.3 & 5.8 & $-5.0$ & 3 & 0.0321 & 0.0506 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.2}}
-      & Reference (all ideal) & 68.3 & 7.6 & --- \\
-      & Search: BM25 & 51.7 & 2.9 & \textbf{$-16.7$} \\
-      & Search: PNEUMA & 55.0 & 8.7 & \textbf{$-13.3$} \\
-      & Search: Preloaded & 73.3 & 5.8 & $+5.0$ \\
-      & Plan: No Plan & 61.7 & 7.6 & $-6.7$ \\
-      & Plan: Default & 46.7 & 7.6 & \textbf{$-21.7$} \\
-      & Data An.: Standard & 55.0 & 8.7 & \textbf{$-13.3$} \\
+      & Reference (all ideal) & 68.3 & 7.6 & --- & 3 & 0.0931 & 0.1362 \\
+      & Search: BM25 & 51.7 & 2.9 & \textbf{$-16.7$} & 3 & 0.1453 & 0.2813 \\
+      & Search: PNEUMA & 55.0 & 8.7 & \textbf{$-13.3$} & 3 & 0.1543 & 0.2805 \\
+      & Search: Preloaded & 73.3 & 5.8 & $+5.0$ & 3 & 0.0728 & 0.0992 \\
+      & Plan: No Plan & 61.7 & 7.6 & $-6.7$ & 3 & 0.0651 & 0.1055 \\
+      & Plan: Default & 46.7 & 7.6 & \textbf{$-21.7$} & 3 & 0.0746 & 0.1599 \\
+      & Data An.: Standard & 55.0 & 8.7 & \textbf{$-13.3$} & 3 & 0.0915 & 0.1663 \\
     \midrule
     \multirow{7}{*}{\texttt{gpt-5.6-luna}}
-      & Reference (all ideal) & 65.0 & --- & --- \\
-      & Search: BM25 & 55.0 & --- & $-10.0$ \\
-      & Search: PNEUMA & 60.0 & --- & $-5.0$ \\
-      & Search: Preloaded & 75.0 & --- & $+10.0$ \\
-      & Plan: No Plan & 65.0 & --- & $+0.0$ \\
-      & Plan: Default & 65.0 & --- & $+0.0$ \\
-      & Data An.: Standard & 65.0 & --- & $+0.0$ \\
+      & Reference (all ideal) & 65.0 & --- & --- & 1 & 0.0094 & 0.0145 \\
+      & Search: BM25 & 55.0 & --- & $-10.0$ & 1 & 0.0130 & 0.0236 \\
+      & Search: PNEUMA & 60.0 & --- & $-5.0$ & 1 & 0.0143 & 0.0239 \\
+      & Search: Preloaded & 75.0 & --- & $+10.0$ & 1 & 0.0075 & 0.0100 \\
+      & Plan: No Plan & 65.0 & --- & $+0.0$ & 1 & 0.0060 & 0.0092 \\
+      & Plan: Default & 65.0 & --- & $+0.0$ & 1 & 0.0073 & 0.0113 \\
+      & Data An.: Standard & 65.0 & --- & $+0.0$ & 1 & 0.0079 & 0.0122 \\
     \bottomrule
   \end{tabular}}
 \end{table}
@@ -107,31 +111,6 @@ alone put \texttt{gpt-5.2} 5\,pp below \texttt{gpt-5-mini}.
     Cells                 & 21 \\
     \bottomrule
   \end{tabular}
-\end{table}
-
-\begin{table}[h]
-  \centering
-  \caption{Cost and effort per model, over completed rows across the
-  replicate rounds each model has. \emph{Rounds} is how many replicates
-  back that model's numbers; \emph{Turns} is mean agent cycles per task,
-  and token counts are means per task. Cost per correct answer divides
-  total spend by answers scored correct, so it prices the outcome rather
-  than the attempt.}
-  \label{tab:tier-cost}
-  \scriptsize
-  \setlength{\tabcolsep}{4pt}
-  \renewcommand{\arraystretch}{0.95}
-  \resizebox{\columnwidth}{!}{%
-  \begin{tabular}{lrrrrrrr}
-    \toprule
-    Model & Rounds & Tasks & Turns & In (k) & Out (k) & \$/task & \$/correct \\
-    \midrule
-    \texttt{gpt-5.4-nano} & 3 & 420 & 20.8 & 290 & 2.3 & 0.0147 & 0.0487 \\
-    \texttt{gpt-5-mini} & 3 & 420 & 23.3 & 456 & 7.7 & 0.0378 & 0.0625 \\
-    \texttt{gpt-5.2} & 3 & 420 & 16.3 & 236 & 1.7 & 0.0995 & 0.1692 \\
-    \texttt{gpt-5.6-luna} & 1 & 140 & 10.5 & 141 & 2.3 & 0.0093 & \textbf{0.0145} \\
-    \bottomrule
-  \end{tabular}}
 \end{table}
 
 \begin{figure}[h]

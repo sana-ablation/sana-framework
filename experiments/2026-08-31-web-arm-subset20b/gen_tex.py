@@ -213,22 +213,26 @@ def main() -> int:
     A("read a gold source.")
     A("")
 
+    costs_by_label = {c["label"]: c for c in cost_rows(semantic, key)}
+
     A(r"\begin{table}[h]")
     A(r"  \centering")
     A(r"  \caption{Retrieval-source comparison on LakeQA \textsc{subset20b}")
     A(r"  (\texttt{gpt-5-mini}, 20 tasks per arm, three replicate rounds, " + metric + r").")
     A(r"  $\bar{x}$ is the mean over rounds and $\sigma$ their standard deviation.")
-    A(r"  \emph{Turns} is the mean agent cycles per task, averaged over the three")
-    A(r"  rounds. $D_{ret}$ and $D_{acc}$ are")
+    A(r"  \emph{R} is the number of replicate rounds and \emph{Turns} the mean")
+    A(r"  agent cycles per task. Cost is over completed rows; \$/correct divides")
+    A(r"  an arm's spend by the answers it got right, so it prices the outcome")
+    A(r"  rather than the attempt. $D_{ret}$ and $D_{acc}$ are")
     A(r"  retrieval and access recall of gold datasets, undefined for the web arm.}")
     A(r"  \label{tab:web-arm}")
     A(r"  \scriptsize")
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{lrrrrr}")
+    A(r"  \begin{tabular}{lrrrrrrrr}")
     A(r"    \toprule")
-    A(r"    Arm & $\bar{x}$ (\%) & $\sigma$ & Turns & "
+    A(r"    Arm & $\bar{x}$ (\%) & $\sigma$ & R & Turns & \$/task & \$/correct & "
       r"$D_{ret}$ (\%) & $D_{acc}$ (\%) \\")
     A(r"    \midrule")
     for t in table:
@@ -236,39 +240,15 @@ def main() -> int:
         dr = "n/a" if t["dret"] is None else f"{t['dret']:.1f}"
         da = "n/a" if t["dacc"] is None else f"{t['dacc']:.1f}"
         mean = f"\\textbf{{{t['mean']:.1f}}}" if t is best_lake else f"{t['mean']:.1f}"
-        A(f"    {t['label']} & {mean} & {sd} & {t['cyc']:.1f} & {dr} & {da} \\\\")
+        c = costs_by_label.get(t["label"], {})
+        pt = "---" if c.get("per_task") is None else f"{c['per_task']:.4f}"
+        pc = "---" if c.get("per_correct") is None else f"{c['per_correct']:.4f}"
+        A(f"    {t['label']} & {mean} & {sd} & {t['rounds']} & {t['cyc']:.1f} & "
+          f"{pt} & {pc} & {dr} & {da} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")
     A(r"\end{table}")
     A("")
-
-    # ---- cost and effort
-    costs = cost_rows(semantic, key)
-    if costs:
-        A(r"\begin{table}[h]")
-        A(r"  \centering")
-        A(r"  \caption{Cost and effort per arm, over completed rows across the three")
-        A(r"  replicate rounds. Token counts are means per task. Cost per correct")
-        A(r"  answer divides total spend by answers scored correct, so it prices the")
-        A(r"  outcome rather than the attempt: the web arm is the most expensive")
-        A(r"  place to buy a right answer here, since it both reads more and")
-        A(r"  succeeds less.}")
-        A(r"  \label{tab:web-arm-cost}")
-        A(r"  \scriptsize")
-        A(r"  \setlength{\tabcolsep}{4pt}")
-        A(r"  \renewcommand{\arraystretch}{0.95}")
-        A(r"  \begin{tabular}{lrrrrrr}")
-        A(r"    \toprule")
-        A(r"    Arm & Rounds & Tasks & In (k) & Out (k) & \$/task & \$/correct \\")
-        A(r"    \midrule")
-        for c in costs:
-            pc = "---" if c["per_correct"] is None else f"{c['per_correct']:.4f}"
-            A(f"    {c['label']} & {c['rounds']} & {c['n']} & {c['tin']/1000:.0f} & "
-              f"{c['tout']/1000:.1f} & {c['per_task']:.4f} & {pc} \\\\")
-        A(r"    \bottomrule")
-        A(r"  \end{tabular}")
-        A(r"\end{table}")
-        A("")
 
     # ---- figure: same construction as the tier figure and the paper's fig21b,
     # drawn by make_search_axis_figure.py. Outcome first, then the two recall

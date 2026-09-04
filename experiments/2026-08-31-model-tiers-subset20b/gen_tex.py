@@ -79,40 +79,27 @@ def cell_pct(tree: str, model: str, pattern: str, key: str):
     return 100 * sum(1 for r in done if _num(r.get(key)) >= 1) / len(done)
 
 
-def cost_rows(key):
-    """Per-model cost and effort over completed rows, plus how many rounds exist.
+def cell_rows(tree: str, model: str, pattern: str, key: str):
+    """Completed rows for one cell in one round, or None.
 
-    Reported over completed rows only: an errored row never called the model, so
-    counting it would divide a real cost by an inflated denominator.
+    Errored rows are dropped here rather than at the call site: such a row never
+    reached the model, so counting it would divide real spend by an inflated
+    task count.
     """
-    out = []
-    for model in MODELS:
-        rows, rounds = [], 0
-        for tree in ROUNDS:
-            root = HERE / tree / "modes" / model
-            if not root.is_dir():
-                continue
-            got = []
-            for path in root.rglob("eval_results.csv"):
-                with open(path, newline="") as f:
-                    got += [r for r in csv.DictReader(f) if not (r.get("error") or "").strip()]
-            if got:
-                rounds += 1
-                rows += got
-        if not rows:
-            continue
-        n = len(rows)
-        correct = sum(1 for r in rows if _num(r.get(key)) >= 1)
-        cost = sum(_num(r.get("cost_usd")) for r in rows)
-        out.append({
-            "model": model, "rounds": rounds, "n": n,
-            "turns": sum(_num(r.get("cycle_count")) for r in rows) / n,
-            "tin": sum(_num(r.get("input_tokens")) for r in rows) / n,
-            "tout": sum(_num(r.get("output_tokens")) for r in rows) / n,
-            "per_task": cost / n,
-            "per_correct": cost / correct if correct else None,
-        })
-    return out
+    root = HERE / (f"{tree}_semantic" if key == "semantic_match" else tree) / "modes"
+    md = root / model
+    if not md.is_dir():
+        return None
+    hits = [d for d in md.iterdir() if d.is_dir() and re.search(pattern, d.name)]
+    if not hits:
+        return None
+    p = hits[0] / "eval_results.csv"
+    if not p.is_file():
+        return None
+    with open(p, newline="") as f:
+        done = [r for r in csv.DictReader(f) if not (r.get("error") or "").strip()]
+    return done if len(done) >= 15 else None
+
 
 def collect(key):
     data, sds = {}, []
@@ -125,8 +112,18 @@ def collect(key):
             sd = statistics.stdev(vals) if len(vals) > 1 else None
             if sd is not None:
                 sds.append(sd)
-            rows.append({"label": label, "vals": vals,
-                         "mean": statistics.mean(vals), "sd": sd})
+            cost = n = correct = 0
+            for tree in ROUNDS:
+                got = cell_rows(tree, model, pattern, key)
+                if not got:
+                    continue
+                n += len(got)
+                correct += sum(1 for r in got if _num(r.get(key)) >= 1)
+                cost += sum(_num(r.get("cost_usd")) for r in got)
+            rows.append({"label": label, "vals": vals, "rounds": len(vals),
+                         "mean": statistics.mean(vals), "sd": sd,
+                         "per_task": cost / n if n else None,
+                         "per_correct": cost / correct if correct else None})
         if rows:
             ref = rows[0]["mean"]
             for r in rows:
@@ -216,19 +213,24 @@ def main() -> int:
     A(r"\begin{table}[h]")
     A(r"  \centering")
     A(r"  \caption{Leave-one-out ablation across model tiers on LakeQA")
-    A(r"  \textsc{subset20b} (20 tasks per cell, " + metric_name + r", mean over three")
-    A(r"  replicate rounds under identical configuration). $\bar{x}$ is the mean")
+    A(r"  \textsc{subset20b} (20 tasks per cell, " + metric_name + r", mean over the")
+    A(r"  replicate rounds in column \emph{R}, run under identical")
+    A(r"  configuration). $\bar{x}$ is the mean")
     A(r"  over rounds and $\sigma$ their standard deviation; $\delta$ is the effect")
     A(r"  relative to that model's reference cell. Effects exceeding the")
-    A(f"  $\\pm{thresh:.0f}$\\,pp two-sigma threshold are set in bold.}}")
+    A(f"  $\\pm{thresh:.0f}$\\,pp two-sigma threshold are set in bold.")
+    A(r"  \emph{R} is how many replicate rounds back the row. Cost is over")
+    A(r"  completed rows: \$/correct divides that cell's spend by the answers it")
+    A(r"  got right, so it prices the outcome rather than the attempt.}")
     A(r"  \label{tab:tier-ablation}")
     A(r"  \scriptsize")
     A(r"  \setlength{\tabcolsep}{4pt}")
     A(r"  \renewcommand{\arraystretch}{0.95}")
     A(r"  \resizebox{\columnwidth}{!}{%")
-    A(r"  \begin{tabular}{llrrr}")
+    A(r"  \begin{tabular}{llrrrrrr}")
     A(r"    \toprule")
-    A(r"    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) \\")
+    A(r"    Model & Condition & $\bar{x}$ (\%) & $\sigma$ & $\delta$ (pp) & R & "
+      r"\$/task & \$/correct \\")
     A(r"    \midrule")
     for i, model in enumerate([m for m in MODELS if m in data]):
         if i:
@@ -242,7 +244,10 @@ def main() -> int:
             else:
                 txt = f"${r['delta']:+.1f}$"
                 dl = f"\\textbf{{{txt}}}" if abs(r["delta"]) > thresh else txt
-            A(f"      & {r['label']} & {r['mean']:.1f} & {sd} & {dl} \\\\")
+            pt = "---" if r["per_task"] is None else f"{r['per_task']:.4f}"
+            pc = "---" if r["per_correct"] is None else f"{r['per_correct']:.4f}"
+            A(f"      & {r['label']} & {r['mean']:.1f} & {sd} & {dl} & "
+              f"{r['rounds']} & {pt} & {pc} \\\\")
     A(r"    \bottomrule")
     A(r"  \end{tabular}}")
     A(r"\end{table}")
@@ -269,39 +274,6 @@ def main() -> int:
     A(r"  \end{tabular}")
     A(r"\end{table}")
     A("")
-
-    # ---- cost and effort
-    costs = cost_rows(key)
-    if costs:
-        cheapest = min((c for c in costs if c["per_correct"]), key=lambda c: c["per_correct"], default=None)
-        A(r"\begin{table}[h]")
-        A(r"  \centering")
-        A(r"  \caption{Cost and effort per model, over completed rows across the")
-        A(r"  replicate rounds each model has. \emph{Rounds} is how many replicates")
-        A(r"  back that model's numbers; \emph{Turns} is mean agent cycles per task,")
-        A(r"  and token counts are means per task. Cost per correct answer divides")
-        A(r"  total spend by answers scored correct, so it prices the outcome rather")
-        A(r"  than the attempt.}")
-        A(r"  \label{tab:tier-cost}")
-        A(r"  \scriptsize")
-        A(r"  \setlength{\tabcolsep}{4pt}")
-        A(r"  \renewcommand{\arraystretch}{0.95}")
-        A(r"  \resizebox{\columnwidth}{!}{%")
-        A(r"  \begin{tabular}{lrrrrrrr}")
-        A(r"    \toprule")
-        A(r"    Model & Rounds & Tasks & Turns & In (k) & Out (k) & "
-          r"\$/task & \$/correct \\")
-        A(r"    \midrule")
-        for c in costs:
-            pc = "---" if c["per_correct"] is None else f"{c['per_correct']:.4f}"
-            if cheapest is not None and c is cheapest:
-                pc = f"\\textbf{{{pc}}}"
-            A(f"    {TEX_NAME[c['model']]} & {c['rounds']} & {c['n']} & {c['turns']:.1f} & "
-              f"{c['tin']/1000:.0f} & {c['tout']/1000:.1f} & {c['per_task']:.4f} & {pc} \\\\")
-        A(r"    \bottomrule")
-        A(r"  \end{tabular}}")
-        A(r"\end{table}")
-        A("")
 
     # ---- figure: per-axis panels, matching the paper's fig21b family.
     # Drawn by make_axis_delta_figure.py into fig-axis-delta.pdf rather than
