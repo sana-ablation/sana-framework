@@ -7,6 +7,8 @@ Supported providers (set AgentConfig.provider to one of these strings):
     "openai"        OpenAI API (chat completions) — needs OPENAI_API_KEY
     "openai_responses"  OpenAI API over /v1/responses — same key; required by
                     models that reject function tools on chat completions
+    "foundry"       Claude on Microsoft Foundry (Azure) — needs
+                    ANTHROPIC_FOUNDRY_API_KEY + _RESOURCE or _BASE_URL
     "gemini"        Google Gemini — needs GEMINI_API_KEY
     "ollama"        Ollama local server — needs ollama running at ollama_host
     "llamaapi"      LlamaAPI — needs LLAMA_API_KEY
@@ -41,6 +43,7 @@ def build_model(config: AgentConfig) -> Any:
         "anthropic":  _build_anthropic,
         "openai":     _build_openai,
         "openai_responses": _build_openai_responses,
+        "foundry":    _build_foundry,
         "gemini":     _build_gemini,
         "ollama":     _build_ollama,
         "llamaapi":   _build_llamaapi,
@@ -218,6 +221,63 @@ def _build_openai_responses(c: AgentConfig) -> Any:
     """
     return _build_openai(c, responses=True)
 
+
+def _build_foundry(c: AgentConfig) -> Any:
+    """Claude on Microsoft Foundry (Azure).
+
+    Strands has no Foundry provider, so this uses the repo-local subclass that
+    swaps in AsyncAnthropicFoundry and restores cache-read token counts.
+
+    Requires ANTHROPIC_FOUNDRY_API_KEY (or AgentConfig.foundry_api_key) plus
+    exactly one of ANTHROPIC_FOUNDRY_RESOURCE / ANTHROPIC_FOUNDRY_BASE_URL --
+    the SDK rejects both together.
+    """
+    from sana_evaluation.llm.anthropic_foundry_model import AnthropicFoundryModel
+
+    extras = dict(c.extra_model_kwargs or {})
+    params = dict(extras.pop("params", {}) or {})
+    client_args = dict(extras.pop("client_args", {}) or {})
+    params.update(extras)
+
+    for key, value, env in (
+        ("api_key", c.foundry_api_key, "ANTHROPIC_FOUNDRY_API_KEY"),
+        ("resource", c.foundry_resource, "ANTHROPIC_FOUNDRY_RESOURCE"),
+        ("base_url", c.foundry_base_url, "ANTHROPIC_FOUNDRY_BASE_URL"),
+    ):
+        resolved = value or os.getenv(env)
+        if resolved and key not in client_args:
+            client_args[key] = resolved
+    if client_args.get("resource") and client_args.get("base_url"):
+        # Not recoverable by preferring one: the SDK re-reads whichever argument
+        # is None from the environment, so dropping it here changes nothing and
+        # the failure resurfaces as a bare "mutually exclusive" ValueError from
+        # deep inside the client. Say which knobs to turn instead.
+        raise ValueError(
+            "Foundry resource and base_url are mutually exclusive, and both are set. "
+            "Unset one of ANTHROPIC_FOUNDRY_RESOURCE / ANTHROPIC_FOUNDRY_BASE_URL "
+            "(or AgentConfig.foundry_resource / foundry_base_url)."
+        )
+
+    # Claude Fable 5.1 and the rest of the 4.6+ family reject sampling
+    # parameters outright (HTTP 400), so temperature is passed only when the
+    # caller set a non-default value -- same rule as the OpenAI builder.
+    if "temperature" not in params and c.temperature not in (None, 0.0):
+        params["temperature"] = c.temperature
+
+    # Thinking is always on for Fable 5.1 and cannot be configured -- an explicit
+    # thinking block returns 400 -- so depth is controlled by effort instead.
+    # Thinking tokens bill as output at $50/MTok, which makes effort the main
+    # cost lever on this model. Default medium; override with SANA_CLAUDE_EFFORT
+    # or an explicit params["output_config"].
+    if "output_config" not in params:
+        effort = os.getenv("SANA_CLAUDE_EFFORT", "medium")
+        if effort:
+            params["output_config"] = {"effort": effort}
+
+    kwargs: dict[str, Any] = {"model_id": c.model_id, "max_tokens": c.max_tokens}
+    if params:
+        kwargs["params"] = params
+    return AnthropicFoundryModel(client_args=client_args, **kwargs)
 
 def _build_gemini(c: AgentConfig) -> Any:
     # Requires: GEMINI_API_KEY env var (or AgentConfig.gemini_api_key)

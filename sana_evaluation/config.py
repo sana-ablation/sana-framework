@@ -84,6 +84,11 @@ class AgentConfig:
 
     bedrock_region: Optional[str] = None      # falls back to AWS_DEFAULT_REGION
     anthropic_api_key: Optional[str] = None   # or set ANTHROPIC_API_KEY
+    # Microsoft Foundry (Azure) serves Claude; resource and base_url are
+    # mutually exclusive, and one of them is required.
+    foundry_api_key: Optional[str] = None     # or set ANTHROPIC_FOUNDRY_API_KEY
+    foundry_resource: Optional[str] = None    # or set ANTHROPIC_FOUNDRY_RESOURCE
+    foundry_base_url: Optional[str] = None    # or set ANTHROPIC_FOUNDRY_BASE_URL
     openai_api_key: Optional[str] = None      # or set OPENAI_API_KEY
     openai_base_url: Optional[str] = None     # for Azure / vLLM / compatible APIs
     openai_prompt_cache_key: Optional[str] = None        # optional stable OpenAI prompt cache key

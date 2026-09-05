@@ -55,6 +55,10 @@ MODEL_REGISTRY: Dict[str, Tuple[str, str]] = {
     # /v1/chat/completions whenever reasoning is active.
     "openai/gpt-5.6-luna":         ("openai_responses", "gpt-5.6-luna"),
 
+    # Claude on Microsoft Foundry (Azure). Foundry is Anthropic-hosted and uses
+    # the bare first-party model id -- no "anthropic." prefix (that is Bedrock).
+    "foundry/claude-fable-5-1":     ("foundry", "claude-fable-5-1"),
+
     # Google Gemini API
     "gemini/gemini-3.1-flash-lite": ("gemini", "gemini-3.1-flash-lite"),
 
@@ -80,6 +84,11 @@ MODEL_PRICING = {
         "openai/gpt-5.4": {"input": 2.50, "cache_read_input": 0.25, "output": 15.00},
         "openai/gpt-5.4-nano": {"input": 0.20, "cache_read_input": 0.02, "output": 1.25},
         "openai/gpt-5.6-luna": {"input": 0.20, "cache_read_input": 0.02, "output": 1.20},
+
+        # Claude on Microsoft Foundry bills through the Microsoft Marketplace at
+        # standard Anthropic API rates, so these are the first-party numbers.
+        "claude-fable-5-1": {"input": 10.00, "cache_read_input": 0.25, "output": 50.00},
+        "foundry/claude-fable-5-1": {"input": 10.00, "cache_read_input": 0.25, "output": 50.00},
 
         # Google Gemini API
         "gemini/gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50},
