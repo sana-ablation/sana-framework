@@ -128,7 +128,14 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 _MODES = {"naive", "standard", "ideal", "preloaded", "web"}
-_RESULT_MODES = {"naive", "ideal"}
+# search_results controls how much metadata rides along with each search hit --
+# minimal is dataset_id + s3_uri, rich adds the LLM description, the schema and a
+# data snippet. It is not one of the paper's axes, so it is named for what it
+# varies rather than borrowed from the naive/ideal tier vocabulary those axes use.
+# The old names remain accepted so existing scripts and result trees still
+# resolve.
+_RESULT_MODES = {"minimal", "rich"}
+_RESULT_MODE_ALIASES = {"naive": "minimal", "ideal": "rich"}
 _COMPUTATION_MODES = {"standard", "ideal"}
 
 
@@ -150,8 +157,9 @@ def _normalize_mode(value: Optional[str], default: str, label: str) -> str:
     return mode
 
 
-def _normalize_result_mode(value: Optional[str], default: str, label: str) -> str:
+def _normalize_result_mode(value: Optional[str], default: str = "rich", label: str = "search_results") -> str:
     mode = (value or default).strip().lower()
+    mode = _RESULT_MODE_ALIASES.get(mode, mode)
     if mode not in _RESULT_MODES:
         raise ValueError(
             f"Unsupported {label} mode '{value}'. Expected one of: {', '.join(sorted(_RESULT_MODES))}"
@@ -187,7 +195,7 @@ def _validate_search_mode_combination(
       falls back to *all* records when the submitted source matches none. The
       agent is handed gold node answers no matter what it retrieved.
     - profile=ideal: the gold reasoning chain is injected into the prompt.
-    - search_results=ideal: reshape_search_payload expects lake-shaped result
+    - search_results=rich: reshape_search_payload expects lake-shaped result
       fields that web results do not carry.
     """
     if no_s3 and search_tool_mode != "web":
@@ -203,7 +211,10 @@ def _validate_search_mode_combination(
     conflicts = [
         ("--computation_tool ideal", computation_tool_mode == "ideal"),
         ("--profile ideal", profile_mode == "ideal"),
-        ("--search_results ideal", search_results_mode == "ideal"),
+        # Normalised here so the deprecated spelling (--search_results ideal) is
+        # caught too; callers may pass either.
+        ("--search_results rich",
+         _normalize_result_mode(search_results_mode, "rich", "search_results") == "rich"),
     ]
     active = [label for label, hit in conflicts if hit]
     if active:
@@ -370,7 +381,7 @@ def build_mode_bundle(
 ) -> ModeBundle:
     """Build final tools/prompt/plugin toggles from multi-axis modes."""
     search_tool_mode = _normalize_mode(run_config.search_tool_mode, "standard", "search_tool")
-    search_results_mode = _normalize_result_mode(run_config.search_results_mode, "naive", "search_results")
+    search_results_mode = _normalize_result_mode(run_config.search_results_mode, "rich", "search_results")
     profile_mode = _normalize_mode(
         run_config.profile_mode or run_config.profile_mode,
         "standard",

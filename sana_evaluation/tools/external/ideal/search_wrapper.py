@@ -314,7 +314,7 @@ def _reshape_row(row: Dict[str, Any], mode: str) -> Dict[str, Any]:
     if uri:
         out["s3_uri"] = uri
 
-    if mode == "naive":
+    if mode == "minimal":
         return out
 
     desc = _DESC_BY_URI.get(uri or "", "")
@@ -334,17 +334,23 @@ def _reshape_row(row: Dict[str, Any], mode: str) -> Dict[str, Any]:
 
 
 def reshape_search_payload(payload: Any, mode: str) -> Any:
-    """Transform a search payload into naive/ideal result richness."""
-    normalized = str(mode or "naive").strip().lower()
-    if normalized not in {"naive", "ideal"}:
-        raise ValueError(f"Unsupported search_results mode '{mode}'. Expected: naive|ideal")
+    """Transform a search payload into minimal/rich result richness.
+
+    minimal keeps only dataset_id and s3_uri; rich adds the LLM description, the
+    schema fields and a data snippet. naive/ideal are accepted as the former
+    names of the same two tiers.
+    """
+    normalized = str(mode or "rich").strip().lower()
+    normalized = {"naive": "minimal", "ideal": "rich"}.get(normalized, normalized)
+    if normalized not in {"minimal", "rich"}:
+        raise ValueError(f"Unsupported search_results mode '{mode}'. Expected: minimal|rich")
 
     if not isinstance(payload, dict):
         return payload
     if "results" not in payload or not isinstance(payload["results"], list):
         return payload
 
-    if normalized == "ideal":
+    if normalized == "rich":
         _load_desc_cache()
         _load_snippet_cache()
         _load_schemas_cache()
@@ -390,7 +396,7 @@ def _compose_description(
             )
         else:
             notes.append(f"Result limit is fixed at {fixed_k}; callers cannot change it.")
-    if mode == "naive":
+    if mode == "minimal":
         notes.append("Each result returns dataset_id and s3_uri.")
     else:
         notes.append(
@@ -465,10 +471,11 @@ def build_search_tools(
     results_mode: str,
 ) -> List[DecoratedFunctionTool]:
     """Return search tools wrapped with k-control and payload shaping."""
-    mode = str(results_mode or "naive").strip().lower()
-    if mode not in {"naive", "ideal"}:
+    mode = str(results_mode or "rich").strip().lower()
+    mode = {"naive": "minimal", "ideal": "rich"}.get(mode, mode)
+    if mode not in {"minimal", "rich"}:
         raise ValueError(
-            f"Unsupported results_mode '{results_mode}'. Expected: naive|ideal"
+            f"Unsupported results_mode '{results_mode}'. Expected: minimal|rich"
         )
 
     wrapped: List[DecoratedFunctionTool] = []

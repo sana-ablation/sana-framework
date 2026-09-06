@@ -3,7 +3,7 @@
 
 This runner controls four orthogonal axes:
   - search_tool quality
-  - search_results richness
+  - search_results richness (minimal | rich)
   - profile style
   - computation_tool behavior
 """
@@ -39,7 +39,7 @@ base_eval.BatchRunner = ModeBatchRunner
 
 _AXIS_DEFAULTS = {
     "search_tool": "standard",
-    "search_results": "naive",
+    "search_results": "rich",
     "profile": "standard",
     "computation_tool": "standard",
 }
@@ -95,10 +95,14 @@ def _resolve_mode_axes(
     profile: Optional[str],
     computation_tool: Optional[str] = None,
 ) -> tuple[str, str, str, str]:
+    from sana_evaluation.agent_with_mode import _normalize_result_mode
+
     defaults = _AXIS_DEFAULTS
     return (
         search_tool or defaults["search_tool"],
-        search_results or defaults["search_results"],
+        # Canonicalised so the deprecated spellings do not produce a second set
+        # of variant directories for the same condition.
+        _normalize_result_mode(search_results, defaults["search_results"], "search_results"),
         profile or defaults["profile"],
         computation_tool or defaults["computation_tool"],
     )
@@ -435,9 +439,11 @@ def main() -> None:
     )
     parser.add_argument(
         "--search_results",
-        choices=["naive", "ideal"],
+        choices=["minimal", "rich", "naive", "ideal"],
         default=None,
-        help="Search result richness axis.",
+        help="How much metadata rides along with each search hit: minimal is "
+             "dataset_id + s3_uri, rich adds the LLM description, schema and a "
+             "data snippet (default: rich). naive/ideal are the former names.",
     )
     parser.add_argument(
         "--profile",

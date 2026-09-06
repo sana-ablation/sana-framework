@@ -57,7 +57,8 @@ class TestModeWrapper(unittest.TestCase):
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
         self.assertEqual(bundle.modes["search_tool"], "naive")
-        self.assertEqual(bundle.modes["search_results"], "naive")
+        # "naive" is the former name of the minimal tier and still accepted.
+        self.assertEqual(bundle.modes["search_results"], "minimal")
         self.assertEqual(bundle.modes["profile"], "naive")
         self.assertFalse(bundle.enable_skills)
         self.assertFalse(bundle.enable_stagnation)

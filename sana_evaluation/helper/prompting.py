@@ -72,6 +72,16 @@ def _compose_search_overlay_prompt(
     no_s3: bool = False,
 ) -> str:
     mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
+    # Web mode has no data lake, so it needs its own base rather than the lake
+    # one. The lake base advertises list_files/peek_file/read_file/query_file and
+    # devotes four sections to S3 file handling; appending the web overlay to it
+    # produced a prompt that listed eight tools the agent did not have and then
+    # said, two sections later, that they did not exist.
+    mode_specific_base = Path(base_prompt_path).with_name(
+        f"{Path(base_prompt_path).stem}_{mode}{Path(base_prompt_path).suffix}"
+    )
+    if mode_specific_base.is_file():
+        base_prompt_path = mode_specific_base
     base_prompt = load_prompt_text(base_prompt_path).rstrip()
     benchmark_name = (benchmark or "lakeqa").strip().lower()
     benchmark_overlay = _PROMPTS_DIR / f"search_{mode}_{benchmark_name}.txt"

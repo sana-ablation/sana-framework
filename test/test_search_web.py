@@ -184,17 +184,22 @@ class TestWebModeAxisGuard(unittest.TestCase):
         with self.assertRaises(ValueError):
             self._validate(profile_mode="ideal")
 
-    def test_rejects_ideal_results(self) -> None:
+    def test_rejects_rich_results(self) -> None:
+        with self.assertRaises(ValueError):
+            self._validate(search_results_mode="rich")
+
+    def test_rejects_the_deprecated_spelling_of_rich_results(self) -> None:
+        # "ideal" is the former name of "rich"; the guard must see through it.
         with self.assertRaises(ValueError):
             self._validate(search_results_mode="ideal")
 
     def test_reports_every_conflicting_axis_at_once(self) -> None:
         with self.assertRaises(ValueError) as ctx:
             self._validate(
-                computation_tool_mode="ideal", profile_mode="ideal", search_results_mode="ideal"
+                computation_tool_mode="ideal", profile_mode="ideal", search_results_mode="rich"
             )
         message = str(ctx.exception)
-        for label in ("--computation_tool ideal", "--profile ideal", "--search_results ideal"):
+        for label in ("--computation_tool ideal", "--profile ideal", "--search_results rich"):
             self.assertIn(label, message)
 
     def test_allows_the_supported_web_combination(self) -> None:
@@ -212,3 +217,38 @@ class TestWebModeAxisGuard(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestWebBasePrompt(unittest.TestCase):
+    """Web mode composes against its own base, not the data-lake one.
+
+    The lake base advertises list_files/peek_file/read_file/query_file and gives
+    four sections to S3 file handling. Appending the web overlay to it produced a
+    prompt that offered eight tools the agent did not have, then denied them two
+    sections later.
+    """
+
+    def _base_of(self, mode: str, **kw) -> str:
+        from sana_evaluation.helper.prompting import compose_managed_prompt
+        return compose_managed_prompt(mode, **kw).split("## AVAILABLE SEARCH TOOLS")[0]
+
+    def test_web_base_advertises_no_lake_tools(self) -> None:
+        base = self._base_of("web", no_s3=True)
+        for tool in ("list_files", "peek_file", "read_file",
+                     "query_file", "grep_file", "parse_xml_records"):
+            self.assertNotIn(tool, base, f"{tool} still advertised to the web arm")
+
+    def test_web_base_still_offers_what_the_arm_does_have(self) -> None:
+        base = self._base_of("web", no_s3=True)
+        for tool in ("download", "execute_code", "submit_answer"):
+            self.assertIn(tool, base)
+
+    def test_lake_modes_keep_the_lake_base(self) -> None:
+        for mode in ("ideal", "standard", "naive"):
+            self.assertIn("read_file", self._base_of(mode), f"{mode} lost its lake tools")
+
+    def test_web_base_drops_the_s3_specific_guidance(self) -> None:
+        base = self._base_of("web", no_s3=True)
+        self.assertNotIn("TOOL COST LADDER", base)
+        self.assertNotIn("DATASET TYPES", base)
+        self.assertNotIn("directly on S3", base)
