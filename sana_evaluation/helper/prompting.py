@@ -54,11 +54,14 @@ def load_prompt_text(path: str | Path) -> str:
 
 
 def search_overlay_name(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
-    """Return the overlay stem for a search mode. --no-s3 rewrites the web overlay."""
-    mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
-    if no_s3 and mode == "web":
-        return "web_nos3"
-    return mode
+    """Return the overlay stem for a search mode.
+
+    ``no_s3`` is accepted and ignored: web mode has a single overlay now. It used
+    to select between an excerpts-only variant (web search, no fetch) and the
+    fetch-and-compute one; only the latter survives, and web mode implies it.
+    """
+    del no_s3
+    return _normalize_mode(search_tool_mode, "naive", "search_tool")
 
 
 def _compose_search_overlay_prompt(

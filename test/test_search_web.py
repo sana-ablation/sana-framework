@@ -153,7 +153,7 @@ class TestWebSearchMode(unittest.TestCase):
         names = [t.tool_spec["name"] for t in bundle.tools]
         self.assertEqual(names, ["search_web"])
         self.assertIn("`search_web`", bundle.system_prompt)
-        self.assertIn("NOT data-lake sources", bundle.system_prompt)
+        self.assertIn("There is no data lake in this run", bundle.system_prompt)
         self.assertNotIn("search_value", bundle.system_prompt)
         self.assertNotIn("search_ideal", bundle.system_prompt)
 

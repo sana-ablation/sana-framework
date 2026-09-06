@@ -334,10 +334,16 @@ class TestPrompt(unittest.TestCase):
         self.assertIn("download", prompt)
         self.assertIn("execute_code", prompt)
 
-    def test_default_web_prompt_still_forbids_download(self) -> None:
-        prompt = compose_managed_prompt("web", no_s3=False)
+    def test_web_prompt_is_the_same_with_or_without_no_s3(self) -> None:
+        # Web mode has one overlay now. The excerpts-only variant (web search,
+        # no fetch) was removed, and no_s3 no longer selects between two.
+        self.assertEqual(
+            compose_managed_prompt("web", no_s3=False),
+            compose_managed_prompt("web", no_s3=True),
+        )
 
-        self.assertIn("cannot open, download", prompt)
+    def test_web_prompt_describes_fetch_and_compute(self) -> None:
+        self.assertIn("FETCH AND COMPUTE", compose_managed_prompt("web", no_s3=False))
 
 
 if __name__ == "__main__":
@@ -359,7 +365,14 @@ class TestRunConfigWiring(unittest.TestCase):
             benchmark="lakeqa",
             no_s3=no_s3,
         )
-        return build_mode_bundle(cfg, data_tools=build_data_tools(no_s3=no_s3))
+        # Mirror the production call site: the tool surface depends on the
+        # search mode too, not only on no_s3.
+        return build_mode_bundle(
+            cfg,
+            data_tools=build_data_tools(
+                no_s3=no_s3, search_tool_mode=cfg.search_tool_mode
+            ),
+        )
 
     def test_no_s3_bundle_uses_the_fetch_and_compute_prompt(self) -> None:
         bundle = self._bundle(no_s3=True)
@@ -373,10 +386,17 @@ class TestRunConfigWiring(unittest.TestCase):
         self.assertIn("download", names)
         self.assertIn("search_web", names)
 
-    def test_web_without_no_s3_keeps_the_excerpts_only_prompt(self) -> None:
-        bundle = self._bundle(no_s3=False)
+    def test_web_drops_the_lake_tools_even_without_no_s3(self) -> None:
+        # The lake tools reject an http(s) URL and web mode has no lake search
+        # to find lake sources with, so offering them is offering tools that
+        # cannot work -- and contradicts the overlay telling the agent the lake
+        # is absent.
+        names = _tool_names(self._bundle(no_s3=False).tools)
 
-        self.assertNotIn("FETCH AND COMPUTE", bundle.system_prompt)
+        self.assertNotIn("read_file", names)
+        self.assertNotIn("query_file", names)
+        self.assertIn("search_web", names)
+        self.assertIn("FETCH AND COMPUTE", self._bundle(no_s3=False).system_prompt)
 
 
 class TestLocalFileNaming(_SandboxTestCase):

@@ -341,14 +341,19 @@ _S3_DATA_TOOLS = (
 )
 
 
-def build_data_tools(*, no_s3: bool = False) -> List[Any]:
+def build_data_tools(*, no_s3: bool = False, search_tool_mode: Optional[str] = None) -> List[Any]:
     """Return the core data-manipulation tool surface.
 
-    Under ``no_s3`` every S3-backed tool is dropped rather than left in place to
-    fail at call time, and ``download`` is swapped for the web fetcher gated by
-    the search_web allowlist. What remains is fetch-then-compute.
+    Without the lake, every S3-backed tool is dropped rather than left in place
+    to fail at call time, and ``download`` is swapped for the web fetcher. What
+    remains is fetch-then-compute.
+
+    Web search implies this. The lake tools reject an ``http(s)`` URL, and web
+    mode has no lake search to find lake sources with, so leaving them in place
+    only offers the agent tools that cannot work -- and would contradict the web
+    overlay, which tells it there is no data lake.
     """
-    if no_s3:
+    if no_s3 or _normalize_mode(search_tool_mode, "naive", "search_tool") == "web":
         return [download_web, execute_code, submit_answer]
     return [
         list_files, peek_file, peek_multiple, read_file, grep_file,
@@ -724,6 +729,7 @@ class DataLakeAgent:
         # Core data-manipulation tools shared across all conditions
         _data_tools = build_data_tools(
             no_s3=bool(getattr(self.run_config, "no_s3", False)),
+            search_tool_mode=getattr(self.run_config, "search_tool_mode", None),
         )
 
         task_trailer = ""

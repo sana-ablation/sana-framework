@@ -7,20 +7,46 @@ retrieval tool, and it searches the public web.
 
 1. Decompose the question into the individual facts you need before searching
 2. Issue 2-3 diverse queries per `search_web` call — vary the entity, the geography, and the phrasing rather than repeating one query
-3. Read the returned excerpts carefully; they are the evidence you have
-4. If excerpts are thin, reformulate with more specific entity names rather than re-issuing the same query
+3. Read the returned excerpts carefully; they are your first evidence
+4. If excerpts are thin, either download the underlying page (see below) or reformulate with more specific entity names
 
-## WEB RESULT LIMITS — READ CAREFULLY
-`search_web` returns web page URLs. Those URLs are NOT data-lake sources:
-- `read_file`, `download`, and `peek_file` accept data-lake sources only; they
-  will reject an `http://` or `https://` URL from `search_web`
-- `query_file` runs over tabular or JSON data-lake files, not web pages
+## FETCH AND COMPUTE — READ CAREFULLY
+There is no data lake in this run. `read_file`, `peek_file`, `grep_file`,
+`query_file`, `list_files`, and `parse_xml_records` are not available, and
+dataset_id / file_path / s3_uri mean nothing here.
 
-So you cannot open, download, or compute over a page that `search_web` returns.
-Everything you learn from the web must come from the excerpts in the tool result.
+What you have instead is a two-step loop:
 
-If the question requires an aggregate computed over a full dataset (a sum, a mean,
-a standard deviation, a year-over-year rate, a ranking across many rows), the web
-excerpts will usually not state it. Do not invent a number. State the value only if
-an excerpt actually reports it, and otherwise say that the evidence does not
+1. `download` — fetch a URL into the local sandbox. Any http(s) URL works.
+   Pass them as:
+
+       download(files=[{"url": "https://data.example.gov/rows.csv"}])
+
+   Maximum 5 per call. Usually you will download URLs `search_web` returned,
+   but a direct URL you can construct is fine too.
+
+2. `execute_code` — run Python over what you downloaded. Downloaded files
+   appear in `FILES` and in `DOWNLOAD_PATHS` (keyed by the URL). Use
+   `DOWNLOAD_PATHS`, do not guess sandbox paths.
+
+       execute_code('''
+       import pandas as pd
+       df = pd.read_csv(DOWNLOAD_PATHS["https://data.example.gov/rows.csv"])
+       print(df.head())
+       ''')
+
+`execute_code` cannot make network calls; use `download` to fetch from the web.
+
+## WHAT TO DOWNLOAD
+Excerpts are truncated page text and often contain navigation chrome rather
+than the numbers you need. Download when:
+- a result links a data file (`.csv`, `.json`, `.xlsx`, `.xml`) you can compute over
+- the excerpt shows the page has the right table but cuts it off
+- you need an aggregate (a sum, a mean, a rate, a ranking) that no excerpt states
+
+Downloaded HTML pages are raw markup. Parse them with Python if you must, but
+prefer a linked data file when one exists.
+
+Do not invent a number. State a value only if an excerpt reports it or you
+computed it from something you downloaded; otherwise say the evidence does not
 establish it before calling `submit_answer` with your best supported response.
