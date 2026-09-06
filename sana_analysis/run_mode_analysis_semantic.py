@@ -48,6 +48,7 @@ from __future__ import annotations
 import argparse
 import csv
 import datetime as dt
+import glob
 import json
 import math
 import re
@@ -70,19 +71,87 @@ from sana_analysis.running_analysis.discovery_metrics import (
     make_task_stem_key,
     _normalize_source_id,
 )
-from sana_analysis.running_analysis.reasoning_density import _BINS as _REASONING_DENSITY_BINS
-from sana_analysis.running_analysis.reasoning_density import _assign_bin as _assign_reasoning_density_bin
-from sana_analysis.running_analysis.reasoning_density import load_task_gold_counts
 from sana_analysis.running_analysis.search_bottleneck import (
     SEARCH_BOTTLENECK_CUTOFFS,
     compute_search_bottleneck,
     generate_search_bottleneck_figures,
     write_search_bottleneck_csv,
 )
-from sana_analysis.running_analysis.search_depth import _BINS as _SEARCH_DEPTH_BINS
-from sana_analysis.running_analysis.search_depth import _assign_bin as _assign_search_depth_bin
-from sana_analysis.running_analysis.tool_error_analysis import _DATA_TOOLS
 from sana_analysis.report_generator.run_mode_delta_figures import generate_delta_figures
+
+
+# --- slicing axes -----------------------------------------------------------
+# These lived in three modules of their own (search_depth, reasoning_density,
+# tool_error_analysis). Each exported a compute_* entry point that nothing
+# called, because this pipeline reimplemented all three internally as
+# build_search_depth_curves, build_reasoning_density_curves and its own tool
+# accounting -- so the modules were ~490 lines to deliver the 40 below. They are
+# defined here, next to their only consumer, rather than collected into a shared
+# module: bins over search-call counts, bins over gold-dataset counts, and a set
+# of tool names have nothing in common but the word "constant".
+
+# Bins over the number of search calls a task made.
+_SEARCH_DEPTH_BINS = [
+    ("1", lambda n: n == 1),
+    ("2-3", lambda n: 2 <= n <= 3),
+    ("4-6", lambda n: 4 <= n <= 6),
+    ("7-10", lambda n: 7 <= n <= 10),
+    ("11-30", lambda n: 11 <= n <= 30),
+]
+
+
+def _assign_search_depth_bin(search_calls: int) -> str:
+    for label, pred in _SEARCH_DEPTH_BINS:
+        if pred(search_calls):
+            return label
+    return "11-30"
+
+
+# Bins over how many gold datasets a task requires -- a proxy for how much
+# evidence an answer has to combine.
+_REASONING_DENSITY_BINS = [
+    ("<=2", lambda n: n <= 2),
+    ("3-4", lambda n: 3 <= n <= 4),
+    ("5-7", lambda n: 5 <= n <= 7),
+    ("8-10", lambda n: 8 <= n <= 10),
+    (">10", lambda n: n > 10),
+]
+
+
+def _assign_reasoning_density_bin(n_docs: int) -> str:
+    for label, pred in _REASONING_DENSITY_BINS:
+        if pred(n_docs):
+            return label
+    return ">10"
+
+
+def load_task_gold_counts(tasks_dir: str) -> dict[str, int]:
+    """Return {task_stem_key: len(datasets_used)} for all task JSON files.
+
+    Keyed by both the full path and the stem, since callers hold either.
+    """
+    counts: dict[str, int] = {}
+    for path in glob.glob(str(Path(tasks_dir) / "**" / "*.json"), recursive=True):
+        with open(path) as handle:
+            task = json.load(handle)
+        value = len(task.get("datasets_used", []))
+        counts[path] = value
+        counts[make_task_stem_key(path)] = value
+    return counts
+
+
+# Tools that touch data, as opposed to planning or answer submission.
+_DATA_TOOLS = {
+    "query_file",
+    "execute_code",
+    "peek_file",
+    "peek_files",
+    "peek_multiple",
+    "grep_file",
+    "read_file",
+    "download",
+    "list_files",
+}
 
 
 SEMANTIC_BUCKETS = [

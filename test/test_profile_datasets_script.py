@@ -11,7 +11,7 @@ from tempfile import TemporaryDirectory
 
 def _load_profile_datasets_module():
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "scripts" / "profile_datasets.py"
+    module_path = repo_root / "dataindexing" / "cli" / "profile_datasets.py"
     spec = importlib.util.spec_from_file_location("_test_profile_datasets_module", module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader

@@ -30,7 +30,7 @@ except Exception:  # pragma: no cover
     def tqdm(iterable=None, **_kwargs):
         return iterable if iterable is not None else _NullTqdm()
 
-from scripts import profile_datasets
+from dataindexing.cli import profile_datasets
 
 
 class _NullTqdm:

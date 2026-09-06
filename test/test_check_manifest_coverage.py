@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 def _load_coverage_module():
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "scripts" / "check_manifest_coverage.py"
+    module_path = repo_root / "dataindexing" / "cli" / "check_manifest_coverage.py"
     spec = importlib.util.spec_from_file_location("_test_check_manifest_coverage", module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader

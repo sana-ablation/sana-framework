@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 def _load_merge_module():
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "scripts" / "merge_table_descriptions.py"
+    module_path = repo_root / "dataindexing" / "cli" / "merge_table_descriptions.py"
     spec = importlib.util.spec_from_file_location("_test_merge_table_descriptions", module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader

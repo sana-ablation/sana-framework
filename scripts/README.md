@@ -18,21 +18,16 @@ that file is the only thing `run_experiment.sh` needs to know about it.
 
 ## Preparing the corpus and artifacts
 
-These generate the offline artifacts the ideal-mode tools read at runtime. They
-are run once per benchmark corpus, not per experiment.
+Moved to `dataindexing/cli/`, which already owns offline artifact generation.
+The five-stage pipeline now has one entry point instead of five scripts that
+each hardcoded a lakeqa artifact path:
 
-| script | produces |
-|---|---|
-| `profile_datasets.py` | `table_profiles.jsonl` |
-| `sample_unavailable_profiles.py` | retry pass over datasets the profiler could not reach |
-| `build_task_file_manifest.py` | `task_file_manifest.jsonl` |
-| `build_task_manifest_descriptions.py` | `task_file_manifest_descriptions.jsonl` |
-| `merge_table_descriptions.py` | `descriptions.jsonl` |
-| `build_snippet_jsonl.py` | `snippets.jsonl` |
-| `check_manifest_coverage.py` | coverage audit over the four above |
+    python -m dataindexing.cli.benchmark_artifacts --benchmark lakeqa all
 
-The last five run in that order; each consumes the previous one's output. See
-`dataindexing/README.md`, which owns the upstream parquet stages.
+Stages: `manifest`, `describe`, `merge-descriptions`, `snippets PARQUET`,
+`check`. `all` runs every stage but `snippets`, whose input parquet is not
+derivable from the benchmark name. Dataset profiling stays alongside them as
+`dataindexing/cli/profile_datasets.py`.
 
 ## What is deliberately not here
 

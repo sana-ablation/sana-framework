@@ -82,3 +82,17 @@ from dataindexing.hybrid_search import api as _api
 The exported API includes `setup_hybrid()`, `setup_sparse()`,
 `hybrid_search()`, `hybrid_search_schema()`, `sparse_search()`,
 `sparse_search_schema()`, and `hybrid_search_with_reranker()`.
+
+## Benchmark artifacts
+
+The offline artifacts the ideal-mode tools read at runtime are built by one CLI:
+
+    python -m dataindexing.cli.benchmark_artifacts --benchmark lakeqa all
+
+Stages run in dependency order -- `manifest` -> `describe` ->
+`merge-descriptions` -> `check` -- each consuming the previous one's output.
+`snippets PARQUET` is separate because its input is a parquet path the caller
+supplies. Arguments after the stage name pass through and override the defaults
+derived from `--benchmark`.
+
+These moved here from `scripts/`, which now holds only experiment execution.
