@@ -42,3 +42,18 @@ other-benchmarks
 extras/
 pytest*
 experiments/README.md
+
+# Experiment artefacts. The line is generated vs authored: run scripts, task
+# manifests, plans and the generators are tracked so a sweep can be reproduced;
+# everything they emit is not. results*/ and logs*/ above already cover the
+# result trees.
+experiments/**/*.log
+experiments/**/*.pdf
+experiments/**/*.png
+experiments/**/per_task.csv
+experiments/**/summary.csv
+experiments/**/results.tex
+experiments/**/fig-*.pdf
+experiments/**/fig-*.png
+experiments/build_pdf.pdf
+experiments/lakeqa-subset20b-results.pdf

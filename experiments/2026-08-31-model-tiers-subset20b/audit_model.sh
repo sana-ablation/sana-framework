@@ -25,6 +25,11 @@ SHIM=${SHIM:-tmp/audit-shim}
 # thinking and returns truncated JSON, which surfaces as an APIConnectionError
 # rather than as the length error it is.
 ROW_TOKENS=${ROW_TOKENS:-1500}
+# Optional extended-regex filter on variant directory names. Cells added to a
+# model that is already audited must not drag its finished cells back through
+# the judge: the judge is not deterministic, so re-running it would move numbers
+# that are already in the tables. Default matches everything.
+VARIANTS=${VARIANTS:-.}
 
 [ -f "$AUDITOR" ] || { echo "auditor not found: $AUDITOR" >&2; exit 1; }
 
@@ -39,16 +44,30 @@ for ROUND in "$@"; do
   fi
 
   S=$SHIM/r$ROUND
-  rm -rf "$S"; mkdir -p "$S/src/modes" "$S/logs/modes"
-  cp -R "$SRC/modes/$MODEL" "$S/src/modes/$MODEL"
-  [ -d "$LOG/modes/$MODEL" ] && cp -R "$LOG/modes/$MODEL" "$S/logs/modes/$MODEL"
+  rm -rf "$S"; mkdir -p "$S/src/modes/$MODEL" "$S/logs/modes/$MODEL"
+  matched=0
+  for V in "$SRC/modes/$MODEL"/*/; do
+    V=$(basename "$V")
+    echo "$V" | grep -Eq "$VARIANTS" || continue
+    cp -R "$SRC/modes/$MODEL/$V" "$S/src/modes/$MODEL/$V"
+    [ -d "$LOG/modes/$MODEL/$V" ] && cp -R "$LOG/modes/$MODEL/$V" "$S/logs/modes/$MODEL/$V"
+    matched=$((matched + 1))
+  done
+  if [ "$matched" = 0 ]; then
+    echo "round $ROUND: no variant matched /$VARIANTS/ -- skipping"; continue
+  fi
 
   echo "=== round $ROUND: auditing $MODEL ($(find "$S/src" -name eval_results.csv | wc -l | tr -d ' ') files) ==="
   $PY "$AUDITOR" --source "$S/src" --logs "$S/logs" --output "$S/out" \
       --row-max-output-tokens "$ROW_TOKENS"
 
-  mkdir -p "$OUT/modes"
-  rm -rf "${OUT:?}/modes/${MODEL:?}"
-  cp -R "$S/out/modes/$MODEL" "$OUT/modes/$MODEL"
+  # Copy variant-by-variant: replacing the whole model directory would delete
+  # the cells this run deliberately did not audit.
+  mkdir -p "$OUT/modes/$MODEL"
+  for V in "$S/out/modes/$MODEL"/*/; do
+    V=$(basename "$V")
+    rm -rf "${OUT:?}/modes/${MODEL:?}/${V:?}"
+    cp -R "$S/out/modes/$MODEL/$V" "$OUT/modes/$MODEL/$V"
+  done
   echo "=== round $ROUND -> $OUT/modes/$MODEL ==="
 done
