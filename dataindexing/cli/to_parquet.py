@@ -28,9 +28,22 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 from tqdm.asyncio import tqdm
 
-from dataindexing.sources.s3 import S3Config, parse_s3_uri, s3_fetch
+from dataindexing.sources.s3 import S3Config, _client_kwargs, parse_s3_uri, s3_fetch
 
 BUCKET = "lakeqa-yc4103-datalake"
+
+# The shipped table schemas address objects as datagov/<dataset>/v1/files/<name>,
+# but the bucket has no version segment: every one of its keys is
+# datagov/<dataset>/files/<name>. Checked against the live bucket -- 0 of 4000
+# keys contain "/v1/", while 4205 of 4205 schema entries do. The eval-side tools
+# never hit this because they build keys from (dataset_id, file_path) rather than
+# from the schema's s3_key.
+_VERSION_SEGMENT = re.compile(r"/v\d+/(?=files/)")
+
+
+def _bucket_key(s3_key: str) -> str:
+    """Map a schema s3_key onto the key layout the bucket actually uses."""
+    return _VERSION_SEGMENT.sub("/", s3_key or "")
 TOKEN_PATTERN = re.compile(r'(?u)\b[a-zA-Z_]\w+\b')
 YEAR_PATTERN = re.compile(r'\b(14|15|16|17|18|19|20)\d{2}\b')
 
@@ -46,7 +59,7 @@ def load_tables(jsonl_path: Path) -> list[dict]:
             rec = json.loads(line)
             for table in rec.get("tables", []):
                 tables.append({
-                    "dataset_uri": f"s3://{BUCKET}/{table['s3_key']}",
+                    "dataset_uri": f"s3://{BUCKET}/{_bucket_key(table['s3_key'])}",
                     "metadata": table["s3_key"].replace("/", " ").replace(".csv", "").replace(".json", "").replace(".txt", ""),
                     "columns": json.dumps(table["columns"]) if table.get("columns") is not None else None,
                     "table_kind": table.get("table_kind"),
@@ -59,7 +72,9 @@ async def fetch_batch(batch: list[dict], cfg: S3Config) -> list[dict | None]:
     sem = asyncio.Semaphore(cfg.max_async)
     session = aioboto3.Session()
 
-    async with session.client("s3", region_name=cfg.region) as s3:
+    # Same unsigned/signed decision as sources/s3.py -- this module builds its own
+    # client rather than going through fetch_bytes, so it has to make it too.
+    async with session.client("s3", region_name=cfg.region, **_client_kwargs(cfg)) as s3:
 
         async def fetch_one(entry: dict) -> dict | None:
             bucket, key = parse_s3_uri(entry["dataset_uri"])
