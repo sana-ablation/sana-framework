@@ -12,6 +12,12 @@
 #   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep bootstrap
 #   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep run
 #   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep pull
+#   REMOTE_HOST=box ./scripts/run_experiment.sh "sweep-a sweep-b" queue
+#
+# queue runs several experiments back to back in one session, sequentially --
+# overlapping sweeps is what OOM-killed this box, since the search cells load a
+# ~3.7 GB embedding model per worker. stop ends the session and the eval workers
+# it started; killing the session alone leaves them running and writing rows.
 #
 # Contract: an experiment is any directory under experiments/ that supplies
 # inputs/run.sh. That file is the only thing this script needs to know about
@@ -44,7 +50,7 @@ usage () {
   # the usage text cannot drift from the file's length.
   awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"
   echo
-  echo "commands: bootstrap | run | status | logs | pull | stop"
+  echo "commands: bootstrap | run | queue | status | logs | pull | stop"
   echo
   echo "experiments:"
   for d in "$EXP_ROOT"/*/; do
@@ -54,9 +60,14 @@ usage () {
 }
 
 [ -z "$EXP" ] || [ "$CMD" = help ] && usage 0
-[ -d "$EXP_ROOT/$EXP" ] || die "no such experiment: $EXP"
+# queue takes a space-separated list; every other command takes one experiment
+# and validates it here.
+if [ "$CMD" != queue ]; then
+  [ -d "$EXP_ROOT/$EXP" ] || die "no such experiment: $EXP"
+fi
 DRIVER="$EXP_ROOT/$EXP/inputs/run.sh"
-if [ ! -f "$DRIVER" ] && [ "$CMD" != pull ] && [ "$CMD" != status ]; then
+if [ ! -f "$DRIVER" ] && [ "$CMD" != pull ] && [ "$CMD" != status ] \
+   && [ "$CMD" != queue ] && [ "$CMD" != stop ]; then
   die "$EXP has no inputs/run.sh -- that file is the driver this script invokes"
 fi
 
@@ -114,6 +125,43 @@ Use '$0 $EXP status' to check it, or '$0 $EXP stop' to end it first."
   fi
   ;;
 
+queue)
+  # Run several experiments back to back in ONE session, unattended.
+  #
+  #   ./scripts/run_experiment.sh "a b c" queue
+  #
+  # Sequential on purpose. Two sweeps at PARALLEL=4 double memory pressure, and
+  # the search cells load a ~3.7 GB embedding model per worker -- that is what
+  # OOM-killed this box repeatedly when grids overlapped. It also means a queued
+  # sweep inherits a machine in a known state rather than one still unwinding.
+  #
+  # Each experiment keeps its own driver and its own results tree; the queue only
+  # decides the order.
+  for e in $EXP; do
+    [ -f "$EXP_ROOT/$e/inputs/run.sh" ] || die "queued experiment '$e' has no inputs/run.sh"
+  done
+  QUEUE_SESSION="${QUEUE_SESSION:-exp-queue}"
+  script="set -u\n"
+  for e in $EXP; do
+    script="${script}echo \"=== queue: $e \$(date -u +%H:%M:%SZ) ===\"\n"
+    script="${script}./experiments/$e/inputs/run.sh > experiments/$e/run.log 2>&1\n"
+    script="${script}echo \"=== queue: $e done rc=\$? \$(date -u +%H:%M:%SZ) ===\"\n"
+  done
+  script="${script}echo QUEUE COMPLETE\n"
+
+  if [ -n "$REMOTE_HOST" ]; then
+    if ssh_cmd "tmux has-session -t $QUEUE_SESSION 2>/dev/null"; then
+      die "queue session '$QUEUE_SESSION' already running; '$0 \"$EXP\" stop' to end it"
+    fi
+    ssh_cmd "cd $REMOTE_DIR && printf '%b' '$script' > .queue.sh && chmod +x .queue.sh && \
+             tmux new-session -d -s $QUEUE_SESSION 'cd $REMOTE_DIR && ./.queue.sh > queue.log 2>&1'"
+    say "queued [$EXP] in session '$QUEUE_SESSION' on $REMOTE_HOST"
+    say "follow with: REMOTE_HOST=$REMOTE_HOST QUEUE_SESSION=$QUEUE_SESSION $0 '$EXP' logs"
+  else
+    ( cd "$REPO" && printf '%b' "$script" > .queue.sh && chmod +x .queue.sh && ./.queue.sh )
+  fi
+  ;;
+
 status)
   if [ -n "$REMOTE_HOST" ]; then
     ssh_cmd "tmux ls 2>/dev/null | grep '^$SESSION' || echo '(no session $SESSION)'; \
@@ -152,11 +200,34 @@ pull)
   ;;
 
 stop)
-  if [ -n "$REMOTE_HOST" ]; then
-    ssh_cmd "tmux kill-session -t $SESSION 2>/dev/null && echo killed || echo '(no session)'"
-  else
-    die "stop is remote-only; interrupt the local run instead"
+  # Kill the session AND the eval processes it started. Killing only the session
+  # leaves the python workers orphaned: they keep running, keep holding S3
+  # connections and several GB of embedding model each, and keep writing rows
+  # into the results tree -- so a "stopped" sweep silently carries on and the
+  # next run contends with it for memory.
+  [ -n "$REMOTE_HOST" ] || die "stop is remote-only; interrupt the local run instead"
+  QUEUE_SESSION="${QUEUE_SESSION:-exp-queue}"
+  ssh_cmd "SESSIONS='$SESSION $QUEUE_SESSION' REMOTE_DIR='$REMOTE_DIR' bash -s" <<'REMOTE'
+set -u
+for s in $SESSIONS; do
+  if tmux has-session -t "$s" 2>/dev/null; then
+    tmux kill-session -t "$s"; echo "killed session $s"
   fi
+done
+# Match by PID, never by pattern: a pkill -f on the eval module name also
+# matches this very command line and would kill the shell running it.
+pids=$(pgrep -f 'run_mode[_]eval' | tr '\n' ' ')
+if [ -n "$pids" ]; then
+  kill $pids 2>/dev/null
+  sleep 3
+  still=$(pgrep -f 'run_mode[_]eval' | tr '\n' ' ')
+  if [ -n "$still" ]; then kill -9 $still 2>/dev/null; echo "force-killed stragglers: $still"; fi
+  echo "stopped eval workers: $pids"
+else
+  echo "no eval workers running"
+fi
+rm -f "$REMOTE_DIR/.queue.sh"
+REMOTE
   ;;
 
 *) usage 1 ;;

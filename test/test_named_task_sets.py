@@ -32,10 +32,10 @@ def _pinned_profiles_root():
 
 class TestResolution:
     def test_short_name_resolves_to_the_set_path(self):
-        assert resolve_task_set("nano20", "lakeqa") == "benchmarks/lakeqa/nano20/tasks"
+        assert resolve_task_set("tasks_20_subset", "lakeqa") == "benchmarks/lakeqa/tasks_20_subset/tasks"
 
     def test_a_path_is_used_unchanged(self):
-        p = "benchmarks/lakeqa/nano20/tasks"
+        p = "benchmarks/lakeqa/tasks_20_subset/tasks"
         assert resolve_task_set(p, "lakeqa") == p
 
     def test_none_falls_back_to_the_benchmark_default(self):
@@ -43,15 +43,15 @@ class TestResolution:
         assert resolve_task_set(None, "kramabench").startswith("benchmarks/kramabench/")
 
     def test_unknown_name_lists_what_is_available(self):
-        with pytest.raises(ValueError, match="nano20"):
+        with pytest.raises(ValueError, match="tasks_20_subset"):
             resolve_task_set("does-not-exist", "lakeqa")
 
-    def test_nano20_is_discoverable(self):
-        assert "nano20" in _named_task_sets("lakeqa")
+    def test_tasks_20_subset_is_discoverable(self):
+        assert "tasks_20_subset" in _named_task_sets("lakeqa")
 
 
 class TestProfileSharing:
-    @pytest.mark.parametrize("task_set", ["tasks-mini", "nano20"])
+    @pytest.mark.parametrize("task_set", ["tasks-mini", "tasks_20_subset"])
     def test_every_set_resolves_to_the_same_shared_profiles(self, task_set):
         root, rel = _profile_location_from_task(
             f"benchmarks/lakeqa/{task_set}/tasks/k-3-d-2/task_11.json"
@@ -62,7 +62,7 @@ class TestProfileSharing:
     def test_resolution_survives_a_path_prefix(self):
         # Sweeps run from a copied tree on a remote box; the prefix must not matter.
         root, rel = _profile_location_from_task(
-            "tmp/staging/benchmarks/lakeqa/nano20/tasks/k-5-d-3/task_13.json"
+            "tmp/staging/benchmarks/lakeqa/tasks_20_subset/tasks/k-5-d-3/task_13.json"
         )
         assert root == DEFAULT_PROFILES_ROOT
         assert rel == Path("k-5-d-3/task_13.json")
@@ -75,7 +75,7 @@ class TestProfileSharing:
 
 
 class TestNano20Contents:
-    ROOT = Path("benchmarks/lakeqa/nano20")
+    ROOT = Path("benchmarks/lakeqa/tasks_20_subset")
 
     def test_manifest_and_tree_agree(self):
         ids = json.loads((self.ROOT / "manifest.json").read_text())
@@ -90,6 +90,6 @@ class TestNano20Contents:
         ids = json.loads((self.ROOT / "manifest.json").read_text())
         for task_id in ids:
             root, rel = _profile_location_from_task(
-                f"benchmarks/lakeqa/nano20/tasks/{task_id}.json"
+                f"benchmarks/lakeqa/tasks_20_subset/tasks/{task_id}.json"
             )
             assert (root / rel).is_file(), f"no runtime profile for {task_id}"

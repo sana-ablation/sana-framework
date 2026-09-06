@@ -143,7 +143,7 @@ def _default_task_set_for_benchmark(benchmark: str) -> str:
 def resolve_task_set(task_set: Optional[str], benchmark: str) -> str:
     """Accept a named set as well as a path.
 
-    ``--task-set nano20`` is shorthand for ``benchmarks/<benchmark>/nano20/tasks``.
+    ``--task-set tasks_20_subset`` is shorthand for ``benchmarks/<benchmark>/tasks_20_subset/tasks``.
     A value containing a separator, or naming a directory that exists, is used
     as-is, so paths keep working unchanged.
     """

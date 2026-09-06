@@ -15,9 +15,9 @@ relative to the set's ``tasks/`` directory, and runtime_profile_store resolves
 runtime-profiles directory, so every set reuses one copy.
 
     python scripts/materialize_task_subset.py \\
-        --manifest benchmarks/lakeqa/nano20/manifest.json \\
+        --manifest benchmarks/lakeqa/tasks_20_subset/manifest.json \\
         --source benchmarks/lakeqa/tasks-mini/tasks \\
-        --out benchmarks/lakeqa/nano20/tasks
+        --out benchmarks/lakeqa/tasks_20_subset/tasks
 """
 from __future__ import annotations
 
@@ -57,7 +57,7 @@ def main() -> int:
     ap.add_argument("--source", required=True, type=Path,
                     help="task tree to copy from, e.g. benchmarks/lakeqa/tasks-mini/tasks")
     ap.add_argument("--out", required=True, type=Path,
-                    help="destination tasks/ directory, e.g. benchmarks/lakeqa/nano20/tasks")
+                    help="destination tasks/ directory, e.g. benchmarks/lakeqa/tasks_20_subset/tasks")
     ap.add_argument("--clean", action="store_true",
                     help="remove the destination first, so a shrunken manifest does not "
                          "leave orphaned tasks behind")

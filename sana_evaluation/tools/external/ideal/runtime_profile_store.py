@@ -72,7 +72,7 @@ def _profile_location_from_task(task_id: str) -> tuple[Path, Path]:
 
     def _benchmark_suffix(benchmark: str) -> Optional[tuple[Path, Path]]:
         # benchmarks/<benchmark>/<set>/tasks/... for ANY set name, not just
-        # tasks-mini. A named subset (nano20) holds the same tasks under the
+        # tasks-mini. A named subset (tasks_20_subset) holds the same tasks under the
         # same <dir>/<task>.json suffix, so it resolves to the same runtime
         # profiles; hardcoding the set name meant a new set silently resolved
         # to a wrong profile path and failed later with a missing-file error.

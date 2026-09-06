@@ -1,4 +1,4 @@
-# LakeQA nano20
+# LakeQA tasks_20_subset
 
 A 20-task subset of `benchmarks/lakeqa/tasks-mini`, stratified jointly on node
 count (`k-*`) and dataset count (`d-*`) so the sweep keeps the shape of the full
@@ -13,10 +13,10 @@ means a grid gets run once and its variance never measured.
 ## Running it
 
     python -m sana_evaluation.run_mode_eval \
-        --benchmark lakeqa --task-set nano20 --all-tasks ...
+        --benchmark lakeqa --task-set tasks_20_subset --all-tasks ...
 
 `--task-set` accepts either the short name or the full path
-(`benchmarks/lakeqa/nano20/tasks`).
+(`benchmarks/lakeqa/tasks_20_subset/tasks`).
 
 ## Runtime profiles are shared, not copied
 
@@ -35,6 +35,6 @@ confusing missing-file message.
 `manifest.json` lists the 20 task ids. To rebuild the tree from it:
 
     python scripts/materialize_task_subset.py \
-        --manifest benchmarks/lakeqa/nano20/manifest.json \
+        --manifest benchmarks/lakeqa/tasks_20_subset/manifest.json \
         --source benchmarks/lakeqa/tasks-mini/tasks \
-        --out benchmarks/lakeqa/nano20/tasks
+        --out benchmarks/lakeqa/tasks_20_subset/tasks

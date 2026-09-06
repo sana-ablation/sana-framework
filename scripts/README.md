@@ -9,7 +9,7 @@ different reasons.
 | script | what it does |
 |---|---|
 | `run_experiment.sh` | The entry point for a sweep: `bootstrap`, `run`, `status`, `logs`, `pull`, `stop`. Local by default; set `REMOTE_HOST` to run the same command on a remote box. |
-| `materialize_task_subset.py` | Build a named task set (e.g. `benchmarks/lakeqa/nano20/tasks`) from a manifest of task ids. |
+| `materialize_task_subset.py` | Build a named task set (e.g. `benchmarks/lakeqa/tasks_20_subset/tasks`) from a manifest of task ids. |
 | `smoke_agent_tools_bucket.py` | Pre-run check that the agent's data tools can reach their S3 bucket. |
 
 An experiment is any directory under `experiments/` supplying `inputs/run.sh`;
