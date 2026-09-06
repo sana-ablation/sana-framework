@@ -43,17 +43,9 @@ extras/
 pytest*
 experiments/README.md
 
-# Experiment artefacts. The line is generated vs authored: run scripts, task
-# manifests, plans and the generators are tracked so a sweep can be reproduced;
-# everything they emit is not. results*/ and logs*/ above already cover the
-# result trees.
-experiments/**/*.log
-experiments/**/*.pdf
-experiments/**/*.png
-experiments/**/per_task.csv
-experiments/**/summary.csv
-experiments/**/results.tex
-experiments/**/fig-*.pdf
-experiments/**/fig-*.png
-experiments/build_pdf.pdf
-experiments/lakeqa-subset20b-results.pdf
+# Experiment records are not part of the framework. Individual sweeps -- their
+# drivers, task-set copies, plans, result trees and paper output -- are working
+# records of one study, not something a borrower of this repo needs or can use.
+# The reusable half lives in scripts/run_experiment.sh, which drives whatever
+# experiments/<name>/inputs/run.sh happens to be on disk.
+experiments/

@@ -1,25 +1,29 @@
 #!/usr/bin/env bash
 # One entry point for every experiment: provision, run, pull, inspect.
 #
-#   ./run_experiment.sh <experiment-dir> <command>
+#   ./scripts/run_experiment.sh <experiment-dir> <command>
 #
 # Local by default. Set REMOTE_HOST and the same command runs on that box
 # instead -- provisioning it first if needed, and pulling results back when the
 # sweep finishes. Nothing about the experiment changes between the two; only
 # where the driver executes.
 #
-#   ./run_experiment.sh 2026-08-31-model-tiers-subset20b run
-#   REMOTE_HOST=sana ./run_experiment.sh 2026-08-31-model-tiers-subset20b run
-#   REMOTE_HOST=sana ./run_experiment.sh 2026-08-31-model-tiers-subset20b pull
+#   ./scripts/run_experiment.sh my-sweep run
+#   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep bootstrap
+#   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep run
+#   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep pull
 #
-# Contract: each experiment directory supplies inputs/run.sh as its driver.
-# That is the only thing this script needs to know about it.
+# Contract: an experiment is any directory under experiments/ that supplies
+# inputs/run.sh. That file is the only thing this script needs to know about
+# it -- put whatever driver you like behind it. experiments/ is gitignored, so
+# your sweeps stay yours; this runner is the reusable part.
 #
-# Written because the two experiments here had each grown their own copy of the
-# remote plumbing -- web-arm-subset20b has bootstrap/run/pull/watch scripts with
-# its own directory name baked into pull_remote.sh, and model-tiers-subset20b
-# reimplemented the driver side without any of it. Sharing the plumbing is what
-# makes a third experiment cheap.
+# Two remote-transfer hazards are designed out rather than left to the caller.
+# Remote paths never start with ~, because bash tilde-expands after a colon in
+# an assignment and quietly turns a remote path into a local one. And a pull
+# that fails for a tree which demonstrably exists on the remote is fatal, not a
+# soft "nothing there yet" note -- that soft branch hides a missing result tree
+# behind what looks like an ordinary empty run.
 set -uo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
