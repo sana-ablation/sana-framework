@@ -1,0 +1,166 @@
+{
+  "question": "Across 2019-2021, identify the Texas counties that consistently rank in the top five for capital outlay spending. From those, keep only the counties that also rank in the statewide top five for releases from the Department of Criminal Justice in each of those years. For the remaining counties, compute the average annual intake counts from the Department of Criminal Justice over 2019-2021 and report the largest average, rounded to one decimal. Return the number only. Your response should be in the format [Answer].",
+  "answer": "5455.3",
+  "nodes": {
+    "1": {
+      "source": "datagov/texas-state-expenditures-by-county-2019/files/rows.txt",
+      "fact": "import csv\nfrom collections import defaultdict\n\ndef title_county(name):\n    return (name or '').strip().lower().title()\n\nwith open('datagov/texas-state-expenditures-by-county-2019/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ntotals = defaultdict(float)\nfor r in rows:\n    category = (r.get('Major Spending Category') or '').strip().upper()\n    county = (r.get('County') or '').strip().upper()\n    if category != 'CAPITAL OUTLAY' or not county:\n        continue\n    try:\n        amount = float((r.get('Amount') or '').replace(',', '').strip())\n    except (TypeError, ValueError):\n        continue\n    totals[county] += amount\n\nranked = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[:5]\nresult = [title_county(county) for county, _ in ranked]",
+      "subquestion": "In this fiscal year, which Texas counties were in the top 5 for Capital Outlay spending? (Filter for this node: Major Spending Category == 'Capital Outlay'; group by County; sum Amount; normalize County to uppercase; rank desc; take top 5.)",
+      "answer": [
+        "Harris",
+        "Travis",
+        "Dallas",
+        "Hardin",
+        "Bexar"
+      ]
+    },
+    "2": {
+      "source": "datagov/texas-state-expenditures-by-county-2020/files/rows.txt",
+      "fact": "import csv\nfrom collections import defaultdict\n\ndef title_county(name):\n    return (name or '').strip().lower().title()\n\nwith open('datagov/texas-state-expenditures-by-county-2020/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ntotals = defaultdict(float)\nfor r in rows:\n    category = (r.get('Major Spending Category') or '').strip().upper()\n    county = (r.get('County') or '').strip().upper()\n    if category != 'CAPITAL OUTLAY' or not county:\n        continue\n    try:\n        amount = float((r.get('Amount') or '').replace(',', '').strip())\n    except (TypeError, ValueError):\n        continue\n    totals[county] += amount\n\nranked = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[:5]\nresult = [title_county(county) for county, _ in ranked]",
+      "subquestion": "In this fiscal year, which Texas counties were in the top 5 for Capital Outlay spending? (Filter for this node: Major Spending Category == 'Capital Outlay'; group by County; sum Amount; normalize County to uppercase; rank desc; take top 5.)",
+      "answer": [
+        "Travis",
+        "Harris",
+        "Dallas",
+        "Bexar",
+        "Grayson"
+      ]
+    },
+    "3": {
+      "source": "datagov/texas-state-expenditures-by-county-2021/files/rows.txt",
+      "fact": "import csv\nfrom collections import defaultdict\n\ndef title_county(name):\n    return (name or '').strip().lower().title()\n\nwith open('datagov/texas-state-expenditures-by-county-2021/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ntotals = defaultdict(float)\nfor r in rows:\n    category = (r.get('Major Spending Category') or '').strip().upper()\n    county = (r.get('County') or '').strip().upper()\n    if category != 'CAPITAL OUTLAY' or not county:\n        continue\n    try:\n        amount = float((r.get('Amount') or '').replace(',', '').strip())\n    except (TypeError, ValueError):\n        continue\n    totals[county] += amount\n\nranked = sorted(totals.items(), key=lambda x: (-x[1], x[0]))[:5]\nresult = [title_county(county) for county, _ in ranked]",
+      "subquestion": "In this fiscal year, which Texas counties were in the top 5 for Capital Outlay spending? (Filter for this node: Major Spending Category == 'Capital Outlay'; group by County; sum Amount; normalize County to uppercase; rank desc; take top 5.)",
+      "answer": [
+        "Harris",
+        "Travis",
+        "Dallas",
+        "Bexar",
+        "Guadalupe"
+      ]
+    },
+    "4": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\ncandidates = ['Harris', 'Travis', 'Dallas', 'Hardin', 'Bexar']\ncandidate_set = {c.upper() for c in candidates}\n\nwith open('datagov/texas-department-of-criminal-justice-releases-fy-2019/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((r.get('County') or '').strip() for r in rows if (r.get('County') or '').strip())\ntop5 = sorted(counts.items(), key=lambda x: (-x[1], x[0]))[:5]\nresult = [county for county, _ in top5 if county.upper() in candidate_set]",
+      "subquestion": "In this fiscal year, among the counties from hop 1, which were in the overall top 5 for releases from the Department of Criminal Justice? (Filter for this node: count rows by County; normalize County to uppercase; rank desc; take top 5 overall; then keep counties in hop 1 list.)",
+      "answer": [
+        "Harris",
+        "Dallas",
+        "Bexar"
+      ]
+    },
+    "5": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\ncandidates = ['Travis', 'Harris', 'Dallas', 'Bexar', 'Grayson']\ncandidate_set = {c.upper() for c in candidates}\n\nwith open('datagov/texas-department-of-criminal-justice-releases-fy-2020/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((r.get('County') or '').strip() for r in rows if (r.get('County') or '').strip())\ntop5 = sorted(counts.items(), key=lambda x: (-x[1], x[0]))[:5]\nresult = [county for county, _ in top5 if county.upper() in candidate_set]",
+      "subquestion": "In this fiscal year, among the counties from hop 1, which were in the overall top 5 for releases from the Department of Criminal Justice? (Filter for this node: count rows by County; normalize County to uppercase; rank desc; take top 5 overall; then keep counties in hop 1 list.)",
+      "answer": [
+        "Harris",
+        "Dallas",
+        "Bexar",
+        "Travis"
+      ]
+    },
+    "6": {
+      "source": "datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\ncandidates = ['Harris', 'Travis', 'Dallas', 'Bexar', 'Guadalupe']\ncandidate_set = {c.upper() for c in candidates}\n\nwith open('datagov/texas-department-of-criminal-justice-releases-fy-2021/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((r.get('County') or '').strip() for r in rows if (r.get('County') or '').strip())\ntop5 = sorted(counts.items(), key=lambda x: (-x[1], x[0]))[:5]\nresult = [county for county, _ in top5 if county.upper() in candidate_set]",
+      "subquestion": "In this fiscal year, among the counties from hop 1, which were in the overall top 5 for releases from the Department of Criminal Justice? (Filter for this node: count rows by County; normalize County to uppercase; rank desc; take top 5 overall; then keep counties in hop 1 list.)",
+      "answer": [
+        "Harris",
+        "Dallas",
+        "Bexar"
+      ]
+    },
+    "7": {
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2019/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\ncounties = ['Harris', 'Dallas', 'Bexar']\ncounty_set = {c.upper() for c in counties}\n\nwith open('datagov/texas-department-of-criminal-justice-receives-fy-2019/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((r.get('County') or '').strip() for r in rows if (r.get('County') or '').strip().upper() in county_set)\nresult = {county: counts[county] for county in counties if county in counts}",
+      "subquestion": "In this fiscal year, what were the intake counts from the Department of Criminal Justice for the counties from hop 2? (Filter for this node: County in hop 2 list; normalize County to uppercase; count rows by County.)",
+      "answer": {
+        "Harris": 7874,
+        "Dallas": 4660,
+        "Bexar": 4457
+      }
+    },
+    "8": {
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2020/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\ncounties = ['Harris', 'Dallas', 'Bexar']\ncounty_set = {c.upper() for c in counties}\n\nwith open('datagov/texas-department-of-criminal-justice-receives-fy-2020/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((r.get('County') or '').strip() for r in rows if (r.get('County') or '').strip().upper() in county_set)\nresult = {county: counts[county] for county in counties if county in counts}",
+      "subquestion": "In this fiscal year, what were the intake counts from the Department of Criminal Justice for the counties from hop 2? (Filter for this node: County in hop 2 list; normalize County to uppercase; count rows by County.)",
+      "answer": {
+        "Harris": 3840,
+        "Dallas": 2519,
+        "Bexar": 2420
+      }
+    },
+    "9": {
+      "source": "datagov/texas-department-of-criminal-justice-receives-fy-2021/files/rows.txt",
+      "fact": "import csv\nfrom collections import Counter\n\ncounties = ['Harris', 'Dallas', 'Bexar']\ncounty_set = {c.upper() for c in counties}\n\nwith open('datagov/texas-department-of-criminal-justice-receives-fy-2021/files/rows.txt', 'r', encoding='utf-8', newline='') as f:\n    rows = list(csv.DictReader(f))\n\ncounts = Counter((r.get('County') or '').strip() for r in rows if (r.get('County') or '').strip().upper() in county_set)\nresult = {county: counts[county] for county in counties if county in counts}",
+      "subquestion": "In this fiscal year, what were the intake counts from the Department of Criminal Justice for the counties from hop 2? (Filter for this node: County in hop 2 list; normalize County to uppercase; count rows by County.)",
+      "answer": {
+        "Harris": 4652,
+        "Dallas": 3520,
+        "Bexar": 2822
+      }
+    }
+  },
+  "reasoning_chain": [
+    "HOP 1 (d=3): Find Texas counties in the top 5 for Capital Outlay spending in fiscal years 2019, 2020, and 2021",
+    "  Node 1 (2019): Top 5 = {Harris, Travis, Dallas, Hardin, Bexar}",
+    "  Node 2 (2020): Top 5 = {Travis, Harris, Dallas, Bexar, Grayson}",
+    "  Node 3 (2021): Top 5 = {Harris, Travis, Dallas, Bexar, Guadalupe}",
+    "  Intersection: {Harris, Travis, Dallas, Bexar}",
+    "HOP 2 (d=3): Among those counties, find which were in the overall top 5 for releases from the Department of Criminal Justice in 2019, 2020, and 2021",
+    "  Node 4 (2019): Hop 1 counties in top 5 releases = {Harris, Dallas, Bexar}",
+    "  Node 5 (2020): Hop 1 counties in top 5 releases = {Harris, Dallas, Bexar, Travis}",
+    "  Node 6 (2021): Hop 1 counties in top 5 releases = {Harris, Dallas, Bexar}",
+    "  Intersection: {Harris, Dallas, Bexar}",
+    "HOP 3 (d=3): For those counties, gather intake counts from the Department of Criminal Justice for 2019-2021 and compute averages",
+    "  Node 7 (2019): Harris=7874, Dallas=4660, Bexar=4457",
+    "  Node 8 (2020): Harris=3840, Dallas=2519, Bexar=2420",
+    "  Node 9 (2021): Harris=4652, Dallas=3520, Bexar=2822",
+    "  Averages (rounded to 1 decimal): Harris=5455.3, Dallas=3566.3, Bexar=3233.0",
+    "  Result: 5455.3",
+    "Final answer: 5455.3"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "texas-department-of-criminal-justice-receives-fy-2019",
+    "texas-department-of-criminal-justice-receives-fy-2020",
+    "texas-department-of-criminal-justice-receives-fy-2021",
+    "texas-department-of-criminal-justice-releases-fy-2019",
+    "texas-department-of-criminal-justice-releases-fy-2020",
+    "texas-department-of-criminal-justice-releases-fy-2021",
+    "texas-state-expenditures-by-county-2019",
+    "texas-state-expenditures-by-county-2020",
+    "texas-state-expenditures-by-county-2021"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3
+      ],
+      "reasoning": "Node 1 (2019): Top 5 = {Harris, Travis, Dallas, Hardin, Bexar} Node 2 (2020): Top 5 = {Travis, Harris, Dallas, Bexar, Grayson} Node 3 (2021): Top 5 = {Harris, Travis, Dallas, Bexar, Guadalupe} Intersection: {Harris, Travis, Dallas, Bexar}",
+      "answer": "{Harris, Travis, Dallas, Bexar}"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        4,
+        5,
+        6
+      ],
+      "reasoning": "Node 4 (2019): Hop 1 counties in top 5 releases = {Harris, Dallas, Bexar} Node 5 (2020): Hop 1 counties in top 5 releases = {Harris, Dallas, Bexar, Travis} Node 6 (2021): Hop 1 counties in top 5 releases = {Harris, Dallas, Bexar} Intersection: {Harris, Dallas, Bexar}",
+      "answer": "{Harris, Dallas, Bexar}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        7,
+        8,
+        9
+      ],
+      "reasoning": "Node 7 (2019): Harris=7874, Dallas=4660, Bexar=4457 Node 8 (2020): Harris=3840, Dallas=2519, Bexar=2420 Node 9 (2021): Harris=4652, Dallas=3520, Bexar=2822 Averages (rounded to 1 decimal): Harris=5455.3, Dallas=3566.3, Bexar=3233.0 Result: 5455.3",
+      "answer": "5455.3"
+    }
+  ]
+}

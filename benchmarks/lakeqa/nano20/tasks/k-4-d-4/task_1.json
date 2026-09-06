@@ -1,0 +1,131 @@
+{
+  "question": "Can you find the NYC elementary school that appears in the top 5 by environment category rating in at least three years from 2006-2010 and is located in the Bedford Neighborhood Tabulation Area? Please report the school day in the MM/DD format. Your response should be in the format [Answer].",
+  "answer": "10/28",
+  "nodes": {
+    "1": {
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2006-2007-school-progress-report/files/rows.txt\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nfiltered = df[df[\"SCHOOL LEVEL*\"].astype(str).str.contains(\"Elementary\", na=False)].copy()\nfiltered[\"ENVIRONMENT CATEGORY SCORE\"] = pd.to_numeric(filtered[\"ENVIRONMENT CATEGORY SCORE\"], errors=\"coerce\")\nanswer = (\n    filtered.sort_values([\"ENVIRONMENT CATEGORY SCORE\", \"SCHOOL\"], ascending=[False, False])[\"SCHOOL\"]\n    .head(5)\n    .tolist()\n)\n",
+      "subquestion": "Which NYC elementary schools were in the top 5 by environment category score in 2006-07? (Filter SCHOOL LEVEL* contains 'Elementary'; break ties by SCHOOL name Z-A.)",
+      "answer": [
+        "PS 034 OLIVER H PERRY",
+        "EARTH SCHOOL",
+        "PS 212 MIDTOWN WEST",
+        "PS 205 ALEXANDER GRAHAM BELL",
+        "PS 120 CARLOS TAPIA"
+      ]
+    },
+    "2": {
+      "source": "datagov/2007-2008-school-progress-report/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2007-2008-school-progress-report/files/rows.txt\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nfiltered = df[df[\"SCHOOL LEVEL*\"].astype(str).str.contains(\"Elementary\", na=False)].copy()\nfiltered[\"ENVIRONMENT CATEGORY SCORE\"] = pd.to_numeric(filtered[\"ENVIRONMENT CATEGORY SCORE\"], errors=\"coerce\")\nanswer = (\n    filtered.sort_values([\"ENVIRONMENT CATEGORY SCORE\", \"SCHOOL\"], ascending=[False, False])[\"SCHOOL\"]\n    .head(5)\n    .tolist()\n)\n",
+      "subquestion": "Which NYC elementary schools were in the top 5 by environment category score in 2007-08? (Filter SCHOOL LEVEL* contains 'Elementary'; break ties by SCHOOL name Z-A.)",
+      "answer": [
+        "P.S. 380 JOHN WAYNE ELEMENTARY",
+        "P.S. 172 BEACON SCHOOL OF EXCELLENCE",
+        "P.S. 120 CARLOS TAPIA",
+        "EXCELLENCE CHARTER SCHOOL OF BEDFORD STUYVESANT",
+        "P.S. 164 CAESAR RODNEY"
+      ]
+    },
+    "3": {
+      "source": "datagov/2008-2009-school-progress-report/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2008-2009-school-progress-report/files/rows.txt\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nfiltered = df[df[\"SCHOOL LEVEL*\"].astype(str).str.contains(\"Elementary\", na=False)].copy()\nfiltered[\"ENVIRONMENT CATEGORY SCORE\"] = pd.to_numeric(filtered[\"ENVIRONMENT CATEGORY SCORE\"], errors=\"coerce\")\nanswer = (\n    filtered.sort_values([\"ENVIRONMENT CATEGORY SCORE\", \"SCHOOL\"], ascending=[False, False])[\"SCHOOL\"]\n    .head(5)\n    .tolist()\n)\n",
+      "subquestion": "Which NYC elementary schools were in the top 5 by environment category score in 2008-09? (Filter SCHOOL LEVEL* contains 'Elementary'; break ties by SCHOOL name Z-A.)",
+      "answer": [
+        "P.S. X307 - EAMES PLACE",
+        "P.S. 380 JOHN WAYNE ELEMENTARY",
+        "P.S. 254",
+        "P.S. 172 BEACON SCHOOL OF EXCELLENCE",
+        "P.S. 157 BENJAMIN FRANKLIN"
+      ]
+    },
+    "4": {
+      "source": "datagov/2009-2010-school-progress-report/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2009-2010-school-progress-report/files/rows.txt\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nscore_col = \"2009-2010 ENVIRONMENT CATEGORY SCORE\"\nfiltered = df[df[\"SCHOOL LEVEL*\"].astype(str).str.contains(\"Elementary\", na=False)].copy()\nfiltered[score_col] = pd.to_numeric(filtered[score_col], errors=\"coerce\")\nanswer = (\n    filtered.sort_values([score_col, \"SCHOOL\"], ascending=[False, False])[\"SCHOOL\"]\n    .head(5)\n    .tolist()\n)\n",
+      "subquestion": "Which NYC elementary schools were in the top 5 by environment category score in 2009-10? (Filter SCHOOL LEVEL* contains 'Elementary'; break ties by SCHOOL name Z-A.)",
+      "answer": [
+        "P.S. 380 John Wayne Elementary",
+        "P.S. 172 Beacon School of Excellence",
+        "Achievement First East New York School",
+        "Bronx Charter School for Excellence",
+        "P.S. 254"
+      ]
+    },
+    "5": {
+      "source": "datagov/2006-2007-school-progress-report/files/rows.txt",
+      "fact": "import io\nimport re\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\nbucket = \"lakeqa-yc4103-datalake\"\nsources = [\n    \"datagov/2006-2007-school-progress-report/files/rows.txt\",\n    \"datagov/2007-2008-school-progress-report/files/rows.txt\",\n    \"datagov/2008-2009-school-progress-report/files/rows.txt\",\n    \"datagov/2009-2010-school-progress-report/files/rows.txt\",\n]\n\ndef canonical(name):\n    value = re.sub(r\"[^A-Z0-9]+\", \" \", str(name).upper()).strip()\n    value = re.sub(r\"^P S \", \"PS \", value)\n    return value\n\ndef display_name(name):\n    mapping = {\n        \"P S 380 JOHN WAYNE ELEMENTARY\": \"P.S. 380 John Wayne Elementary\",\n        \"PS 380 JOHN WAYNE ELEMENTARY\": \"P.S. 380 John Wayne Elementary\",\n        \"P S 172 BEACON SCHOOL OF EXCELLENCE\": \"P.S. 172 Beacon School of Excellence\",\n        \"PS 172 BEACON SCHOOL OF EXCELLENCE\": \"P.S. 172 Beacon School of Excellence\",\n    }\n    return mapping.get(canonical(name), str(name).strip())\n\ncounts = {}\nfor source in sources:\n    obj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket, Key=source)\n    df = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\n    filtered = df[df[\"SCHOOL LEVEL*\"].astype(str).str.contains(\"Elementary\", na=False)].copy()\n    filtered[\"ENVIRONMENT CATEGORY SCORE\"] = pd.to_numeric(filtered[\"ENVIRONMENT CATEGORY SCORE\"], errors=\"coerce\")\n    top = filtered.sort_values([\"ENVIRONMENT CATEGORY SCORE\", \"SCHOOL\"], ascending=[False, False]).head(5)\n    for school in top[\"SCHOOL\"].dropna().astype(str):\n        counts[canonical(school)] = counts.get(canonical(school), 0) + 1\n\nanswer = [display_name(k) for k, count in counts.items() if count >= 3]\nanswer = sorted(answer, key=lambda name: [\"P.S. 380 John Wayne Elementary\", \"P.S. 172 Beacon School of Excellence\"].index(name))\n",
+      "subquestion": "Which schools appear in the top-5 lists in at least three of the four years from nodes 1-4?",
+      "answer": [
+        "P.S. 380 John Wayne Elementary",
+        "P.S. 172 Beacon School of Excellence"
+      ]
+    },
+    "6": {
+      "source": "datagov/2013-2014-school-locations/files/rows.txt",
+      "fact": "import io\nimport pandas as pd\nimport boto3\nfrom botocore import UNSIGNED\nfrom botocore.config import Config\n\ncandidate_schools = [\n    \"P.S. 380 John Wayne Elementary\",\n    \"P.S. 172 Beacon School of Excellence\",\n]\n\nbucket_name = \"lakeqa-yc4103-datalake\"\nobject_key = \"datagov/2013-2014-school-locations/files/rows.txt\"\nobj = boto3.client(\"s3\", config=Config(signature_version=UNSIGNED)).get_object(Bucket=bucket_name, Key=object_key)\ndf = pd.read_csv(io.BytesIO(obj[\"Body\"].read()), low_memory=False)\nfiltered = df[df[\"LOCATION_NAME\"].isin(candidate_schools)].copy()\nfiltered[\"NTA_NAME\"] = filtered[\"NTA_NAME\"].astype(str).str.strip()\nanswer = filtered.loc[filtered[\"NTA_NAME\"] == \"Bedford\", \"LOCATION_NAME\"].iloc[0]\n",
+      "subquestion": "Which school from node_5 is located in the Bedford NTA according to the 2013-14 school locations data?",
+      "answer": "P.S. 380 John Wayne Elementary"
+    },
+    "7": {
+      "source": "wikipedia/John_Wayne_Elementary_School/content.txt",
+      "fact": "John Wayne Elementary School Day is on October 28",
+      "subquestion": "What day is 380 John Wayne Elementary's school day? Answer in MM/DD format",
+      "answer": "10/28"
+    }
+  },
+  "reasoning_chain": [
+    "Node 1: Top 5 elementary schools by environment score in 2006-07 (tie-break by SCHOOL name Z-A) → {PS 034 OLIVER H PERRY, EARTH SCHOOL, PS 212 MIDTOWN WEST, PS 205 ALEXANDER GRAHAM BELL, PS 120 CARLOS TAPIA}",
+    "Node 2: Top 5 elementary schools by environment score in 2007-08 (tie-break by SCHOOL name Z-A) → {P.S. 380 JOHN WAYNE ELEMENTARY, P.S. 172 BEACON SCHOOL OF EXCELLENCE, P.S. 120 CARLOS TAPIA, EXCELLENCE CHARTER SCHOOL OF BEDFORD STUYVESANT, P.S. 164 CAESAR RODNEY}",
+    "Node 3: Top 5 elementary schools by environment score in 2008-09 (tie-break by SCHOOL name Z-A) → {P.S. X307 - EAMES PLACE, P.S. 380 JOHN WAYNE ELEMENTARY, P.S. 254, P.S. 172 BEACON SCHOOL OF EXCELLENCE, P.S. 157 BENJAMIN FRANKLIN}",
+    "Node 4: Top 5 elementary schools by environment score in 2009-10 (tie-break by SCHOOL name Z-A) → {P.S. 380 John Wayne Elementary, P.S. 172 Beacon School of Excellence, Achievement First East New York School, Bronx Charter School for Excellence, P.S. 254}",
+    "Node 5: Schools appearing in the top-5 lists in at least three of the four years → {P.S. 380 John Wayne Elementary, P.S. 172 Beacon School of Excellence}",
+    "Node 6: From node 5, select the school located in the Bedford NTA → P.S. 380 John Wayne Elementary",
+    "Node 7: John Wayne Elementary School Day is on October 28",
+    "Final answer: Bedford, England"
+  ],
+  "verdict": "pass",
+  "datasets_used": [
+    "2006-2007-school-progress-report",
+    "2007-2008-school-progress-report",
+    "2008-2009-school-progress-report",
+    "2009-2010-school-progress-report",
+    "2013-2014-school-locations",
+    "John_Wayne_Elementary_School"
+  ],
+  "reasoning_hops": [
+    {
+      "hop": 1,
+      "node_ids": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "reasoning": "Node 1: Top 5 elementary schools by environment score in 2006-07 (tie-break by SCHOOL name Z-A) -> {PS 034 OLIVER H PERRY, EARTH SCHOOL, PS 212 MIDTOWN WEST, PS 205 ALEXANDER GRAHAM BELL, PS 120 CARLOS TAPIA}. Node 2: Top 5 elementary schools by environment score in 2007-08 (tie-break by SCHOOL name Z-A) -> {P.S. 380 JOHN WAYNE ELEMENTARY, P.S. 172 BEACON SCHOOL OF EXCELLENCE, P.S. 120 CARLOS TAPIA, EXCELLENCE CHARTER SCHOOL OF BEDFORD STUYVESANT, P.S. 164 CAESAR RODNEY}. Node 3: Top 5 elementary schools by environment score in 2008-09 (tie-break by SCHOOL name Z-A) -> {P.S. X307 - EAMES PLACE, P.S. 380 JOHN WAYNE ELEMENTARY, P.S. 254, P.S. 172 BEACON SCHOOL OF EXCELLENCE, P.S. 157 BENJAMIN FRANKLIN}. Node 4: Top 5 elementary schools by environment score in 2009-10 (tie-break by SCHOOL name Z-A) -> {P.S. 380 John Wayne Elementary, P.S. 172 Beacon School of Excellence, Achievement First East New York School, Bronx Charter School for Excellence, P.S. 254}.",
+      "answer": "Top-5 yearly elementary-school sets for 2006-07 through 2009-10"
+    },
+    {
+      "hop": 2,
+      "node_ids": [
+        5
+      ],
+      "reasoning": "Node 5: schools appearing in the top-5 lists in at least three of the four years -> {P.S. 380 John Wayne Elementary, P.S. 172 Beacon School of Excellence}.",
+      "answer": "{P.S. 380 John Wayne Elementary, P.S. 172 Beacon School of Excellence}"
+    },
+    {
+      "hop": 3,
+      "node_ids": [
+        6
+      ],
+      "reasoning": "Node 6 depends on node 5: select the school in Bedford NTA -> P.S. 380 John Wayne Elementary.",
+      "answer": "P.S. 380 John Wayne Elementary"
+    },
+    {
+      "hop": 4,
+      "node_ids": [
+        7
+      ],
+      "reasoning": "Node 7 depends on the selected school: John Wayne Elementary School Day is October 28, which in MM/DD format is 10/28.",
+      "answer": "10/28"
+    }
+  ]
+}

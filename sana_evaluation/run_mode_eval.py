@@ -16,6 +16,7 @@ import glob
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from sana_evaluation import run_eval as base_eval
@@ -137,6 +138,35 @@ def _default_task_set_for_benchmark(benchmark: str) -> str:
     if benchmark == "kramabench":
         return _KRAMABENCH_TASK_SET
     return _DEFAULT_TASK_SET
+
+
+def resolve_task_set(task_set: Optional[str], benchmark: str) -> str:
+    """Accept a named set as well as a path.
+
+    ``--task-set nano20`` is shorthand for ``benchmarks/<benchmark>/nano20/tasks``.
+    A value containing a separator, or naming a directory that exists, is used
+    as-is, so paths keep working unchanged.
+    """
+    if not task_set:
+        return _default_task_set_for_benchmark(benchmark)
+    raw = str(task_set).strip()
+    if os.sep in raw or "/" in raw or Path(raw).is_dir():
+        return raw
+    candidate = Path("benchmarks") / benchmark / raw / "tasks"
+    if candidate.is_dir():
+        return str(candidate)
+    raise ValueError(
+        f"Unknown task set '{task_set}' for benchmark '{benchmark}'. "
+        f"Expected a path, or a named set under benchmarks/{benchmark}/<name>/tasks. "
+        f"Available: {', '.join(_named_task_sets(benchmark)) or '(none)'}"
+    )
+
+
+def _named_task_sets(benchmark: str) -> list[str]:
+    root = Path("benchmarks") / benchmark
+    if not root.is_dir():
+        return []
+    return sorted(d.name for d in root.iterdir() if (d / "tasks").is_dir())
 
 
 def _run_all_tasks_pooled(
@@ -482,8 +512,7 @@ def main() -> None:
     args = parser.parse_args()
     if args.decision_notes:
         args.debug_mode = "decision_notes"
-    if args.task_set is None:
-        args.task_set = _default_task_set_for_benchmark(args.benchmark)
+    args.task_set = resolve_task_set(args.task_set, args.benchmark)
 
     if args.k is not None and args.k <= 0:
         parser.error("--k must be > 0")

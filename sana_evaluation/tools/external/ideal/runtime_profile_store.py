@@ -71,18 +71,23 @@ def _profile_location_from_task(task_id: str) -> tuple[Path, Path]:
     parts = p.parts
 
     def _benchmark_suffix(benchmark: str) -> Optional[tuple[Path, Path]]:
-        marker = ("benchmarks", benchmark, "tasks-mini", "tasks")
-        for idx in range(0, max(len(parts) - len(marker) + 1, 0)):
-            if parts[idx : idx + len(marker)] == marker:
-                suffix = parts[idx + len(marker) :]
-                if not suffix:
-                    raise ValueError(f"Could not derive relative profile path from task_id '{task_id}'.")
-                root = (
-                    _RUNTIME_PROFILES_ROOT
-                    if benchmark == "lakeqa"
-                    else _KRAMABENCH_RUNTIME_PROFILES_ROOT
-                )
-                return (root, Path(*suffix))
+        # benchmarks/<benchmark>/<set>/tasks/... for ANY set name, not just
+        # tasks-mini. A named subset (nano20) holds the same tasks under the
+        # same <dir>/<task>.json suffix, so it resolves to the same runtime
+        # profiles; hardcoding the set name meant a new set silently resolved
+        # to a wrong profile path and failed later with a missing-file error.
+        for idx in range(0, max(len(parts) - 3, 0)):
+            if (parts[idx], parts[idx + 1], parts[idx + 3]) != ("benchmarks", benchmark, "tasks"):
+                continue
+            suffix = parts[idx + 4 :]
+            if not suffix:
+                raise ValueError(f"Could not derive relative profile path from task_id '{task_id}'.")
+            root = (
+                _RUNTIME_PROFILES_ROOT
+                if benchmark == "lakeqa"
+                else _KRAMABENCH_RUNTIME_PROFILES_ROOT
+            )
+            return (root, Path(*suffix))
         return None
 
     lakeqa_location = _benchmark_suffix("lakeqa")
