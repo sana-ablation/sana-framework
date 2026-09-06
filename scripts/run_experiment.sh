@@ -97,7 +97,14 @@ run)
   if [ -n "$REMOTE_HOST" ]; then
     ssh_cmd "test -f $REMOTE_DIR/experiments/$EXP/inputs/run.sh" \
       || die "driver missing on $REMOTE_HOST -- run 'bootstrap' first"
-    ssh_cmd "cd $REMOTE_DIR && tmux kill-session -t $SESSION 2>/dev/null; \
+    # Refuse rather than clobber. SESSION defaults to exp-<dirname>, so a second
+    # `run` against the same experiment would otherwise silently kill a sweep
+    # that is hours in.
+    if ssh_cmd "tmux has-session -t $SESSION 2>/dev/null"; then
+      die "session '$SESSION' is already running on $REMOTE_HOST. \
+Use '$0 $EXP status' to check it, or '$0 $EXP stop' to end it first."
+    fi
+    ssh_cmd "cd $REMOTE_DIR && \
              tmux new-session -d -s $SESSION \
              'cd $REMOTE_DIR && ./experiments/$EXP/inputs/run.sh > experiments/$EXP/run.log 2>&1'"
     say "started in tmux session '$SESSION' on $REMOTE_HOST"

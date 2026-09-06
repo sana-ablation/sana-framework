@@ -563,7 +563,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--answer-failure-combined-dir", default=None)
     parser.add_argument("--model-filter", default=None)
     parser.add_argument("--paper-dir", default="sana_framework_paper/figures")
-    parser.add_argument("--mirror-dir", default="paper_figures")
+    parser.add_argument(
+        "--out-dir", "--mirror-dir", dest="mirror_dir",
+        default="analysis_results/figures",
+        help="Where generated figures are written. Defaults under the gitignored\n"
+             "analysis_results/ so a run does not dirty the tree.")
     parser.add_argument("--agent-analysis-dir", default="agent_analysis")
     return parser.parse_args()
 
@@ -621,13 +625,14 @@ def main() -> None:
     try:
         render_search_efficiency_figure(config.analysis_dir, config.benchmark, search_figure_path)
     except ValueError as exc:
-        fallback_search_figure = (
-            Path("paper_figures")
-            / f"search_efficiency_cumulative_retrieval_{config.benchmark}.pdf"
-        )
-        if not fallback_search_figure.exists():
-            raise
-        print(f"Skipping search-efficiency render: {exc}")
+        # No fallback. This used to substitute a checked-in PDF from
+        # paper_figures/ when the render found no canonical rows, which meant a
+        # different dataset silently produced THIS repo's figure in someone
+        # else's export. A missing figure must fail loudly.
+        raise ValueError(
+            f"Could not render the search-efficiency figure for "
+            f"'{config.benchmark}' from {config.analysis_dir}: {exc}"
+        ) from exc
         print(f"Using existing search-efficiency figure: {fallback_search_figure}")
         search_figure_path = fallback_search_figure
     refreshed = refresh_answer_failure_figures(config.answer_failure_combined_dir)

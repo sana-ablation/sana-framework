@@ -239,7 +239,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-root", default=".")
     parser.add_argument("--output", default="agent_analysis/plan_default_analysis/figures/plan_default_similarity_by_benchmark_model.pdf")
     parser.add_argument("--paper-dir", default="sana_framework_paper/figures")
-    parser.add_argument("--mirror-dir", default="paper_figures")
+    parser.add_argument(
+        "--out-dir", "--mirror-dir", dest="mirror_dir",
+        default="analysis_results/figures",
+        help="Where generated figures are written (gitignored by default).")
     return parser.parse_args()
 
 
