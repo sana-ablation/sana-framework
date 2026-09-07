@@ -39,11 +39,18 @@ BUCKET = "lakeqa-yc4103-datalake"
 # never hit this because they build keys from (dataset_id, file_path) rather than
 # from the schema's s3_key.
 _VERSION_SEGMENT = re.compile(r"/v\d+/(?=files/)")
+# The crawler stored every payload under files/ as .txt whatever it contained --
+# a data.txt here holds GeoJSON. descriptions.jsonl, the artifact the working
+# LanceDB was built from, is 94% .txt and effectively free of /v1/, so that is
+# the bucket's real convention. The schemas instead record data.gov's advertised
+# distributions, which is why one dataset lists both a .csv and a .json for a
+# single stored object.
+_LOGICAL_EXT = re.compile(r"\.(csv|json|jsonl|tsv|xlsx?|xml)$", re.IGNORECASE)
 
 
 def _bucket_key(s3_key: str) -> str:
     """Map a schema s3_key onto the key layout the bucket actually uses."""
-    return _VERSION_SEGMENT.sub("/", s3_key or "")
+    return _LOGICAL_EXT.sub(".txt", _VERSION_SEGMENT.sub("/", s3_key or ""))
 TOKEN_PATTERN = re.compile(r'(?u)\b[a-zA-Z_]\w+\b')
 YEAR_PATTERN = re.compile(r'\b(14|15|16|17|18|19|20)\d{2}\b')
 
@@ -134,6 +141,21 @@ if __name__ == "__main__":
 
     print(f"Schemas          : {jsonl_path}")
     tables = load_tables(jsonl_path)
+    # Collapse rows that resolve to the same stored object. Fetching it once is
+    # not just cheaper: the format is decided by sniffing the content, so the
+    # duplicate rows would otherwise produce identical parquet rows differing
+    # only in the extension the schema claimed.
+    before = len(tables)
+    deduped, seen = [], set()
+    for entry in tables:
+        uri = entry.get("dataset_uri", "")
+        if uri in seen:
+            continue
+        seen.add(uri)
+        deduped.append(entry)
+    tables = deduped
+    if before != len(tables):
+        print(f"Deduplicated      : {before} schema rows -> {len(tables)} stored objects")
     if args.limit_n:
         tables = tables[: args.limit_n]
 
