@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_analysis.report_generator.run_mode_delta_figures import (
+from sana_analysis.paper.delta_figures import (
     SEMANTIC_DELTA_COMPACT_AXIS_LABEL_FONTSIZE,
     SEMANTIC_DELTA_COMPACT_LABEL_FONTSIZE,
     SEMANTIC_DELTA_COMPACT_MODEL_FONTSIZE,

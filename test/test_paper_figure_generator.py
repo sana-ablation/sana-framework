@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from sana_analysis.report_generator.paper_figure_generator import (
+from sana_analysis.paper.figures import (
     _benchmark_defaults,
     _load_search_figure_data,
     _search_variant_label,
@@ -146,7 +146,7 @@ class TestPaperFigureGenerator(unittest.TestCase):
                 )
 
             fake_plot = FakePlot()
-            with patch("sana_analysis.report_generator.paper_figure_generator._import_plot_libs", return_value=fake_plot):
+            with patch("sana_analysis.paper.figures._import_plot_libs", return_value=fake_plot):
                 render_search_efficiency_figure(analysis_dir, "lakeqa", analysis_dir / "figure.pdf")
 
             self.assertEqual(fake_plot.subplots_kwargs["nrows"], 1)

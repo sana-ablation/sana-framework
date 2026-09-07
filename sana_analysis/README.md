@@ -11,7 +11,7 @@ generation, and audit aggregation.
 - `answer_failure_audit_runner.py` and `answer_failure_rerun_queue.py`: answer
   failure audit helpers.
 - `metrics/`: reusable metric and validation modules.
-- `report_generator/`: paper figure, answer-failure, and export helpers.
+- `paper/`: paper figure and export helpers.
 
 Generated artifacts should be written to `analysis_results*`, `agent_analysis/`,
 or `paper_figures/`, not back into this package.

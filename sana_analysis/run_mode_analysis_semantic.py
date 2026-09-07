@@ -74,7 +74,7 @@ from sana_analysis.metrics.search_bottleneck import (
     generate_search_bottleneck_figures,
     write_search_bottleneck_csv,
 )
-from sana_analysis.report_generator.run_mode_delta_figures import generate_delta_figures
+from sana_analysis.paper.delta_figures import generate_delta_figures
 
 
 # --- slicing axes -----------------------------------------------------------

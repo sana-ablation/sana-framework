@@ -1,6 +1,6 @@
 import unittest
 
-from sana_analysis.report_generator.plan_default_figure_generator import (
+from sana_analysis.paper.plan_ablation_figure import (
     CANONICAL_PLAN_D_MODE,
     CANONICAL_PLAN_I_MODE,
     _normalize_plan_similarity,

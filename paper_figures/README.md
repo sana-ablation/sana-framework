@@ -6,5 +6,5 @@ Top-level PDFs are final or near-final figure artifacts. The
 `agent_analysis/` subdirectory mirrors selected behavioral-analysis outputs used
 to create supporting paper figures.
 
-Regenerate these from `sana_analysis.report_generator` or the relevant
+Regenerate these from `sana_analysis.paper` or the relevant
 analysis scripts rather than editing figure outputs directly.
