@@ -10,7 +10,7 @@ generation, and audit aggregation.
 - `run_sana_mode_analysis.py`: analysis for SANA-specific result layouts.
 - `answer_failure_audit_runner.py` and `answer_failure_rerun_queue.py`: answer
   failure audit helpers.
-- `running_analysis/`: reusable metric and validation modules.
+- `metrics/`: reusable metric and validation modules.
 - `report_generator/`: paper figure, answer-failure, and export helpers.
 
 Generated artifacts should be written to `analysis_results*`, `agent_analysis/`,
