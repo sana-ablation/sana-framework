@@ -7,7 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_runtime_and_analysis_packages_have_canonical_imports():
-    import sana_analysis.run_mode_analysis_semantic as semantic_analysis
+    import sana_analysis.run_mode_analysis as semantic_analysis
     import sana_evaluation.setup_run as setup_run
 
     assert callable(setup_run.run)
@@ -34,3 +34,24 @@ def test_maintained_benchmarks_use_tasks_profiles_artifacts_layout():
         "benchmarks/kramabench/tasks-mini/runtime-profiles"
     )
     assert kramabench.artifact_root == Path("benchmarks/kramabench/tasks-mini/artifacts")
+
+
+def test_renamed_analysis_layout_has_no_survivors():
+    import importlib
+
+    assert not (ROOT / "sana_analysis" / "running_analysis").exists()
+    assert not (ROOT / "sana_analysis" / "report_generator").exists()
+    assert not (ROOT / "sana_analysis" / "run_sana_mode_analysis.py").exists()
+    assert not (ROOT / "sana_analysis" / "run_mode_analysis_semantic.py").exists()
+
+    for dead in (
+        "sana_analysis.running_analysis",
+        "sana_analysis.report_generator",
+        "sana_analysis.run_sana_mode_analysis",
+        "sana_analysis.run_mode_analysis_semantic",
+    ):
+        try:
+            importlib.import_module(dead)
+        except ModuleNotFoundError:
+            continue
+        raise AssertionError(f"{dead} still importable")

@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from sana_analysis.run_sana_mode_analysis import prepare_sana_modes
+from sana_analysis.prepare_sana_result_tree import prepare_sana_modes
 
 
 class RunSanaModeAnalysisTests(unittest.TestCase):

@@ -71,7 +71,6 @@ def prepare_sana_modes(source_root: str | Path = "sana-results") -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", default="sana-results")
-    parser.add_argument("--prepare-only", action="store_true")
     return parser.parse_args()
 
 
@@ -79,8 +78,6 @@ def main() -> None:
     args = parse_args()
     prepared = prepare_sana_modes(args.source)
     print(f"Prepared {prepared} SANA run(s) under {Path(args.source) / 'modes'}")
-    if not args.prepare_only:
-        print("Mode analysis is not implemented here; use --prepare-only.")
 
 
 if __name__ == "__main__":

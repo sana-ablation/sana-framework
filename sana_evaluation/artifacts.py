@@ -156,7 +156,7 @@ def format_artifact_report(
         f"--k 5 --db {artifacts.default_db_hint} --model openai/gpt-5.4-nano"
     )
     analysis_command = (
-        "python -m sana_analysis.run_mode_analysis_semantic "
+        "python -m sana_analysis.run_mode_analysis "
         f"--results-dir {artifacts.semantic_results_root / 'modes'} "
         f"--base-results-dir {artifacts.results_root / 'modes'} "
         f"--traces-dir {artifacts.results_root / 'traces' / 'modes'} "

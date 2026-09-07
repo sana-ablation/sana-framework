@@ -5,9 +5,10 @@ generation, and audit aggregation.
 
 ## Contents
 
-- `run_mode_analysis_semantic.py`: main mode-analysis entry point for semantic
+- `prepare_sana_result_tree.py`: stages raw SANA result trees into the
+  `modes/`/`logs/`/`traces/` layout `run_mode_analysis.py` reads.
+- `run_mode_analysis.py`: main mode-analysis entry point for semantic
   result trees.
-- `run_sana_mode_analysis.py`: analysis for SANA-specific result layouts.
 - `answer_failure_audit_runner.py` and `answer_failure_rerun_queue.py`: answer
   failure audit helpers.
 - `metrics/`: reusable metric and validation modules.

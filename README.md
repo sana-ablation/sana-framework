@@ -275,7 +275,7 @@ flowchart LR
 LakeQA semantic mode analysis:
 
 ```bash
-python -m sana_analysis.run_mode_analysis_semantic \
+python -m sana_analysis.run_mode_analysis \
   --results-dir results_semantic/modes \
   --base-results-dir results/modes \
   --traces-dir results/traces/modes \
@@ -286,7 +286,7 @@ python -m sana_analysis.run_mode_analysis_semantic \
 Kramabench semantic mode analysis:
 
 ```bash
-python -m sana_analysis.run_mode_analysis_semantic \
+python -m sana_analysis.run_mode_analysis \
   --results-dir results-kramabench_semantic/modes \
   --base-results-dir results-kramabench/modes \
   --traces-dir results-kramabench/traces/modes \

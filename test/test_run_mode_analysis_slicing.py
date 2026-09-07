@@ -8,7 +8,7 @@ NameError that the whole suite passed straight over, so they are pinned here.
 import json
 from pathlib import Path
 
-from sana_analysis.run_mode_analysis_semantic import (
+from sana_analysis.run_mode_analysis import (
     _DATA_TOOLS,
     _assign_reasoning_density_bin,
     _assign_search_depth_bin,
