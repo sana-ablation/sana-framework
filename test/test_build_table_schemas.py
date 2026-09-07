@@ -73,3 +73,47 @@ class TestRejects:
 
     def test_empty_content_yields_nothing(self):
         assert derive_table(_key(), "") is None
+
+
+class TestBinaryAndMetadata:
+    """Guards added after a 3000-dataset sample, each for something it found."""
+
+    def test_zip_stored_as_txt_is_rejected(self):
+        # should_skip only sees filenames; these arrive as .txt and their
+        # compressed bytes contain commas, which parsed as a 2180-column header.
+        head = "PK\x03\x04\x14\x00\x00\x00ag_roosevelt_1936.json,Project,Agency\n"
+        assert derive_table(_key("archive.txt"), head) is None
+
+    def test_content_with_nul_bytes_is_rejected(self):
+        assert derive_table(_key(), "a,b,c\n\x00\x00\x00binary\n") is None
+
+    def test_absurd_column_count_is_rejected(self):
+        assert derive_table(_key(), ",".join(f"c{i}" for i in range(900)) + "\n") is None
+
+    def test_json_ld_envelope_is_not_a_table(self):
+        head = json.dumps({"@context": {}, "@id": "x", "@type": "dcat:Catalog",
+                           "dataset": [], "describedBy": "y"})
+        assert derive_table(_key("catalog-record.txt"), head) is None
+
+    def test_service_descriptor_is_not_a_table(self):
+        head = json.dumps({"capabilities": "Query", "supportedQueryFormats": "JSON",
+                           "cacheMaxAge": 0, "name": "layer"})
+        assert derive_table(_key("arcgis-layer.txt"), head) is None
+
+    def test_single_key_envelope_is_not_a_table(self):
+        assert derive_table(_key("tags.txt"), json.dumps({"tags": ["a", "b"]})) is None
+
+
+class TestLargeJsonFallback:
+    def test_geojson_larger_than_the_peek_still_yields_columns(self):
+        # A FeatureCollection is typically megabytes, so it never parses whole
+        # from a 32 KiB peek; ijson reads far enough to reach the first feature.
+        truncated = (
+            '{\n  "type": "FeatureCollection",\n  "features": [\n'
+            '    {"type": "Feature", "properties": '
+            '{"ADDDATE": "2019", "CITY": "DC", "DETAILS": "x", "WARD": 1},'
+            ' "geometry": {"type": "Point", "coordinates": [1, 2'
+        )
+        rec = derive_table(_key("data.txt"), truncated)
+        assert rec is not None, "truncated GeoJSON should still yield columns"
+        assert rec["columns"] == ["ADDDATE", "CITY", "DETAILS", "WARD"]

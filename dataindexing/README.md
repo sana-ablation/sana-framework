@@ -116,6 +116,11 @@ the content family -- never the extension, since the crawler stored every
 payload as `.txt` whatever it held -- then derives columns and delimiter from
 the bytes. Output matches the shape `load_table_schemas` already reads.
 
+It runs concurrently and resumes: a `<output>.done` checkpoint records finished
+dataset slugs, so a run that dies part-way continues rather than repeating. On
+this corpus it sustains roughly 35 datasets/second, so all 311,588 datagov
+datasets are a couple of hours rather than the day a serial pass would take.
+
 Whether a first line is a header or a data row is decided by its shape: several
 short identifier-like fields. That is a heuristic, and the two cases it exists
 to handle are both in the corpus -- a list of `Surname, Given` author names
@@ -123,3 +128,12 @@ reads as a consistent two-column table, and a real table's quoted WKT geometry
 spans lines and defeats delimiter-consistency checks. Measured against the
 datasets the benchmark tasks actually use, it derived a correct schema for 14 of
 the 14 that have an eligible file.
+
+A 3,000-dataset sample is what shaped the rest of the filtering, and each guard
+exists for something that sample turned up: ZIP archives stored under a `.txt`
+name whose compressed bytes parsed as a 2,180-column header, JSON-LD catalogue
+records, ArcGIS service descriptors, and single-key API envelopes. Large
+pretty-printed JSON is streamed with ijson, because a GeoJSON FeatureCollection
+never parses whole from a peek and would otherwise be lost. Yield on that sample
+is about 15% of datasets -- most of the rest hold citation or licence text
+rather than tables.
