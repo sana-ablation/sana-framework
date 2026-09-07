@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from sana_analysis.report_generator.combine_answer_failure_grouped_models import (
+from sana_analysis.answer_failure.combine_grouped_models import (
     COMBINED_CONDITION_FIGURE_NAME,
     COMBINED_CSV_NAME,
     COMBINED_FIGURE_NAME,

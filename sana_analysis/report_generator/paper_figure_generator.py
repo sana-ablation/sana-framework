@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Iterable, Optional
 
 from sana_analysis.run_mode_analysis_semantic import run_analysis
-from sana_analysis.report_generator.combine_answer_failure_grouped_models import (
+from sana_analysis.answer_failure.combine_grouped_models import (
     COMBINED_CSV_NAME,
     COMBINED_CONDITION_FIGURE_NAME,
     COMBINED_FIGURE_NAME,

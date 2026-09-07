@@ -8,7 +8,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Optional
 
-from sana_analysis.running_analysis.answer_failure_taxonomy import ANSWER_FAILURE_TYPES, FAILURE_STAGES
+from sana_analysis.answer_failure.taxonomy import ANSWER_FAILURE_TYPES, FAILURE_STAGES
 
 
 CONFIDENCE_VALUES = {"high", "medium", "low"}

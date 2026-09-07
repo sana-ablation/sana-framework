@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from sana_analysis.report_generator.migrate_answer_failure_taxonomy import (
+from sana_analysis.answer_failure.migrate_taxonomy import (
     AMBIGUOUS_OLD_TYPES,
     apply_migration,
     export_review_packet,

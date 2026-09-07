@@ -17,13 +17,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from sana_analysis.running_analysis.answer_failure_taxonomy import (
+from sana_analysis.answer_failure.taxonomy import (
     format_answer_failure_type_definitions,
     format_blocker_subtypes,
     format_boundary_rules,
     format_failure_stages,
 )
-from sana_analysis.running_analysis.answer_failure_validation import (
+from sana_analysis.answer_failure.validation import (
     EVENT_COLUMNS,
     MODEL_VALIDATION_NOTES_FIELD,
     MODEL_VALIDATION_STATUS_FIELD,
@@ -34,7 +34,7 @@ from sana_analysis.running_analysis.answer_failure_validation import (
     row_log_path,
     validate_answer_failure_root,
 )
-from sana_analysis.report_generator.build_answer_failure_report import build_answer_failure_report
+from sana_analysis.answer_failure.report import build_answer_failure_report
 
 
 SOURCE_ROOTS = {

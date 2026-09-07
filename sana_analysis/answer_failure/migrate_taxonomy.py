@@ -9,10 +9,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from sana_analysis.running_analysis.answer_failure_taxonomy import ANSWER_FAILURE_TYPES
-from sana_analysis.running_analysis.answer_failure_validation import validate_answer_failure_root
-from sana_analysis.report_generator.build_answer_failure_report import build_answer_failure_report
-from sana_analysis.report_generator.combine_answer_failure_grouped_models import combine_answer_failures
+from sana_analysis.answer_failure.taxonomy import ANSWER_FAILURE_TYPES
+from sana_analysis.answer_failure.validation import validate_answer_failure_root
+from sana_analysis.answer_failure.report import build_answer_failure_report
+from sana_analysis.answer_failure.combine_grouped_models import combine_answer_failures
 
 
 AMBIGUOUS_OLD_TYPES = {

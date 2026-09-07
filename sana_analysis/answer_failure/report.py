@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Optional
 
-from sana_analysis.running_analysis.answer_failure_validation import (
+from sana_analysis.answer_failure.validation import (
     MODEL_VALIDATION_STATUS_FIELD,
     TRUSTED_MODEL_VALIDATION_STATUSES,
     VALIDATION_STATUS_FIELD,

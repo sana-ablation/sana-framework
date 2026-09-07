@@ -10,11 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
-from sana_analysis.running_analysis.answer_failure_taxonomy import (
+from sana_analysis.answer_failure.taxonomy import (
     ANSWER_FAILURE_FIGURE_GROUPS as ANSWER_FAILURE_GROUPS,
     OMITTED_ANSWER_FAILURE_TYPES,
 )
-from sana_analysis.report_generator.build_answer_failure_report import _load_rows_for_events_file, _trusted_events
+from sana_analysis.answer_failure.report import _load_rows_for_events_file, _trusted_events
 
 
 COMBINED_CSV_NAME = "combined_answer_failure_events.csv"

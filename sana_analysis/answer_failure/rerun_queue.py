@@ -9,8 +9,8 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from sana_analysis.running_analysis.answer_failure_validation import is_non_correct_row
-from sana_analysis.running_analysis.answer_failure_validation import validate_answer_failure_root
+from sana_analysis.answer_failure.validation import is_non_correct_row
+from sana_analysis.answer_failure.validation import validate_answer_failure_root
 
 
 DETERMINISTIC_USABLE_STATUSES = {"valid", "valid_with_warnings"}
@@ -123,7 +123,7 @@ def command_for_candidate(
         "run",
         "python",
         "-m",
-        "sana_analysis.answer_failure_audit_runner",
+        "sana_analysis.answer_failure.audit_runner",
         "--eval-path",
         candidate.source_eval_path.as_posix(),
         "--repair-invalid-rounds",
