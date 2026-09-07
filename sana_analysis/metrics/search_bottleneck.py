@@ -19,7 +19,7 @@ from pathlib import Path
 from statistics import median
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
-from sana_analysis.running_analysis.discovery_metrics import (
+from sana_analysis.metrics.discovery import (
     _dataset_to_unique_source,
     _is_source_gold_values,
     _normalize_source_id,

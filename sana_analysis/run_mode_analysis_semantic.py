@@ -56,7 +56,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from sana_analysis.running_analysis.discovery_metrics import (
+from sana_analysis.metrics.discovery import (
     compute_discovery_metrics,
     compute_tools_discovery,
     load_task_gold_ids_for_traces,
@@ -68,7 +68,7 @@ from sana_analysis.running_analysis.discovery_metrics import (
     make_task_stem_key,
     _normalize_source_id,
 )
-from sana_analysis.running_analysis.search_bottleneck import (
+from sana_analysis.metrics.search_bottleneck import (
     SEARCH_BOTTLENECK_CUTOFFS,
     compute_search_bottleneck,
     generate_search_bottleneck_figures,

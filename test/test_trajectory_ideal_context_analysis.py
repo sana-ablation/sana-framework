@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from sana_analysis.running_analysis.trajectory_ideal_context_analysis import (
+from sana_analysis.metrics.trajectory_ideal_context_analysis import (
     TARGET_MODES,
     build_judge_prompt,
     build_trajectory_rows,

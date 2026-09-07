@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
-from sana_analysis.running_analysis.trajectory_pair_analysis import (
+from sana_analysis.metrics.trajectory_pair_analysis import (
     _append_journal_record,
     _extract_runner_model,
     _first_executing_line,

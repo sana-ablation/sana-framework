@@ -6,7 +6,7 @@ D_ret: retrieval-evidence gold coverage per task = |retrieved_gold ∩ gold| / |
 D_acc: access gold recall per task = |read_gold ∩ gold| / |gold|
 
 Usage:
-    python -m sana_analysis.running_analysis.discovery_metrics [--traces-dir results/traces] [--tasks-dir tasks_mini]
+    python -m sana_analysis.metrics.discovery [--traces-dir results/traces] [--tasks-dir tasks_mini]
 """
 from __future__ import annotations
 
