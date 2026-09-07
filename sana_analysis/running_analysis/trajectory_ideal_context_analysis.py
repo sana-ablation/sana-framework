@@ -13,9 +13,6 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
 
-if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-
 from sana_analysis.running_analysis.trajectory_pair_analysis import (
     _append_journal_record,
     _extract_runner_model,

@@ -5,13 +5,9 @@ from __future__ import annotations
 import argparse
 import csv
 import os
-import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Optional
-
-if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sana_analysis.running_analysis.answer_failure_validation import (
     MODEL_VALIDATION_STATUS_FIELD,

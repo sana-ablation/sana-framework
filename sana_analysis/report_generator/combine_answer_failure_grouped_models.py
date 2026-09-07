@@ -5,14 +5,10 @@ from __future__ import annotations
 
 import argparse
 import csv
-import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
-
-if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sana_analysis.running_analysis.answer_failure_taxonomy import (
     ANSWER_FAILURE_FIGURE_GROUPS as ANSWER_FAILURE_GROUPS,

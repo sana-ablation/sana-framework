@@ -8,12 +8,9 @@ import csv
 import json
 import math
 import shutil
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sana_analysis.run_mode_analysis_semantic import run_analysis
 from sana_analysis.report_generator.combine_answer_failure_grouped_models import (

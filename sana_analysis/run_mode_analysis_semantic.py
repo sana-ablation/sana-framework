@@ -52,12 +52,9 @@ import glob
 import json
 import math
 import re
-import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sana_analysis.running_analysis.discovery_metrics import (
     compute_discovery_metrics,

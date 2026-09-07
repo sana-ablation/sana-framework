@@ -5,13 +5,9 @@ from __future__ import annotations
 import argparse
 import csv
 import shutil
-import sys
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
-
-if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sana_analysis.running_analysis.answer_failure_taxonomy import ANSWER_FAILURE_TYPES
 from sana_analysis.running_analysis.answer_failure_validation import validate_answer_failure_root
