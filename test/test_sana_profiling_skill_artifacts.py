@@ -20,7 +20,7 @@ def test_sana_profiling_folder_has_public_index():
 
 AUDITOR = SANA_PROFILING / "skills" / "benchmark-lakeqa-conversion-auditor"
 SCAFFOLDER = SANA_PROFILING / "skills" / "benchmark-lakeqa-skill-scaffolder"
-RUNS = SANA_PROFILING / "runs"
+EXAMPLES = SANA_PROFILING / "examples"
 
 
 def test_conversion_auditor_skill_contract():
@@ -374,7 +374,7 @@ def test_sana_profiling_ideal_artifact_skills_use_runtime_profile_convention():
 
 
 def test_hotpotqa_generated_conversion_run_outputs_current_layout_and_no_prompt_leaks():
-    run = RUNS / "hotpotqa-generated-conversion"
+    run = EXAMPLES / "hotpotqa-conversion"
     validation = json.loads((run / "validation.json").read_text(encoding="utf-8"))
 
     assert validation["requested_import_count"] == 5
