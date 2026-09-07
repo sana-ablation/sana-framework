@@ -96,3 +96,30 @@ supplies. Arguments after the stage name pass through and override the defaults
 derived from `--benchmark`.
 
 These moved here from `scripts/`, which now holds only experiment execution.
+
+## Deriving table schemas from the bucket
+
+`table_schemas_full.jsonl` as shipped has no generator anywhere -- it came from
+data.gov's catalogue, which is why it advertises a `.csv` and a `.json`
+distribution for a single stored object, and why it carries a `/v1/` path
+segment the bucket does not use. Every reader compensates for both.
+
+To derive schemas from what is actually stored:
+
+    python -m dataindexing.cli.build_table_schemas \
+        --prefix datagov/ \
+        --output benchmarks/lakeqa/tasks-mini/artifacts/table_schemas_bucket.jsonl
+
+It lists the bucket, skips metadata siblings (`catalog`, `dcat-us`, `headers`,
+licence text, Socrata ids, bare numbers), and for each remaining object sniffs
+the content family -- never the extension, since the crawler stored every
+payload as `.txt` whatever it held -- then derives columns and delimiter from
+the bytes. Output matches the shape `load_table_schemas` already reads.
+
+Whether a first line is a header or a data row is decided by its shape: several
+short identifier-like fields. That is a heuristic, and the two cases it exists
+to handle are both in the corpus -- a list of `Surname, Given` author names
+reads as a consistent two-column table, and a real table's quoted WKT geometry
+spans lines and defeats delimiter-consistency checks. Measured against the
+datasets the benchmark tasks actually use, it derived a correct schema for 14 of
+the 14 that have an eligible file.
