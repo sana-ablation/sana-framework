@@ -373,19 +373,9 @@ def test_sana_profiling_ideal_artifact_skills_use_runtime_profile_convention():
     assert "metadata/audit fields" in verifier
 
 
-def test_hotpotqa_generated_conversion_run_outputs_current_layout_and_no_prompt_leaks():
+def test_hotpotqa_conversion_example_uses_current_layout_and_leaks_no_prompts():
     run = EXAMPLES / "hotpotqa-conversion"
     validation = json.loads((run / "validation.json").read_text(encoding="utf-8"))
-
-    # validation.json is a frozen artifact from when this example lived at
-    # sana-profiling/runs/hotpotqa-generated-conversion; its recorded "task"
-    # and "runtime_profile" paths still say so. Resolve them against the
-    # example's current location instead of editing the frozen JSON.
-    frozen_prefix = "sana-profiling/runs/hotpotqa-generated-conversion/"
-
-    def resolve(raw_path):
-        assert raw_path.startswith(frozen_prefix), raw_path
-        return run / raw_path[len(frozen_prefix):]
 
     assert validation["requested_import_count"] == 5
     assert validation["converted_count"] == 5
@@ -409,8 +399,8 @@ def test_hotpotqa_generated_conversion_run_outputs_current_layout_and_no_prompt_
         assert row["ideal_query_count"] == 0
         assert row["text_evidence_computation_skip_ok"] is True
 
-        task = json.loads(resolve(row["task"]).read_text(encoding="utf-8"))
-        profile = json.loads(resolve(row["runtime_profile"]).read_text(encoding="utf-8"))
+        task = json.loads((ROOT / row["task"]).read_text(encoding="utf-8"))
+        profile = json.loads((ROOT / row["runtime_profile"]).read_text(encoding="utf-8"))
 
         assert task["question"].endswith("Write your answer as [ANSWER].")
         assert all(
