@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import sana_evaluation.tools.external.search_web_tools as search_web_tools
-from sana_evaluation.agent_with_mode import (
+from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_mode_bundle,
     build_search,

@@ -8,7 +8,8 @@ This package provides:
 - Metrics: Evaluation metrics for comparing answers
 
 Usage:
-    from sana_evaluation.agent_with_mode import DataLakeAgent, BatchRunner
+    from sana_evaluation.runner.agent import DataLakeAgent
+    from sana_evaluation.runner.batch import BatchRunner
     from sana_evaluation.config import AgentConfig, RunConfig
 
     agent = DataLakeAgent(AgentConfig())
@@ -18,7 +19,8 @@ Usage:
     results = batch.run_from_files(["tasks/task_1.json", "tasks/task_2.json"])
 """
 
-from .agent_with_mode import DataLakeAgent, BatchRunner
+from .runner.agent import DataLakeAgent
+from .runner.batch import BatchRunner
 from .config import AgentConfig, RunConfig
 from .helper.result import AgentResult
 from .llm.llm_factory import build_model

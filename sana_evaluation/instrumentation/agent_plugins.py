@@ -1,7 +1,7 @@
 """Shared agent plugins and callback utilities.
 
 This module centralizes plugin implementations used by both
-`agent.py` and `agent_with_mode.py` to avoid duplicated logic.
+`agent.py` and `runner/agent.py` to avoid duplicated logic.
 """
 
 from __future__ import annotations

@@ -5,8 +5,8 @@ from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
 from sana_evaluation.config import AgentConfig, RunConfig
-from sana_evaluation.agent_with_mode import (
-    DataLakeAgent,
+from sana_evaluation.runner.agent import DataLakeAgent
+from sana_evaluation.runner.modes import (
     build_mode_bundle,
     _tool_limit_exclusions_for_run,
 )
@@ -197,7 +197,7 @@ class TestModeWrapper(unittest.TestCase):
         self.assertEqual(bundle.modes["profile_skills"], "on")
 
     def test_base_agent_does_not_expose_sandbox_admin_tools(self):
-        import sana_evaluation.agent_with_mode as agent_with_mode
+        import sana_evaluation.runner.agent as runner_agent
 
         captured = {}
 
@@ -212,8 +212,8 @@ class TestModeWrapper(unittest.TestCase):
             profile_mode="standard",
         )
 
-        with patch.object(agent_with_mode, "build_model", return_value=object()):
-            with patch.object(agent_with_mode, "Agent", _FakeStrandsAgent):
+        with patch.object(runner_agent, "build_model", return_value=object()):
+            with patch.object(runner_agent, "Agent", _FakeStrandsAgent):
                 agent = DataLakeAgent(AgentConfig(model_name="openai/gpt-5.4-nano"), cfg)
                 agent._build_agent(MagicMock(), task_context={})
 

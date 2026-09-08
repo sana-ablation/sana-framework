@@ -81,7 +81,7 @@ def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str, no_s3: bo
     Without this the guard in build_mode_bundle only fires inside each task
     worker, so a bad combination burns one crash per task instead of one upfront.
     """
-    from sana_evaluation.agent_with_mode import _validate_search_mode_combination
+    from sana_evaluation.runner.modes import _validate_search_mode_combination
 
     label = f"mode_combination:search={st}"
     try:

@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import sana_evaluation.tools.agent_tools as agent_tools
 import sana_evaluation.tools.external.search_web_tools as search_web_tools
 import sana_evaluation.tools.external.web_fetch_tools as web_fetch_tools
-from sana_evaluation.agent_with_mode import (
+from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_data_tools,
 )
@@ -354,7 +354,7 @@ class TestRunConfigWiring(unittest.TestCase):
     """no_s3 must reach the composed prompt and tool surface through RunConfig."""
 
     def _bundle(self, *, no_s3: bool):
-        from sana_evaluation.agent_with_mode import build_mode_bundle
+        from sana_evaluation.runner.modes import build_mode_bundle
         from sana_evaluation.config import RunConfig
 
         cfg = RunConfig(

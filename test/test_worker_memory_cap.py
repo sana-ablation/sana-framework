@@ -23,7 +23,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation import agent_with_mode as awm
+from sana_evaluation.runner import batch as awm
 
 
 class WorkerMemoryCapTests(unittest.TestCase):

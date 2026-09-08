@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.agent_with_mode import build_mode_bundle, _tool_limit_exclusions_for_run
+from sana_evaluation.runner.modes import build_mode_bundle, _tool_limit_exclusions_for_run
 from sana_evaluation.config import RunConfig
 from sana_evaluation.instrumentation import ideal_subagent_costs
 from sana_evaluation.instrumentation.trace_plugin import set_trace_context

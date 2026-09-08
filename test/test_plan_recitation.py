@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.agent_with_mode import DataLakeAgent
+from sana_evaluation.runner.agent import DataLakeAgent
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.preflight import run_preflight
 from sana_evaluation.tools.external.ideal import runtime_profile_store

@@ -56,8 +56,8 @@ def _load_run_mode_eval_module():
     fake_base_eval._results_dir = lambda run_config, agent_config: "unused"
     fake_base_eval.find_all_task_dirs = lambda *_args, **_kwargs: []
 
-    fake_agent_with_mode = types.ModuleType("sana_evaluation.agent_with_mode")
-    fake_agent_with_mode.BatchRunner = object
+    fake_runner_batch = types.ModuleType("sana_evaluation.runner.batch")
+    fake_runner_batch.BatchRunner = object
 
     fake_config = types.ModuleType("sana_evaluation.config")
     fake_config.AgentConfig = object
@@ -67,12 +67,12 @@ def _load_run_mode_eval_module():
     saved = {
         "sana_evaluation": sys.modules.get("sana_evaluation"),
         "sana_evaluation.run_eval": sys.modules.get("sana_evaluation.run_eval"),
-        "sana_evaluation.agent_with_mode": sys.modules.get("sana_evaluation.agent_with_mode"),
+        "sana_evaluation.runner.batch": sys.modules.get("sana_evaluation.runner.batch"),
         "sana_evaluation.config": sys.modules.get("sana_evaluation.config"),
     }
     sys.modules["sana_evaluation"] = fake_pkg
     sys.modules["sana_evaluation.run_eval"] = fake_base_eval
-    sys.modules["sana_evaluation.agent_with_mode"] = fake_agent_with_mode
+    sys.modules["sana_evaluation.runner.batch"] = fake_runner_batch
     sys.modules["sana_evaluation.config"] = fake_config
     try:
         spec = importlib.util.spec_from_file_location("_test_run_mode_eval_module", module_path)

@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Optional
 
 from sana_evaluation import run_eval as base_eval
-from sana_evaluation.agent_with_mode import BatchRunner as ModeBatchRunner
+from sana_evaluation.runner.batch import BatchRunner as ModeBatchRunner
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.env import load_repo_dotenv
 from sana_evaluation.helper.prompting import normalize_debug_mode
@@ -96,7 +96,7 @@ def _resolve_mode_axes(
     profile: Optional[str],
     computation_tool: Optional[str] = None,
 ) -> tuple[str, str, str, str]:
-    from sana_evaluation.agent_with_mode import _normalize_result_mode
+    from sana_evaluation.runner.modes import _normalize_result_mode
 
     defaults = _AXIS_DEFAULTS
     return (

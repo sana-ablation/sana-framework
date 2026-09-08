@@ -15,7 +15,7 @@ from strands.hooks.events import (
     BeforeToolCallEvent,
 )
 
-from sana_evaluation.agent_with_mode import build_mode_bundle
+from sana_evaluation.runner.modes import build_mode_bundle
 from sana_evaluation.config import RunConfig
 from sana_evaluation.instrumentation import ideal_subagent_costs
 from sana_evaluation.instrumentation.trace_plugin import set_trace_context
