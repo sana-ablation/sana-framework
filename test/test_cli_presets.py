@@ -333,12 +333,8 @@ def test_search_free_alias_resolves(repo):
     ])
 
     assert a.search_free is True
-
-
-def test_search_lessguide_is_gone(repo):
-    for dead in ("--search-lessguide", "--search_lessguide"):
-        with pytest.raises(SystemExit):
-            cli.parse(["smoke", dead])
+    # Its former companion --search-lessguide is one of the five deleted flags;
+    # test_cli.py::test_deleted_flags_are_gone owns that assertion, both spellings.
 
 
 def test_skills_flag_resolves(repo):

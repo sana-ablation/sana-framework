@@ -247,7 +247,7 @@ Common feature flags:
 | `--repair-model` | model name | `--model` | Optional stronger model for ideal computation repair calls. |
 | `--openai-prompt-cache-key` | string | unset | Prompt-cache key for OpenAI-backed adapters. |
 | `--openai-prompt-cache-retention` | string | unset | Prompt-cache retention policy for OpenAI-backed adapters. |
-| `--db` | path | `./lance_data` | LanceDB root, for example `lance_data` or `lance_kramabench_infused`. Preflight fails if it is missing. |
+| `--db` | path | `./lance_data` | LanceDB root, for example `lance_data` or `lance_kramabench_infused`. Preflight checks that it exists only under `--search standard` or `--search naive`, the two modes that query the index; the `smoke` and `full` examples above run `--search ideal`, which is served from runtime profiles and so never touches it. |
 | `--timeout` | seconds | `600` | Per-task soft timeout. |
 | `--submit-grace-seconds` | seconds | `30` | Extra time reserved for final answer submission after timeout. |
 | `--task-dir` | path or bucket name | smoke default | Run one directory of tasks, e.g. `k-5-d-4`. |

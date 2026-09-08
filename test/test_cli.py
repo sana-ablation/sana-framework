@@ -42,8 +42,22 @@ def test_legacy_spellings_still_parse(argv, attr, expected):
     assert getattr(cli.parse(argv), attr) == expected
 
 
-def test_deleted_flags_are_gone():
-    for dead in ("--condition", "--sparse-backend", "--decision-notes",
-                 "--search-lessguide", "--only-new"):
-        with pytest.raises(SystemExit):
-            cli.parse([dead, "x"])
+@pytest.mark.parametrize("dead", [
+    ["--condition", "baseline"],        # took a value; "baseline" was its one legal choice
+    ["--sparse-backend", "bm25"],       # took a value; "bm25" was its default
+    ["--decision-notes"],               # store_true alias for --debug-mode decision_notes
+    ["--search-lessguide"],             # store_true
+    ["--search_lessguide"],             # ... and its underscore spelling
+    ["--only-new"],                     # store_true duplicate of --task-continue
+])
+def test_deleted_flags_are_gone(dead):
+    """Each argv is otherwise valid, so only the missing option can raise.
+
+    The obvious spelling of this test asserts nothing: `parse(["--condition", "x"])`
+    exits whether or not the flag exists — if it exists, "x" is an illegal choice,
+    and if it does not, "x" lands on the `preset` positional, which rejects it. So
+    the preset is supplied up front and every flag that took a value is given a
+    legal one; a parser that still defined these would parse all six cleanly.
+    """
+    with pytest.raises(SystemExit):
+        cli.parse(["smoke"] + dead)
