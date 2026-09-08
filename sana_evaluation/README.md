@@ -6,8 +6,8 @@ Runtime package for SANA benchmark execution.
 
 - `setup_run.py`: builds configured evaluation runs.
 - `run_eval.py` and `run_mode_eval.py`: run evaluation entry points.
-- `artifacts.py` and `preflight.py`: artifact discovery and readiness checks.
-- `helper/`: shared runtime helpers for prompts, metrics, results, logging, and
+- `benchmarks.py` and `preflight.py`: artifact discovery and readiness checks.
+- `helper/`: shared runtime helpers for prompts, results, logging, and
   sandbox handling.
 - `instrumentation/`: plugins for traces, loop metadata, read traces, costs,
   and search-call budgets.

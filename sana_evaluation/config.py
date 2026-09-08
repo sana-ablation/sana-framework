@@ -7,7 +7,7 @@ To create a model from this config, use:
 
 Short model names (e.g. "bedrock/claude-sonnet-4.5") are resolved via MODEL_REGISTRY
 into the canonical provider string and actual model ID required by the Strands SDK.
-They also serve as the key for pricing lookups in helper/constants.py MODEL_PRICING.
+They also serve as the key for pricing lookups in models.py MODEL_PRICING.
 """
 
 from dataclasses import dataclass, field
