@@ -1,6 +1,6 @@
 """Named task sets: resolution, and that a set reuses the shared runtime profiles.
 
-The second half is the one that matters. runtime_profile_store used to match the
+The second half is the one that matters. sana_evaluation.profiles used to match the
 literal segment `benchmarks/<benchmark>/tasks-mini/tasks`, so a set under any
 other name did not raise -- it resolved to a *wrong* profile path and failed
 much later with a confusing missing-file error.
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from sana_evaluation.cli import _named_task_sets, resolve_task_set
-from sana_evaluation.tools.external.ideal.runtime_profile_store import (
+from sana_evaluation.profiles import (
     _profile_location_from_task,
     runtime_profiles_root,
     set_runtime_profiles_root,

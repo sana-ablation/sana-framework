@@ -171,7 +171,7 @@ def search_web(search_queries: List[str], objective: str = "") -> Dict[str, Any]
         # Record what search offered so `download` can gate on it under --no-s3.
         # Best-effort: a failure here must never break search itself.
         try:
-            from sana_evaluation.tools.external.web_fetch_tools import record_search_urls
+            from sana_evaluation.tools.fetch import record_search_urls
 
             record_search_urls(
                 item.get("url") for item in (result.get("results") or []) if item.get("url")

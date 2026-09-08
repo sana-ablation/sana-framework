@@ -36,17 +36,17 @@ from sana_evaluation.tools.lake import (
     search_prefix,
     submit_answer,
 )
-from sana_evaluation.tools.external.web_fetch_tools import download_web
-from sana_evaluation.tools.external.plan_tools import plan
-from sana_evaluation.tools.external.ideal.plan_ideal import (
+from sana_evaluation.tools.fetch import download_web
+from sana_evaluation.tools.plan import plan
+from sana_evaluation.tools.oracle.plan import (
     inject_reasoning_chain_prompt,
     plan_ideal,
 )
-from sana_evaluation.tools.external.ideal.runtime_profile_store import (
+from sana_evaluation.profiles import (
     load_runtime_profile_for_context as load_ideal_profile_for_context,
     set_task_context as set_ideal_profile_task_context,
 )
-from sana_evaluation.tools.external.ideal.search_wrapper import (
+from sana_evaluation.tools.search.wrapper import (
     build_search_tools as build_search_tools_by_mode,
     search_tool_names_in as search_tool_names_in_mode,
 )
@@ -54,7 +54,7 @@ from sana_evaluation.tools.external.ideal.search_wrapper import (
 # Standard hybrid search tools
 _STANDARD_SEARCH_TOOLS_AVAILABLE = False
 try:
-    from sana_evaluation.tools.external.search_standard_tools import (
+    from sana_evaluation.tools.search.standard import (
         search_value as search_value_standard,
         search_schema,
         search_reranked,
@@ -66,7 +66,7 @@ except ImportError:
 # Naive sparse search tools
 _NAIVE_SEARCH_TOOLS_AVAILABLE = False
 try:
-    from sana_evaluation.tools.external.search_naive_tools import (
+    from sana_evaluation.tools.search.naive import (
         search_value as search_value_naive,
         search_schema as search_schema_naive,
     )
@@ -178,7 +178,7 @@ def build_search(
     if search_mode == "web":
         # Web search is not reshaped by the results axis (see search_wrapper._WEB_TOOLS),
         # so --k has to be applied here rather than by build_search_results.
-        from sana_evaluation.tools.external.search_web_tools import (
+        from sana_evaluation.tools.search.web import (
             search_web,
             set_max_results,
         )
@@ -189,7 +189,7 @@ def build_search(
     if search_mode == "naive":
         if not _NAIVE_SEARCH_TOOLS_AVAILABLE:
             raise RuntimeError("Naive sparse search tools are unavailable (import failed).")
-        from sana_evaluation.tools.external.search_naive_tools import (
+        from sana_evaluation.tools.search.naive import (
             search_schema as search_schema_sparse,
             search_value as search_value_sparse,
         )
@@ -199,7 +199,7 @@ def build_search(
     if search_mode == "standard":
         if not _STANDARD_SEARCH_TOOLS_AVAILABLE:
             raise RuntimeError("Standard hybrid search tools are unavailable (import failed).")
-        from sana_evaluation.tools.external.search_standard_tools import (
+        from sana_evaluation.tools.search.standard import (
             search_schema as search_schema_hybrid,
             search_value as search_value_hybrid,
         )
@@ -209,7 +209,7 @@ def build_search(
     if search_mode == "preloaded":
         return []
 
-    import sana_evaluation.tools.external.ideal.search_ideal as search_ideal
+    import sana_evaluation.tools.oracle.search as search_ideal
 
     search_ideal.set_task_context(task_context or {})
     return [search_ideal.search_ideal]
@@ -412,7 +412,7 @@ def _apply_computation_tool_mode(
             if _tool_name(tool_obj) != "query_file"
         ]
 
-    from sana_evaluation.tools.external.ideal import computation_ideal
+    from sana_evaluation.tools.oracle import computation as computation_ideal
 
     computation_ideal.set_task_context(task_context or {})
     out: List[Any] = []

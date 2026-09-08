@@ -29,8 +29,8 @@ from typing import Any, Dict, List, Optional, Sequence
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sana_evaluation.tools.lake import search_prefix
-from sana_evaluation.tools.external.ideal import search_ideal as ideal_search
-from sana_evaluation.tools.external.ideal.search_wrapper import build_search_tools
+from sana_evaluation.tools.oracle import search as ideal_search
+from sana_evaluation.tools.search.wrapper import build_search_tools
 
 SEARCH_TOOL_MODES = ("naive", "standard", "ideal")
 SEARCH_RESULT_MODES = ("naive", "ideal")
@@ -39,13 +39,13 @@ SEARCH_RESULT_MODES = ("naive", "ideal")
 def _build_base_tools(search_tool_mode: str, db_path: str, task_file: Optional[str]) -> List:
     """Return the un-wrapped base search tools for a given search_tool mode."""
     if search_tool_mode == "naive":
-        from sana_evaluation.tools.external import search_naive_tools
+        from sana_evaluation.tools.search import naive as search_naive_tools
         search_naive_tools.set_db_path(db_path)
         search_naive_tools.setup()
         return [search_naive_tools.search_value, search_naive_tools.search_schema, search_prefix]
 
     if search_tool_mode == "standard":
-        from sana_evaluation.tools.external import search_standard_tools
+        from sana_evaluation.tools.search import standard as search_standard_tools
         search_standard_tools.set_db_path(db_path)
         search_standard_tools.setup()
         return [search_standard_tools.search_value, search_standard_tools.search_schema, search_prefix]

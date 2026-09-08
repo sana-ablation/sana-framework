@@ -30,7 +30,7 @@ from sana_evaluation.preflight import PreflightError, run_preflight
 from sana_evaluation.runner import orchestration as base_eval
 from sana_evaluation.runner.batch import BatchRunner as ModeBatchRunner
 from sana_evaluation.runner.reporting import print_comparison_table
-from sana_evaluation.tools.external.ideal.subagent_models import (
+from sana_evaluation.tools.oracle.subagent_models import (
     IDEAL_SUBAGENT_MODEL_ENV,
     MAIN_MODEL_ENV,
     REPAIR_IDEAL_SUBAGENT_MODEL_ENV,

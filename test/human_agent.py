@@ -252,7 +252,7 @@ def cmd_search_sparse():
     top_k = int(top_k_raw) if top_k_raw.isdigit() else 10
     try:
         # Naive sparse backend.
-        from sana_evaluation.tools.external.search_naive_tools import search_value as search_sparse
+        from sana_evaluation.tools.search.naive import search_value as search_sparse
     except Exception as e:
         print(
             "  [ERROR] sparse backend unavailable "
@@ -275,7 +275,7 @@ def cmd_search_hybrid():
     top_k = int(top_k_raw) if top_k_raw.isdigit() else 10
     try:
         # Standard hybrid backend.
-        from sana_evaluation.tools.external.search_standard_tools import search_value as search_hybrid
+        from sana_evaluation.tools.search.standard import search_value as search_hybrid
     except Exception as e:
         print(
             "  [ERROR] hybrid backend unavailable "

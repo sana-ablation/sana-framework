@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Sequence
 
 from sana_evaluation.config import RunConfig
 from sana_evaluation.tools.lake import configure_benchmark
-from sana_evaluation.tools.external.ideal.benchmark_paths import (
+from sana_evaluation.benchmarks import (
     artifact_paths,
     canonical_source_uri,
     normalize_benchmark,
@@ -111,7 +111,7 @@ def _check_web_search_credentials() -> PreflightCheck:
 
 
 def _check_desc_cache_for_enrichment() -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
 
     _sw._DESC_CACHE_LOADED = False
     _sw._DESC_BY_URI = {}
@@ -124,7 +124,7 @@ def _check_desc_cache_for_enrichment() -> PreflightCheck:
 
 
 def _check_snippet_cache() -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
 
     _sw._SNIPPET_CACHE_LOADED = False
     _sw._SNIPPET_BY_URI = {}
@@ -137,7 +137,7 @@ def _check_snippet_cache() -> PreflightCheck:
 
 
 def _check_schemas_jsonl_load() -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
 
     _sw._SCHEMAS_CACHE_LOADED = False
     _sw._SCHEMA_BY_SLUG_FILENAME = {}
@@ -158,8 +158,8 @@ def _check_runtime_profile_source_description_coverage(
     *,
     benchmark: str,
 ) -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation import profiles
+    from sana_evaluation.tools.search import wrapper as _sw
 
     label = "runtime profile source description coverage"
     missing: List[str] = []
@@ -177,7 +177,7 @@ def _check_runtime_profile_source_description_coverage(
         ):
             continue
         try:
-            profile = runtime_profile_store.load_runtime_profile_for_task(task_str)
+            profile = profiles.load_runtime_profile_for_task(task_str)
         except Exception as exc:
             return PreflightCheck(label, False, f"{task_str}: {exc}")
         for source in profile.source_sequence:
@@ -246,7 +246,7 @@ def _add_task_node_sources(task_path: str, sources: Dict[str, List[str]]) -> Non
 
 def _check_kramabench_source_objects(task_files: Sequence[str]) -> PreflightCheck:
     from sana_evaluation.tools.lake import _get_s3_client
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
+    from sana_evaluation import profiles
 
     label = "kramabench source object existence"
     sources: Dict[str, List[str]] = {}
@@ -256,7 +256,7 @@ def _check_kramabench_source_objects(task_files: Sequence[str]) -> PreflightChec
         except Exception as exc:
             return PreflightCheck(label, False, f"{task_path}: could not read task nodes: {exc}")
         try:
-            profile = runtime_profile_store.load_runtime_profile_for_task(str(task_path))
+            profile = profiles.load_runtime_profile_for_task(str(task_path))
         except Exception as exc:
             return PreflightCheck(label, False, f"{task_path}: could not load runtime profile: {exc}")
         for index, source in enumerate(profile.source_sequence, start=1):
@@ -323,13 +323,13 @@ def _check_profiles_jsonl(*, required: bool = False) -> PreflightCheck:
 
 
 def _check_runtime_profile_files(task_files: Sequence[str]) -> List[PreflightCheck]:
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
+    from sana_evaluation import profiles
 
     checks: List[PreflightCheck] = []
     for task_path in task_files:
         label = f"runtime_profile:{task_path}"
         try:
-            runtime_profile_store.load_runtime_profile_for_task(task_path)
+            profiles.load_runtime_profile_for_task(task_path)
         except Exception as exc:
             checks.append(PreflightCheck(label, False, str(exc)))
             continue
@@ -342,12 +342,12 @@ def _check_ideal_computation_records(
     *,
     benchmark: str = "lakeqa",
 ) -> List[PreflightCheck]:
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
+    from sana_evaluation import profiles
 
     checks: List[PreflightCheck] = []
     for task_path in task_files:
         try:
-            profile = runtime_profile_store.load_runtime_profile_for_task(task_path)
+            profile = profiles.load_runtime_profile_for_task(task_path)
         except Exception as exc:
             if benchmark != "kramabench":
                 checks.append(PreflightCheck(f"ideal_query:{task_path}", False, str(exc)))
@@ -426,7 +426,7 @@ def run_preflight(
     benchmark = normalize_benchmark(getattr(run_config, "benchmark", None) or "lakeqa")
     configure_benchmark(benchmark)
 
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
     from sana_evaluation.helper import peek_profile as _pp
 
     paths = artifact_paths(benchmark)

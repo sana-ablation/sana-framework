@@ -18,7 +18,7 @@ from sana_evaluation.helper.prompting import (
     normalize_debug_mode,
     skill_paths_for_modes,
 )
-from sana_evaluation.tools.external.ideal.runtime_profile_store import (
+from sana_evaluation.profiles import (
     get_task_context,
     set_runtime_profiles_root,
     set_task_context,
@@ -612,10 +612,10 @@ class TestModeWrapper(unittest.TestCase):
                     }
                 )
             )
-            from sana_evaluation.tools.external.ideal import runtime_profile_store
+            from sana_evaluation import profiles
 
-            old_root = runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT
-            runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = runtime_profiles_root
+            old_root = profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT
+            profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = runtime_profiles_root
             try:
                 cfg = RunConfig(
                     search_tool_mode="preloaded",
@@ -630,7 +630,7 @@ class TestModeWrapper(unittest.TestCase):
                     task_context={"task_id": "benchmarks/kramabench/tasks-mini/tasks/k-1-d-1/task_1.json"},
                 )
             finally:
-                runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
+                profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
 
         tool_names = [tool_obj.tool_spec["name"] for tool_obj in bundle.tools]
         self.assertIn("read_file", tool_names)
@@ -665,10 +665,10 @@ class TestModeWrapper(unittest.TestCase):
                     }
                 )
             )
-            from sana_evaluation.tools.external.ideal import runtime_profile_store
+            from sana_evaluation import profiles
 
-            old_root = runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT
-            runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = runtime_profiles_root
+            old_root = profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT
+            profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = runtime_profiles_root
             try:
                 cfg = RunConfig(
                     search_tool_mode="preloaded",
@@ -683,7 +683,7 @@ class TestModeWrapper(unittest.TestCase):
                     task_context={"task_id": "benchmarks/kramabench/tasks-mini/tasks/k-1-d-1/task_1.json"},
                 )
             finally:
-                runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
+                profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
 
         tool_names = [tool_obj.tool_spec["name"] for tool_obj in bundle.tools]
         self.assertIn("execute_code", tool_names)
@@ -716,10 +716,10 @@ class TestModeWrapper(unittest.TestCase):
                     }
                 )
             )
-            from sana_evaluation.tools.external.ideal import runtime_profile_store
+            from sana_evaluation import profiles
 
-            old_root = runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT
-            runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = runtime_profiles_root
+            old_root = profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT
+            profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = runtime_profiles_root
             try:
                 cfg = RunConfig(
                     search_tool_mode="ideal",
@@ -734,7 +734,7 @@ class TestModeWrapper(unittest.TestCase):
                     task_context={"task_id": "benchmarks/kramabench/tasks-mini/tasks/k-1-d-1/task_1.json"},
                 )
             finally:
-                runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
+                profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
 
         tool_names = [tool_obj.tool_spec["name"] for tool_obj in bundle.tools]
         self.assertIn("search_ideal", tool_names)

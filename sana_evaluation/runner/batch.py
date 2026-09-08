@@ -126,7 +126,7 @@ def _run_task_worker(
 
     if mode_search_tool == "standard" and _STANDARD_SEARCH_TOOLS_AVAILABLE:
         try:
-            import sana_evaluation.tools.external.search_standard_tools as _sa
+            import sana_evaluation.tools.search.standard as _sa
             if run_config.search_db_path:
                 _sa.set_db_path(run_config.search_db_path)
             _sa.setup()
@@ -140,7 +140,7 @@ def _run_task_worker(
         # search paths and can heavily impact worker startup and memory.
         if run_config.search_db_path:
             try:
-                import sana_evaluation.tools.external.search_naive_tools as _sb
+                import sana_evaluation.tools.search.naive as _sb
 
                 _sb.set_db_path(run_config.search_db_path)
             except Exception as e:
@@ -148,7 +148,7 @@ def _run_task_worker(
 
     if mode_search_tool == "ideal":
         if run_config.search_db_path:
-            import sana_evaluation.tools.external.ideal.search_ideal as _si
+            import sana_evaluation.tools.oracle.search as _si
 
             _si.set_db_path(run_config.search_db_path)
 
@@ -179,7 +179,7 @@ def _run_task_worker(
             "reasoning_chain": task.get("reasoning_chain", []),
         }
         if mode_search_tool == "ideal":
-            import sana_evaluation.tools.external.ideal.search_ideal as _si
+            import sana_evaluation.tools.oracle.search as _si
 
             _si.set_task_context(task_context)
 
@@ -225,7 +225,7 @@ def _run_task_worker(
         result_dict["tool_counts"]      = result.get_tool_counts()
 
         if mode_computation_tool == "ideal":
-            from sana_evaluation.tools.external.ideal import computation_ideal as _ci
+            from sana_evaluation.tools.oracle import computation as _ci
 
             result_dict.update(_ci.get_stats())
 

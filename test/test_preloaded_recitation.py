@@ -29,7 +29,7 @@ from sana_evaluation.runner.modes import build_mode_bundle
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.helper.prompting import compose_preloaded_block, skill_paths_for_modes
 from sana_evaluation.preflight import run_preflight
-from sana_evaluation.tools.external.ideal.runtime_profile_store import load_runtime_profile_for_task
+from sana_evaluation.profiles import load_runtime_profile_for_task
 
 _RECITATION_PROMPT = (
     "This is a diagnostic. Do NOT solve the underlying benchmark question. "

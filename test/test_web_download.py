@@ -16,8 +16,8 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import sana_evaluation.tools.lake as lake
-import sana_evaluation.tools.external.search_web_tools as search_web_tools
-import sana_evaluation.tools.external.web_fetch_tools as web_fetch_tools
+import sana_evaluation.tools.search.web as search_web_tools
+import sana_evaluation.tools.fetch as web_fetch_tools
 from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_data_tools,
@@ -122,7 +122,7 @@ class TestUrlAllowlist(_SandboxTestCase):
 
 def _read_allowlist_in_child(queue, sandbox_dir: str) -> None:
     import sana_evaluation.tools.lake as at
-    import sana_evaluation.tools.external.web_fetch_tools as wft
+    import sana_evaluation.tools.fetch as wft
 
     at.set_sandbox_dir(Path(sandbox_dir))
     queue.put(wft.allowed_urls())

@@ -33,11 +33,7 @@ from sana_evaluation.instrumentation import (
     TelemetryTracker,
 )
 from sana_evaluation.instrumentation.loop_plugin import CategoryStagnationHandler
-from sana_evaluation.helper.prompting import (
-    compose_baseline_prompt,
-    inject_debug_prompt,
-    skill_paths_for_modes,
-)
+from sana_evaluation.helper.prompting import skill_paths_for_modes
 from sana_evaluation.helper.agent_runtime import invoke_with_watchdog
 from sana_evaluation.helper.conversation import build_conversation_manager
 from sana_evaluation.helper.result import AgentResult
@@ -52,12 +48,7 @@ from sana_evaluation.tools.lake import (
     clear_submitted_answer,
     configure_benchmark as configure_data_lake_benchmark,
     get_submitted_answer,
-    search_prefix,
     set_sandbox_dir,
-)
-from sana_evaluation.tools.external.search_eval_tools import (
-    build_search_tools,
-    search_tool_names_in as search_tool_names_in_legacy,
 )
 from sana_evaluation.runner.modes import (
     _inject_search_budget_prompt,
@@ -68,20 +59,6 @@ from sana_evaluation.runner.modes import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Naive sparse search tools -- the legacy (no mode axes) fallback path below
-# needs the tool objects themselves, not just the availability flag, so this
-# mirrors runner.modes's own guarded import rather than depending on names
-# that modes.py binds only when the optional import there succeeds.
-_NAIVE_SEARCH_TOOLS_AVAILABLE = False
-try:
-    from sana_evaluation.tools.external.search_naive_tools import (
-        search_value as search_value_naive,
-        search_schema as search_schema_naive,
-    )
-    _NAIVE_SEARCH_TOOLS_AVAILABLE = True
-except ImportError:
-    pass
 
 
 class DataLakeAgent:
@@ -186,18 +163,6 @@ class DataLakeAgent:
         configure_data_lake_benchmark(getattr(self.run_config, "benchmark", None))
         cond = self.run_config.condition_config
         condition = _resolve_condition(cond)
-        mode_overrides_enabled = any(
-            [
-                self.run_config.search_tool_mode,
-                self.run_config.search_results_mode,
-                self.run_config.plan_mode,
-                self.run_config.computation_tool_mode,
-            ]
-        )
-
-        if not mode_overrides_enabled:
-            if not _NAIVE_SEARCH_TOOLS_AVAILABLE:
-                raise RuntimeError("Naive sparse search tools are unavailable (import failed).")
 
         # Core data-manipulation tools shared across all conditions
         _data_tools = build_data_tools(
@@ -205,54 +170,32 @@ class DataLakeAgent:
             search_tool_mode=getattr(self.run_config, "search_tool_mode", None),
         )
 
-        task_trailer = ""
-        if mode_overrides_enabled:
-            mode_bundle = build_mode_bundle(
-                self.run_config,
-                data_tools=_data_tools,
-                task_context=task_context,
-            )
-            tools = mode_bundle.tools
-            system_prompt = mode_bundle.system_prompt
-            task_trailer = mode_bundle.task_trailer
-            search_tool_names = mode_bundle.search_tool_names
-            enable_skills = mode_bundle.enable_skills
-            enable_stagnation = mode_bundle.enable_stagnation
-            skill_paths = skill_paths_for_modes(
-                mode_bundle.modes["search_tool"],
-                mode_bundle.modes["plan"],
-            )
-            logger.info(
-                "Mode axes active: search_tool=%s search_results=%s plan=%s plan_skills=%s",
-                mode_bundle.modes["search_tool"],
-                mode_bundle.modes["search_results"],
-                mode_bundle.modes["plan"],
-                mode_bundle.modes["plan_skills"],
-            )
-        else:
-            raw_search_tools = [search_value_naive, search_schema_naive, search_prefix]
-            system_prompt = compose_baseline_prompt("naive")
-            search_tools = build_search_tools(
-                raw_search_tools,
-                fixed_k=self.run_config.search_k,
-                search_descriptions=self.run_config.search_descriptions,
-            )
-            tools = search_tools + _data_tools
-            enable_skills = False
-            enable_stagnation = False
-            skill_paths = skill_paths_for_modes("naive", "naive")
+        mode_bundle = build_mode_bundle(
+            self.run_config,
+            data_tools=_data_tools,
+            task_context=task_context,
+        )
+        tools = mode_bundle.tools
+        system_prompt = mode_bundle.system_prompt
+        task_trailer = mode_bundle.task_trailer
+        search_tool_names = mode_bundle.search_tool_names
+        enable_skills = mode_bundle.enable_skills
+        enable_stagnation = mode_bundle.enable_stagnation
+        skill_paths = skill_paths_for_modes(
+            mode_bundle.modes["search_tool"],
+            mode_bundle.modes["plan"],
+        )
+        logger.info(
+            "Mode axes active: search_tool=%s search_results=%s plan=%s plan_skills=%s",
+            mode_bundle.modes["search_tool"],
+            mode_bundle.modes["search_results"],
+            mode_bundle.modes["plan"],
+            mode_bundle.modes["plan_skills"],
+        )
 
-            search_tool_names = search_tool_names_in_legacy(search_tools)
-
-        # Resolve the active modes (None on the legacy path) for hook calls.
-        _hook_search_tool_mode: Optional[str]
-        _hook_plan_mode: Optional[str]
-        if mode_overrides_enabled:
-            _hook_search_tool_mode = mode_bundle.modes.get("search_tool")
-            _hook_plan_mode = mode_bundle.modes.get("plan")
-        else:
-            _hook_search_tool_mode = None
-            _hook_plan_mode = None
+        # Resolve the active modes for hook calls.
+        _hook_search_tool_mode: Optional[str] = mode_bundle.modes.get("search_tool")
+        _hook_plan_mode: Optional[str] = mode_bundle.modes.get("plan")
 
         self._pre_build_setup(
             search_tool_mode=_hook_search_tool_mode,
@@ -264,8 +207,6 @@ class DataLakeAgent:
             self.run_config.search_calls_limit,
             search_tool_names,
         )
-        if not mode_overrides_enabled:
-            system_prompt = inject_debug_prompt(system_prompt, self.run_config.debug_mode)
 
         prompt_override = self._system_prompt_override(
             system_prompt=system_prompt,

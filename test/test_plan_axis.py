@@ -100,7 +100,7 @@ def test_run_config_has_no_search_lessguide_field():
 
 
 def test_search_ideal_has_no_lessguide_plumbing():
-    import sana_evaluation.tools.external.ideal.search_ideal as search_ideal
+    import sana_evaluation.tools.oracle.search as search_ideal
 
     assert not hasattr(search_ideal, "set_lessguide")
     assert not hasattr(search_ideal, "_apply_lessguide")

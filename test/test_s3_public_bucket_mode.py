@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from botocore.exceptions import ClientError
 
 from sana_evaluation.tools import lake
-from sana_evaluation.tools.external.ideal.benchmark_paths import canonical_source_uri
+from sana_evaluation.benchmarks import canonical_source_uri
 
 
 class TestS3PublicBucketMode(unittest.TestCase):

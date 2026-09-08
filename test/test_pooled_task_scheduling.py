@@ -9,7 +9,7 @@ longer than the worker count suggests.
 
 Flattening the tasks into one directory is not an option: runtime-profile lookup
 keys off the path suffix after `benchmarks/<bench>/tasks-mini/tasks`
-(`runtime_profile_store._profile_location_from_task`), and subset20b has six
+(`sana_evaluation.profiles._profile_location_from_task`), and subset20b has six
 colliding basenames (`task_6` appears three times), so a flat tree would both
 mis-resolve profiles and silently drop 8 of 20 tasks.
 

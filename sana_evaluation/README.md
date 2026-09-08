@@ -8,14 +8,18 @@ Runtime package for SANA benchmark execution.
   orchestrator directly.
 - `runner/orchestration.py` and `runner/reporting.py`: task discovery,
   per-directory orchestration, and the CSV/JSONL writers it uses.
-- `benchmarks.py` and `preflight.py`: artifact discovery and readiness checks.
+- `benchmarks.py` and `preflight.py`: benchmark paths, artifact discovery, and
+  readiness checks.
+- `profiles.py`: loader and process state for a task's runtime profile.
 - `helper/`: shared runtime helpers for prompts, results, logging, and
   sandbox handling.
 - `instrumentation/`: plugins for traces, loop metadata, read traces, costs,
   and search-call budgets.
 - `llm/`: model factory and cached OpenAI model adapter.
 - `prompts/`: baseline, managed, and search-mode prompt templates.
-- `tools/`: agent tools plus external and helper tool wrappers.
+- `tools/`: the data-lake tools, the search backends and their wrapper
+  (`tools/search/`), the gold-data oracles (`tools/oracle/`), and the
+  standalone `fetch` and `plan` tools.
 
 Prefer invoking this package with `python -m sana_evaluation.<module>` from the
 repo root so relative benchmark and result paths resolve consistently.

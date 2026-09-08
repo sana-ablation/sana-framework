@@ -14,8 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.tools.external.ideal.plan_ideal import plan_ideal
-from sana_evaluation.tools.external.plan_tools import plan
+from sana_evaluation.tools.oracle.plan import plan_ideal
+from sana_evaluation.tools.plan import plan
 
 
 class _FakeAgent:

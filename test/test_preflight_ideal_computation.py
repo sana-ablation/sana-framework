@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from sana_evaluation.config import RunConfig
 from sana_evaluation.preflight import run_preflight
-from sana_evaluation.tools.external.ideal.runtime_profile_store import set_runtime_profiles_root, set_task_context
+from sana_evaluation.profiles import set_runtime_profiles_root, set_task_context
 
 
 class IdealComputationPreflightTests(unittest.TestCase):

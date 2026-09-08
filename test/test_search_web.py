@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import sana_evaluation.tools.external.search_web_tools as search_web_tools
+import sana_evaluation.tools.search.web as search_web_tools
 from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_mode_bundle,
@@ -13,7 +13,7 @@ from sana_evaluation.runner.modes import (
 )
 from sana_evaluation.config import RunConfig
 from sana_evaluation.helper.prompting import skill_paths_for_modes
-from sana_evaluation.tools.external.ideal.search_wrapper import search_tool_names_in
+from sana_evaluation.tools.search.wrapper import search_tool_names_in
 
 
 def _response(payload):

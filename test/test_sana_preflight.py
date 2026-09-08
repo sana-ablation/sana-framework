@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from sana_evaluation.config import RunConfig
 import sana_evaluation.preflight as preflight
-from sana_evaluation.tools.external.ideal import search_wrapper
+from sana_evaluation.tools.search import wrapper as search_wrapper
 
 
 class SanaPreflightTests(unittest.TestCase):

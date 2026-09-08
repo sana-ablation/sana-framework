@@ -14,7 +14,7 @@ from sana_evaluation.config import AgentConfig
 from sana_evaluation.instrumentation.agent_plugins import LoggingPlugin
 from sana_evaluation.instrumentation.ideal_subagent_costs import record_subagent_call
 from sana_evaluation.llm.llm_factory import build_model
-from sana_evaluation.tools.external.ideal.subagent_models import (
+from sana_evaluation.tools.oracle.subagent_models import (
     repair_model_name,
     semantic_model_name,
 )
@@ -24,13 +24,13 @@ from sana_evaluation.tools.lake import (
     peek_file as _peek_file_tool,
     query_file as _query_file_tool,
 )
-from sana_evaluation.tools.external.ideal.runtime_profile_store import (
+from sana_evaluation.profiles import (
     IdealComputationRecord,
     IdealRuntimeProfile,
     load_runtime_profile_for_context,
     set_task_context as _set_task_context_shared,
 )
-from sana_evaluation.tools.external.ideal.benchmark_paths import (
+from sana_evaluation.benchmarks import (
     canonical_source_uri,
     source_key,
 )
