@@ -84,14 +84,8 @@ def test_build_pair_rows_marks_missing_ideal_as_not_comparable(tmp_path: Path) -
     task_rel = Path("tasks_mini/k-1-d-1/task_1.log")
     model = "openai_gpt-test"
     _write_log(root / "modes" / model / PAIR_MODES["nii_vs_iii"] / task_rel)
-    # The ideal mode must be observed somewhere in the tree for build_pair_rows
-    # to resolve it at all; it is just missing for this particular task, which
-    # is what this test exercises via task_filter below.
-    _write_log(root / "modes" / model / IDEAL_MODE / Path("tasks_mini/k-1-d-1/task_2.log"))
 
-    rows = build_pair_rows(
-        benchmark="lakeqa", log_root=root, pair_labels=["nii_vs_iii"], task_filter="task_1"
-    )
+    rows = build_pair_rows(benchmark="lakeqa", log_root=root, pair_labels=["nii_vs_iii"])
 
     assert len(rows) == 1
     assert rows[0]["trajectory_similarity"] == "not_comparable"

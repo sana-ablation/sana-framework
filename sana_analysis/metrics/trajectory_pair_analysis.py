@@ -206,9 +206,12 @@ def build_pair_rows(
 ) -> list[dict[str, str]]:
     paths_by_model_mode = _mode_log_paths(log_root)
     observed_modes = {mode for _model, mode in paths_by_model_mode}
-    ideal_mode = find_variant(observed_modes, **IDEAL_AXES)
-    if ideal_mode is None:
-        return []
+    # When the ideal arm was never run anywhere in this tree, keep emitting rows
+    # for the comparison arms that WERE run: their ideal logs are simply absent
+    # and downstream marks them not_comparable. Returning [] here would silently
+    # drop real data. The empty string is also more honest than the literal this
+    # replaced, which named a directory that might not exist.
+    ideal_mode = find_variant(observed_modes, **IDEAL_AXES) or ""
     rows: list[dict[str, str]] = []
     for pair_label in pair_labels:
         comparison_mode = find_variant(observed_modes, **PAIR_AXES[pair_label])
