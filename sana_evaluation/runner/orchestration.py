@@ -253,57 +253,6 @@ def _empty_summary(model_id: str, task_dir_name: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Run a fixed list of task files (bypass glob in run_evaluation)
-# ---------------------------------------------------------------------------
-
-def _run_task_files(
-    task_dir: str,
-    task_files: list,
-    agent_config,
-    run_config,
-    verbose: bool,
-    parallel: int,
-    *,
-    batch_runner_cls,
-) -> None:
-    """Run evaluation on an explicit list of task files (bypass glob in run_evaluation)."""
-    cond = run_config.condition_config
-    condition_label = cond.condition
-    output_dir = _results_dir(run_config, agent_config)
-    os.makedirs(output_dir, exist_ok=True)
-
-    task_dir_name = os.path.basename(task_dir)
-    model_id = agent_config.model_id
-
-    tasks_by_id: dict = {}
-    for path in task_files:
-        with open(path) as f:
-            task = json.load(f)
-            task["id"] = path
-            tasks_by_id[path] = task
-
-    logger.info(f"\nEvaluating {len(task_files)} tasks from {task_dir_name}")
-    logger.info(f"Model: {model_id}  Condition: {condition_label}")
-    logger.info("=" * 60)
-
-    try:
-        batch = batch_runner_cls(agent_config=agent_config, run_config=run_config, max_workers=parallel)
-        results = batch.run_from_files(task_files, verbose=verbose)
-    except Exception as e:
-        logger.error(f"  Error: {e}", exc_info=True)
-        return
-
-    csv_path = os.path.join(output_dir, "eval_results.csv")
-    write_main_csv(csv_path, results, tasks_by_id)
-    write_tools_csv(os.path.join(output_dir, "tools_breakdown.csv"), results)
-    write_agent_results_jsonl(os.path.join(output_dir, "agent_results.jsonl"), results)
-
-    total = len(results)
-    exact_matches = sum(r.get("exact_match", 0) for r in results)
-    logger.info(f"  Exact Match: {exact_matches}/{total} ({100*exact_matches/total:.1f}%)" if total else "  No results")
-
-
-# ---------------------------------------------------------------------------
 # Whole-task-set run loops
 # ---------------------------------------------------------------------------
 

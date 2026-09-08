@@ -26,6 +26,15 @@ def test_explicit_flag_beats_the_preset():
     assert a.only_new is True           # still from the preset
 
 
+def test_no_only_new_overrides_the_full_preset():
+    """--only-new is store_true, so the full preset's only_new=True default
+    would otherwise be impossible to turn off explicitly -- exactly the trap
+    the deleted --no-continue used to guard against for --task-continue.
+    """
+    assert cli.parse(["full", "--no-only-new"]).only_new is False
+    assert cli.parse(["full"]).only_new is True
+
+
 @pytest.mark.parametrize("argv,attr,expected", [
     (["--search_tool", "ideal"], "search", "ideal"),
     (["--search_results", "minimal"], "results", "minimal"),

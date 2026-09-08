@@ -103,8 +103,11 @@ def build_parser() -> argparse.ArgumentParser:
     bm.add_argument("--task-dir", "-d", help="run this one directory of tasks")
     bm.add_argument("--tasks-per-dir", type=int)
     bm.add_argument("--all-tasks", action="store_true")
-    bm.add_argument("--only-new", action="store_true", default=False,
-                    help="skip task files already recorded in this variant's eval_results.csv")
+    only_new = bm.add_mutually_exclusive_group()
+    only_new.add_argument("--only-new", dest="only_new", action="store_true", default=False,
+                          help="skip task files already recorded in this variant's eval_results.csv")
+    only_new.add_argument("--no-only-new", dest="only_new", action="store_false",
+                          help="explicitly turn off --only-new, e.g. to override the full preset")
     bm.add_argument("--db-path", "--db", dest="db_path")
 
     md = p.add_argument_group("model")
