@@ -1,4 +1,5 @@
 import csv
+import unittest
 from pathlib import Path
 
 from sana_analysis.metrics.plan_following_summary import (
@@ -121,3 +122,32 @@ def test_plan_following_summary_writes_csv_and_json(tmp_path: Path) -> None:
         "plan_following_summary.json",
     }
     assert all(path.exists() for path in outputs)
+
+
+class TestCanonicalPlanFamily(unittest.TestCase):
+    def test_canonical_directories_get_a_plan_family(self):
+        from sana_analysis.metrics.plan_following_summary import plan_family
+
+        self.assertEqual(
+            plan_family("search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"),
+            "iii",
+        )
+        self.assertEqual(
+            plan_family("search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off"),
+            "dii",
+        )
+
+    def test_gen1_literals_still_get_the_same_families(self):
+        from sana_analysis.metrics.plan_following_summary import plan_family
+
+        self.assertEqual(plan_family("search_i_results_i_plani_computei_k5_skills_off"), "iii")
+        self.assertEqual(plan_family("search_i_results_i_pland_computei_k5_skills_off"), "dii")
+
+    def test_unrelated_mode_has_no_family(self):
+        from sana_analysis.metrics.plan_following_summary import plan_family
+
+        self.assertEqual(
+            plan_family("search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off"),
+            "",
+        )
+        self.assertEqual(plan_family("not-a-variant"), "")

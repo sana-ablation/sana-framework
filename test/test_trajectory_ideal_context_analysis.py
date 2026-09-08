@@ -1,8 +1,8 @@
 import json
+import unittest
 from pathlib import Path
 
 from sana_analysis.metrics.trajectory_ideal_context_analysis import (
-    TARGET_MODES,
     build_judge_prompt,
     build_trajectory_rows,
     default_journal_path,
@@ -11,6 +11,15 @@ from sana_analysis.metrics.trajectory_ideal_context_analysis import (
     summarize_rows,
     write_outputs,
 )
+
+# Gen1-format literal directory names used only to build test fixtures on
+# disk. The module itself now resolves these by predicate (see TARGET_AXES);
+# this local constant keeps the fixtures below unchanged.
+TARGET_MODES = {
+    "nii": "search_i_results_i_plann_computei_k5_skills_off",
+    "dii": "search_i_results_i_pland_computei_k5_skills_off",
+    "iii": "search_i_results_i_plani_computei_k5_skills_off",
+}
 
 
 def _write_log(
@@ -300,3 +309,30 @@ def test_run_id_suffixes_outputs_journal_and_tmp_root(tmp_path: Path) -> None:
     }
     assert default_journal_path(tmp_path, "second pass").name == "trajectory_ideal_context_second_pass_journal.jsonl"
     assert default_tmp_root(tmp_path, "second pass") == tmp_path / "tmp" / "second_pass"
+
+
+class TestCanonicalTargetResolution(unittest.TestCase):
+    OBSERVED = [
+        "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+        "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+        "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    ]
+
+    def test_each_target_resolves_to_the_observed_directory(self):
+        from sana_analysis.metrics.trajectory_ideal_context_analysis import TARGET_AXES
+        from sana_analysis.variants import find_variant
+
+        self.assertEqual(
+            find_variant(self.OBSERVED, **TARGET_AXES["nii"]), self.OBSERVED[0]
+        )
+        self.assertEqual(
+            find_variant(self.OBSERVED, **TARGET_AXES["dii"]), self.OBSERVED[1]
+        )
+        self.assertEqual(
+            find_variant(self.OBSERVED, **TARGET_AXES["iii"]), self.OBSERVED[2]
+        )
+
+    def test_mode_labels_are_unchanged(self):
+        from sana_analysis.metrics.trajectory_ideal_context_analysis import TARGET_AXES
+
+        self.assertEqual(list(TARGET_AXES), ["nii", "dii", "iii"])

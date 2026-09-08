@@ -1,8 +1,7 @@
+import unittest
 from pathlib import Path
 
 from sana_analysis.metrics.trajectory_pair_analysis import (
-    IDEAL_MODE,
-    PAIR_MODES,
     build_pair_rows,
     extract_trajectory_excerpt,
     judge_pending_rows,
@@ -13,6 +12,15 @@ from sana_analysis.metrics.trajectory_pair_analysis import (
     validate_judge_payload,
     write_outputs,
 )
+
+# Gen1-format literal directory names used only to build test fixtures on
+# disk. The module itself now resolves these by predicate (see IDEAL_AXES /
+# PAIR_AXES); these local constants keep the fixtures below unchanged.
+IDEAL_MODE = "search_i_results_i_plani_computei_k5_skills_off"
+PAIR_MODES = {
+    "nii_vs_iii": "search_i_results_i_plann_computei_k5_skills_off",
+    "dii_vs_iii": "search_i_results_i_pland_computei_k5_skills_off",
+}
 
 
 def _write_log(path: Path, *, runner: str = "gpt-test", plan_tool: str | None = None) -> None:
@@ -76,8 +84,14 @@ def test_build_pair_rows_marks_missing_ideal_as_not_comparable(tmp_path: Path) -
     task_rel = Path("tasks_mini/k-1-d-1/task_1.log")
     model = "openai_gpt-test"
     _write_log(root / "modes" / model / PAIR_MODES["nii_vs_iii"] / task_rel)
+    # The ideal mode must be observed somewhere in the tree for build_pair_rows
+    # to resolve it at all; it is just missing for this particular task, which
+    # is what this test exercises via task_filter below.
+    _write_log(root / "modes" / model / IDEAL_MODE / Path("tasks_mini/k-1-d-1/task_2.log"))
 
-    rows = build_pair_rows(benchmark="lakeqa", log_root=root, pair_labels=["nii_vs_iii"])
+    rows = build_pair_rows(
+        benchmark="lakeqa", log_root=root, pair_labels=["nii_vs_iii"], task_filter="task_1"
+    )
 
     assert len(rows) == 1
     assert rows[0]["trajectory_similarity"] == "not_comparable"
@@ -481,3 +495,47 @@ def test_judge_pending_rows_retries_invalid_json_until_valid(tmp_path: Path, mon
     assert len(list((tmp_path / "tmp").rglob("*.attempt1.last_message.txt"))) == 1
     assert len(list((tmp_path / "tmp").rglob("*.attempt2.last_message.txt"))) == 1
     assert '"status": "retry"' in (tmp_path / "journal.jsonl").read_text()
+
+
+class TestCanonicalPairResolution(unittest.TestCase):
+    OBSERVED = [
+        "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+        "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+    ]
+
+    def test_ideal_mode_resolves_to_the_observed_directory(self):
+        from sana_analysis.metrics.trajectory_pair_analysis import IDEAL_AXES
+        from sana_analysis.variants import find_variant
+
+        self.assertEqual(
+            find_variant(self.OBSERVED, **IDEAL_AXES),
+            "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        )
+
+    def test_each_pair_resolves_to_the_observed_directory(self):
+        from sana_analysis.metrics.trajectory_pair_analysis import PAIR_AXES
+        from sana_analysis.variants import find_variant
+
+        self.assertEqual(
+            find_variant(self.OBSERVED, **PAIR_AXES["nii_vs_iii"]),
+            "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+        )
+        self.assertEqual(
+            find_variant(self.OBSERVED, **PAIR_AXES["dii_vs_iii"]),
+            "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+        )
+
+    def test_pair_labels_are_unchanged(self):
+        from sana_analysis.metrics.trajectory_pair_analysis import PAIR_AXES
+
+        self.assertEqual(set(PAIR_AXES), {"nii_vs_iii", "dii_vs_iii"})
+
+    def test_gen1_trees_still_resolve(self):
+        from sana_analysis.metrics.trajectory_pair_analysis import IDEAL_AXES
+        from sana_analysis.variants import find_variant
+
+        self.assertEqual(
+            find_variant(["search_i_results_i_plani_computei_k5_skills_off"], **IDEAL_AXES),
+            "search_i_results_i_plani_computei_k5_skills_off",
+        )

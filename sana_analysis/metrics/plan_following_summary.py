@@ -10,6 +10,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Iterable
 
+from sana_analysis.variants import try_parse_variant
 
 LABELS = [
     "followed",
@@ -20,10 +21,23 @@ LABELS = [
 ]
 FOLLOWED_STRICT = {"followed"}
 FOLLOWED_BROAD = {"followed", "mostly_followed"}
-CANONICAL_MODE_LABELS = {
-    "search_i_results_i_plani_computei_k5_skills_off": "iii",
-    "search_i_results_i_pland_computei_k5_skills_off": "dii",
+
+# The two plan-axis conditions this summary distinguishes, as predicates.
+CANONICAL_MODE_PREDICATES = {
+    "iii": dict(search="ideal", plan="ideal", compute="ideal"),
+    "dii": dict(search="ideal", plan="standard", compute="ideal"),
 }
+
+
+def plan_family(mode: str) -> str:
+    """The short plan-family code for a variant name, or "" if it is neither."""
+    decoded = try_parse_variant(mode)
+    if decoded is None:
+        return ""
+    for family, axes in CANONICAL_MODE_PREDICATES.items():
+        if decoded.matches(**axes):
+            return family
+    return ""
 
 
 def _benchmark_from_path(path: Path) -> str:
@@ -64,7 +78,7 @@ def _read_follow_plan_csv(path: Path) -> list[dict]:
                 except IndexError:
                     normalized["mode"] = "unknown"
             if not normalized.get("plan_family"):
-                normalized["plan_family"] = CANONICAL_MODE_LABELS.get(normalized["mode"], "")
+                normalized["plan_family"] = plan_family(normalized["mode"])
             rows.append(normalized)
         return rows
 
@@ -108,14 +122,14 @@ def summarize_follow_plan(rows: Iterable[dict]) -> tuple[list[dict], list[dict]]
             for row in group_rows
             if (value := _safe_float(row.get("semantic_match"))) is not None
         ]
-        plan_family = next((str(row.get("plan_family", "")) for row in group_rows if row.get("plan_family")), "")
+        plan_family_value = next((str(row.get("plan_family", "")) for row in group_rows if row.get("plan_family")), "")
 
         summary_row = {
             "benchmark": benchmark,
             "model_variant": model_variant,
             "runner_model": next((str(row.get("runner_model", "")) for row in group_rows if row.get("runner_model")), ""),
             "mode": mode,
-            "plan_family": plan_family or CANONICAL_MODE_LABELS.get(mode, ""),
+            "plan_family": plan_family_value or plan_family(mode),
             "n_total": n_total,
             "n_complete": n_complete,
             "n_comparable": n_comparable,
