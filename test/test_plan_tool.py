@@ -10,7 +10,7 @@ Asks the agent to:
 from strands import Agent
 from sana_evaluation.llm.llm_factory import build_model
 from sana_evaluation.config import AgentConfig
-from sana_evaluation.tools.plan import plan
+from sana_evaluation.tools.plan.standard import plan
 
 SYSTEM_PROMPT = "You are a helpful assistant. Always follow instructions precisely."
 

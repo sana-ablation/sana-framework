@@ -30,6 +30,8 @@ from sana_evaluation.tools.lake import (
     _strip_folder_prefix,
     _to_json_safe,
     download,
+)
+from sana_evaluation.tools.computation.standard import (
     execute_code,
     query_file,
 )
@@ -793,7 +795,12 @@ class TestExecuteCodeSandboxEnvAndIjson(unittest.TestCase):
         self.assertFalse(result.get("success"))
         self.assertNotIn("hint", result)
 
-    @mock.patch("sana_evaluation.tools.lake._run_tool_with_timeout", return_value=(False, None))
+    # Patched where it is *called*: the execute_code tool surface lives in
+    # tools.computation.standard, which binds the lake helper at import time.
+    @mock.patch(
+        "sana_evaluation.tools.computation.standard._run_tool_with_timeout",
+        return_value=(False, None),
+    )
     def test_execute_code_timeout_returns_failure(self, _patched_timeout):
         result = execute_code("print('hello')")
         self.assertFalse(result.get("success"))
@@ -808,7 +815,11 @@ class TestToolTimeoutWrappers(unittest.TestCase):
         self.assertIn("timed out after 150s", result.get("error", ""))
         self.assertEqual(result.get("download_count"), 0)
 
-    @mock.patch("sana_evaluation.tools.lake._run_tool_with_timeout", return_value=(False, None))
+    # Patched where it is *called* -- see the execute_code case above.
+    @mock.patch(
+        "sana_evaluation.tools.computation.standard._run_tool_with_timeout",
+        return_value=(False, None),
+    )
     def test_query_file_timeout_returns_error(self, _patched_timeout):
         result = query_file(dataset_id="example", file_path="files/data.txt", sql="SELECT 1")
         self.assertIn("timed out after 150s", result.get("error", ""))

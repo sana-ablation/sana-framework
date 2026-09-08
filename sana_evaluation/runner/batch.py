@@ -149,7 +149,7 @@ def _run_task_worker(
 
     if mode_search_tool == "ideal":
         if run_config.search_db_path:
-            import sana_evaluation.tools.oracle.search as _si
+            import sana_evaluation.tools.search.oracle as _si
 
             _si.set_db_path(run_config.search_db_path)
 
@@ -180,7 +180,7 @@ def _run_task_worker(
             "reasoning_chain": task.get("reasoning_chain", []),
         }
         if mode_search_tool == "ideal":
-            import sana_evaluation.tools.oracle.search as _si
+            import sana_evaluation.tools.search.oracle as _si
 
             _si.set_task_context(task_context)
 
@@ -226,7 +226,7 @@ def _run_task_worker(
         result_dict["tool_counts"]      = result.get_tool_counts()
 
         if mode_computation_tool == "ideal":
-            from sana_evaluation.tools.oracle import computation as _ci
+            from sana_evaluation.tools.computation import oracle as _ci
 
             result_dict.update(_ci.get_stats())
 

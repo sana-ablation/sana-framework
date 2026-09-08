@@ -12,7 +12,7 @@ from sana_evaluation.config import AgentConfig
 from sana_evaluation.instrumentation.agent_plugins import LoggingPlugin
 from sana_evaluation.instrumentation.ideal_subagent_costs import record_subagent_call
 from sana_evaluation.llm.llm_factory import build_model
-from sana_evaluation.tools.oracle.subagent_models import search_model_name
+from sana_evaluation.tools.subagent_models import search_model_name
 from sana_evaluation.profiles import (
     load_runtime_profile_for_context,
     set_runtime_profiles_root as _set_runtime_profiles_root_shared,

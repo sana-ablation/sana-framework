@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.tools.oracle.plan import (
+from sana_evaluation.tools.plan.oracle import (
     inject_reasoning_chain_prompt,
     plan_ideal,
 )

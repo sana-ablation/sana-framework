@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from sana_evaluation.tools import lake
+from sana_evaluation.tools.computation import standard as computation_standard
 from dataindexing.formats import detect_family
 
 
@@ -169,10 +170,11 @@ class TestQueryFileXmlSupport(unittest.TestCase):
         duckdb_connection.assert_not_called()
 
     def test_query_file_docstring_mentions_xml_detection_behavior(self):
+        query_file = computation_standard.query_file
         fn = getattr(
-            lake.query_file,
+            query_file,
             "_tool_func",
-            getattr(lake.query_file, "original_function", lake.query_file),
+            getattr(query_file, "original_function", query_file),
         )
         doc = fn.__doc__ or ""
         self.assertIn("Supported file types: CSV", doc)

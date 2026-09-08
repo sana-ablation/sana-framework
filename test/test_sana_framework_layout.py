@@ -45,6 +45,10 @@ def test_sana_evaluation_legacy_paths_are_removed():
         "sana_evaluation/tools/external",
         "sana_evaluation/tools/helper",
         "sana_evaluation/tools/skills",
+        # tools/ is grouped by axis now, so the gold-data grab-bag is gone:
+        # its members moved beside the implementations they are compared with.
+        "sana_evaluation/tools/oracle",
+        "sana_evaluation/tools/plan.py",
     ):
         assert not (ROOT / path).exists(), f"{path} should have been removed"
 
@@ -58,6 +62,7 @@ def test_sana_evaluation_legacy_paths_are_removed():
         "sana_evaluation.tools.agent_tools",
         "sana_evaluation.tools.agent_tools_v2",
         "sana_evaluation.tools.external",
+        "sana_evaluation.tools.oracle",
     ):
         try:
             importlib.import_module(dead)

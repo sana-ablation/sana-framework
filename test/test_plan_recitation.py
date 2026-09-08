@@ -166,7 +166,7 @@ def run_recitation(
             "reasoning_chain": task.get("reasoning_chain", []),
         }
         if mode == "ideal":
-            import sana_evaluation.tools.oracle.search as _si
+            import sana_evaluation.tools.search.oracle as _si
             _si.set_task_context(task_context)
 
         da = DataLakeAgent(agent_config, run_config)

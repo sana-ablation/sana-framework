@@ -260,7 +260,15 @@ def _execute_code_snippet() -> str:
     )
 
 
-def build_lake_cases(lake: Any, target: Target) -> List[ToolCase]:
+def build_lake_cases(lake: Any, computation: Any, target: Target) -> List[ToolCase]:
+    """Cases for the lake tool surface.
+
+    ``query_file`` and ``execute_code`` come from ``computation`` rather than
+    ``lake``: they are the computation axis's standard arm and their @tool
+    surfaces live in ``sana_evaluation.tools.computation.standard``. Their
+    bodies still run the lake's DuckDB/sandbox plumbing, so they stay part of
+    this bucket smoke test.
+    """
     return [
         ToolCase(
             "lake",
@@ -327,10 +335,10 @@ def build_lake_cases(lake: Any, target: Target) -> List[ToolCase]:
             expect_error_substring="XML/KML",
         ),
         ToolCase(
-            "lake",
+            "computation",
             "query_file",
-            lambda: lake.query_file(s3_uri=target.s3_uri, sql=target.query_sql),
-            f"lake.query_file(s3_uri={target.s3_uri!r}, sql={target.query_sql!r})",
+            lambda: computation.query_file(s3_uri=target.s3_uri, sql=target.query_sql),
+            f"computation.query_file(s3_uri={target.s3_uri!r}, sql={target.query_sql!r})",
         ),
         ToolCase(
             "lake",
@@ -340,10 +348,10 @@ def build_lake_cases(lake: Any, target: Target) -> List[ToolCase]:
         ),
         ToolCase("lake", "get_sandbox_info", lake.get_sandbox_info, "lake.get_sandbox_info()"),
         ToolCase(
-            "lake",
+            "computation",
             "execute_code",
-            lambda: lake.execute_code(_execute_code_snippet()),
-            f"lake.execute_code({_execute_code_snippet()!r})",
+            lambda: computation.execute_code(_execute_code_snippet()),
+            f"computation.execute_code({_execute_code_snippet()!r})",
         ),
         ToolCase(
             "lake",
@@ -361,6 +369,7 @@ def import_tool_modules(module_names: Iterable[str]) -> tuple[Dict[str, Any], Li
     install_lightweight_package_stubs()
     import_paths = {
         "lake": "sana_evaluation.tools.lake",
+        "computation": "sana_evaluation.tools.computation.standard",
     }
     for module_name in module_names:
         started = time.monotonic()
@@ -462,8 +471,8 @@ def run_smoke_tests(
             module.set_sandbox_dir(sandbox_dir)
 
     cases: List[ToolCase] = []
-    if "lake" in modules:
-        cases.extend(build_lake_cases(modules["lake"], target))
+    if "lake" in modules and "computation" in modules:
+        cases.extend(build_lake_cases(modules["lake"], modules["computation"], target))
 
     for case in cases:
         record = run_case(case)
@@ -506,10 +515,13 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--run-label", help="Directory name under --log-dir")
     parser.add_argument(
         "--module",
-        choices=["lake"],
+        choices=["lake", "computation"],
         action="append",
         dest="modules",
-        help="Module to test. Defaults to the only tool module, lake.",
+        help=(
+            "Module to test. Defaults to both halves of the lake tool surface: "
+            "lake, plus computation (query_file / execute_code)."
+        ),
     )
     parser.add_argument(
         "--s3-access-mode",
@@ -551,7 +563,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         query_sql=args.query_sql,
     )
     run_label = args.run_label or f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{target.benchmark}"
-    modules_to_test = args.modules or ["lake"]
+    # The lake surface now spans two modules: the eleven lake-owned tools and
+    # the computation axis's standard arm (query_file / execute_code).
+    modules_to_test = args.modules or ["lake", "computation"]
 
     result = run_smoke_tests(
         target=target,

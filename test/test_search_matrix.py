@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional, Sequence
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sana_evaluation.tools.lake import search_prefix
-from sana_evaluation.tools.oracle import search as ideal_search
+from sana_evaluation.tools.search import oracle as ideal_search
 from sana_evaluation.tools.search.wrapper import build_search_tools
 
 SEARCH_TOOL_MODES = ("naive", "standard", "ideal")

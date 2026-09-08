@@ -25,20 +25,22 @@ from sana_evaluation.prompting.compose import (
 )
 from sana_evaluation.tools.lake import (
     download,
-    execute_code,
     grep_file,
     list_files,
     parse_xml_records,
     peek_file,
     peek_multiple,
-    query_file,
     read_file,
     search_prefix,
     submit_answer,
 )
+from sana_evaluation.tools.computation.standard import (
+    execute_code,
+    query_file,
+)
 from sana_evaluation.tools.fetch import download_web
-from sana_evaluation.tools.plan import plan
-from sana_evaluation.tools.oracle.plan import (
+from sana_evaluation.tools.plan.standard import plan
+from sana_evaluation.tools.plan.oracle import (
     inject_reasoning_chain_prompt,
     plan_ideal,
 )
@@ -209,7 +211,7 @@ def build_search(
     if search_mode == "preloaded":
         return []
 
-    import sana_evaluation.tools.oracle.search as search_ideal
+    import sana_evaluation.tools.search.oracle as search_ideal
 
     search_ideal.set_task_context(task_context or {})
     return [search_ideal.search_ideal]
@@ -419,7 +421,7 @@ def _apply_computation_tool_mode(
             if _tool_name(tool_obj) != "query_file"
         ]
 
-    from sana_evaluation.tools.oracle import computation as computation_ideal
+    from sana_evaluation.tools.computation import oracle as computation_ideal
 
     computation_ideal.set_task_context(task_context or {})
     out: List[Any] = []

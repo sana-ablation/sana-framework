@@ -14,7 +14,7 @@ from sana_evaluation.runner.modes import build_mode_bundle, _tool_limit_exclusio
 from sana_evaluation.config import RunConfig
 from sana_evaluation.instrumentation import ideal_subagent_costs
 from sana_evaluation.instrumentation.trace_plugin import set_trace_context
-import sana_evaluation.tools.oracle.search as search_ideal
+import sana_evaluation.tools.search.oracle as search_ideal
 import sana_evaluation.tools.search.wrapper as search_wrapper
 
 _TASK_ROOT = "k-1-d-1"
@@ -606,7 +606,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
         _reset_wrapper_caches()
         self._model_env_patch.stop()
         try:
-            from sana_evaluation.tools.oracle import computation as computation_ideal
+            from sana_evaluation.tools.computation import oracle as computation_ideal
 
             computation_ideal.reset_state()
         except Exception:

@@ -19,9 +19,13 @@ Runtime package for SANA benchmark execution.
 - `prompting/`: prompt composition (`compose.py`, `sections.py`), the
   baseline/managed/search-mode templates (`fragments/`), and the `SKILL.md`
   assets the composed prompts point at (`skills/`).
-- `tools/`: the data-lake tools, the search backends and their wrapper
-  (`tools/search/`), the gold-data oracles (`tools/oracle/`), and the
-  standalone `fetch` and `plan` tools.
+- `tools/`: grouped by axis, so each directory holds the interchangeable
+  implementations the framework exists to compare. `tools/search/` holds
+  `naive`, `standard`, `web` and `oracle` behind `wrapper.py`; `tools/plan/`
+  holds `standard` and `oracle`; `tools/computation/` holds `standard` and
+  `oracle`. `tools/lake.py` is the shared S3/DuckDB/sandbox substrate the
+  eleven non-swapped lake tools live in and the computation arms import from;
+  `tools/fetch.py` and `tools/subagent_models.py` sit alongside it.
 
 Prefer invoking this package with `python -m sana_evaluation.<module>` from the
 repo root so relative benchmark and result paths resolve consistently.
