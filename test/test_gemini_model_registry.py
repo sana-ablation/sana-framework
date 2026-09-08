@@ -1,5 +1,5 @@
 from sana_evaluation.config import resolve_model
-from sana_evaluation.helper.constants import MODEL_PRICING
+from sana_evaluation.models import MODEL_PRICING
 
 
 def test_gemini_flash_lite_model_registry_entry() -> None:

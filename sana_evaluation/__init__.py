@@ -22,7 +22,7 @@ from .agent_with_mode import DataLakeAgent, BatchRunner
 from .config import AgentConfig, RunConfig
 from .helper.result import AgentResult
 from .llm.llm_factory import build_model
-from .helper.metrics import (
+from .metrics import (
     compute_exact_match,
     compute_f1_score,
     normalize_text,

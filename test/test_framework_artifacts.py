@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from sana_evaluation.artifacts import (
+from sana_evaluation.benchmarks import (
     ArtifactValidationError,
     benchmark_artifacts,
     format_artifact_report,

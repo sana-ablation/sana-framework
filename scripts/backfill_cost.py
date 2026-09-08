@@ -36,7 +36,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from sana_evaluation.helper.constants import MODEL_PRICING  # noqa: E402
+from sana_evaluation.models import MODEL_PRICING  # noqa: E402
 
 # Every tree a sweep may have produced, raw and audited. The audited trees are
 # separate copies of the rows, so a repair applied only to the raw side never

@@ -12,7 +12,7 @@ They also serve as the key for pricing lookups in helper/constants.py MODEL_PRIC
 
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, Tuple
-from sana_evaluation.helper.constants import MODEL_REGISTRY
+from sana_evaluation.models import MODEL_REGISTRY
 
 
 def resolve_model(model_name: str) -> Tuple[str, str]:

@@ -175,8 +175,8 @@ flowchart LR
 Inspect maintained artifacts:
 
 ```bash
-python -m sana_evaluation.artifacts --benchmark lakeqa --check
-python -m sana_evaluation.artifacts --benchmark kramabench --check
+python -m sana_evaluation.benchmarks --benchmark lakeqa --check
+python -m sana_evaluation.benchmarks --benchmark kramabench --check
 ```
 
 LakeQA smoke run:

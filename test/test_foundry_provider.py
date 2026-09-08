@@ -11,7 +11,7 @@ import os
 import pytest
 
 from sana_evaluation.config import AgentConfig
-from sana_evaluation.helper.constants import MODEL_PRICING, MODEL_REGISTRY
+from sana_evaluation.models import MODEL_PRICING, MODEL_REGISTRY
 from sana_evaluation.llm.anthropic_foundry_model import AnthropicFoundryModel
 from sana_evaluation.llm.llm_factory import build_model
 

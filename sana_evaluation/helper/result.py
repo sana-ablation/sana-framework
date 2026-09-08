@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from sana_evaluation.helper.constants import MODEL_PRICING
+from sana_evaluation.models import MODEL_PRICING
 
 _API_TOOL_NAMES = {
     # Legacy search/data tools

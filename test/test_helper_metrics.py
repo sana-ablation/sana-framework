@@ -1,6 +1,6 @@
 import unittest
 
-from sana_evaluation.helper.metrics import compute_efficiency_metrics
+from sana_evaluation.metrics import compute_efficiency_metrics
 
 
 class EfficiencyMetricsTests(unittest.TestCase):

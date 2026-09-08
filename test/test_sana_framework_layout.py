@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sana_evaluation.artifacts import benchmark_artifacts
+from sana_evaluation.benchmarks import benchmark_artifacts
 
 
 ROOT = Path(__file__).resolve().parents[1]

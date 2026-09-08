@@ -1121,7 +1121,7 @@ def _run_task_worker(
     Defaults to `DataLakeAgent`.
     """
     _apply_worker_memory_cap()
-    from sana_evaluation.helper.metrics import compute_exact_match, compute_f1_score, normalize_text
+    from sana_evaluation.metrics import compute_exact_match, compute_f1_score, normalize_text
 
     log_model_name = agent_config.model_name or agent_config.model_id
     effort = (agent_config.extra_model_kwargs or {}).get("reasoning_effort")
