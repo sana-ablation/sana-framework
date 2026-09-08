@@ -414,6 +414,68 @@ class TestCanonicalExportAxes(unittest.TestCase):
                 f"{condition}: results={results!r} is not current vocabulary",
             )
 
+    def test_axes_for_summary_row_normalises_retired_results_spelling(self):
+        from sana_analysis.paper.export import _axes_for_summary_row
+
+        # No variant string to decode from, so every value below comes
+        # straight from the row-field override path this test targets.
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "ideal"})["search_results"],
+            "rich",
+        )
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "naive"})["search_results"],
+            "minimal",
+        )
+        # Current spellings pass through unchanged.
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "rich"})["search_results"],
+            "rich",
+        )
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "minimal"})["search_results"],
+            "minimal",
+        )
+        # An unrecognised value is preserved rather than coerced, matching
+        # the decoder's own contract (RESULT_MODE_ALIASES.get(value, value)).
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "exotic"})["search_results"],
+            "exotic",
+        )
+
+    def test_main_ablation_table_rows_match_the_current_results_vocabulary(self):
+        # build_main_ablation_table_rows compares against a `results` literal
+        # that lives in the function body, not in MAIN_ABLATION_TABLE_SPECS
+        # (which only carries plan/search/compute). This row's variant name
+        # decodes to search_results="rich" and nothing else; if the internal
+        # comparison still asked for the retired "ideal" spelling, the row
+        # would be silently dropped and this list would come back empty.
+        from sana_analysis.paper.export import build_main_ablation_table_rows
+
+        summary_rows = [
+            {
+                "model": "openai_gpt-5.4-nano",
+                "variant": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+                "n": 20,
+                "semantic_match": 0.5,
+            },
+        ]
+
+        rows = build_main_ablation_table_rows(summary_rows)
+
+        self.assertTrue(
+            any(
+                row["model"] == "gpt-5.4-nano"
+                and row["plan"] == "Ideal"
+                and row["search"] == "Ideal"
+                and row["compute"] == "Ideal"
+                for row in rows
+            ),
+            "expected a matching row; the results comparison inside "
+            "build_main_ablation_table_rows may still be asking for the "
+            "retired 'ideal' spelling instead of 'rich'",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

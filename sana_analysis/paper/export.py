@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Iterable, Mapping
 
-from sana_analysis.variants import try_parse_variant
+from sana_analysis.variants import RESULT_MODE_ALIASES, try_parse_variant
 
 
 MODEL_SPECS = [
@@ -146,7 +146,13 @@ def _axes_for_summary_row(row: Mapping[str, object]) -> dict[str, str | None]:
     for field in ("agent_management", "search_tool", "computation_tool", "search_results"):
         value = row.get(field)
         if value:
-            axes[field] = str(value).lower()
+            lowered = str(value).lower()
+            if field == "search_results":
+                # A stored row can predate the rich/minimal spelling and still
+                # carry the retired ideal/naive words verbatim; resolve them
+                # the same way the decoder does at its own parse boundary.
+                lowered = RESULT_MODE_ALIASES.get(lowered, lowered)
+            axes[field] = lowered
     if not axes.get("computation_tool"):
         axes["computation_tool"] = "standard"
     return axes
@@ -442,7 +448,7 @@ def build_main_ablation_table_rows(summary_rows: list[Mapping[str, object]]) -> 
                 plan=plan,
                 search=search,
                 compute=compute,
-                results="ideal",
+                results="rich",
             )
             if observed is None:
                 continue
