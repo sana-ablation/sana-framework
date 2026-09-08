@@ -40,7 +40,7 @@ from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from strands import tool
 
-from sana_evaluation.helper.peek_profile import load_dataset_profile, select_dataset_profile_fields
+from sana_evaluation.runtime.peek_profile import load_dataset_profile, select_dataset_profile_fields
 
 from .helper.detect import detect_family, should_skip
 

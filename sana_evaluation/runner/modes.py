@@ -4,9 +4,9 @@ Mode axis resolution for the Data Lake benchmark runner.
 Builds the tool surface, system prompt, and behavior toggles for each of the
 search_tool / search_results / plan / computation_tool axes and merges
 them into a ModeBundle (``build_mode_bundle``). Also holds the small
-per-run bookkeeping helpers -- condition-label resolution, search-budget
-prompt injection, tool-limit exclusions, and gold-source merging -- that
-``runner.agent.DataLakeAgent`` and ``runner.batch`` both consume.
+per-run bookkeeping helpers -- search-budget prompt injection, tool-limit
+exclusions, and gold-source merging -- that ``runner.agent.DataLakeAgent``
+and ``runner.batch`` both consume.
 """
 
 from dataclasses import dataclass
@@ -14,8 +14,8 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from strands.tools.decorator import DecoratedFunctionTool
 
-from sana_evaluation.config import AXIS_DEFAULTS, ConditionConfig, RunConfig
-from sana_evaluation.helper.prompting import (
+from sana_evaluation.config import AXIS_DEFAULTS, RunConfig
+from sana_evaluation.prompting.compose import (
     _normalize_mode,
     compose_baseline_prompt,
     compose_kramabench_prompt,
@@ -503,20 +503,6 @@ def _inject_computation_file_family_prompt(
 # ---------------------------------------------------------------------------
 # DataLakeAgent
 # ---------------------------------------------------------------------------
-
-def _base_condition(condition_label: str) -> str:
-    """Strip optional experimental suffix from condition label."""
-    if not condition_label:
-        return "baseline"
-    return str(condition_label).split("__", 1)[0]
-
-
-def _resolve_condition(cond_cfg: ConditionConfig) -> str:
-    """Resolve the base experiment condition label."""
-    if getattr(cond_cfg, "base_condition", None):
-        return str(cond_cfg.base_condition)
-    return _base_condition(cond_cfg.condition)
-
 
 def _inject_search_budget_prompt(
     system_prompt: str,

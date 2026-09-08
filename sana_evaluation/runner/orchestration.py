@@ -14,7 +14,7 @@ from datetime import datetime
 from typing import Optional
 
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
-from sana_evaluation.helper.prompting import normalize_debug_mode
+from sana_evaluation.prompting.compose import normalize_debug_mode
 from sana_evaluation.runner.reporting import (
     print_comparison_table,
     write_agent_results_jsonl,

@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 def _load_logger_module():
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "sana_evaluation" / "helper" / "logger.py"
+    module_path = repo_root / "sana_evaluation" / "runtime" / "logger.py"
     spec = importlib.util.spec_from_file_location("_test_logger_module", module_path)
     module = importlib.util.module_from_spec(spec)
     assert spec and spec.loader

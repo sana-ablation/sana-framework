@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from sana_evaluation.runner.agent import DataLakeAgent
 from sana_evaluation.runner.modes import build_mode_bundle
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
-from sana_evaluation.helper.prompting import compose_preloaded_block, skill_paths_for_modes
+from sana_evaluation.prompting.compose import compose_preloaded_block, skill_paths_for_modes
 from sana_evaluation.preflight import run_preflight
 from sana_evaluation.profiles import load_runtime_profile_for_task
 

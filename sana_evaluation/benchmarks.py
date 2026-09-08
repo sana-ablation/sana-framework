@@ -135,7 +135,7 @@ class BenchmarkArtifacts:
             self.task_root,
             self.runtime_profile_root,
             self.artifact_root,
-            Path("sana_evaluation/prompts"),
+            Path("sana_evaluation/prompting/fragments"),
             paths.descriptions,
             paths.snippets,
             paths.schemas,

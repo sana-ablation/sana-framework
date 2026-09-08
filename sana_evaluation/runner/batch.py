@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 
 from sana_evaluation.config import AXIS_DEFAULTS, AgentConfig, RunConfig
 from sana_evaluation.instrumentation import set_trace_context
-from sana_evaluation.helper.logger import configure_worker_logging
+from sana_evaluation.runtime.logger import configure_worker_logging
 from sana_evaluation.runner.agent import DataLakeAgent
 from sana_evaluation.runner.modes import (
     _NAIVE_SEARCH_TOOLS_AVAILABLE,

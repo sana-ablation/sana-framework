@@ -10,7 +10,7 @@ from sana_evaluation.runner.modes import (
     build_mode_bundle,
     _tool_limit_exclusions_for_run,
 )
-from sana_evaluation.helper.prompting import (
+from sana_evaluation.prompting.compose import (
     compose_baseline_prompt,
     compose_managed_prompt,
     compose_preloaded_block,
@@ -151,12 +151,12 @@ class TestModeWrapper(unittest.TestCase):
         standard_paths = skill_paths_for_modes("standard", "standard")
         ideal_paths = skill_paths_for_modes("ideal", "ideal")
         preloaded_paths = skill_paths_for_modes("preloaded", "standard")
-        self.assertIn("sana_evaluation/tools/skills/plan-agent", standard_paths)
-        self.assertIn("sana_evaluation/tools/skills/discover-data-standard", standard_paths)
-        self.assertIn("sana_evaluation/tools/skills/plan-ideal", ideal_paths)
-        self.assertIn("sana_evaluation/tools/skills/discover-data-ideal", ideal_paths)
-        self.assertIn("sana_evaluation/tools/skills/plan-agent", preloaded_paths)
-        self.assertIn("sana_evaluation/tools/skills/query-data", preloaded_paths)
+        self.assertIn("sana_evaluation/prompting/skills/plan-agent", standard_paths)
+        self.assertIn("sana_evaluation/prompting/skills/discover-data-standard", standard_paths)
+        self.assertIn("sana_evaluation/prompting/skills/plan-ideal", ideal_paths)
+        self.assertIn("sana_evaluation/prompting/skills/discover-data-ideal", ideal_paths)
+        self.assertIn("sana_evaluation/prompting/skills/plan-agent", preloaded_paths)
+        self.assertIn("sana_evaluation/prompting/skills/query-data", preloaded_paths)
         self.assertFalse(any("discover-data" in path for path in preloaded_paths))
 
     def test_ideal_management_uses_managed_stack_with_plan_swap(self):

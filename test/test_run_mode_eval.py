@@ -17,7 +17,7 @@ def _load_run_eval_module():
     # orchestration.py lives one level deeper than run_eval.py used to
     # (sana_evaluation/runner/ instead of sana_evaluation/), so the fake
     # package path must point at the top-level sana_evaluation/ directory —
-    # that's what its sibling imports (config, helper.prompting,
+    # that's what its sibling imports (config, prompting.compose,
     # runner.reporting) resolve against.
     fake_pkg.__path__ = [str(module_path.parents[1])]
 

@@ -24,7 +24,7 @@ Usage:
 from .runner.agent import DataLakeAgent
 from .runner.batch import BatchRunner
 from .config import AgentConfig, RunConfig
-from .helper.result import AgentResult
+from .runner.record import AgentResult
 from .llm.llm_factory import build_model
 from .metrics import (
     compute_exact_match,

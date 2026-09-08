@@ -10,7 +10,7 @@ import re
 from datetime import datetime
 from typing import Optional
 
-logger = logging.getLogger(__name__)  # "sana_evaluation.helper.logger" — never configured here
+logger = logging.getLogger(__name__)  # "sana_evaluation.runtime.logger" — never configured here
 
 
 def _slugify(value: Optional[str]) -> Optional[str]:

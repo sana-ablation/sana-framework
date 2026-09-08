@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from sana_evaluation.helper.prompting import compose_managed_prompt
+from sana_evaluation.prompting.compose import compose_managed_prompt
 
 
 class PromptPathTests(unittest.TestCase):

@@ -9,18 +9,18 @@ from sana_evaluation.instrumentation.trace_plugin import _normalize_dataset_id
 logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_PROMPTS_DIR = _REPO_ROOT / "sana_evaluation" / "prompts"
+_PROMPTS_DIR = _REPO_ROOT / "sana_evaluation" / "prompting" / "fragments"
 _MODES = {"naive", "standard", "ideal", "preloaded", "web"}
 _DEBUG_MODES = {"decision_notes"}
 
-_PLAN_AGENT_SKILL = "sana_evaluation/tools/skills/plan-agent"
-_PLAN_IDEAL_SKILL = "sana_evaluation/tools/skills/plan-ideal"
+_PLAN_AGENT_SKILL = "sana_evaluation/prompting/skills/plan-agent"
+_PLAN_IDEAL_SKILL = "sana_evaluation/prompting/skills/plan-ideal"
 _DISCOVER_SKILL_PATHS = {
-    "naive": "sana_evaluation/tools/skills/discover-data-naive",
-    "standard": "sana_evaluation/tools/skills/discover-data-standard",
-    "ideal": "sana_evaluation/tools/skills/discover-data-ideal",
+    "naive": "sana_evaluation/prompting/skills/discover-data-naive",
+    "standard": "sana_evaluation/prompting/skills/discover-data-standard",
+    "ideal": "sana_evaluation/prompting/skills/discover-data-ideal",
 }
-_QUERY_DATA_SKILL = "sana_evaluation/tools/skills/query-data"
+_QUERY_DATA_SKILL = "sana_evaluation/prompting/skills/query-data"
 
 
 def _normalize_mode(value: Optional[str], default: str, label: str) -> str:
@@ -48,7 +48,7 @@ def load_prompt_text(path: str | Path) -> str:
     if not prompt_path.is_file():
         raise FileNotFoundError(
             f"Required prompt file missing: {prompt_path}. "
-            "Run preflight to confirm your sana_evaluation/prompts/ directory is complete."
+            "Run preflight to confirm your sana_evaluation/prompting/fragments/ directory is complete."
         )
     return prompt_path.read_text()
 

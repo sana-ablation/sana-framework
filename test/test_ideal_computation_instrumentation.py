@@ -1,5 +1,5 @@
 from sana_analysis.metrics.discovery import compute_discovery_metrics
-from sana_evaluation.helper import result as result_module
+from sana_evaluation.runner import record as result_module
 from sana_evaluation.instrumentation import read_trace_plugin
 
 

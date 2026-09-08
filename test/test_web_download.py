@@ -22,7 +22,7 @@ from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_data_tools,
 )
-from sana_evaluation.helper.prompting import compose_managed_prompt
+from sana_evaluation.prompting.compose import compose_managed_prompt
 from sana_evaluation.cli import _variant_condition_label
 
 

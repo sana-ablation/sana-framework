@@ -1,6 +1,6 @@
 import unittest
 
-from sana_evaluation.helper.prompt_sections import split_prompt_sections, upsert_prompt_section
+from sana_evaluation.prompting.sections import split_prompt_sections, upsert_prompt_section
 
 
 class PromptSectionTests(unittest.TestCase):

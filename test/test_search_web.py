@@ -12,7 +12,7 @@ from sana_evaluation.runner.modes import (
     build_search,
 )
 from sana_evaluation.config import RunConfig
-from sana_evaluation.helper.prompting import skill_paths_for_modes
+from sana_evaluation.prompting.compose import skill_paths_for_modes
 from sana_evaluation.tools.search.wrapper import search_tool_names_in
 
 
@@ -229,7 +229,7 @@ class TestWebBasePrompt(unittest.TestCase):
     """
 
     def _base_of(self, mode: str, **kw) -> str:
-        from sana_evaluation.helper.prompting import compose_managed_prompt
+        from sana_evaluation.prompting.compose import compose_managed_prompt
         return compose_managed_prompt(mode, **kw).split("## AVAILABLE SEARCH TOOLS")[0]
 
     def test_web_base_advertises_no_lake_tools(self) -> None:

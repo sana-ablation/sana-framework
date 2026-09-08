@@ -272,7 +272,7 @@ def _enhanced_peek_context(source: str) -> str:
     payload["enhanced_peek_file"] = peek
 
     try:
-        from sana_evaluation.helper.peek_profile import load_dataset_profile, select_dataset_profile_fields
+        from sana_evaluation.runtime.peek_profile import load_dataset_profile, select_dataset_profile_fields
         profile = load_dataset_profile(s3_uri)
     except Exception:
         profile = None

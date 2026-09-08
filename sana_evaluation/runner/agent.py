@@ -33,15 +33,15 @@ from sana_evaluation.instrumentation import (
     TelemetryTracker,
 )
 from sana_evaluation.instrumentation.loop_plugin import CategoryStagnationHandler
-from sana_evaluation.helper.prompting import skill_paths_for_modes
-from sana_evaluation.helper.agent_runtime import invoke_with_watchdog
-from sana_evaluation.helper.conversation import build_conversation_manager
-from sana_evaluation.helper.result import AgentResult
-from sana_evaluation.helper.sandbox import (
+from sana_evaluation.prompting.compose import skill_paths_for_modes
+from sana_evaluation.runtime.agent_runtime import invoke_with_watchdog
+from sana_evaluation.runtime.conversation import build_conversation_manager
+from sana_evaluation.runner.record import AgentResult
+from sana_evaluation.runtime.sandbox import (
     _cleanup_isolated_sandbox,
     _create_isolated_sandbox,
 )
-from sana_evaluation.helper.text_utils import _clean_answer
+from sana_evaluation.runtime.text_utils import _clean_answer
 from sana_evaluation.llm.llm_factory import build_model
 from sana_evaluation.tools.lake import (
     cleanup_sandbox,

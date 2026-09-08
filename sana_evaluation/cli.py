@@ -25,7 +25,7 @@ from typing import Optional, Sequence
 
 from sana_evaluation.config import AXIS_DEFAULTS, AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.env import load_repo_dotenv
-from sana_evaluation.helper.prompting import normalize_debug_mode
+from sana_evaluation.prompting.compose import normalize_debug_mode
 from sana_evaluation.preflight import PreflightError, run_preflight
 from sana_evaluation.runner import orchestration as base_eval
 from sana_evaluation.runner.batch import BatchRunner as ModeBatchRunner

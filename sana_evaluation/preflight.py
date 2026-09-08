@@ -21,7 +21,7 @@ from sana_evaluation.benchmarks import (
     normalize_benchmark,
 )
 
-_PROMPTS_DIR = Path("sana_evaluation/prompts")
+_PROMPTS_DIR = Path("sana_evaluation/prompting/fragments")
 _PROFILES_PATH = Path("benchmarks/lakeqa/tasks-mini/artifacts/table_profiles.jsonl")
 
 
@@ -43,7 +43,7 @@ def _prompt_files_for_modes(
     benchmark: str = "lakeqa",
     no_s3: bool = False,
 ) -> List[Path]:
-    from sana_evaluation.helper.prompting import search_overlay_name
+    from sana_evaluation.prompting.compose import search_overlay_name
 
     overlay_mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
     if benchmark == "kramabench":
@@ -432,7 +432,7 @@ def run_preflight(
     configure_benchmark(benchmark)
 
     from sana_evaluation.tools.search import wrapper as _sw
-    from sana_evaluation.helper import peek_profile as _pp
+    from sana_evaluation.runtime import peek_profile as _pp
 
     paths = artifact_paths(benchmark)
     if not _sw._TABLE_DESCRIPTIONS_PATH.is_absolute():

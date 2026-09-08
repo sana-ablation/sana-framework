@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from sana_evaluation.helper import prompting as P
+from sana_evaluation.prompting import compose as P
 
 GOLDEN = Path(__file__).parent / "golden_prompts"
 

@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-from sana_evaluation.helper.sandbox import _cleanup_isolated_sandbox
+from sana_evaluation.runtime.sandbox import _cleanup_isolated_sandbox
 
 
 class IsolatedSandboxCleanupTests(unittest.TestCase):
@@ -12,7 +12,7 @@ class IsolatedSandboxCleanupTests(unittest.TestCase):
             sandbox = Path(tmpdir) / "sandbox"
             sandbox.mkdir()
 
-            with patch("sana_evaluation.helper.sandbox.shutil.rmtree", side_effect=OSError("busy")):
+            with patch("sana_evaluation.runtime.sandbox.shutil.rmtree", side_effect=OSError("busy")):
                 with self.assertRaisesRegex(OSError, "busy"):
                     _cleanup_isolated_sandbox(sandbox)
 

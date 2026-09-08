@@ -11,12 +11,14 @@ Runtime package for SANA benchmark execution.
 - `benchmarks.py` and `preflight.py`: benchmark paths, artifact discovery, and
   readiness checks.
 - `profiles.py`: loader and process state for a task's runtime profile.
-- `helper/`: shared runtime helpers for prompts, results, logging, and
-  sandbox handling.
+- `runtime/`: agent-invocation, conversation, logging, profile-peeking,
+  sandbox and answer-cleaning support for a running task.
 - `instrumentation/`: plugins for traces, loop metadata, read traces, costs,
   and search-call budgets.
 - `llm/`: model factory and cached OpenAI model adapter.
-- `prompts/`: baseline, managed, and search-mode prompt templates.
+- `prompting/`: prompt composition (`compose.py`, `sections.py`), the
+  baseline/managed/search-mode templates (`fragments/`), and the `SKILL.md`
+  assets the composed prompts point at (`skills/`).
 - `tools/`: the data-lake tools, the search backends and their wrapper
   (`tools/search/`), the gold-data oracles (`tools/oracle/`), and the
   standalone `fetch` and `plan` tools.
