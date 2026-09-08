@@ -17,7 +17,7 @@ def test_bare_root_tag_is_detected():
 
 def test_delimiter_in_an_xml_first_line_is_not_csv():
     # The drifted copy classified this "csv" because line 1 contains commas.
-    assert formats.detect_family('<?xml version="1.0"?>\n<r a="1,2,3" b="4,5"/>') == "xml"
+    assert formats.detect_family('<?xml version="1.0"?><r a="1,2,3" b="4,5"/>') == "xml"
 
 
 def test_sources_s3_uses_the_one_implementation():
