@@ -4,13 +4,127 @@ Logging helpers for the Strands evaluation runner.
 Extracted from agent_runner.py.
 """
 
+import atexit
 import logging
 import os
 import re
+import traceback
 from datetime import datetime
 from typing import Optional
 
 logger = logging.getLogger(__name__)  # "sana_evaluation.runtime.logger" — never configured here
+
+
+# ---------------------------------------------------------------------------
+# Async-teardown noise suppression
+# ---------------------------------------------------------------------------
+#
+# On Python 3.14, the OpenAI client's async HTTP streams fail to close cleanly:
+# httpcore2's PoolByteStream.__aiter__ is thrown into at teardown and does not
+# stop, so contextlib raises RuntimeError("generator didn't stop after
+# athrow()"). asyncio's exception handler logs the whole traceback through
+# logging.getLogger("asyncio"), and a real OpenAI run drowned in it -- 209 of
+# 720 log lines (29%) across 21 tracebacks, with zero frames in
+# sana_evaluation. Bedrock runs are unaffected (botocore is synchronous).
+#
+# The filter below drops *only* that signature. It deliberately does not
+# silence the asyncio logger, and it counts what it drops so a genuine asyncgen
+# bug cannot become undiscoverable: every run that suppressed anything says so
+# in one summary line at exit.
+
+_ASYNCGEN_CLOSE_MESSAGE = "an error occurred during closing of asynchronous generator"
+_ASYNCGEN_ATHROW_SIGNATURE = "generator didn't stop after athrow()"
+
+
+def _record_exception_text(record: logging.LogRecord) -> str:
+    """Formatted exception attached to a record, or "" if there is none."""
+    if record.exc_text:
+        return record.exc_text
+    if not record.exc_info:
+        return ""
+    exc_info = record.exc_info
+    if exc_info is True or not isinstance(exc_info, tuple) or len(exc_info) != 3:
+        return ""
+    try:
+        return "".join(traceback.format_exception(*exc_info))
+    except Exception:  # pragma: no cover - formatting must never break logging
+        return ""
+
+
+class AsyncgenTeardownFilter(logging.Filter):
+    """Drop the httpcore/httpx asyncgen-close tracebacks, and count them.
+
+    A record is dropped only when all of these hold:
+
+    - it was logged through the ``asyncio`` logger,
+    - at ERROR or above,
+    - its message is asyncio's asyncgen-close report, and
+    - the athrow signature appears in the message or the attached traceback.
+
+    Anything else on the ``asyncio`` logger -- including a *different* asyncgen
+    failure -- passes through untouched.
+    """
+
+    def __init__(self, name: str = "") -> None:
+        super().__init__(name)
+        self.suppressed = 0
+
+    def matches(self, record: logging.LogRecord) -> bool:
+        if record.name != "asyncio" or record.levelno < logging.ERROR:
+            return False
+        try:
+            message = record.getMessage()
+        except Exception:  # pragma: no cover - a broken record is not ours to drop
+            return False
+        if _ASYNCGEN_CLOSE_MESSAGE not in message:
+            return False
+        if _ASYNCGEN_ATHROW_SIGNATURE in message:
+            return True
+        return _ASYNCGEN_ATHROW_SIGNATURE in _record_exception_text(record)
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not self.matches(record):
+            return True
+        self.suppressed += 1
+        return False
+
+    def reset(self) -> int:
+        count, self.suppressed = self.suppressed, 0
+        return count
+
+
+asyncgen_teardown_filter = AsyncgenTeardownFilter()
+
+_ASYNCGEN_SUMMARY_REGISTERED = False
+
+
+def install_asyncgen_teardown_filter(logger_name: str = "asyncio") -> AsyncgenTeardownFilter:
+    """Attach the teardown filter to the asyncio logger. Idempotent."""
+    global _ASYNCGEN_SUMMARY_REGISTERED
+    target = logging.getLogger(logger_name)
+    if asyncgen_teardown_filter not in target.filters:
+        target.addFilter(asyncgen_teardown_filter)
+    if not _ASYNCGEN_SUMMARY_REGISTERED:
+        # Registered after the logging module's own shutdown hook, so atexit's
+        # LIFO order runs this first, while handlers are still open.
+        atexit.register(report_suppressed_asyncgen_errors)
+        _ASYNCGEN_SUMMARY_REGISTERED = True
+    return asyncgen_teardown_filter
+
+
+def report_suppressed_asyncgen_errors(*, reset: bool = True) -> int:
+    """Emit one summary line naming how many teardown errors were dropped."""
+    count = asyncgen_teardown_filter.suppressed
+    if count:
+        logger.info(
+            "suppressed %d asyncgen close error%s during teardown "
+            "(httpcore/httpx stream close on Python 3.14; not a sana_evaluation fault)",
+            count,
+            "" if count == 1 else "s",
+        )
+    if reset:
+        asyncgen_teardown_filter.reset()
+    return count
 
 
 def _slugify(value: Optional[str]) -> Optional[str]:
@@ -119,6 +233,10 @@ def configure_logging(
 
     # Re-enable retry INFO logs from SDK (throttle/retry events are useful)
     logging.getLogger("strands.event_loop._retry").setLevel(logging.INFO)
+
+    # Drop the OpenAI-client asyncgen teardown tracebacks (counted, and
+    # summarised at exit). Every other asyncio record still gets through.
+    install_asyncgen_teardown_filter()
 
     logger.info(f"Logging to: {log_file}")
 
