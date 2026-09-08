@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from sana_evaluation.run_mode_eval import _named_task_sets, resolve_task_set
+from sana_evaluation.cli import _named_task_sets, resolve_task_set
 from sana_evaluation.tools.external.ideal.runtime_profile_store import (
     _profile_location_from_task,
     runtime_profiles_root,

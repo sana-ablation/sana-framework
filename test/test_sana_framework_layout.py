@@ -8,15 +8,29 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_runtime_and_analysis_packages_have_canonical_imports():
     import sana_analysis.run_mode_analysis as semantic_analysis
-    import sana_evaluation.setup_run as setup_run
+    import sana_evaluation.cli as cli
 
-    assert callable(setup_run.run)
+    assert callable(cli.main)
     assert callable(semantic_analysis.run_analysis)
 
 
 def test_legacy_package_shims_are_removed():
     assert not (ROOT / "analysis").exists()
     assert not (ROOT / "strands_evaluation").exists()
+
+
+def test_the_merged_cli_leaves_no_shim_behind():
+    import importlib
+
+    assert not (ROOT / "sana_evaluation" / "run_mode_eval.py").exists()
+    assert not (ROOT / "sana_evaluation" / "setup_run.py").exists()
+
+    for dead in ("sana_evaluation.run_mode_eval", "sana_evaluation.setup_run"):
+        try:
+            importlib.import_module(dead)
+        except ModuleNotFoundError:
+            continue
+        raise AssertionError(f"{dead} still importable")
 
 
 def test_maintained_benchmarks_use_tasks_profiles_artifacts_layout():

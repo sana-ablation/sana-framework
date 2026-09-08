@@ -148,11 +148,11 @@ def format_artifact_report(
     status = "ready" if not required_missing else "incomplete"
 
     smoke_command = (
-        f"python -m sana_evaluation.setup_run smoke --benchmark {artifacts.name} "
+        f"python -m sana_evaluation.cli smoke --benchmark {artifacts.name} "
         f"--k 5 --db {artifacts.default_db_hint} --model openai/gpt-5.4-nano"
     )
     full_command = (
-        f"python -m sana_evaluation.setup_run full --benchmark {artifacts.name} "
+        f"python -m sana_evaluation.cli full --benchmark {artifacts.name} "
         f"--k 5 --db {artifacts.default_db_hint} --model openai/gpt-5.4-nano"
     )
     analysis_command = (

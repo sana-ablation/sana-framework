@@ -132,12 +132,11 @@ class PoolTasksFlagTests(unittest.TestCase):
     """--pool-tasks must gather every directory into a single run_evaluation call."""
 
     def test_flag_defaults_to_off(self):
-        import sana_evaluation.run_mode_eval as rme
-        parser_args = rme.main.__doc__  # touch module so import errors surface
-        self.assertIsNotNone(rme)
+        from sana_evaluation import cli
+
+        self.assertFalse(cli.parse([]).pool_tasks)
 
     def test_pool_tasks_collects_every_directory_into_one_call(self):
-        import sana_evaluation.run_mode_eval as rme
         seen = {}
 
         def fake_run_evaluation(task_dir, agent_config, run_config, **kw):
@@ -148,13 +147,14 @@ class PoolTasksFlagTests(unittest.TestCase):
         files = {"/t/k-3-d-2": ["/t/k-3-d-2/task_6.json", "/t/k-3-d-2/task_11.json"],
                  "/t/k-4-d-3": ["/t/k-4-d-3/task_6.json"]}
 
-        with patch.object(rme.base_eval, "find_all_task_dirs", return_value=dirs), \
-             patch.object(rme.base_eval, "run_evaluation", side_effect=fake_run_evaluation), \
-             patch.object(rme.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
-             patch.object(rme, "print_comparison_table", lambda *a, **k: None):
-            rme._run_all_tasks_pooled(
+        with patch.object(run_eval, "find_all_task_dirs", return_value=dirs), \
+             patch.object(run_eval, "run_evaluation", side_effect=fake_run_evaluation), \
+             patch.object(run_eval.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
+             patch.object(run_eval, "print_comparison_table", lambda *a, **k: None):
+            run_eval._run_all_tasks_pooled(
                 task_set="/t", agent_config=object(), run_config=object(),
-                verbose=False, only_new=False, parallel=8, tasks_per_dir=None,
+                verbose=False, parallel=8, tasks_per_dir=None,
+                batch_runner_cls=_FakeBatchRunner,
             )
 
         self.assertEqual(len(seen["calls"]), 1, "one pooled call, not one per directory")

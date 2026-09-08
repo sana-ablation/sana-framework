@@ -23,7 +23,7 @@ from sana_evaluation.runner.modes import (
     build_data_tools,
 )
 from sana_evaluation.helper.prompting import compose_managed_prompt
-from sana_evaluation.run_mode_eval import _variant_condition_label
+from sana_evaluation.cli import _variant_condition_label
 
 
 def _search_response(payload):

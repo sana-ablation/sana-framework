@@ -4,8 +4,8 @@ Runtime package for SANA benchmark execution.
 
 ## Contents
 
-- `setup_run.py`: builds configured evaluation runs.
-- `run_mode_eval.py`: run evaluation entry point.
+- `cli.py`: the evaluation entry point — resolves the run and calls the
+  orchestrator directly.
 - `runner/orchestration.py` and `runner/reporting.py`: task discovery,
   per-directory orchestration, and the CSV/JSONL writers it uses.
 - `benchmarks.py` and `preflight.py`: artifact discovery and readiness checks.
@@ -20,15 +20,19 @@ Runtime package for SANA benchmark execution.
 Prefer invoking this package with `python -m sana_evaluation.<module>` from the
 repo root so relative benchmark and result paths resolve consistently.
 
-## setup_run Defaults
-
-`setup_run.py` is the friendly wrapper for `run_mode_eval.py`. Use:
+## Presets
 
 ```bash
-python -m sana_evaluation.setup_run smoke|full [options]
+python -m sana_evaluation.cli [smoke|full] [options]
 ```
 
-The wrapper defaults to ideal search results, ideal planning/profile mode,
-ideal compute mode, verbose logging, and resume mode for `full`. Use `--plans`
-or the compatible `--profile` flag to override the planning axis, and use
+A preset is a default set, nothing more: explicit flags always win, and
+omitting the preset reproduces the raw evaluator defaults (`--search standard
+--results rich --profile standard --compute standard`, non-verbose, no resume).
+
+`smoke` runs one small task bucket under `test_logs/` and `test_results/`;
+`full` runs the maintained task set in resume mode. Both shift the four axes to
+`ideal`, turn on verbose logging, and move the output roots to
+`log-kramabench/` and `results-kramabench/` under `--benchmark kramabench`. Use
+`--plans` or the equivalent `--profile` to override the planning axis, and
 `--no-continue` when a full run should rerun every task.

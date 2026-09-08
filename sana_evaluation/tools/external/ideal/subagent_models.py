@@ -17,7 +17,7 @@ def _model_from_env(*names: str) -> str:
         if value:
             return value
     raise RuntimeError(
-        "Ideal subagent model is not configured. Run through setup_run/run_mode_eval "
+        "Ideal subagent model is not configured. Run through sana_evaluation.cli "
         "or set SANA_IDEAL_SUBAGENT_MODEL."
     )
 
