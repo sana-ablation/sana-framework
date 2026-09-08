@@ -1495,15 +1495,8 @@ def cleanup_sandbox() -> Dict[str, Any]:
 # Budget constants (mirrored from streams.py S3Config defaults)
 # ---------------------------------------------------------------------------
 _PEEK_BYTES = 65_536          # 64 KB for initial range-GET / peek
-_READ_BYTES = 1_048_576       # 1 MB budget for read_file / search_in_file
-_MAX_CSV_ROWS = 500
-_CSV_BYTES_PER_ROW = 512
-_MAX_JSON_ITEMS = 200
-_JSON_BYTES_PER_ITEM = 2_048
-_MAX_TEXT_CHARS = 50_000
 _QUERY_ROW_CAP = 200
 _SEARCH_MAX_MATCHES = 20
-_SEARCH_CONTEXT_LINES = 2
 _QUERY_MAX_FILE_BYTES = 500 * 1024 * 1024  # 500 MB — above this, download first
 _MAX_SPREADSHEET_PEEK_BYTES = 128 * 1024 * 1024
 _MAX_SPREADSHEET_PREVIEW_COLUMNS = 30
