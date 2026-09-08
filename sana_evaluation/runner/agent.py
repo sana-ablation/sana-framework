@@ -52,7 +52,6 @@ from sana_evaluation.tools.lake import (
 )
 from sana_evaluation.runner.modes import (
     _inject_search_budget_prompt,
-    _resolve_condition,
     _tool_limit_exclusions_for_run,
     build_data_tools,
     build_mode_bundle,
@@ -161,8 +160,6 @@ class DataLakeAgent:
         task_context: Optional[Dict[str, Any]] = None,
     ) -> tuple:
         configure_data_lake_benchmark(getattr(self.run_config, "benchmark", None))
-        cond = self.run_config.condition_config
-        condition = _resolve_condition(cond)
 
         # Core data-manipulation tools shared across all conditions
         _data_tools = build_data_tools(

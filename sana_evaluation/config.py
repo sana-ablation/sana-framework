@@ -33,6 +33,21 @@ class ConditionConfig:
     trace_output_dir: str = "results/traces"
 
 
+# The four experiment axes have exactly one set of defaults, keyed by RunConfig
+# field name and consumed by every site that used to spell them out: the CLI
+# parser and `cli._resolve_mode_axes`, `runner.modes.build_mode_bundle`,
+# `preflight.run_preflight`, and the batch worker's backend setup. Sharing them
+# is what makes `RunConfig()` and `cli.parse([])` describe the same run *by
+# construction* rather than by three copies happening to agree -- the property
+# the deleted no-axes agent path silently violated.
+AXIS_DEFAULTS = {
+    "search_tool_mode": "standard",
+    "search_results_mode": "rich",
+    "plan_mode": "standard",
+    "computation_tool_mode": "standard",
+}
+
+
 @dataclass
 class RunConfig:
     results_output_dir: str = "results"
@@ -53,11 +68,13 @@ class RunConfig:
     search_calls_limit: Optional[int] = None
     search_descriptions: str = "naive"
     search_db_path: Optional[str] = None
-    search_tool_mode: Optional[str] = None
-    search_results_mode: Optional[str] = None
-    plan_mode: Optional[str] = None
+    # Optional[str] because callers may still pass None explicitly; every reader
+    # coalesces it back to the same AXIS_DEFAULTS entry.
+    search_tool_mode: Optional[str] = AXIS_DEFAULTS["search_tool_mode"]
+    search_results_mode: Optional[str] = AXIS_DEFAULTS["search_results_mode"]
+    plan_mode: Optional[str] = AXIS_DEFAULTS["plan_mode"]
     skills_enabled: bool = False
-    computation_tool_mode: Optional[str] = None
+    computation_tool_mode: Optional[str] = AXIS_DEFAULTS["computation_tool_mode"]
     plan_skills_enabled: bool = False
     search_free: bool = False
     no_s3: bool = False

@@ -23,7 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Sequence
 
-from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
+from sana_evaluation.config import AXIS_DEFAULTS, AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.env import load_repo_dotenv
 from sana_evaluation.helper.prompting import normalize_debug_mode
 from sana_evaluation.preflight import PreflightError, run_preflight
@@ -42,12 +42,6 @@ logger = logging.getLogger(__name__)
 
 BENCHMARKS = ("lakeqa", "kramabench")
 
-_AXIS_DEFAULTS = {
-    "search_tool": "standard",
-    "search_results": "rich",
-    "plan": "standard",
-    "computation_tool": "standard",
-}
 _DEFAULT_TASK_SET = "benchmarks/lakeqa/tasks-mini/tasks"
 _KRAMABENCH_TASK_SET = "benchmarks/kramabench/tasks-mini/tasks"
 _DEFAULT_SMOKE_TASK_DIR = "k-5-d-4"
@@ -86,15 +80,18 @@ def build_parser() -> argparse.ArgumentParser:
     ax = p.add_argument_group("experiment axes")
     ax.add_argument("--search", "--search-tool", "--search_tool", dest="search",
                     choices=("naive", "preloaded", "standard", "ideal", "web"),
-                    default="standard")
+                    default=AXIS_DEFAULTS["search_tool_mode"])
     # naive/ideal are the former names for minimal/rich; they are canonicalised
     # in _resolve_mode_axes so they cannot produce a second variant directory.
     ax.add_argument("--results", "--search-results", "--search_results", dest="results",
-                    choices=("minimal", "rich", "naive", "ideal"), default="rich")
+                    choices=("minimal", "rich", "naive", "ideal"),
+                    default=AXIS_DEFAULTS["search_results_mode"])
     ax.add_argument("--plan", "--plans", dest="plan",
-                    choices=("naive", "standard", "ideal"), default="standard")
+                    choices=("naive", "standard", "ideal"),
+                    default=AXIS_DEFAULTS["plan_mode"])
     ax.add_argument("--compute", "--computation-tool", "--computation_tool",
-                    dest="compute", choices=("standard", "ideal"), default="standard")
+                    dest="compute", choices=("standard", "ideal"),
+                    default=AXIS_DEFAULTS["computation_tool_mode"])
     ax.add_argument("--skills", choices=("on", "off"), default="off")
 
     bm = p.add_argument_group("benchmark and tasks")
@@ -233,14 +230,15 @@ def _resolve_mode_axes(
 ) -> tuple[str, str, str, str]:
     from sana_evaluation.runner.modes import _normalize_result_mode
 
-    defaults = _AXIS_DEFAULTS
     return (
-        search_tool or defaults["search_tool"],
+        search_tool or AXIS_DEFAULTS["search_tool_mode"],
         # Canonicalised so the deprecated spellings do not produce a second set
         # of variant directories for the same condition.
-        _normalize_result_mode(search_results, defaults["search_results"], "search_results"),
-        plan or defaults["plan"],
-        computation_tool or defaults["computation_tool"],
+        _normalize_result_mode(
+            search_results, AXIS_DEFAULTS["search_results_mode"], "search_results"
+        ),
+        plan or AXIS_DEFAULTS["plan_mode"],
+        computation_tool or AXIS_DEFAULTS["computation_tool_mode"],
     )
 
 

@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from sana_evaluation.config import RunConfig
+from sana_evaluation.config import AXIS_DEFAULTS, RunConfig
 from sana_evaluation.tools.lake import configure_benchmark
 from sana_evaluation.benchmarks import (
     artifact_paths,
@@ -419,10 +419,15 @@ def run_preflight(
     """
     stream = stream or sys.stdout
 
-    st = (run_config.search_tool_mode or "standard").strip().lower()
-    sr = (run_config.search_results_mode or "naive").strip().lower()
-    pm = (run_config.plan_mode or "standard").strip().lower()
-    ct = (getattr(run_config, "computation_tool_mode", None) or "standard").strip().lower()
+    # Coalesced against AXIS_DEFAULTS, the same table build_mode_bundle uses, so
+    # this upfront check sees exactly the combination the workers will build.
+    st = (run_config.search_tool_mode or AXIS_DEFAULTS["search_tool_mode"]).strip().lower()
+    sr = (run_config.search_results_mode or AXIS_DEFAULTS["search_results_mode"]).strip().lower()
+    pm = (run_config.plan_mode or AXIS_DEFAULTS["plan_mode"]).strip().lower()
+    ct = (
+        getattr(run_config, "computation_tool_mode", None)
+        or AXIS_DEFAULTS["computation_tool_mode"]
+    ).strip().lower()
     benchmark = normalize_benchmark(getattr(run_config, "benchmark", None) or "lakeqa")
     configure_benchmark(benchmark)
 

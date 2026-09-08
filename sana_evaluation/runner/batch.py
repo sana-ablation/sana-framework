@@ -15,7 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from sana_evaluation.config import AgentConfig, RunConfig
+from sana_evaluation.config import AXIS_DEFAULTS, AgentConfig, RunConfig
 from sana_evaluation.instrumentation import set_trace_context
 from sana_evaluation.helper.logger import configure_worker_logging
 from sana_evaluation.runner.agent import DataLakeAgent
@@ -115,14 +115,15 @@ def _run_task_worker(
         task_id=task.get("id"),
     )
 
-    # Eagerly load search backend state once per worker process.
-    # For mode runs, explicit axes drive setup. Otherwise the baseline path drives setup.
-    mode_search_tool = (run_config.search_tool_mode or "").strip().lower() or None
-    if mode_search_tool is None:
-        mode_search_tool = "naive"
-    mode_computation_tool = (run_config.computation_tool_mode or "").strip().lower() or None
-    if mode_computation_tool is None:
-        mode_computation_tool = "standard"
+    # Eagerly load search backend state once per worker process. Coalesced
+    # against AXIS_DEFAULTS so the backend set up here is the one
+    # build_mode_bundle will actually hand the agent.
+    mode_search_tool = (
+        run_config.search_tool_mode or AXIS_DEFAULTS["search_tool_mode"]
+    ).strip().lower()
+    mode_computation_tool = (
+        run_config.computation_tool_mode or AXIS_DEFAULTS["computation_tool_mode"]
+    ).strip().lower()
 
     if mode_search_tool == "standard" and _STANDARD_SEARCH_TOOLS_AVAILABLE:
         try:

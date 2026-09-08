@@ -14,7 +14,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from strands.tools.decorator import DecoratedFunctionTool
 
-from sana_evaluation.config import ConditionConfig, RunConfig
+from sana_evaluation.config import AXIS_DEFAULTS, ConditionConfig, RunConfig
 from sana_evaluation.helper.prompting import (
     _normalize_mode,
     compose_baseline_prompt,
@@ -322,14 +322,20 @@ def build_mode_bundle(
     task_context: Optional[Dict[str, Any]] = None,
 ) -> ModeBundle:
     """Build final tools/prompt/plugin toggles from multi-axis modes."""
-    search_tool_mode = _normalize_mode(run_config.search_tool_mode, "standard", "search_tool")
-    search_results_mode = _normalize_result_mode(run_config.search_results_mode, "rich", "search_results")
+    search_tool_mode = _normalize_mode(
+        run_config.search_tool_mode, AXIS_DEFAULTS["search_tool_mode"], "search_tool"
+    )
+    search_results_mode = _normalize_result_mode(
+        run_config.search_results_mode, AXIS_DEFAULTS["search_results_mode"], "search_results"
+    )
     plan_mode = _normalize_mode(
-        run_config.plan_mode or run_config.plan_mode,
-        "standard",
+        run_config.plan_mode,
+        AXIS_DEFAULTS["plan_mode"],
         "plan",
     )
-    computation_tool_mode = _normalize_computation_mode(run_config.computation_tool_mode)
+    computation_tool_mode = _normalize_computation_mode(
+        run_config.computation_tool_mode, AXIS_DEFAULTS["computation_tool_mode"]
+    )
     benchmark = (getattr(run_config, "benchmark", None) or "lakeqa").strip().lower()
 
     if search_tool_mode == "ideal" or plan_mode == "ideal" or computation_tool_mode == "ideal":

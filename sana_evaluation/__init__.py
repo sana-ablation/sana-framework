@@ -12,6 +12,8 @@ Usage:
     from sana_evaluation.runner.batch import BatchRunner
     from sana_evaluation.config import AgentConfig, RunConfig
 
+    # A RunConfig is optional; omitting it takes config.AXIS_DEFAULTS --
+    # search=standard, results=rich, plan=standard, compute=standard.
     agent = DataLakeAgent(AgentConfig())
     result = agent.run("What is the capital of France?")
 
