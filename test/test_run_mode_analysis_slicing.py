@@ -6,6 +6,7 @@ dead, and the pipeline imported only the constants. Inlining them surfaced a
 NameError that the whole suite passed straight over, so they are pinned here.
 """
 import json
+import unittest
 from pathlib import Path
 
 from sana_analysis.run_mode_analysis import (
@@ -55,3 +56,61 @@ def test_data_tools_are_the_data_touching_ones():
     assert "query_file" in _DATA_TOOLS and "read_file" in _DATA_TOOLS
     # Planning and answer submission are not data tools.
     assert "plan" not in _DATA_TOOLS and "submit_answer" not in _DATA_TOOLS
+
+
+class TestCanonicalVariantDecoding(unittest.TestCase):
+    """Gen-4 is what every directory on disk uses. The old parser read it as
+    all-None, which is why every canonical lookup missed."""
+
+    CANONICAL = "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+
+    def test_canonical_variant_resolves_every_axis(self):
+        from sana_analysis.run_mode_analysis import _parse_variant
+
+        axes = _parse_variant(self.CANONICAL)
+        self.assertEqual(axes["search_tool"], "ideal")
+        self.assertEqual(axes["search_results"], "rich")
+        self.assertEqual(axes["agent_management"], "ideal")
+        self.assertEqual(axes["computation_tool"], "ideal")
+        self.assertEqual(axes["k"], 5)
+        self.assertEqual(axes["plan_skills"], "off")
+
+    def test_canonical_variant_renders_a_real_legend(self):
+        from sana_analysis.run_mode_analysis import _compact_variant_label
+
+        label = _compact_variant_label(self.CANONICAL)
+        self.assertNotIn("?", label)
+        self.assertIn("S:Ideal", label)
+
+    def test_standard_compute_is_not_silently_reported_as_ideal(self):
+        from sana_analysis.run_mode_analysis import _parse_variant
+
+        standard = "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off"
+        self.assertEqual(_parse_variant(standard)["computation_tool"], "standard")
+        self.assertEqual(_parse_variant(self.CANONICAL)["computation_tool"], "ideal")
+
+    def test_gen1_literals_still_decode(self):
+        from sana_analysis.run_mode_analysis import _parse_variant
+
+        axes = _parse_variant("search_i_results_i_plani_computei_k5_skills_off")
+        self.assertEqual(axes["search_tool"], "ideal")
+        self.assertEqual(axes["agent_management"], "ideal")
+        self.assertEqual(axes["computation_tool"], "ideal")
+
+    def test_condition_figure_order_matches_canonical_directories(self):
+        from sana_analysis.run_mode_analysis import TURN_WASTE_CONDITION_FIGURE_ORDER
+        from sana_analysis.variants import parse_variant
+
+        names = {
+            "No Plan": "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+            "Standard Plan": "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+            "BM25": "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "Pneuma Hybrid": "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "Standard Computation": "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+            "Ideal": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        }
+        for label, axes in TURN_WASTE_CONDITION_FIGURE_ORDER:
+            self.assertTrue(
+                parse_variant(names[label]).matches(**axes),
+                f"{label} does not match {names[label]}",
+            )

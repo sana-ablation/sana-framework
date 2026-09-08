@@ -75,6 +75,11 @@ from sana_analysis.metrics.search_bottleneck import (
     write_search_bottleneck_csv,
 )
 from sana_analysis.paper.delta_figures import generate_delta_figures
+from sana_analysis.variants import (
+    CONDITION_ORDER,
+    select_conditions,
+    try_parse_variant,
+)
 
 
 # --- slicing axes -----------------------------------------------------------
@@ -290,13 +295,12 @@ TURN_WASTE_GROUP_COLORS = {
     "Final-hop retrieval/finalization failure": "#E45756",
 }
 TURN_WASTE_FIGURE_EXCLUDED_GROUPS = {"Runtime/blocker fallback"}
+# Predicates, not literals: `sana_analysis.variants.CONDITION_ORDER` is the one
+# definition, and this figure covers the first six of its seven conditions.
 TURN_WASTE_CONDITION_FIGURE_ORDER = [
-    ("No Plan", "search_i_results_i_plann_computei_k5_skills_off"),
-    ("Standard Plan", "search_i_results_i_pland_computei_k5_skills_off"),
-    ("BM25", "search_n_results_i_plani_computei_k5_skills_off"),
-    ("Pneuma Hybrid", "search_d_results_i_plani_computei_k5_skills_off"),
-    ("Standard Computation", "search_i_results_i_plani_k5_skills_off"),
-    ("Ideal", "search_i_results_i_plani_computei_k5_skills_off"),
+    (label, axes)
+    for label, axes in CONDITION_ORDER
+    if label != "Preloaded"
 ]
 TURN_WASTE_CONDITION_FIGURE_MODEL_ORDER = ["openai_gpt-5.4-nano", "openai_gpt-5-mini", "gpt-5.4-nano", "gpt-5-mini"]
 TURN_WASTE_CONDITION_FIGURE_MODEL_LABELS = {
@@ -320,10 +324,16 @@ TURN_WASTE_PREFERRED_GROUP_ORDER = [
     "Final-hop retrieval/finalization failure",
 ]
 
-_LETTER_TO_MODE = {"n": "naive", "d": "standard", "i": "ideal", "p": "preloaded"}
 _MODE_PRIORITY = {"ideal": 0, "standard": 1, "naive": 2, None: 3}
 _UNIMPORTANT_TOOLS = {"get_sandbox_info", "submit_answer", "plan", "think"}
-_MODE_DISPLAY = {"ideal": "Ideal", "standard": "Std", "naive": "Naive", None: "?"}
+_MODE_DISPLAY = {
+    "ideal": "Ideal",
+    "standard": "Std",
+    "naive": "Naive",
+    "minimal": "Minimal",
+    "rich": "Rich",
+    None: "?",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -378,62 +388,56 @@ def _parse_model_filters(model_filter: Optional[str]) -> Optional[List[str]]:
 
 
 def _parse_variant(variant: str) -> Dict[str, Optional[object]]:
-    out: Dict[str, Optional[object]] = {
+    """Decode a variant name into this module's long-standing axis keys.
+
+    A shim over `sana_analysis.variants` -- the key names and shape are
+    unchanged so the eight call sites below need no edit.
+    """
+    decoded = try_parse_variant(variant)
+    if decoded is None:
+        return {
+            "variant": variant,
+            "search_tool": None,
+            "search_results": None,
+            "agent_management": None,
+            "computation_tool": "standard",
+            "plan_skills": None,
+            "k": None,
+            "sc": None,
+        }
+    return {
         "variant": variant,
-        "search_tool": None,
-        "search_results": None,
-        "agent_management": None,
-        "computation_tool": "standard",
-        "plan_skills": None,
-        "k": None,
-        "sc": None,
+        "search_tool": decoded.search,
+        "search_results": decoded.results,
+        "agent_management": decoded.plan,
+        "computation_tool": decoded.compute,
+        "plan_skills": "on" if decoded.skills else "off",
+        "k": decoded.k,
+        "sc": decoded.search_calls,
     }
-    parts = variant.split("_")
-    for idx, token in enumerate(parts):
-        if token == "search" and idx + 1 < len(parts):
-            out["search_tool"] = _LETTER_TO_MODE.get(parts[idx + 1])
-        elif token == "results" and idx + 1 < len(parts):
-            out["search_results"] = _LETTER_TO_MODE.get(parts[idx + 1])
-        elif token.startswith("plan") and len(token) > 4:
-            out["agent_management"] = _LETTER_TO_MODE.get(token[4:])
-        elif token.startswith("compute") and len(token) > 7:
-            out["computation_tool"] = _LETTER_TO_MODE.get(token[7:])
-        elif token == "skills" and idx + 1 < len(parts):
-            out["plan_skills"] = parts[idx + 1]
-        elif token.startswith("k") and token[1:].isdigit():
-            out["k"] = int(token[1:])
-        elif token.startswith("sc") and token[2:].isdigit():
-            out["sc"] = int(token[2:])
-    return out
 
 
 def _parse_variant_mode_codes(variant: str) -> Dict[str, Optional[str]]:
-    out: Dict[str, Optional[str]] = {
-        "search": None,
-        "results": None,
-        "plan": None,
-        "compute": None,
-        "skills": None,
-        "k": None,
-        "sc": None,
+    """Axis values keyed by short axis name, for label rendering.
+
+    Values are resolved words now, not gen-1 letters, so callers must not run
+    them through `_LETTER_TO_MODE` a second time.
+    """
+    decoded = try_parse_variant(variant)
+    if decoded is None:
+        return {
+            "search": None, "results": None, "plan": None,
+            "compute": None, "skills": None, "k": None, "sc": None,
+        }
+    return {
+        "search": decoded.search,
+        "results": decoded.results,
+        "plan": decoded.plan,
+        "compute": decoded.compute,
+        "skills": "on" if decoded.skills else "off",
+        "k": str(decoded.k) if decoded.k is not None else None,
+        "sc": str(decoded.search_calls) if decoded.search_calls is not None else None,
     }
-    parts = variant.split("_")
-    for idx, token in enumerate(parts):
-        if token == "search" and idx + 1 < len(parts):
-            out["search"] = parts[idx + 1]
-        elif token == "results" and idx + 1 < len(parts):
-            out["results"] = parts[idx + 1]
-        elif token.startswith("plan") and len(token) > 4:
-            out["plan"] = token[4:]
-        elif token.startswith("compute") and len(token) > 7:
-            out["compute"] = token[7:]
-        elif token == "skills" and idx + 1 < len(parts):
-            out["skills"] = parts[idx + 1]
-        elif token.startswith("k") and token[1:].isdigit():
-            out["k"] = token[1:]
-        elif token.startswith("sc") and token[2:].isdigit():
-            out["sc"] = token[2:]
-    return out
 
 
 def _mode_display(mode: Optional[str]) -> str:
@@ -444,13 +448,13 @@ def _compact_variant_label(variant: str, *, multiline: bool = False) -> str:
     codes = _parse_variant_mode_codes(variant)
     parts = []
     if codes.get("search"):
-        parts.append(f"S:{_mode_display(_LETTER_TO_MODE.get(codes['search']))}")
-    if codes.get("results") and codes.get("results") != "i":
-        parts.append(f"R:{_mode_display(_LETTER_TO_MODE.get(codes['results']))}")
+        parts.append(f"S:{_mode_display(codes['search'])}")
+    if codes.get("results") and codes.get("results") != "rich":
+        parts.append(f"R:{_mode_display(codes['results'])}")
     if codes.get("plan"):
-        parts.append(f"P:{_mode_display(_LETTER_TO_MODE.get(codes['plan']))}")
-    if codes.get("compute") and _LETTER_TO_MODE.get(codes["compute"]) != "standard":
-        parts.append(f"C:{_mode_display(_LETTER_TO_MODE.get(codes['compute']))}")
+        parts.append(f"P:{_mode_display(codes['plan'])}")
+    if codes.get("compute") and codes["compute"] != "standard":
+        parts.append(f"C:{_mode_display(codes['compute'])}")
     if codes.get("k") and codes.get("k") != "5":
         parts.append(f"k={codes['k']}")
     if codes.get("sc"):
@@ -3387,7 +3391,11 @@ def _plot_turn_waste_reconciled_groups_by_condition(
 ) -> None:
     counts_by_variant_model_group: Dict[Tuple[str, str], Counter] = defaultdict(Counter)
     group_totals: Counter = Counter()
-    condition_variants = {variant for _, variant in TURN_WASTE_CONDITION_FIGURE_ORDER}
+    observed_variants = {str(entry.get("variant", "")) for entry in condition_groups.values()}
+    variant_by_label = dict(
+        select_conditions(observed_variants, labels=[label for label, _ in TURN_WASTE_CONDITION_FIGURE_ORDER])
+    )
+    condition_variants = set(variant_by_label.values())
 
     for entry in condition_groups.values():
         variant = str(entry.get("variant", ""))
@@ -3407,8 +3415,12 @@ def _plot_turn_waste_reconciled_groups_by_condition(
     ordered_groups = _ordered_turn_waste_groups(group_totals)
     active_conditions = [
         (label, variant)
-        for label, variant in TURN_WASTE_CONDITION_FIGURE_ORDER
-        if any(sum(counts.values()) > 0 for (observed_variant, _), counts in counts_by_variant_model_group.items() if observed_variant == variant)
+        for label, variant in variant_by_label.items()
+        if any(
+            sum(counts.values()) > 0
+            for (observed_variant, _), counts in counts_by_variant_model_group.items()
+            if observed_variant == variant
+        )
     ]
     if not active_conditions or not ordered_groups:
         return
