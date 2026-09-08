@@ -75,6 +75,14 @@ def fragment_paths(
     plan_mode = _normalize_mode(plan, "standard", "plan")
     search_mode = _normalize_mode(search, "naive", "search_tool")
     benchmark_name = (benchmark or "lakeqa").strip().lower()
+    if benchmark_name == "kramabench":
+        # Kramabench composes the managed plan fragment for every plan mode,
+        # including naive: there was never a baseline_kramabench.txt to select,
+        # so its naive arm has always read the managed base. The normalisation
+        # lives here rather than in the wrapper because preflight resolves from
+        # the caller's plan, and a rule known only to the wrapper would let the
+        # two disagree again -- 6b, one axis over.
+        plan_mode = "standard"
 
     paths = [_PROMPTS_DIR / "base" / "framing.txt"]
     # naive contributes the plain tool-list heading; every other plan mode adds

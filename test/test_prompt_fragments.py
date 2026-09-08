@@ -49,11 +49,45 @@ def test_kramabench_never_mentions_query_file():
     )
 
 
+def _paths_the_run_really_composes(case):
+    """The fragment list the runtime dispatch actually resolved, not a model of it.
+
+    ``runner.modes`` picks one of three wrappers before any resolver is reached,
+    and a wrapper may normalise an axis on the way -- kramabench composes the
+    managed plan fragment whatever plan mode the caller asked for. Asserting
+    ``_prompt_files_for_modes == fragment_paths`` would compare the two sides of
+    one delegation and prove only that preflight still delegates. Recording the
+    call the wrapper really made is what makes this a check on 6b.
+    """
+    from test import test_prompt_corpus  # _compose mirrors runner/modes.py's dispatch
+
+    recorded = []
+    real = compose.fragment_paths
+
+    def spy(**kwargs):
+        paths = real(**kwargs)
+        recorded.append(paths)
+        return paths
+
+    compose.fragment_paths = spy
+    try:
+        test_prompt_corpus._compose(*case)
+    finally:
+        compose.fragment_paths = real
+
+    assert len(recorded) == 1, f"expected one resolution per prompt, got {len(recorded)}"
+    return recorded[0]
+
+
 def test_preflight_and_runtime_resolve_the_same_paths():
     from sana_evaluation.preflight import _prompt_files_for_modes
-    for benchmark in ("lakeqa", "kramabench"):
-        for search in ("naive", "standard", "ideal", "preloaded", "web"):
-            for plan in ("naive", "standard", "ideal"):
-                kwargs = dict(plan=plan, search=search,
-                              benchmark=benchmark, skills=False)
-                assert _prompt_files_for_modes(**kwargs) == compose.fragment_paths(**kwargs)
+    from test.test_prompt_corpus import CASES
+
+    for case in CASES:
+        plan, search, benchmark, skills = case
+        preflight_paths = _prompt_files_for_modes(
+            plan=plan, search=search, benchmark=benchmark, skills=skills
+        )
+        assert preflight_paths == _paths_the_run_really_composes(case), (
+            f"preflight validates different files than {plan}+{search}+{benchmark} reads"
+        )
