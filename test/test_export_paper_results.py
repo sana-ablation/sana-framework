@@ -233,7 +233,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_i_results_i_plani_computei_k5_skills_off",
                 "search_tool": "ideal",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "ideal",
                 "computation_tool": "ideal",
                 "n": 87,
@@ -251,7 +251,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_i_results_i_plani_k5_skills_off",
                 "search_tool": "ideal",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "ideal",
                 "computation_tool": "standard",
                 "n": 87,
@@ -275,7 +275,7 @@ class ExportPaperResultsTests(unittest.TestCase):
             and row["plan"] == "Ideal"
             and row["search"] == "Ideal"
             and row["compute"] == "Ideal"
-            and row["results"] == "Ideal"
+            and row["results"] == "Rich"
         )
         standard_compute = next(
             row for row in rows
@@ -283,7 +283,7 @@ class ExportPaperResultsTests(unittest.TestCase):
             and row["plan"] == "Ideal"
             and row["search"] == "Ideal"
             and row["compute"] == "Standard"
-            and row["results"] == "Ideal"
+            and row["results"] == "Rich"
         )
         preloaded_search = next(
             row for row in rows
@@ -291,7 +291,7 @@ class ExportPaperResultsTests(unittest.TestCase):
             and row["plan"] == "Ideal"
             and row["search"] == "Preloaded"
             and row["compute"] == "Ideal"
-            and row["results"] == "Ideal"
+            and row["results"] == "Rich"
         )
         pending_mini = next(row for row in rows if row["model"] == "gpt-5-mini")
 
@@ -403,6 +403,16 @@ class TestCanonicalExportAxes(unittest.TestCase):
             observed = _parse_variant_axes(directories[mode])
             for field, value in expected_axes.items():
                 self.assertEqual(observed[field], value, f"{mode}.{field}")
+
+    def test_planned_conditions_spell_the_results_axis_in_current_vocabulary(self):
+        from sana_analysis.paper.export import PLANNED_CONDITIONS
+
+        for condition, _plan, _search, _compute, results in PLANNED_CONDITIONS:
+            self.assertIn(
+                results,
+                {"minimal", "rich"},
+                f"{condition}: results={results!r} is not current vocabulary",
+            )
 
 
 if __name__ == "__main__":

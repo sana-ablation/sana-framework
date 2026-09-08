@@ -25,16 +25,16 @@ TOOL_CALL_CAPTION_NOTE = (
 )
 
 PLANNED_CONDITIONS = [
-    ("N-I-I-I", "naive", "ideal", "ideal", "ideal"),
-    ("S-I-I-I", "standard", "ideal", "ideal", "ideal"),
-    ("I-N-I-I", "ideal", "naive", "ideal", "ideal"),
-    ("I-S-I-I", "ideal", "standard", "ideal", "ideal"),
-    ("I-P-I-I", "ideal", "preloaded", "ideal", "ideal"),
-    ("I-I-S-I", "ideal", "ideal", "standard", "ideal"),
-    ("I-I-I-I", "ideal", "ideal", "ideal", "ideal"),
-    ("N-N-S-N", "naive", "naive", "standard", "naive"),
-    ("S-S-S-I", "standard", "standard", "standard", "ideal"),
-    ("I-I-I-N", "ideal", "ideal", "ideal", "naive"),
+    ("N-I-I-I", "naive", "ideal", "ideal", "rich"),
+    ("S-I-I-I", "standard", "ideal", "ideal", "rich"),
+    ("I-N-I-I", "ideal", "naive", "ideal", "rich"),
+    ("I-S-I-I", "ideal", "standard", "ideal", "rich"),
+    ("I-P-I-I", "ideal", "preloaded", "ideal", "rich"),
+    ("I-I-S-I", "ideal", "ideal", "standard", "rich"),
+    ("I-I-I-I", "ideal", "ideal", "ideal", "rich"),
+    ("N-N-S-N", "naive", "naive", "standard", "minimal"),
+    ("S-S-S-I", "standard", "standard", "standard", "rich"),
+    ("I-I-I-N", "ideal", "ideal", "ideal", "minimal"),
 ]
 
 CANONICAL_MODE_SPECS = [
@@ -85,6 +85,8 @@ MODE_DISPLAY = {
     "standard": "Standard",
     "ideal": "Ideal",
     "preloaded": "Preloaded",
+    "rich": "Rich",
+    "minimal": "Minimal",
 }
 
 SUPPORTING_FIGURES = {
