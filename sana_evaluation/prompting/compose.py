@@ -96,6 +96,24 @@ def fragment_paths(
     return paths
 
 
+def _unloadable_skill_markers(search_mode: str) -> tuple[str, ...]:
+    """Skill bullets the shared plan fragment lists that this search mode never loads.
+
+    The SKILLS list is plan-axis content, but one of its bullets is selected by
+    the search axis: ``skill_paths_for_modes`` gives web only planning and
+    query-data, so ``discover_skill_path`` raises for it. Advertising
+    discover-data there is the tool-advertisement bug one axis over, and the
+    section sits above the data-access fragment, so no fragment of the search
+    axis can drop it -- the skills axis is already filtered as text below, and
+    this uses the same mechanism.
+
+    ``preloaded`` has the identical gap and has had it since before the split.
+    It is deliberately not fixed here: it changes four further golden files that
+    this commit's review did not cover.
+    """
+    return ('skills("discover-data")',) if search_mode == "web" else ()
+
+
 def build(
     *,
     plan: str,
@@ -111,6 +129,12 @@ def build(
     prompt = "\n\n".join(part for part in parts if part)
     if not skills:
         prompt = _remove_skill_references(prompt)
+    markers = _unloadable_skill_markers(_normalize_mode(search, "naive", "search_tool"))
+    if markers:
+        prompt = "\n".join(
+            line for line in prompt.splitlines()
+            if not any(marker in line for marker in markers)
+        )
     return prompt
 
 

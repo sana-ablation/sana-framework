@@ -56,6 +56,8 @@ If a result is too large, you will receive:
 
 - `query_file` — SQL query directly on a CSV/JSON file via DuckDB (no download needed); XML/KML is detected but not queryable here
 
+`query_file` output is capped and truncated exactly like the tools under OUTPUT LIMITS above.
+
 ## QUERY DISCIPLINE — know the schema before SQL
 NEVER call `query_file` on a file you do not know the schema of. The most common failure modes come from guessing the schema:
 - Inventing column names (`county_name` when the column is `County`, `ISSUING_AGENCY_NAME` when it's `IssuingAgency`) -> Binder Error

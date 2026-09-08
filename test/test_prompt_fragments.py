@@ -24,6 +24,22 @@ def test_web_mode_never_advertises_a_lake_tool(benchmark, plan):
         )
 
 
+def test_web_mode_never_advertises_a_skill_it_cannot_load():
+    """The tool-advertisement bug, one axis over.
+
+    skill_paths_for_modes gives web planning + query-data and no discover-data,
+    so a `skills("discover-data")` bullet in the web prompt names a capability
+    the run cannot serve.
+    """
+    loaded = compose.skill_paths_for_modes("web", "standard")
+    assert not any("discover-data" in path for path in loaded)
+
+    prompt = compose.build(plan="standard", search="web",
+                           benchmark="lakeqa", skills=True)
+    assert "discover-data" not in prompt
+    assert 'skills("query-data")' in prompt, "web does load query-data"
+
+
 def test_kramabench_never_mentions_query_file():
     prompt = compose.build(plan="standard", search="standard",
                            benchmark="kramabench", skills=False)
