@@ -9,7 +9,7 @@ recoverable exactly.
 
 Three columns are involved, not one. The hidden ideal-mode helper agents bill
 separately into ideal_subagent_cost_usd, and the two totals are defined in
-run_eval.py as:
+runner/reporting.py as:
 
     total_cost_with_ideal_subagents_usd = cost_usd + ideal_subagent_cost_usd
     total_cost_with_all_subagents_usd   = that + delegation_subagent_cost_usd

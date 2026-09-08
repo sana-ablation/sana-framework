@@ -4,7 +4,7 @@
 so every model-tier variant label silently exceeded the cap until a Responses-API
 model was added.
 """
-from sana_evaluation.run_eval import _MAX_PROMPT_CACHE_KEY, _bounded_cache_key
+from sana_evaluation.runner.orchestration import _MAX_PROMPT_CACHE_KEY, _bounded_cache_key
 
 VARIANTS = [
     "search_ideal__results_ideal__profile_ideal__compute_ideal__k5__skills_off",

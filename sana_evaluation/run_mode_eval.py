@@ -19,8 +19,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from sana_evaluation import run_eval as base_eval
+from sana_evaluation.runner import orchestration as base_eval
 from sana_evaluation.runner.batch import BatchRunner as ModeBatchRunner
+from sana_evaluation.runner.reporting import print_comparison_table
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.env import load_repo_dotenv
 from sana_evaluation.helper.prompting import normalize_debug_mode
@@ -34,9 +35,6 @@ from sana_evaluation.tools.external.ideal.subagent_models import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Reuse run_eval orchestration while swapping only the runner implementation.
-base_eval.BatchRunner = ModeBatchRunner
 
 _AXIS_DEFAULTS = {
     "search_tool": "standard",
@@ -207,12 +205,13 @@ def _run_all_tasks_pooled(
         task_dir=task_set,
         agent_config=agent_config,
         run_config=run_config,
+        batch_runner_cls=ModeBatchRunner,
         verbose=verbose,
         only_new=only_new,
         parallel=parallel,
         task_files=pooled,
     )
-    base_eval.print_comparison_table(results)
+    print_comparison_table(results)
 
 
 def _collect_task_files(args) -> list[str]:
@@ -291,6 +290,7 @@ def _run_continue(args, agent_config: AgentConfig, run_config: RunConfig) -> Non
             run_config=run_config,
             verbose=args.verbose,
             parallel=args.parallel,
+            batch_runner_cls=ModeBatchRunner,
         )
 
 
@@ -642,23 +642,25 @@ def main() -> None:
                 task_dir=task_dir,
                 agent_config=agent_config,
                 run_config=run_config,
+                batch_runner_cls=ModeBatchRunner,
                 verbose=args.verbose,
                 only_new=args.only_new,
                 parallel=args.parallel,
                 tasks_per_dir=args.tasks_per_dir,
             )
-            base_eval.print_comparison_table(results)
+            print_comparison_table(results)
     elif args.task_dir:
         results = base_eval.run_evaluation(
             task_dir=args.task_dir,
             agent_config=agent_config,
             run_config=run_config,
+            batch_runner_cls=ModeBatchRunner,
             verbose=args.verbose,
             only_new=args.only_new,
             parallel=args.parallel,
             tasks_per_dir=args.tasks_per_dir,
         )
-        base_eval.print_comparison_table(results)
+        print_comparison_table(results)
     else:
         parser.print_help()
 

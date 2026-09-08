@@ -8,13 +8,31 @@ from unittest.mock import patch
 
 def _load_run_eval_module():
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "sana_evaluation" / "run_eval.py"
+    module_path = repo_root / "sana_evaluation" / "runner" / "orchestration.py"
 
     fake_pkg = types.ModuleType("sana_evaluation")
-    fake_pkg.__path__ = [str(module_path.parent)]
+    # orchestration.py lives one level deeper than run_eval.py used to
+    # (sana_evaluation/runner/ instead of sana_evaluation/), so the fake
+    # package path must point at the top-level sana_evaluation/ directory —
+    # that's what its sibling imports (config, helper.prompting,
+    # runner.reporting) resolve against.
+    fake_pkg.__path__ = [str(module_path.parents[1])]
 
-    fake_agent = types.ModuleType("sana_evaluation.agent")
-    fake_agent.BatchRunner = object
+    # Faked (not left to load for real) so that no genuine
+    # sana_evaluation.runner import happens here. A real import — even of
+    # the empty runner/__init__.py — gets cached in sys.modules and never
+    # cleaned up by the restore below (only the four keys tracked in `saved`
+    # are), which then short-circuits and skews the ordering of the *next*
+    # real import of sana_evaluation.runner.modes (its circular import with
+    # runner.agent only resolves in one direction: agent-first, which is how
+    # sana_evaluation/__init__.py naturally does it — a leftover cached
+    # `sana_evaluation.runner` bypasses that and enters modes-first).
+    fake_runner_pkg = types.ModuleType("sana_evaluation.runner")
+
+    fake_reporting = types.ModuleType("sana_evaluation.runner.reporting")
+    fake_reporting.write_main_csv = lambda *_args, **_kwargs: None
+    fake_reporting.write_tools_csv = lambda *_args, **_kwargs: None
+    fake_reporting.write_agent_results_jsonl = lambda *_args, **_kwargs: None
 
     fake_config = types.ModuleType("sana_evaluation.config")
     fake_config.AgentConfig = object
@@ -23,11 +41,13 @@ def _load_run_eval_module():
 
     saved = {
         "sana_evaluation": sys.modules.get("sana_evaluation"),
-        "sana_evaluation.agent": sys.modules.get("sana_evaluation.agent"),
+        "sana_evaluation.runner": sys.modules.get("sana_evaluation.runner"),
+        "sana_evaluation.runner.reporting": sys.modules.get("sana_evaluation.runner.reporting"),
         "sana_evaluation.config": sys.modules.get("sana_evaluation.config"),
     }
     sys.modules["sana_evaluation"] = fake_pkg
-    sys.modules["sana_evaluation.agent"] = fake_agent
+    sys.modules["sana_evaluation.runner"] = fake_runner_pkg
+    sys.modules["sana_evaluation.runner.reporting"] = fake_reporting
     sys.modules["sana_evaluation.config"] = fake_config
     try:
         spec = importlib.util.spec_from_file_location("_test_run_eval_module", module_path)
@@ -50,11 +70,19 @@ def _load_run_mode_eval_module():
     fake_pkg = types.ModuleType("sana_evaluation")
     fake_pkg.__path__ = [str(module_path.parent)]
 
-    fake_base_eval = types.ModuleType("sana_evaluation.run_eval")
-    fake_base_eval.BatchRunner = object
-    fake_base_eval._display_name = lambda agent_config: "openai_gpt-5.2-xhigh"
-    fake_base_eval._results_dir = lambda run_config, agent_config: "unused"
-    fake_base_eval.find_all_task_dirs = lambda *_args, **_kwargs: []
+    # run_mode_eval.py does `from sana_evaluation.runner import orchestration
+    # as base_eval` — that form resolves the package "sana_evaluation.runner"
+    # itself (not just the "orchestration" leaf), so it must be faked too;
+    # see the comment on the matching fake in _load_run_eval_module above.
+    fake_runner_pkg = types.ModuleType("sana_evaluation.runner")
+
+    fake_orchestration = types.ModuleType("sana_evaluation.runner.orchestration")
+    fake_orchestration._display_name = lambda agent_config: "openai_gpt-5.2-xhigh"
+    fake_orchestration._results_dir = lambda run_config, agent_config: "unused"
+    fake_orchestration.find_all_task_dirs = lambda *_args, **_kwargs: []
+
+    fake_reporting = types.ModuleType("sana_evaluation.runner.reporting")
+    fake_reporting.print_comparison_table = lambda *_args, **_kwargs: None
 
     fake_runner_batch = types.ModuleType("sana_evaluation.runner.batch")
     fake_runner_batch.BatchRunner = object
@@ -66,12 +94,16 @@ def _load_run_mode_eval_module():
 
     saved = {
         "sana_evaluation": sys.modules.get("sana_evaluation"),
-        "sana_evaluation.run_eval": sys.modules.get("sana_evaluation.run_eval"),
+        "sana_evaluation.runner": sys.modules.get("sana_evaluation.runner"),
+        "sana_evaluation.runner.orchestration": sys.modules.get("sana_evaluation.runner.orchestration"),
+        "sana_evaluation.runner.reporting": sys.modules.get("sana_evaluation.runner.reporting"),
         "sana_evaluation.runner.batch": sys.modules.get("sana_evaluation.runner.batch"),
         "sana_evaluation.config": sys.modules.get("sana_evaluation.config"),
     }
     sys.modules["sana_evaluation"] = fake_pkg
-    sys.modules["sana_evaluation.run_eval"] = fake_base_eval
+    sys.modules["sana_evaluation.runner"] = fake_runner_pkg
+    sys.modules["sana_evaluation.runner.orchestration"] = fake_orchestration
+    sys.modules["sana_evaluation.runner.reporting"] = fake_reporting
     sys.modules["sana_evaluation.runner.batch"] = fake_runner_batch
     sys.modules["sana_evaluation.config"] = fake_config
     try:
