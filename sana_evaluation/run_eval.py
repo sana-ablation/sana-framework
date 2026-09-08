@@ -349,6 +349,7 @@ def _normalize_main_csv_row(row: dict) -> dict:
         "cycle_count": row.get("cycle_count", ""),
         "input_tokens": row.get("input_tokens", 0),
         "cached_input_tokens": row.get("cached_input_tokens", 0),
+        "cache_write_input_tokens": row.get("cache_write_input_tokens", 0),
         "uncached_input_tokens": row.get(
             "uncached_input_tokens",
             max(0, int(row.get("input_tokens", 0) or 0) - int(row.get("cached_input_tokens", 0) or 0)),
@@ -382,7 +383,8 @@ def _write_main_csv(csv_path: str, results: list, tasks_by_id: dict) -> None:
         "expected_answer", "predicted_answer", "exact_match", "f1_score",
         "required_dataset_count", "sources_used_count",
         "runtime_seconds", "cycle_count",
-        "input_tokens", "cached_input_tokens", "uncached_input_tokens",
+        "input_tokens", "cached_input_tokens", "cache_write_input_tokens",
+        "uncached_input_tokens",
         "output_tokens", "total_tokens", "cost_usd",
         "tool_calls_total", "api_tool_calls",
         "execute_ideal_agent_repair_calls", "query_ideal_agent_repair_calls",

@@ -1225,6 +1225,10 @@ def _run_task_worker(
         result_dict["input_tokens"]     = result.input_tokens
         result_dict["cached_input_tokens"] = result.cached_input_tokens
         result_dict["uncached_input_tokens"] = result.uncached_input_tokens
+        # Priced differently from both other kinds on some models, and only
+        # derivable from the other three by subtraction, which stops being
+        # reconstructable the moment any of them changes meaning.
+        result_dict["cache_write_input_tokens"] = result.cache_write_input_tokens
         result_dict["output_tokens"]    = result.output_tokens
         result_dict["total_tokens"]     = result.total_tokens
         result_dict["cost_usd"]         = result.cost_usd
