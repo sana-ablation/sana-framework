@@ -28,12 +28,12 @@ python -m sana_evaluation.cli [smoke|full] [options]
 
 A preset is a default set, nothing more: explicit flags always win, and
 omitting the preset reproduces the raw evaluator defaults (`--search standard
---results rich --profile standard --compute standard`, non-verbose, no resume).
+--results rich --plan standard --compute standard`, non-verbose, no resume).
 
 `smoke` runs one small task bucket under `test_logs/` and `test_results/`;
 `full` runs the maintained task set, always pooled into one worker pool, and
 resumes it via `--only-new` (skip task files already recorded in
 `eval_results.csv`). Both shift the four axes to `ideal`, turn on verbose
 logging, and move the output roots to `log-kramabench/` and
-`results-kramabench/` under `--benchmark kramabench`. Use `--plans` or the
-equivalent `--profile` to override the planning axis.
+`results-kramabench/` under `--benchmark kramabench`. Use `--plan` (or its
+`--plans` alias) to override the planning axis.

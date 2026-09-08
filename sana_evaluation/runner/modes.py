@@ -2,7 +2,7 @@
 Mode axis resolution for the Data Lake benchmark runner.
 
 Builds the tool surface, system prompt, and behavior toggles for each of the
-search_tool / search_results / profile / computation_tool axes and merges
+search_tool / search_results / plan / computation_tool axes and merges
 them into a ModeBundle (``build_mode_bundle``). Also holds the small
 per-run bookkeeping helpers -- condition-label resolution, search-budget
 prompt injection, tool-limit exclusions, and gold-source merging -- that
@@ -117,7 +117,7 @@ def _validate_search_mode_combination(
     *,
     search_tool_mode: str,
     search_results_mode: str,
-    profile_mode: str,
+    plan_mode: str,
     computation_tool_mode: str,
     no_s3: bool = False,
 ) -> None:
@@ -131,7 +131,7 @@ def _validate_search_mode_combination(
       ``record.answer`` for a semantically matching record, and _records_for_target
       falls back to *all* records when the submitted source matches none. The
       agent is handed gold node answers no matter what it retrieved.
-    - profile=ideal: the gold reasoning chain is injected into the prompt.
+    - plan=ideal: the gold reasoning chain is injected into the prompt.
     - search_results=rich: reshape_search_payload expects lake-shaped result
       fields that web results do not carry.
     """
@@ -147,7 +147,7 @@ def _validate_search_mode_combination(
 
     conflicts = [
         ("--computation_tool ideal", computation_tool_mode == "ideal"),
-        ("--profile ideal", profile_mode == "ideal"),
+        ("--plan ideal", plan_mode == "ideal"),
         # Normalised here so the deprecated spelling (--search_results ideal) is
         # caught too; callers may pass either.
         ("--search_results rich",
@@ -160,7 +160,7 @@ def _validate_search_mode_combination(
             + ", ".join(active)
             + ". Ideal axes are backed by data-lake runtime profiles, so the run's "
             "outcome would not depend on what web search retrieved. Use "
-            "--search_results naive --profile naive|standard --computation_tool standard."
+            "--search_results naive --plan naive|standard --computation_tool standard."
         )
 
 
@@ -168,7 +168,6 @@ def build_search(
     mode: str,
     *,
     task_context: Optional[Dict[str, Any]] = None,
-    search_lessguide: bool = False,
     fixed_k: Optional[int] = None,
 ) -> List[DecoratedFunctionTool]:
     """Return the base search tool surface for a mode."""
@@ -210,29 +209,28 @@ def build_search(
 
     import sana_evaluation.tools.external.ideal.search_ideal as search_ideal
 
-    search_ideal.set_lessguide(search_lessguide)
     search_ideal.set_task_context(task_context or {})
     return [search_ideal.search_ideal]
 
 
-def build_management(
+def build_plan(
     mode: str,
     *,
     search_tool_mode: str,
     task_context: Optional[Dict[str, Any]],
-    profile_skills_enabled: bool = False,
+    plan_skills_enabled: bool = False,
     benchmark: str = "lakeqa",
     no_s3: bool = False,
 ) -> tuple[str, List[Any], bool, bool, str]:
-    """Return stable system prompt, management tools, behavior toggles, and a task-specific trailer.
+    """Return stable system prompt, planning tools, behavior toggles, and a task-specific trailer.
 
     The trailer (gold reasoning chain, preloaded dataset URIs) is task-specific and must be
     appended AFTER all variant-stable injections so the cacheable prefix stays intact across tasks.
     """
-    management_mode = _normalize_mode(mode, "standard", "profile")
+    plan_mode = _normalize_mode(mode, "standard", "plan")
 
     trailer_sections: List[str] = []
-    if management_mode == "ideal":
+    if plan_mode == "ideal":
         set_ideal_profile_task_context(task_context or {})
         ideal_profile = load_ideal_profile_for_context(task_context)
         reasoning_trailer = inject_reasoning_chain_prompt("", ideal_profile.reasoning_chain_text).lstrip()
@@ -244,7 +242,7 @@ def build_management(
     task_trailer = ("\n\n" + "\n\n".join(trailer_sections)) if trailer_sections else ""
 
     benchmark_name = (benchmark or "lakeqa").strip().lower()
-    if management_mode == "naive":
+    if plan_mode == "naive":
         if benchmark_name == "kramabench":
             return compose_kramabench_prompt(search_tool_mode, include_skills=False), [], False, False, task_trailer
         return compose_baseline_prompt(search_tool_mode, no_s3=no_s3), [], False, False, task_trailer
@@ -252,18 +250,18 @@ def build_management(
     if benchmark_name == "kramabench":
         prompt = compose_kramabench_prompt(
             search_tool_mode,
-            include_skills=bool(profile_skills_enabled),
+            include_skills=bool(plan_skills_enabled),
         )
     else:
         prompt = compose_managed_prompt(
             search_tool_mode,
-            include_skills=bool(profile_skills_enabled),
+            include_skills=bool(plan_skills_enabled),
             no_s3=no_s3,
         )
-    if management_mode == "standard":
-        return prompt, [plan], bool(profile_skills_enabled), True, task_trailer
+    if plan_mode == "standard":
+        return prompt, [plan], bool(plan_skills_enabled), True, task_trailer
 
-    return prompt, [plan_ideal], bool(profile_skills_enabled), True, task_trailer
+    return prompt, [plan_ideal], bool(plan_skills_enabled), True, task_trailer
 
 
 def build_search_results(
@@ -324,21 +322,21 @@ def build_mode_bundle(
     """Build final tools/prompt/plugin toggles from multi-axis modes."""
     search_tool_mode = _normalize_mode(run_config.search_tool_mode, "standard", "search_tool")
     search_results_mode = _normalize_result_mode(run_config.search_results_mode, "rich", "search_results")
-    profile_mode = _normalize_mode(
-        run_config.profile_mode or run_config.profile_mode,
+    plan_mode = _normalize_mode(
+        run_config.plan_mode or run_config.plan_mode,
         "standard",
-        "profile",
+        "plan",
     )
     computation_tool_mode = _normalize_computation_mode(run_config.computation_tool_mode)
     benchmark = (getattr(run_config, "benchmark", None) or "lakeqa").strip().lower()
 
-    if search_tool_mode == "ideal" or profile_mode == "ideal" or computation_tool_mode == "ideal":
+    if search_tool_mode == "ideal" or plan_mode == "ideal" or computation_tool_mode == "ideal":
         set_ideal_profile_task_context(task_context or {})
 
     _validate_search_mode_combination(
         search_tool_mode=search_tool_mode,
         search_results_mode=search_results_mode,
-        profile_mode=profile_mode,
+        plan_mode=plan_mode,
         computation_tool_mode=computation_tool_mode,
         no_s3=bool(getattr(run_config, "no_s3", False)),
     )
@@ -346,7 +344,6 @@ def build_mode_bundle(
     raw_search_tools = build_search(
         search_tool_mode,
         task_context=task_context,
-        search_lessguide=bool(run_config.search_lessguide),
         fixed_k=run_config.search_k,
     )
     search_tools = build_search_results(
@@ -354,11 +351,11 @@ def build_mode_bundle(
         base_search_tools=raw_search_tools,
         fixed_k=run_config.search_k,
     )
-    system_prompt, management_tools, enable_skills, enable_stagnation, task_trailer = build_management(
-        profile_mode,
+    system_prompt, plan_tools, enable_skills, enable_stagnation, task_trailer = build_plan(
+        plan_mode,
         search_tool_mode=search_tool_mode,
         task_context=task_context,
-        profile_skills_enabled=bool(run_config.profile_skills_enabled),
+        plan_skills_enabled=bool(run_config.plan_skills_enabled),
         benchmark=benchmark,
         no_s3=bool(getattr(run_config, "no_s3", False)),
     )
@@ -378,7 +375,7 @@ def build_mode_bundle(
     if computation_tool_mode == "ideal":
         system_prompt = _inject_ideal_computation_prompt(system_prompt, benchmark=benchmark)
 
-    tools = list(search_tools) + list(management_tools) + list(data_tool_list)
+    tools = list(search_tools) + list(plan_tools) + list(data_tool_list)
     return ModeBundle(
         tools=tools,
         system_prompt=system_prompt,
@@ -388,9 +385,9 @@ def build_mode_bundle(
         modes={
             "search_tool": search_tool_mode,
             "search_results": search_results_mode,
-            "profile": profile_mode,
+            "plan": plan_mode,
             "computation_tool": computation_tool_mode,
-            "profile_skills": "on" if run_config.profile_skills_enabled else "off",
+            "plan_skills": "on" if run_config.plan_skills_enabled else "off",
         },
         task_trailer=task_trailer,
     )

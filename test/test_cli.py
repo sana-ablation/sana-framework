@@ -5,7 +5,7 @@ from sana_evaluation import cli
 
 def test_no_preset_reproduces_the_axis_defaults():
     a = cli.parse([])
-    assert (a.search, a.results, a.profile, a.compute) == (
+    assert (a.search, a.results, a.plan, a.compute) == (
         "standard", "rich", "standard", "standard"
     )
     assert a.verbose is False
@@ -16,7 +16,7 @@ def test_no_preset_reproduces_the_axis_defaults():
 
 def test_preset_only_shifts_defaults():
     a = cli.parse(["smoke"])
-    assert a.profile == "ideal"
+    assert a.plan == "ideal"
     assert a.verbose is True
 
 

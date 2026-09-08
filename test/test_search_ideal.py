@@ -4,7 +4,6 @@ import sys
 import unittest
 from contextlib import ExitStack
 from datetime import datetime, timezone
-from itertools import product
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -489,7 +488,13 @@ class TestSearchIdealJudge(unittest.TestCase):
         )
         self.assertEqual(len(factory.calls), 0)
 
-    def test_lessguide_omits_plan_exhausted_from_search_ideal_payloads(self):
+    def test_search_ideal_payloads_always_carry_plan_exhausted(self):
+        """--search-lessguide used to be able to strip this field; nothing can now.
+
+        This replaces test_lessguide_omits_plan_exhausted_from_search_ideal_payloads,
+        which asserted the removed behaviour. The payload shape is still pinned --
+        from the other side.
+        """
         with TemporaryDirectory() as tmpdir:
             runtime_profiles_root = Path(tmpdir) / "runtime-profiles"
             _, uris = _set_task_context(
@@ -501,7 +506,6 @@ class TestSearchIdealJudge(unittest.TestCase):
             factory = _FakeAgentFactory(
                 action=lambda prompt, tools: tools[0](s3_uris=[uri], reason="match")
             )
-            search_ideal.set_lessguide(True)
 
             with patch.object(search_ideal, "Agent", factory), patch.object(
                 search_ideal,
@@ -512,7 +516,8 @@ class TestSearchIdealJudge(unittest.TestCase):
 
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["results"][0]["s3_uri"], uri)
-        self.assertNotIn("plan_exhausted", result)
+        self.assertIn("plan_exhausted", result)
+        self.assertTrue(result["plan_exhausted"])
 
     def test_wrapper_hides_top_k_from_agent(self):
         wrapped = search_wrapper.build_search_tools(
@@ -659,7 +664,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
         stack.enter_context(patch.object(search_wrapper, "_SCHEMAS_PATH", schema_path))
         return stack
 
-    def test_search_ideal_four_flag_runs_and_log_results(self):
+    def test_search_ideal_results_mode_runs_and_log_results(self):
         rows: list[dict] = []
         source_sequence = ["datagov/chicago-crime-2017/files/rows.txt"]
 
@@ -682,20 +687,16 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                     "_judge_model",
                     return_value="fake-model",
                 ):
-                    for search_results_mode, search_lessguide in product(
-                        ("minimal", "rich"),
-                        (False, True),
-                    ):
+                    for search_results_mode in ("minimal", "rich"):
                         search_ideal.reset_state()
                         search_ideal.set_runtime_profiles_root(runtime_profiles_root)
                         _reset_wrapper_caches()
                         cfg = RunConfig(
                             search_tool_mode="ideal",
                             search_results_mode=search_results_mode,
-                            profile_mode="naive",
+                            plan_mode="naive",
                             computation_tool_mode="standard",
                             search_free=False,
-                            search_lessguide=search_lessguide,
                         )
                         bundle = build_mode_bundle(
                             cfg,
@@ -719,22 +720,18 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                         self.assertEqual(bundle.search_tool_names, ("search_ideal",))
                         self.assertEqual(bundle.modes["search_tool"], "ideal")
                         self.assertEqual(bundle.modes["search_results"], search_results_mode)
-                        self.assertEqual(bundle.modes["profile"], "naive")
+                        self.assertEqual(bundle.modes["plan"], "naive")
                         self.assertEqual(bundle.modes["computation_tool"], "standard")
-                        if search_lessguide:
-                            self.assertNotIn("plan_exhausted", result)
-                        else:
-                            self.assertTrue(result["plan_exhausted"])
+                        self.assertTrue(result["plan_exhausted"])
                         self.assertNotIn("search_ideal", exclusions)
 
                         rows.append(
                             {
                                 "search_tool": "ideal",
                                 "search_results": search_results_mode,
-                                "profile": "naive",
+                                "plan": "naive",
                                 "computation_tool": "standard",
                                 "search_free": False,
-                                "search_lessguide": search_lessguide,
                                 "search_tool_names": list(bundle.search_tool_names),
                                 "tool_limit_excluded": list(exclusions),
                                 "result": {
@@ -748,14 +745,14 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                             }
                         )
 
-        self.assertEqual(len(rows), 4)
+        self.assertEqual(len(rows), 2)
         _MATRIX_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         _MATRIX_LOG_PATH.write_text(
             "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)
         )
 
     @unittest.skipUnless(_live_openai_enabled(), "set RUN_LIVE_OPENAI_TESTS=1 and OPENAI_API_KEY")
-    def test_live_gpt54_nano_core_quality_four_flag_runs_and_log_results(self):
+    def test_live_gpt54_nano_core_quality_results_mode_runs_and_log_results(self):
         try:
             import openai  # noqa: F401
         except ImportError:
@@ -764,20 +761,16 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
         rows: list[dict] = []
         expected_uri = search_ideal._canonical_uri(_CORE_QUALITY_SOURCE)
 
-        for search_results_mode, search_lessguide in product(
-            ("minimal", "rich"),
-            (False, True),
-        ):
+        for search_results_mode in ("minimal", "rich"):
             search_ideal.reset_state()
             search_ideal.set_runtime_profiles_root("runtime-profiles")
             _reset_wrapper_caches()
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode=search_results_mode,
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="standard",
                 search_free=False,
-                search_lessguide=search_lessguide,
             )
             bundle = build_mode_bundle(
                 cfg,
@@ -793,10 +786,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
             picked_uris = [item["s3_uri"] for item in result.get("results", [])]
 
             self.assertIn(expected_uri, picked_uris)
-            if search_lessguide:
-                self.assertNotIn("plan_exhausted", result)
-            else:
-                self.assertTrue(result["plan_exhausted"])
+            self.assertTrue(result["plan_exhausted"])
             if search_results_mode == "rich":
                 self.assertIn("llm_desc", result["results"][0])
                 self.assertIn("columns", result["results"][0])
@@ -809,7 +799,6 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                     "expected_uri": expected_uri,
                     "search_tool": "ideal",
                     "search_results": search_results_mode,
-                    "search_lessguide": search_lessguide,
                     "result": {
                         "count": result.get("count"),
                         "message": result.get("message"),
@@ -824,7 +813,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                 }
             )
 
-        self.assertEqual(len(rows), 4)
+        self.assertEqual(len(rows), 2)
         _LIVE_MATRIX_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
         _LIVE_MATRIX_LOG_PATH.write_text(
             "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows)

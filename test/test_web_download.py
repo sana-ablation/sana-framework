@@ -277,7 +277,7 @@ class TestNoS3Validation(unittest.TestCase):
             _validate_search_mode_combination(
                 search_tool_mode="ideal",
                 search_results_mode="naive",
-                profile_mode="standard",
+                plan_mode="standard",
                 computation_tool_mode="standard",
                 no_s3=True,
             )
@@ -288,7 +288,7 @@ class TestNoS3Validation(unittest.TestCase):
         _validate_search_mode_combination(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             computation_tool_mode="standard",
             no_s3=True,
         )
@@ -297,7 +297,7 @@ class TestNoS3Validation(unittest.TestCase):
         _validate_search_mode_combination(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             computation_tool_mode="standard",
             no_s3=False,
         )
@@ -308,7 +308,7 @@ class TestConditionLabel(unittest.TestCase):
         label = _variant_condition_label(
             search_tool="web",
             search_results="naive",
-            profile="standard",
+            plan="standard",
             computation_tool="standard",
             no_s3=True,
         )
@@ -319,7 +319,7 @@ class TestConditionLabel(unittest.TestCase):
         label = _variant_condition_label(
             search_tool="web",
             search_results="naive",
-            profile="standard",
+            plan="standard",
             computation_tool="standard",
             no_s3=False,
         )
@@ -360,7 +360,7 @@ class TestRunConfigWiring(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             computation_tool_mode="standard",
             benchmark="lakeqa",
             no_s3=no_s3,

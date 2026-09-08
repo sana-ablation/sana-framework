@@ -127,7 +127,7 @@ class TestWebSearchMode(unittest.TestCase):
         base = dict(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
             computation_tool_mode="standard",
             search_k=5,
             benchmark="lakeqa",
@@ -169,7 +169,7 @@ class TestWebModeAxisGuard(unittest.TestCase):
         args = dict(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
             computation_tool_mode="standard",
         )
         args.update(overrides)
@@ -180,9 +180,9 @@ class TestWebModeAxisGuard(unittest.TestCase):
             self._validate(computation_tool_mode="ideal")
         self.assertIn("--computation_tool ideal", str(ctx.exception))
 
-    def test_rejects_ideal_profile(self) -> None:
+    def test_rejects_ideal_plan(self) -> None:
         with self.assertRaises(ValueError):
-            self._validate(profile_mode="ideal")
+            self._validate(plan_mode="ideal")
 
     def test_rejects_rich_results(self) -> None:
         with self.assertRaises(ValueError):
@@ -196,21 +196,21 @@ class TestWebModeAxisGuard(unittest.TestCase):
     def test_reports_every_conflicting_axis_at_once(self) -> None:
         with self.assertRaises(ValueError) as ctx:
             self._validate(
-                computation_tool_mode="ideal", profile_mode="ideal", search_results_mode="rich"
+                computation_tool_mode="ideal", plan_mode="ideal", search_results_mode="rich"
             )
         message = str(ctx.exception)
-        for label in ("--computation_tool ideal", "--profile ideal", "--search_results rich"):
+        for label in ("--computation_tool ideal", "--plan ideal", "--search_results rich"):
             self.assertIn(label, message)
 
     def test_allows_the_supported_web_combination(self) -> None:
         self._validate()
-        self._validate(profile_mode="standard")
+        self._validate(plan_mode="standard")
 
     def test_does_not_constrain_non_web_search_modes(self) -> None:
         _validate_search_mode_combination(
             search_tool_mode="ideal",
             search_results_mode="ideal",
-            profile_mode="ideal",
+            plan_mode="ideal",
             computation_tool_mode="ideal",
         )
 

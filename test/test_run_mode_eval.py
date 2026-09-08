@@ -76,7 +76,7 @@ class RunModeEvalTests(unittest.TestCase):
             cli._resolve_mode_axes(
                 search_tool=None,
                 search_results=None,
-                profile=None,
+                plan=None,
             ),
             ("standard", "rich", "standard", "standard"),
         )
@@ -86,7 +86,7 @@ class RunModeEvalTests(unittest.TestCase):
             cli._resolve_mode_axes(
                 search_tool="naive",
                 search_results=None,
-                profile=None,
+                plan=None,
             ),
             ("naive", "rich", "standard", "standard"),
         )
@@ -95,62 +95,61 @@ class RunModeEvalTests(unittest.TestCase):
         label = cli._variant_condition_label(
             search_tool="ideal",
             search_results="naive",
-            profile="naive",
+            plan="naive",
             k=5,
             search_calls=2,
         )
 
         self.assertEqual(
             label,
-            "search_ideal__results_naive__profile_naive__compute_standard__k5__sc2__skills_off",
+            "search_ideal__results_naive__plan_naive__compute_standard__k5__sc2__skills_off",
         )
 
     def test_variant_condition_label_uses_preloaded_mode_name(self):
         label = cli._variant_condition_label(
             search_tool="preloaded",
             search_results="ideal",
-            profile="standard",
+            plan="standard",
             k=None,
             search_calls=None,
         )
 
-        self.assertEqual(label, "search_preloaded__results_ideal__profile_standard__compute_standard__skills_off")
+        self.assertEqual(label, "search_preloaded__results_ideal__plan_standard__compute_standard__skills_off")
 
     def test_variant_condition_label_appends_search_flags(self):
         label = cli._variant_condition_label(
             search_tool="ideal",
             search_results="ideal",
-            profile="standard",
+            plan="standard",
             k=None,
             search_calls=None,
             search_free=True,
-            search_lessguide=True,
         )
 
         self.assertEqual(
             label,
-            "search_ideal__results_ideal__profile_standard__compute_standard__free__lessguide__skills_off",
+            "search_ideal__results_ideal__plan_standard__compute_standard__free__skills_off",
         )
 
     def test_variant_condition_label_appends_ideal_computation_axis(self):
         label = cli._variant_condition_label(
             search_tool="preloaded",
             search_results="ideal",
-            profile="standard",
+            plan="standard",
             computation_tool="ideal",
         )
 
-        self.assertEqual(label, "search_preloaded__results_ideal__profile_standard__compute_ideal__skills_off")
+        self.assertEqual(label, "search_preloaded__results_ideal__plan_standard__compute_ideal__skills_off")
 
-    def test_variant_condition_label_appends_profile_skills_when_enabled(self):
+    def test_variant_condition_label_appends_plan_skills_when_enabled(self):
         label = cli._variant_condition_label(
             search_tool="preloaded",
             search_results="ideal",
-            profile="standard",
-            profile_skills_enabled=True,
+            plan="standard",
+            plan_skills_enabled=True,
         )
 
-        self.assertEqual(label, "search_preloaded__results_ideal__profile_standard__compute_standard__skills_on")
+        self.assertEqual(label, "search_preloaded__results_ideal__plan_standard__compute_standard__skills_on")
 
     def test_benchmark_choices_include_supported_external_benchmarks(self):
         self.assertIn("kramabench", cli.BENCHMARKS)
@@ -168,9 +167,9 @@ class RunModeEvalTests(unittest.TestCase):
             "benchmarks/lakeqa/tasks-mini/tasks",
         )
 
-    def test_skills_on_rejects_naive_profile_axis(self):
-        with self.assertRaisesRegex(ValueError, "--skills on requires --profile standard or --profile ideal"):
-            cli._validate_axis_combination(profile="naive", skills="on")
+    def test_skills_on_rejects_naive_plan_axis(self):
+        with self.assertRaisesRegex(ValueError, "--skills on requires --plan standard or --plan ideal"):
+            cli._validate_axis_combination(plan="naive", skills="on")
 
     def test_configure_ideal_subagent_models_defaults_to_main_model(self):
         with patch.dict(os.environ, {}, clear=True):
@@ -208,13 +207,13 @@ class RunModeEvalTests(unittest.TestCase):
         run_config = types.SimpleNamespace(
             results_output_dir="results",
             condition_config=types.SimpleNamespace(
-                condition="modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__profile_ideal__compute_standard__k5",
+                condition="modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__plan_ideal__compute_standard__k5",
             ),
         )
 
         self.assertEqual(
             run_eval._results_dir(run_config, agent_config).replace("\\", "/"),
-            "results/modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__profile_ideal__compute_standard__k5",
+            "results/modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__plan_ideal__compute_standard__k5",
         )
 
     def test_standard_results_dir_layout_is_unchanged(self):

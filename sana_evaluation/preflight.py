@@ -38,7 +38,7 @@ class PreflightError(RuntimeError):
 
 def _prompt_files_for_modes(
     search_tool_mode: str,
-    profile_mode: str,
+    plan_mode: str,
     *,
     benchmark: str = "lakeqa",
     no_s3: bool = False,
@@ -54,7 +54,7 @@ def _prompt_files_for_modes(
             overlay_path = _PROMPTS_DIR / f"search_{overlay_mode}.txt"
         return [base_path, overlay_path]
 
-    base_name = "baseline.txt" if profile_mode == "naive" else "managed.txt"
+    base_name = "baseline.txt" if plan_mode == "naive" else "managed.txt"
     overlay_name = f"search_{overlay_mode}.txt"
     return [_PROMPTS_DIR / base_name, _PROMPTS_DIR / overlay_name]
 
@@ -88,14 +88,14 @@ def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str, no_s3: bo
         _validate_search_mode_combination(
             search_tool_mode=st,
             search_results_mode=sr,
-            profile_mode=pm,
+            plan_mode=pm,
             computation_tool_mode=ct,
             no_s3=no_s3,
         )
     except ValueError as exc:
         return PreflightCheck(label, False, str(exc))
     return PreflightCheck(
-        label, True, f"search={st} results={sr} profile={pm} compute={ct} no_s3={no_s3}"
+        label, True, f"search={st} results={sr} plan={pm} compute={ct} no_s3={no_s3}"
     )
 
 
@@ -421,7 +421,7 @@ def run_preflight(
 
     st = (run_config.search_tool_mode or "standard").strip().lower()
     sr = (run_config.search_results_mode or "naive").strip().lower()
-    pm = (run_config.profile_mode or "standard").strip().lower()
+    pm = (run_config.plan_mode or "standard").strip().lower()
     ct = (getattr(run_config, "computation_tool_mode", None) or "standard").strip().lower()
     benchmark = normalize_benchmark(getattr(run_config, "benchmark", None) or "lakeqa")
     configure_benchmark(benchmark)

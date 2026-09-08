@@ -106,7 +106,7 @@ class DataLakeAgent:
         self,
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
     ) -> None:
         """Hook for runtime toggles that must run before the Agent is constructed."""
         return None
@@ -115,7 +115,7 @@ class DataLakeAgent:
         self,
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
     ) -> str:
         """Return additional prompt text appended after the search-budget block but before the task trailer."""
         return ""
@@ -125,7 +125,7 @@ class DataLakeAgent:
         *,
         system_prompt: str,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
         task_context: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """Return a full replacement system prompt, or None to keep the composed prompt."""
@@ -135,7 +135,7 @@ class DataLakeAgent:
         self,
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
     ) -> List[Any]:
         """Return additional plugins to append before the Agent is constructed."""
         return []
@@ -144,7 +144,7 @@ class DataLakeAgent:
         self,
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
     ) -> Optional[Any]:
         """Return a custom ConversationManager, or None to use the default."""
         return None
@@ -154,7 +154,7 @@ class DataLakeAgent:
         tools: List[Any],
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
         task_context: Optional[Dict[str, Any]] = None,
     ) -> List[Any]:
         """Return a (possibly modified) tools list. Default: identity."""
@@ -165,7 +165,7 @@ class DataLakeAgent:
         plugins: List[Any],
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
     ) -> List[Any]:
         """Return a (possibly modified) plugin list. Default: identity."""
         return plugins
@@ -174,7 +174,7 @@ class DataLakeAgent:
         self,
         *,
         search_tool_mode: Optional[str],
-        profile_mode: Optional[str],
+        plan_mode: Optional[str],
     ) -> Sequence[str]:
         """Return tool names excluded from the global tool-limit counter."""
         return ("skills", "plan", "plan_ideal")
@@ -192,7 +192,7 @@ class DataLakeAgent:
             [
                 self.run_config.search_tool_mode,
                 self.run_config.search_results_mode,
-                self.run_config.profile_mode,
+                self.run_config.plan_mode,
                 self.run_config.computation_tool_mode,
             ]
         )
@@ -222,14 +222,14 @@ class DataLakeAgent:
             enable_stagnation = mode_bundle.enable_stagnation
             skill_paths = skill_paths_for_modes(
                 mode_bundle.modes["search_tool"],
-                mode_bundle.modes["profile"],
+                mode_bundle.modes["plan"],
             )
             logger.info(
-                "Mode axes active: search_tool=%s search_results=%s profile=%s profile_skills=%s",
+                "Mode axes active: search_tool=%s search_results=%s plan=%s plan_skills=%s",
                 mode_bundle.modes["search_tool"],
                 mode_bundle.modes["search_results"],
-                mode_bundle.modes["profile"],
-                mode_bundle.modes["profile_skills"],
+                mode_bundle.modes["plan"],
+                mode_bundle.modes["plan_skills"],
             )
         else:
             raw_search_tools = [search_value_naive, search_schema_naive, search_prefix]
@@ -248,17 +248,17 @@ class DataLakeAgent:
 
         # Resolve the active modes (None on the legacy path) for hook calls.
         _hook_search_tool_mode: Optional[str]
-        _hook_profile_mode: Optional[str]
+        _hook_plan_mode: Optional[str]
         if mode_overrides_enabled:
             _hook_search_tool_mode = mode_bundle.modes.get("search_tool")
-            _hook_profile_mode = mode_bundle.modes.get("profile")
+            _hook_plan_mode = mode_bundle.modes.get("plan")
         else:
             _hook_search_tool_mode = None
-            _hook_profile_mode = None
+            _hook_plan_mode = None
 
         self._pre_build_setup(
             search_tool_mode=_hook_search_tool_mode,
-            profile_mode=_hook_profile_mode,
+            plan_mode=_hook_plan_mode,
         )
 
         system_prompt = _inject_search_budget_prompt(
@@ -272,7 +272,7 @@ class DataLakeAgent:
         prompt_override = self._system_prompt_override(
             system_prompt=system_prompt,
             search_tool_mode=_hook_search_tool_mode,
-            profile_mode=_hook_profile_mode,
+            plan_mode=_hook_plan_mode,
             task_context=task_context,
         )
         if prompt_override is not None:
@@ -280,7 +280,7 @@ class DataLakeAgent:
 
         extra_prompt = self._extra_prompt_text(
             search_tool_mode=_hook_search_tool_mode,
-            profile_mode=_hook_profile_mode,
+            plan_mode=_hook_plan_mode,
         )
         if extra_prompt:
             system_prompt = system_prompt.rstrip() + extra_prompt
@@ -290,7 +290,7 @@ class DataLakeAgent:
 
         conv_manager = self._conversation_manager(
             search_tool_mode=_hook_search_tool_mode,
-            profile_mode=_hook_profile_mode,
+            plan_mode=_hook_plan_mode,
         )
         if conv_manager is None:
             conv_manager = build_conversation_manager(self.run_config)
@@ -307,7 +307,7 @@ class DataLakeAgent:
             excluded_tools=_tool_limit_exclusions_for_run(
                 base_excluded=self._tool_limit_excluded_tools(
                     search_tool_mode=_hook_search_tool_mode,
-                    profile_mode=_hook_profile_mode,
+                    plan_mode=_hook_plan_mode,
                 ),
                 search_free=bool(self.run_config.search_free),
                 search_tool_names=search_tool_names,
@@ -348,19 +348,19 @@ class DataLakeAgent:
         plugins.extend(
             self._extra_plugins(
                 search_tool_mode=_hook_search_tool_mode,
-                profile_mode=_hook_profile_mode,
+                plan_mode=_hook_plan_mode,
             )
         )
         plugins = self._decorate_plugins(
             plugins,
             search_tool_mode=_hook_search_tool_mode,
-            profile_mode=_hook_profile_mode,
+            plan_mode=_hook_plan_mode,
         )
 
         tools = self._decorate_tools(
             list(tools),
             search_tool_mode=_hook_search_tool_mode,
-            profile_mode=_hook_profile_mode,
+            plan_mode=_hook_plan_mode,
             task_context=task_context,
         )
 

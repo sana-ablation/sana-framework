@@ -1,5 +1,5 @@
 """
-Planning tool for standard profile mode.
+Planning tool for standard plan mode.
 
 plan — record a research plan. The agent writes the plan itself; this tool
        echoes it back as the tool result so it persists in the message

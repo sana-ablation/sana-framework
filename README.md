@@ -5,7 +5,7 @@
 SANA is a diagnostic ablation framework for exploratory QA over data lakes. It
 turns benchmark tasks into runtime profiles containing gold source sequences,
 sanitized subquestions, and execution records, then uses those profiles to
-ablate search, profile guidance, and data-analysis tools under a fixed agent
+ablate search, planning guidance, and data-analysis tools under a fixed agent
 runtime.
 
 ## How SANA Works
@@ -157,7 +157,7 @@ Maintained benchmark examples live under:
 ## 2. sana-evaluation
 
 `sana_evaluation/` runs task sets with controlled runtime axes for search,
-retrieved results, profile guidance, optional skills, and computation. Use
+retrieved results, planning guidance, optional skills, and computation. Use
 `smoke` while checking installation and `full` for the maintained task set.
 
 <img src="assets/images/fig3-sana-runtime-operators-white-bg.png" alt="SANA runtime operators" width="720">
@@ -186,7 +186,7 @@ python -m sana_evaluation.cli smoke \
   --benchmark lakeqa \
   --search ideal \
   --results ideal \
-  --profile ideal \
+  --plan ideal \
   --compute ideal \
   --skills off \
   --k 5 \
@@ -201,7 +201,7 @@ python -m sana_evaluation.cli smoke \
   --benchmark kramabench \
   --search ideal \
   --results ideal \
-  --profile ideal \
+  --plan ideal \
   --compute ideal \
   --skills off \
   --k 5 \
@@ -216,7 +216,7 @@ python -m sana_evaluation.cli full \
   --benchmark kramabench \
   --search ideal \
   --results ideal \
-  --profile standard \
+  --plan standard \
   --compute ideal \
   --skills off \
   --k 5 \
@@ -236,7 +236,7 @@ Common feature flags:
 | `--benchmark` | `lakeqa`, `kramabench` | `lakeqa` | Selects task roots, output roots, and benchmark-specific tool behavior. |
 | `--search` | `naive`, `preloaded`, `standard`, `ideal`, `web` | `standard` (`ideal` under a preset) | Chooses the search-tool implementation exposed to the agent. |
 | `--results` | `minimal`, `rich` (`naive`, `ideal` are the former names) | `rich` | Chooses how much metadata rides along with each search hit. |
-| `--profile` | `naive`, `standard`, `ideal` | `standard` (`ideal` under a preset) | Chooses how much runtime-profile guidance is exposed. |
+| `--plan` (alias `--plans`) | `naive`, `standard`, `ideal` | `standard` (`ideal` under a preset) | Chooses the planning treatment: no planning, the managed prompt with skills and planning style, or an injected gold reasoning chain. |
 | `--compute` | `standard`, `ideal` | `standard` (`ideal` under a preset) | Chooses regular data-analysis tools or profile-backed ideal computation. |
 | `--skills` | `on`, `off` | omitted/off | Enables or disables the AgentSkills plugin. |
 | `--k` | positive integer | unset | Search result limit passed to runtime tools. |

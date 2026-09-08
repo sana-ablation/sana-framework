@@ -173,9 +173,9 @@ def compose_preloaded_block(source_sequence: List[str]) -> str:
     return "\n".join(lines)
 
 
-def planning_skill_path(profile_mode: Optional[str]) -> str:
-    management_mode = _normalize_mode(profile_mode, "standard", "profile")
-    return _PLAN_IDEAL_SKILL if management_mode == "ideal" else _PLAN_AGENT_SKILL
+def planning_skill_path(plan_mode: Optional[str]) -> str:
+    mode = _normalize_mode(plan_mode, "standard", "plan")
+    return _PLAN_IDEAL_SKILL if mode == "ideal" else _PLAN_AGENT_SKILL
 
 
 def discover_skill_path(search_tool_mode: Optional[str]) -> str:
@@ -189,17 +189,17 @@ def discover_skill_path(search_tool_mode: Optional[str]) -> str:
 
 def skill_paths_for_modes(
     search_tool_mode: Optional[str],
-    profile_mode: Optional[str],
+    plan_mode: Optional[str],
 ) -> List[str]:
     mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
     # Neither mode does lake discovery, so neither gets a discover-data skill.
     if mode in {"preloaded", "web"}:
         return [
-            planning_skill_path(profile_mode),
+            planning_skill_path(plan_mode),
             _QUERY_DATA_SKILL,
         ]
     return [
-        planning_skill_path(profile_mode),
+        planning_skill_path(plan_mode),
         discover_skill_path(mode),
         _QUERY_DATA_SKILL,
     ]

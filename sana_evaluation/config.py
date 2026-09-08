@@ -55,12 +55,11 @@ class RunConfig:
     search_db_path: Optional[str] = None
     search_tool_mode: Optional[str] = None
     search_results_mode: Optional[str] = None
-    profile_mode: Optional[str] = None
+    plan_mode: Optional[str] = None
     skills_enabled: bool = False
     computation_tool_mode: Optional[str] = None
-    profile_skills_enabled: bool = False
+    plan_skills_enabled: bool = False
     search_free: bool = False
-    search_lessguide: bool = False
     no_s3: bool = False
     benchmark: Optional[str] = None
 

@@ -9,7 +9,7 @@ omitting the preset reproduces the historical run_mode_eval defaults exactly.
 This module controls four orthogonal axes:
   - search_tool quality
   - search_results richness (minimal | rich)
-  - profile style
+  - plan (the management/planning treatment)
   - computation_tool behavior
 """
 
@@ -45,7 +45,7 @@ BENCHMARKS = ("lakeqa", "kramabench")
 _AXIS_DEFAULTS = {
     "search_tool": "standard",
     "search_results": "rich",
-    "profile": "standard",
+    "plan": "standard",
     "computation_tool": "standard",
 }
 _DEFAULT_TASK_SET = "benchmarks/lakeqa/tasks-mini/tasks"
@@ -67,9 +67,9 @@ _MODEL_ALIASES = {
 }
 
 PRESETS = {
-    "smoke": dict(search="ideal", results="rich", profile="ideal", compute="ideal",
+    "smoke": dict(search="ideal", results="rich", plan="ideal", compute="ideal",
                   verbose=True, tasks_per_dir=2),
-    "full":  dict(search="ideal", results="rich", profile="ideal", compute="ideal",
+    "full":  dict(search="ideal", results="rich", plan="ideal", compute="ideal",
                   verbose=True, only_new=True),
 }
 
@@ -91,7 +91,7 @@ def build_parser() -> argparse.ArgumentParser:
     # in _resolve_mode_axes so they cannot produce a second variant directory.
     ax.add_argument("--results", "--search-results", "--search_results", dest="results",
                     choices=("minimal", "rich", "naive", "ideal"), default="rich")
-    ax.add_argument("--profile", "--plans", dest="profile",
+    ax.add_argument("--plan", "--plans", dest="plan",
                     choices=("naive", "standard", "ideal"), default="standard")
     ax.add_argument("--compute", "--computation-tool", "--computation_tool",
                     dest="compute", choices=("standard", "ideal"), default="standard")
@@ -198,19 +198,18 @@ def _variant_condition_label(
     *,
     search_tool: str,
     search_results: str,
-    profile: str,
+    plan: str,
     computation_tool: str = "standard",
     k: Optional[int] = None,
     search_calls: Optional[int] = None,
     search_free: bool = False,
-    search_lessguide: bool = False,
-    profile_skills_enabled: bool = False,
+    plan_skills_enabled: bool = False,
     no_s3: bool = False,
 ) -> str:
     parts = [
         f"search_{search_tool}",
         f"results_{search_results}",
-        f"profile_{profile}",
+        f"plan_{plan}",
         f"compute_{computation_tool}",
     ]
     if k is not None:
@@ -219,11 +218,9 @@ def _variant_condition_label(
         parts.append(f"sc{search_calls}")
     if search_free:
         parts.append("free")
-    if search_lessguide:
-        parts.append("lessguide")
     if no_s3:
         parts.append("nos3")
-    parts.append("skills_on" if profile_skills_enabled else "skills_off")
+    parts.append("skills_on" if plan_skills_enabled else "skills_off")
     return "__".join(parts)
 
 
@@ -231,7 +228,7 @@ def _resolve_mode_axes(
     *,
     search_tool: Optional[str],
     search_results: Optional[str],
-    profile: Optional[str],
+    plan: Optional[str],
     computation_tool: Optional[str] = None,
 ) -> tuple[str, str, str, str]:
     from sana_evaluation.runner.modes import _normalize_result_mode
@@ -242,14 +239,14 @@ def _resolve_mode_axes(
         # Canonicalised so the deprecated spellings do not produce a second set
         # of variant directories for the same condition.
         _normalize_result_mode(search_results, defaults["search_results"], "search_results"),
-        profile or defaults["profile"],
+        plan or defaults["plan"],
         computation_tool or defaults["computation_tool"],
     )
 
 
-def _validate_axis_combination(*, profile: str, skills: str) -> None:
-    if skills == "on" and profile == "naive":
-        raise ValueError("--skills on requires --profile standard or --profile ideal.")
+def _validate_axis_combination(*, plan: str, skills: str) -> None:
+    if skills == "on" and plan == "naive":
+        raise ValueError("--skills on requires --plan standard or --plan ideal.")
 
 
 def _normalize_model_name(raw: str) -> str:
@@ -379,27 +376,34 @@ def resolve(args: argparse.Namespace) -> argparse.Namespace:
     (
         args.search,
         args.results,
-        args.profile,
+        args.plan,
         args.compute,
     ) = _resolve_mode_axes(
         search_tool=args.search,
         search_results=args.results,
-        profile=args.profile,
+        plan=args.plan,
         computation_tool=args.compute,
     )
-    _validate_axis_combination(profile=args.profile, skills=args.skills)
+    _validate_axis_combination(plan=args.plan, skills=args.skills)
     return args
 
 
 def _task_scope(args: argparse.Namespace) -> str:
+    """Describe the scope the run will actually cover.
+
+    ``--only-new`` is honoured on both the ``--all-tasks`` and ``--task-dir``
+    paths, so it is announced on both; otherwise ``full --task-dir X`` skips
+    already recorded tasks with nothing on screen to say so.
+    """
     if args.all_tasks:
         scope = f"all tasks under {args.task_set}"
-        return f"{scope} (only new)" if args.only_new else scope
-    if args.task_dir:
+    elif args.task_dir:
+        scope = args.task_dir
         if args.tasks_per_dir is not None:
-            return f"{args.task_dir} (first {args.tasks_per_dir} tasks)"
-        return args.task_dir
-    return "nothing selected — pass --task-dir or --all-tasks"
+            scope = f"{scope} (first {args.tasks_per_dir} tasks)"
+    else:
+        return "nothing selected — pass --task-dir or --all-tasks"
+    return f"{scope} (only new)" if args.only_new else scope
 
 
 def _collect_task_files(args: argparse.Namespace) -> list:
@@ -460,12 +464,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     variant_condition = _variant_condition_label(
         search_tool=args.search,
         search_results=args.results,
-        profile=args.profile,
+        plan=args.plan,
         computation_tool=args.compute,
         k=args.k,
         search_calls=args.search_calls,
         search_free=args.search_free,
-        profile_skills_enabled=args.skills == "on",
+        plan_skills_enabled=args.skills == "on",
         no_s3=args.no_s3,
     )
     variant_condition = base_eval._with_debug_suffix(variant_condition, args.debug_mode)
@@ -492,9 +496,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         search_db_path=args.db_path,
         search_tool_mode=args.search,
         search_results_mode=args.results,
-        profile_mode=args.profile,
+        plan_mode=args.plan,
         computation_tool_mode=args.compute,
-        profile_skills_enabled=args.skills == "on",
+        plan_skills_enabled=args.skills == "on",
         search_free=args.search_free,
         no_s3=args.no_s3,
         benchmark=args.benchmark,
@@ -509,7 +513,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     print(f"Model       : {args.model_name}")
     print(
         "Axes        : "
-        f"search={args.search} results={args.results} profile={args.profile} "
+        f"search={args.search} results={args.results} plan={args.plan} "
         f"compute={args.compute} skills={args.skills}"
     )
     print(f"Lance DB    : {args.db_path or './lance_data'}")

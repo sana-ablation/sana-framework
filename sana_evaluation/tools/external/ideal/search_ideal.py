@@ -36,7 +36,6 @@ _JUDGE_SYSTEM_PROMPT = (
 # The eval runner uses one task at a time per process; parallel runs fork subprocesses.
 _CANDIDATES: list[tuple[str, str]] = []
 _USED_S3_URIS: set[str] = set()
-_LESSGUIDE = False
 
 
 def set_db_path(path: str) -> None:
@@ -49,12 +48,6 @@ def set_runtime_profiles_root(path: str | Path) -> None:
     _set_runtime_profiles_root_shared(path)
     _CANDIDATES.clear()
     _USED_S3_URIS.clear()
-
-
-def set_lessguide(enabled: bool) -> None:
-    """Configure whether search_ideal omits plan-exhaustion guidance fields."""
-    global _LESSGUIDE
-    _LESSGUIDE = bool(enabled)
 
 
 def set_task_context(task_context: Dict[str, Any]) -> None:
@@ -74,7 +67,6 @@ def reset_state() -> None:
     """Reset in-process candidate/judge state."""
     _CANDIDATES.clear()
     _USED_S3_URIS.clear()
-    set_lessguide(False)
     _set_task_context_shared({})
 
 
@@ -141,24 +133,14 @@ def _build_judge(remaining: list[tuple[str, str]]) -> tuple[Agent, Dict[str, Any
     return judge, state
 
 
-def _apply_lessguide(payload: dict) -> dict:
-    if not _LESSGUIDE:
-        return payload
-    out = dict(payload)
-    out.pop("plan_exhausted", None)
-    return out
-
-
 def _dataset_not_found_response(query: str, *, plan_exhausted: bool) -> dict:
-    return _apply_lessguide(
-        {
-            "results": [],
-            "count": 0,
-            "query": query,
-            "message": _DATASET_NOT_FOUND,
-            "plan_exhausted": plan_exhausted,
-        }
-    )
+    return {
+        "results": [],
+        "count": 0,
+        "query": query,
+        "message": _DATASET_NOT_FOUND,
+        "plan_exhausted": plan_exhausted,
+    }
 
 
 @tool
@@ -216,11 +198,9 @@ def search_ideal(query: str, top_k: int = 100) -> dict:
 
     dsid_by_uri = dict(remaining)
     results = [{"s3_uri": uri, "dataset_id": dsid_by_uri[uri]} for uri in picked]
-    return _apply_lessguide(
-        {
-            "results": results,
-            "count": len(results),
-            "query": query,
-            "plan_exhausted": len(_USED_S3_URIS) >= len(_CANDIDATES),
-        }
-    )
+    return {
+        "results": results,
+        "count": len(results),
+        "query": query,
+        "plan_exhausted": len(_USED_S3_URIS) >= len(_CANDIDATES),
+    }

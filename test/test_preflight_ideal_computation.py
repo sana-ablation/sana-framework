@@ -37,7 +37,7 @@ class IdealComputationPreflightTests(unittest.TestCase):
                 RunConfig(
                     search_tool_mode="preloaded",
                     search_results_mode="naive",
-                    profile_mode="naive",
+                    plan_mode="naive",
                     computation_tool_mode="ideal",
                 ),
                 ["benchmarks/lakeqa/tasks-mini/tasks/k-1-d-1/task_text.json"],

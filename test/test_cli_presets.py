@@ -52,7 +52,7 @@ def test_smoke_resolves_the_kramabench_run(repo):
         "smoke",
         "--search", "ideal",
         "--results", "ideal",
-        "--profile", "ideal",
+        "--plan", "ideal",
         "--k", "5",
         "--model", "gpt5.2",
         "--reasoning-effort", "xhigh",
@@ -86,7 +86,7 @@ def test_kramabench_smoke_defaults_to_the_kramabench_task_dir(repo):
         "--benchmark", "kramabench",
         "--search", "ideal",
         "--results", "naive",
-        "--profile", "standard",
+        "--plan", "standard",
         "--model", "gpt-5.4-nano",
         "--db", "lance_data",
     ])
@@ -105,7 +105,7 @@ def test_smoke_defaults_to_ideal_axes_and_verbose(repo):
         "--db", "lance_data",
     ])
 
-    assert (a.search, a.results, a.profile, a.compute) == (
+    assert (a.search, a.results, a.plan, a.compute) == (
         "ideal", "rich", "ideal", "ideal"
     )
     assert a.verbose is True
@@ -116,14 +116,14 @@ def test_preloaded_search_mode_resolves(repo):
         "smoke",
         "--search", "preloaded",
         "--results", "naive",
-        "--profile", "ideal",
+        "--plan", "ideal",
         "--model", "bedrock/claude-haiku-4.5",
         "--db", "lance_data",
     ])
 
     assert a.search == "preloaded"
     assert a.results == "minimal"       # naive is the former name for minimal
-    assert a.profile == "ideal"
+    assert a.plan == "ideal"
 
 
 def test_smoke_ideal_compute_axis_resolves(repo):
@@ -131,7 +131,7 @@ def test_smoke_ideal_compute_axis_resolves(repo):
         "smoke",
         "--search", "preloaded",
         "--results", "ideal",
-        "--profile", "standard",
+        "--plan", "standard",
         "--compute", "ideal",
         "--db", "lance_data",
     ])
@@ -148,7 +148,7 @@ def test_full_uses_the_default_task_set_and_output_roots(repo):
         "full",
         "--search", "ideal",
         "--results", "ideal",
-        "--profile", "ideal",
+        "--plan", "ideal",
         "--k", "5",
         "--model", "openai/gpt-5.2",
         "--db", "lance_data",
@@ -178,7 +178,7 @@ def test_kramabench_full_defaults_to_kramabench_output_roots(repo):
         "full",
         "--search", "standard",
         "--results", "naive",
-        "--profile", "standard",
+        "--plan", "standard",
         "--benchmark", "kramabench",
         "--model", "openai/gpt-5.2",
         "--db", "lance_kramabench_base",
@@ -195,7 +195,7 @@ def test_kramabench_full_defaults_to_the_kramabench_task_set(repo):
         "--benchmark", "kramabench",
         "--search", "ideal",
         "--results", "naive",
-        "--profile", "standard",
+        "--plan", "standard",
         "--model", "gpt-5.4-nano",
         "--db", "lance_data",
     ])
@@ -212,7 +212,7 @@ def test_only_new_explicit_flag_and_timeout_passthrough(repo):
         "--only-new",
         "--search", "ideal",
         "--results", "ideal",
-        "--profile", "ideal",
+        "--plan", "ideal",
         "--model", "openai/gpt-5.2",
         "--timeout", "600",
         "--submit-grace-seconds", "15",
@@ -242,7 +242,7 @@ def test_full_defaults_to_ideal_axes_verbose_and_only_new_with_plans_alias(repo)
 
     assert a.search == "ideal"
     assert a.results == "rich"          # the preset's default, canonicalised
-    assert a.profile == "standard"      # --plans is the alias for --profile
+    assert a.plan == "standard"         # --plans is the alias for --plan
     assert a.compute == "ideal"
     assert a.verbose is True
     assert a.only_new is True
@@ -260,7 +260,7 @@ def test_full_preset_compute_defaults_to_ideal(repo):
         "full",
         "--search", "ideal",
         "--results", "ideal",
-        "--profile", "ideal",
+        "--plan", "ideal",
         "--model", "gpt-5.4-nano",
         "--db", "lance_data",
     ])
@@ -273,7 +273,7 @@ def test_explicit_standard_compute_wins_over_the_preset(repo):
         "full",
         "--search", "ideal",
         "--results", "ideal",
-        "--profile", "ideal",
+        "--plan", "ideal",
         "--compute", "standard",
         "--model", "gpt-5.4-nano",
         "--db", "lance_data",
@@ -328,7 +328,7 @@ def test_search_free_alias_resolves(repo):
         "smoke",
         "--search", "ideal",
         "--results", "ideal",
-        "--profile", "standard",
+        "--plan", "standard",
         "--search_free",
         "--db", "lance_data",
     ])
@@ -340,24 +340,24 @@ def test_search_free_alias_resolves(repo):
 
 def test_skills_flag_resolves(repo):
     common = ["smoke", "--search", "ideal", "--results", "ideal",
-              "--profile", "standard", "--db", "lance_data"]
+              "--plan", "standard", "--db", "lance_data"]
 
     assert resolved(common + ["--skills", "on"]).skills == "on"
     assert resolved(common + ["--skills", "off"]).skills == "off"
     assert resolved(common).skills == "off"
 
 
-def test_skills_on_with_naive_profile_is_rejected(repo, capsys):
+def test_skills_on_with_naive_plan_is_rejected(repo, capsys):
     argv = ["smoke", "--search", "ideal", "--results", "ideal",
-            "--profile", "naive", "--skills", "on", "--db", "lance_data"]
+            "--plan", "naive", "--skills", "on", "--db", "lance_data"]
 
-    with pytest.raises(ValueError, match="--skills on requires --profile standard or --profile ideal"):
+    with pytest.raises(ValueError, match="--skills on requires --plan standard or --plan ideal"):
         resolved(argv)
 
     with pytest.raises(SystemExit) as excinfo:
         cli.main(argv)
     assert excinfo.value.code == 2
-    assert "--skills on requires --profile standard or --profile ideal" in capsys.readouterr().err
+    assert "--skills on requires --plan standard or --plan ideal" in capsys.readouterr().err
 
 
 # ---------------------------------------------------------------------------

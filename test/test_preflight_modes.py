@@ -36,7 +36,7 @@ class PreflightModeTests(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="preloaded",
             search_results_mode="ideal",
-            profile_mode="ideal",
+            plan_mode="ideal",
         )
         output = io.StringIO()
         checks = run_preflight(
@@ -83,7 +83,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="standard",
                 search_results_mode="ideal",
-                profile_mode="naive",
+                plan_mode="naive",
                 search_db_path=str(db_path),
             )
 
@@ -144,7 +144,7 @@ class PreflightModeTests(unittest.TestCase):
                     cfg = RunConfig(
                         search_tool_mode="ideal",
                         search_results_mode="ideal",
-                        profile_mode="ideal",
+                        plan_mode="ideal",
                         benchmark="kramabench",
                     )
                     checks = run_preflight(
@@ -181,7 +181,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="ideal",
             )
 
@@ -233,7 +233,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="ideal",
             )
 
@@ -292,7 +292,7 @@ class PreflightModeTests(unittest.TestCase):
                     cfg = RunConfig(
                         search_tool_mode="preloaded",
                         search_results_mode="naive",
-                        profile_mode="naive",
+                        plan_mode="naive",
                         computation_tool_mode="ideal",
                         benchmark="kramabench",
                     )
@@ -394,7 +394,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
             )
 
             with patch.object(search_wrapper, "_TABLE_DESCRIPTIONS_PATH", table_desc_path):

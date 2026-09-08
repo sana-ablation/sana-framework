@@ -14,32 +14,32 @@ from sana_evaluation.helper import prompting as P
 
 GOLDEN = Path(__file__).parent / "golden_prompts"
 
-PROFILES = ("naive", "standard", "ideal")
+PLANS = ("naive", "standard", "ideal")
 SEARCHES = ("naive", "preloaded", "standard", "ideal", "web")
 BENCHMARKS = ("lakeqa", "kramabench")
 
 
 def _reachable():
-    for profile, search, benchmark, skills in itertools.product(
-        PROFILES, SEARCHES, BENCHMARKS, (True, False)
+    for plan, search, benchmark, skills in itertools.product(
+        PLANS, SEARCHES, BENCHMARKS, (True, False)
     ):
-        if skills and profile == "naive":
-            continue          # --skills on requires profile standard|ideal
-        if search == "web" and profile == "ideal":
+        if skills and plan == "naive":
+            continue          # --skills on requires plan standard|ideal
+        if search == "web" and plan == "ideal":
             continue          # web rejects every ideal axis
-        yield profile, search, benchmark, skills
+        yield plan, search, benchmark, skills
 
 
-def _compose(profile, search, benchmark, skills):
+def _compose(plan, search, benchmark, skills):
     if benchmark == "kramabench":
         return P.compose_kramabench_prompt(search, include_skills=skills)
-    if profile == "naive":
+    if plan == "naive":
         return P.compose_baseline_prompt(search)
     return P.compose_managed_prompt(search, include_skills=skills)
 
 
-def _name(profile, search, benchmark, skills):
-    return f"{profile}__{search}__{benchmark}__skills-{'on' if skills else 'off'}.txt"
+def _name(plan, search, benchmark, skills):
+    return f"{plan}__{search}__{benchmark}__skills-{'on' if skills else 'off'}.txt"
 
 
 CASES = list(_reachable())

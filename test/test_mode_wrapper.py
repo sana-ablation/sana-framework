@@ -53,13 +53,13 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="naive",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
         self.assertEqual(bundle.modes["search_tool"], "naive")
         # "naive" is the former name of the minimal tier and still accepted.
         self.assertEqual(bundle.modes["search_results"], "minimal")
-        self.assertEqual(bundle.modes["profile"], "naive")
+        self.assertEqual(bundle.modes["plan"], "naive")
         self.assertFalse(bundle.enable_skills)
         self.assertFalse(bundle.enable_stagnation)
         self.assertIn("search_value", bundle.search_tool_names)
@@ -68,7 +68,7 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
         self.assertIn("search_value", bundle.search_tool_names)
@@ -168,7 +168,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="ideal",
+                plan_mode="ideal",
             )
             bundle = build_mode_bundle(
                 cfg,
@@ -182,19 +182,19 @@ class TestModeWrapper(unittest.TestCase):
             self.assertFalse(bundle.enable_skills)
             self.assertTrue(bundle.enable_stagnation)
 
-    def test_profile_skills_flag_enables_skills_for_managed_modes(self):
+    def test_plan_skills_flag_enables_skills_for_managed_modes(self):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="standard",
-            profile_skills_enabled=True,
+            plan_mode="standard",
+            plan_skills_enabled=True,
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
         tool_names = [tool_obj.tool_spec["name"] for tool_obj in bundle.tools]
         self.assertIn("plan", tool_names)
         self.assertTrue(bundle.enable_skills)
         self.assertTrue(bundle.enable_stagnation)
-        self.assertEqual(bundle.modes["profile_skills"], "on")
+        self.assertEqual(bundle.modes["plan_skills"], "on")
 
     def test_base_agent_does_not_expose_sandbox_admin_tools(self):
         import sana_evaluation.runner.agent as runner_agent
@@ -209,7 +209,7 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
         )
 
         with patch.object(runner_agent, "build_model", return_value=object()):
@@ -225,8 +225,8 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="standard",
-            profile_skills_enabled=False,
+            plan_mode="standard",
+            plan_skills_enabled=False,
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
 
@@ -244,7 +244,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="ideal",
+                plan_mode="ideal",
             )
             build_mode_bundle(
                 cfg,
@@ -268,7 +268,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="ideal",
+                plan_mode="ideal",
             )
             bundle = build_mode_bundle(
                 cfg,
@@ -289,7 +289,7 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
         self.assertIn("search_value", bundle.system_prompt)
@@ -309,7 +309,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="standard",
+                plan_mode="standard",
             )
             bundle = build_mode_bundle(
                 cfg,
@@ -324,7 +324,7 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
         self.assertIn("search_value", bundle.system_prompt)
@@ -344,7 +344,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="naive",
+                plan_mode="naive",
             )
             bundle = build_mode_bundle(
                 cfg,
@@ -359,7 +359,7 @@ class TestModeWrapper(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
             debug_mode="decision_notes",
         )
         bundle = build_mode_bundle(cfg, data_tools=[])
@@ -395,7 +395,7 @@ class TestModeWrapper(unittest.TestCase):
                 DataLakeAgent._tool_limit_excluded_tools(
                     None,
                     search_tool_mode="ideal",
-                    profile_mode="ideal",
+                    plan_mode="ideal",
                 )
             ),
             ("skills", "plan", "plan_ideal"),
@@ -420,7 +420,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="ideal",
+                plan_mode="ideal",
             )
             with self.assertRaises(FileNotFoundError):
                 build_mode_bundle(
@@ -447,7 +447,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="ideal",
-                profile_mode="ideal",
+                plan_mode="ideal",
             )
             with self.assertRaises(ValueError):
                 build_mode_bundle(
@@ -465,7 +465,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="ideal",
-                profile_mode="standard",
+                plan_mode="standard",
             )
             bundle = build_mode_bundle(
                 cfg,
@@ -492,7 +492,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
             )
             with self.assertRaises(FileNotFoundError):
                 build_mode_bundle(
@@ -520,7 +520,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="standard",
+                plan_mode="standard",
             )
             with self.assertRaises(ValueError):
                 build_mode_bundle(
@@ -556,7 +556,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="ideal",
             )
             bundle = build_mode_bundle(
@@ -620,7 +620,7 @@ class TestModeWrapper(unittest.TestCase):
                 cfg = RunConfig(
                     search_tool_mode="preloaded",
                     search_results_mode="naive",
-                    profile_mode="naive",
+                    plan_mode="naive",
                     computation_tool_mode="ideal",
                     benchmark="kramabench",
                 )
@@ -673,7 +673,7 @@ class TestModeWrapper(unittest.TestCase):
                 cfg = RunConfig(
                     search_tool_mode="preloaded",
                     search_results_mode="naive",
-                    profile_mode="standard",
+                    plan_mode="standard",
                     computation_tool_mode="standard",
                     benchmark="kramabench",
                 )
@@ -724,7 +724,7 @@ class TestModeWrapper(unittest.TestCase):
                 cfg = RunConfig(
                     search_tool_mode="ideal",
                     search_results_mode="ideal",
-                    profile_mode="ideal",
+                    plan_mode="ideal",
                     computation_tool_mode="standard",
                     benchmark="kramabench",
                 )
@@ -754,7 +754,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="standard",
             )
             bundle = build_mode_bundle(
@@ -788,7 +788,7 @@ class TestModeWrapper(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="ideal",
             )
             bundle = build_mode_bundle(

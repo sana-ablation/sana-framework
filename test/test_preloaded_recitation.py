@@ -4,7 +4,7 @@ Creates a real agent in ``search_tool=preloaded`` mode, asks it to recite what
 is already present in its system state, and writes a detailed log capturing:
 
 - the expected preloaded dataset block derived from ``source_sequence``
-- the expected gold reasoning chain (when ``--management ideal``)
+- the expected gold reasoning chain (when ``--plan ideal``)
 - the configured skill paths and skill file contents
 - the exact prompt sent to the agent
 - the agent's submitted answer and final reasoning
@@ -75,7 +75,7 @@ def _load_skill_bodies(skill_paths: List[str]) -> Dict[str, str]:
 
 def _build_run_config(
     *,
-    management_mode: str,
+    plan_mode: str,
     db_path: str,
     trace_dir: Path,
     results_dir: Path,
@@ -90,9 +90,9 @@ def _build_run_config(
         search_db_path=db_path,
         search_tool_mode="preloaded",
         search_results_mode="ideal",
-        profile_mode=management_mode,
+        plan_mode=plan_mode,
         condition_config=ConditionConfig(
-            condition=f"diagnostic/preloaded_recitation_{management_mode}",
+            condition=f"diagnostic/preloaded_recitation_{plan_mode}",
             base_condition="baseline",
             trace_output_dir=str(trace_dir),
         ),
@@ -102,7 +102,7 @@ def _build_run_config(
 def run_recitation(
     *,
     task_file: str,
-    management_mode: str,
+    plan_mode: str,
     model_name: str,
     db_path: str,
     log_path: Path,
@@ -113,8 +113,8 @@ def run_recitation(
         task_id = task["_task_id"]
         ideal_plan = load_runtime_profile_for_task(task_file)
         preloaded_block = compose_preloaded_block(ideal_plan.source_sequence)
-        expected_chain = ideal_plan.reasoning_chain_text if management_mode == "ideal" else None
-        skill_paths = skill_paths_for_modes("preloaded", management_mode)
+        expected_chain = ideal_plan.reasoning_chain_text if plan_mode == "ideal" else None
+        skill_paths = skill_paths_for_modes("preloaded", plan_mode)
         skill_bodies = _load_skill_bodies(skill_paths)
 
         _dump(
@@ -124,7 +124,7 @@ def run_recitation(
                 {
                     "task_file": task_file,
                     "task_id": task_id,
-                    "management_mode": management_mode,
+                    "plan_mode": plan_mode,
                     "model_name": model_name,
                     "db_path": db_path,
                     "timestamp": datetime.now().isoformat(),
@@ -141,11 +141,11 @@ def run_recitation(
             json.dumps(skill_bodies, indent=2),
         )
 
-        trace_dir = Path("test_results/diagnostic_preloaded_recitation/traces") / management_mode
-        results_dir = Path("test_results/diagnostic_preloaded_recitation/results") / management_mode
-        logs_dir = Path("test_logs/diagnostic_preloaded_recitation") / management_mode
+        trace_dir = Path("test_results/diagnostic_preloaded_recitation/traces") / plan_mode
+        results_dir = Path("test_results/diagnostic_preloaded_recitation/results") / plan_mode
+        logs_dir = Path("test_logs/diagnostic_preloaded_recitation") / plan_mode
         run_config = _build_run_config(
-            management_mode=management_mode,
+            plan_mode=plan_mode,
             db_path=db_path,
             trace_dir=trace_dir,
             results_dir=results_dir,
@@ -193,19 +193,19 @@ def run_recitation(
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--task-file", default="benchmarks/lakeqa/tasks-mini/tasks/k-1-d-1/task_2.json")
-    parser.add_argument("--management", choices=("standard", "ideal"), default="ideal")
+    parser.add_argument("--plan", choices=("standard", "ideal"), default="ideal")
     parser.add_argument("--model-name", default="openai/gpt-5-mini")
     parser.add_argument("--db", default="lance_data")
     parser.add_argument("--out", default=None)
     args = parser.parse_args(argv)
 
     log_path = Path(args.out) if args.out else (
-        Path("test_logs") / f"preloaded_recitation_{args.management}_{datetime.now().strftime('%Y%m%dT%H%M%S')}.log"
+        Path("test_logs") / f"preloaded_recitation_{args.plan}_{datetime.now().strftime('%Y%m%dT%H%M%S')}.log"
     )
 
     run_recitation(
         task_file=args.task_file,
-        management_mode=args.management,
+        plan_mode=args.plan,
         model_name=args.model_name,
         db_path=args.db,
         log_path=log_path,
