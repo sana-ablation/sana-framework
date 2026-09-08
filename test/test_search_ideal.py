@@ -683,7 +683,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                     return_value="fake-model",
                 ):
                     for search_results_mode, search_lessguide in product(
-                        ("naive", "ideal"),
+                        ("minimal", "rich"),
                         (False, True),
                     ):
                         search_ideal.reset_state()
@@ -765,7 +765,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
         expected_uri = search_ideal._canonical_uri(_CORE_QUALITY_SOURCE)
 
         for search_results_mode, search_lessguide in product(
-            ("naive", "ideal"),
+            ("minimal", "rich"),
             (False, True),
         ):
             search_ideal.reset_state()
@@ -797,7 +797,7 @@ class TestSearchIdealFlagMatrix(unittest.TestCase):
                 self.assertNotIn("plan_exhausted", result)
             else:
                 self.assertTrue(result["plan_exhausted"])
-            if search_results_mode == "ideal":
+            if search_results_mode == "rich":
                 self.assertIn("llm_desc", result["results"][0])
                 self.assertIn("columns", result["results"][0])
 

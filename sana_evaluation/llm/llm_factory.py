@@ -4,7 +4,11 @@ LLM Factory - Creates Strands model objects from an AgentConfig.
 Supported providers (set AgentConfig.provider to one of these strings):
     "bedrock"       Amazon Bedrock — needs AWS credentials in env
     "anthropic"     Anthropic API — needs ANTHROPIC_API_KEY
-    "openai"        OpenAI API — needs OPENAI_API_KEY
+    "openai"        OpenAI API (chat completions) — needs OPENAI_API_KEY
+    "openai_responses"  OpenAI API over /v1/responses — same key; required by
+                    models that reject function tools on chat completions
+    "foundry"       Claude on Microsoft Foundry (Azure) — needs
+                    ANTHROPIC_FOUNDRY_API_KEY + _RESOURCE or _BASE_URL
     "gemini"        Google Gemini — needs GEMINI_API_KEY
     "ollama"        Ollama local server — needs ollama running at ollama_host
     "llamaapi"      LlamaAPI — needs LLAMA_API_KEY
@@ -38,6 +42,8 @@ def build_model(config: AgentConfig) -> Any:
         "bedrock":    _build_bedrock,
         "anthropic":  _build_anthropic,
         "openai":     _build_openai,
+        "openai_responses": _build_openai_responses,
+        "foundry":    _build_foundry,
         "gemini":     _build_gemini,
         "ollama":     _build_ollama,
         "llamaapi":   _build_llamaapi,
@@ -103,10 +109,13 @@ def _build_anthropic(c: AgentConfig) -> Any:
     return AnthropicModel(**kwargs)
 
 
-def _build_openai(c: AgentConfig) -> Any:
+def _build_openai(c: AgentConfig, *, responses: bool = False) -> Any:
     # Requires: OPENAI_API_KEY env var (or AgentConfig.openai_api_key)
     # Optional: AgentConfig.openai_base_url for Azure / vLLM / other compatible APIs
-    from sana_evaluation.llm.openai_cached_model import OpenAICachedUsageModel
+    from sana_evaluation.llm.openai_cached_model import (
+        OpenAICachedUsageModel,
+        OpenAIResponsesCachedUsageModel,
+    )
 
     # OpenAIModel expects request fields under `params` and transport/auth fields
     # under `client_args`. Passing raw top-level keys is ignored by Strands.
@@ -151,17 +160,28 @@ def _build_openai(c: AgentConfig) -> Any:
     # caller sets a non-default value.
     if "temperature" not in params and c.temperature not in (None, 0.0):
         params["temperature"] = c.temperature
-    if (
-        "max_completion_tokens" not in params
-        and "max_tokens" not in params
-        and c.max_tokens is not None
-    ):
-        params["max_completion_tokens"] = c.max_tokens
 
-    # Convenience alias: accept Responses-style reasoning dict and map to chat param.
-    reasoning = params.get("reasoning")
-    if isinstance(reasoning, dict) and "reasoning_effort" not in params and "effort" in reasoning:
-        params["reasoning_effort"] = reasoning["effort"]
+    if responses:
+        # /v1/responses names the output budget differently and takes reasoning as
+        # a nested dict, so the chat-shaped keys are translated rather than sent.
+        if "max_output_tokens" not in params and c.max_tokens is not None:
+            params["max_output_tokens"] = c.max_tokens
+        params.pop("max_completion_tokens", None)
+        effort = params.pop("reasoning_effort", None)
+        if effort is not None and "reasoning" not in params:
+            params["reasoning"] = {"effort": effort}
+    else:
+        if (
+            "max_completion_tokens" not in params
+            and "max_tokens" not in params
+            and c.max_tokens is not None
+        ):
+            params["max_completion_tokens"] = c.max_tokens
+
+        # Convenience alias: accept Responses-style reasoning dict and map to chat param.
+        reasoning = params.get("reasoning")
+        if isinstance(reasoning, dict) and "reasoning_effort" not in params and "effort" in reasoning:
+            params["reasoning_effort"] = reasoning["effort"]
 
     # OpenAI prompt caching is automatic for matching prefixes. These optional
     # request fields improve routing and opt into longer retention when desired.
@@ -181,14 +201,83 @@ def _build_openai(c: AgentConfig) -> Any:
     if c.openai_base_url and "base_url" not in client_args:
         client_args["base_url"] = c.openai_base_url
 
+    cls = OpenAIResponsesCachedUsageModel if responses else OpenAICachedUsageModel
     kwargs: dict[str, Any] = {"model_id": c.model_id}
     if params:
         kwargs["params"] = params
 
     if client_args:
-        return OpenAICachedUsageModel(client_args=client_args, **kwargs)
-    return OpenAICachedUsageModel(**kwargs)
+        return cls(client_args=client_args, **kwargs)
+    return cls(**kwargs)
 
+
+def _build_openai_responses(c: AgentConfig) -> Any:
+    """OpenAI over /v1/responses.
+
+    Required by models that reject function tools on /v1/chat/completions while
+    reasoning is active. gpt-5.6-luna answers such a request with HTTP 400
+    ("use /v1/responses or set reasoning_effort to 'none'"), and setting the
+    effort to none would switch off the reasoning the experiment is measuring.
+    """
+    return _build_openai(c, responses=True)
+
+
+def _build_foundry(c: AgentConfig) -> Any:
+    """Claude on Microsoft Foundry (Azure).
+
+    Strands has no Foundry provider, so this uses the repo-local subclass that
+    swaps in AsyncAnthropicFoundry and restores cache-read token counts.
+
+    Requires ANTHROPIC_FOUNDRY_API_KEY (or AgentConfig.foundry_api_key) plus
+    exactly one of ANTHROPIC_FOUNDRY_RESOURCE / ANTHROPIC_FOUNDRY_BASE_URL --
+    the SDK rejects both together.
+    """
+    from sana_evaluation.llm.anthropic_foundry_model import AnthropicFoundryModel
+
+    extras = dict(c.extra_model_kwargs or {})
+    params = dict(extras.pop("params", {}) or {})
+    client_args = dict(extras.pop("client_args", {}) or {})
+    params.update(extras)
+
+    for key, value, env in (
+        ("api_key", c.foundry_api_key, "ANTHROPIC_FOUNDRY_API_KEY"),
+        ("resource", c.foundry_resource, "ANTHROPIC_FOUNDRY_RESOURCE"),
+        ("base_url", c.foundry_base_url, "ANTHROPIC_FOUNDRY_BASE_URL"),
+    ):
+        resolved = value or os.getenv(env)
+        if resolved and key not in client_args:
+            client_args[key] = resolved
+    if client_args.get("resource") and client_args.get("base_url"):
+        # Not recoverable by preferring one: the SDK re-reads whichever argument
+        # is None from the environment, so dropping it here changes nothing and
+        # the failure resurfaces as a bare "mutually exclusive" ValueError from
+        # deep inside the client. Say which knobs to turn instead.
+        raise ValueError(
+            "Foundry resource and base_url are mutually exclusive, and both are set. "
+            "Unset one of ANTHROPIC_FOUNDRY_RESOURCE / ANTHROPIC_FOUNDRY_BASE_URL "
+            "(or AgentConfig.foundry_resource / foundry_base_url)."
+        )
+
+    # Claude Fable 5.1 and the rest of the 4.6+ family reject sampling
+    # parameters outright (HTTP 400), so temperature is passed only when the
+    # caller set a non-default value -- same rule as the OpenAI builder.
+    if "temperature" not in params and c.temperature not in (None, 0.0):
+        params["temperature"] = c.temperature
+
+    # Thinking is always on for Fable 5.1 and cannot be configured -- an explicit
+    # thinking block returns 400 -- so depth is controlled by effort instead.
+    # Thinking tokens bill as output at $50/MTok, which makes effort the main
+    # cost lever on this model. Default medium; override with SANA_CLAUDE_EFFORT
+    # or an explicit params["output_config"].
+    if "output_config" not in params:
+        effort = os.getenv("SANA_CLAUDE_EFFORT", "medium")
+        if effort:
+            params["output_config"] = {"effort": effort}
+
+    kwargs: dict[str, Any] = {"model_id": c.model_id, "max_tokens": c.max_tokens}
+    if params:
+        kwargs["params"] = params
+    return AnthropicFoundryModel(client_args=client_args, **kwargs)
 
 def _build_gemini(c: AgentConfig) -> Any:
     # Requires: GEMINI_API_KEY env var (or AgentConfig.gemini_api_key)

@@ -49,6 +49,18 @@ MODEL_REGISTRY: Dict[str, Tuple[str, str]] = {
     "openai/gpt-5-mini":           ("openai", "gpt-5-mini"),
     "openai/gpt-5.4":              ("openai", "gpt-5.4"),
     "openai/gpt-5.4-nano":         ("openai", "gpt-5.4-nano"),
+    # Pinned to the -luna variant: bare "gpt-5.6" resolves to gpt-5.6-sol,
+    # a different model. Never abbreviate this key.
+    # openai_responses, not openai: this model rejects function tools on
+    # /v1/chat/completions whenever reasoning is active.
+    "openai/gpt-5.6-luna":         ("openai_responses", "gpt-5.6-luna"),
+    # The sibling variant. Both reject function tools on chat completions, so
+    # both take the Responses path; bare "gpt-5.6" resolves here, not to luna.
+    "openai/gpt-5.6-sol":          ("openai_responses", "gpt-5.6-sol"),
+
+    # Claude on Microsoft Foundry (Azure). Foundry is Anthropic-hosted and uses
+    # the bare first-party model id -- no "anthropic." prefix (that is Bedrock).
+    "foundry/claude-fable-5-1":     ("foundry", "claude-fable-5-1"),
 
     # Google Gemini API
     "gemini/gemini-3.1-flash-lite": ("gemini", "gemini-3.1-flash-lite"),
@@ -67,12 +79,23 @@ MODEL_PRICING = {
         "gpt-5-mini": {"input": 0.25, "cache_read_input": 0.025, "output": 2.00},
         "gpt-5.4": {"input": 2.50, "cache_read_input": 0.25, "output": 15.00},
         "gpt-5.4-nano": {"input": 0.20, "cache_read_input": 0.02, "output": 1.25},
+        "gpt-5.6-luna": {"input": 0.20, "cache_read_input": 0.02, "output": 1.20},
+        "gpt-5.6-sol": {"input": 4.00, "cache_read_input": 0.40,
+                        "cache_write_input": 5.00, "output": 20.00},
         # Alias keys for provider-prefixed model_name values
         "openai/gpt-5.2": {"input": 1.75, "cache_read_input": 0.175, "output": 14.00},
         "openai/gpt-5-nano": {"input": 0.05, "cache_read_input": 0.005, "output": 0.40},
         "openai/gpt-5-mini": {"input": 0.25, "cache_read_input": 0.025, "output": 2.00},
         "openai/gpt-5.4": {"input": 2.50, "cache_read_input": 0.25, "output": 15.00},
         "openai/gpt-5.4-nano": {"input": 0.20, "cache_read_input": 0.02, "output": 1.25},
+        "openai/gpt-5.6-luna": {"input": 0.20, "cache_read_input": 0.02, "output": 1.20},
+        "openai/gpt-5.6-sol": {"input": 4.00, "cache_read_input": 0.40,
+                               "cache_write_input": 5.00, "output": 20.00},
+
+        # Claude on Microsoft Foundry bills through the Microsoft Marketplace at
+        # standard Anthropic API rates, so these are the first-party numbers.
+        "claude-fable-5-1": {"input": 10.00, "cache_read_input": 0.25, "output": 50.00},
+        "foundry/claude-fable-5-1": {"input": 10.00, "cache_read_input": 0.25, "output": 50.00},
 
         # Google Gemini API
         "gemini/gemini-3.1-flash-lite": {"input": 0.25, "output": 1.50},

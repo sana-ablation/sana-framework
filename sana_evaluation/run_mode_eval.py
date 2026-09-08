@@ -3,7 +3,7 @@
 
 This runner controls four orthogonal axes:
   - search_tool quality
-  - search_results richness
+  - search_results richness (minimal | rich)
   - profile style
   - computation_tool behavior
 """
@@ -16,6 +16,7 @@ import glob
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from sana_evaluation import run_eval as base_eval
@@ -39,7 +40,7 @@ base_eval.BatchRunner = ModeBatchRunner
 
 _AXIS_DEFAULTS = {
     "search_tool": "standard",
-    "search_results": "naive",
+    "search_results": "rich",
     "profile": "standard",
     "computation_tool": "standard",
 }
@@ -59,6 +60,7 @@ def _variant_condition_label(
     search_free: bool = False,
     search_lessguide: bool = False,
     profile_skills_enabled: bool = False,
+    no_s3: bool = False,
 ) -> str:
     parts = [
         f"search_{search_tool}",
@@ -74,6 +76,8 @@ def _variant_condition_label(
         parts.append("free")
     if search_lessguide:
         parts.append("lessguide")
+    if no_s3:
+        parts.append("nos3")
     parts.append("skills_on" if profile_skills_enabled else "skills_off")
     return "__".join(parts)
 
@@ -92,10 +96,14 @@ def _resolve_mode_axes(
     profile: Optional[str],
     computation_tool: Optional[str] = None,
 ) -> tuple[str, str, str, str]:
+    from sana_evaluation.agent_with_mode import _normalize_result_mode
+
     defaults = _AXIS_DEFAULTS
     return (
         search_tool or defaults["search_tool"],
-        search_results or defaults["search_results"],
+        # Canonicalised so the deprecated spellings do not produce a second set
+        # of variant directories for the same condition.
+        _normalize_result_mode(search_results, defaults["search_results"], "search_results"),
         profile or defaults["profile"],
         computation_tool or defaults["computation_tool"],
     )
@@ -130,6 +138,81 @@ def _default_task_set_for_benchmark(benchmark: str) -> str:
     if benchmark == "kramabench":
         return _KRAMABENCH_TASK_SET
     return _DEFAULT_TASK_SET
+
+
+def resolve_task_set(task_set: Optional[str], benchmark: str) -> str:
+    """Accept a named set as well as a path.
+
+    ``--task-set tasks_20_subset`` is shorthand for ``benchmarks/<benchmark>/tasks_20_subset/tasks``.
+    A value containing a separator, or naming a directory that exists, is used
+    as-is, so paths keep working unchanged.
+    """
+    if not task_set:
+        return _default_task_set_for_benchmark(benchmark)
+    raw = str(task_set).strip()
+    if os.sep in raw or "/" in raw or Path(raw).is_dir():
+        return raw
+    candidate = Path("benchmarks") / benchmark / raw / "tasks"
+    if candidate.is_dir():
+        return str(candidate)
+    raise ValueError(
+        f"Unknown task set '{task_set}' for benchmark '{benchmark}'. "
+        f"Expected a path, or a named set under benchmarks/{benchmark}/<name>/tasks. "
+        f"Available: {', '.join(_named_task_sets(benchmark)) or '(none)'}"
+    )
+
+
+def _named_task_sets(benchmark: str) -> list[str]:
+    root = Path("benchmarks") / benchmark
+    if not root.is_dir():
+        return []
+    return sorted(d.name for d in root.iterdir() if (d / "tasks").is_dir())
+
+
+def _run_all_tasks_pooled(
+    *,
+    task_set: str,
+    agent_config,
+    run_config,
+    verbose: bool,
+    only_new: bool,
+    parallel: int,
+    tasks_per_dir: Optional[int],
+) -> None:
+    """Run every task across all directories through ONE worker pool.
+
+    The per-directory path builds a separate pool per `k-*-d-*` directory and
+    runs them in sequence, so concurrency is capped by the largest directory. On
+    a 20-task subset spread over 11 directories that is ~1.3-way concurrency no
+    matter what `--parallel` says.
+
+    Paths are passed through untouched: runtime-profile lookup keys off the
+    suffix after `benchmarks/<bench>/tasks-mini/tasks`, so the `k-*-d-*` segment
+    has to survive. Pooling the file list rather than flattening the tree keeps
+    it, and keeps colliding basenames (subset20b has `task_6` three times)
+    distinct.
+    """
+    task_dirs = base_eval.find_all_task_dirs(task_set)
+    logger.info("Found %d task directories in '%s'", len(task_dirs), task_set)
+
+    pooled: list[str] = []
+    for task_dir in task_dirs:
+        files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
+        if tasks_per_dir is not None:
+            files = files[:tasks_per_dir]
+        pooled.extend(files)
+
+    logger.info("Pooling %d tasks into one pool of %d workers", len(pooled), parallel)
+    results = base_eval.run_evaluation(
+        task_dir=task_set,
+        agent_config=agent_config,
+        run_config=run_config,
+        verbose=verbose,
+        only_new=only_new,
+        parallel=parallel,
+        task_files=pooled,
+    )
+    base_eval.print_comparison_table(results)
 
 
 def _collect_task_files(args) -> list[str]:
@@ -366,19 +449,31 @@ def main() -> None:
         action="store_true",
         help="Hide search_ideal plan_exhausted guidance fields from tool payloads.",
     )
+    parser.add_argument(
+        "--no-s3",
+        "--no_s3",
+        dest="no_s3",
+        action="store_true",
+        help=(
+            "Drop every data-lake tool and give the agent `download` (http(s) URLs "
+            "returned by search_web) plus execute_code. Requires --search_tool web."
+        ),
+    )
 
     # Mode axes
     parser.add_argument(
         "--search_tool",
-        choices=["naive", "preloaded", "standard", "ideal"],
+        choices=["naive", "preloaded", "standard", "ideal", "web"],
         default=None,
         help="Search tool quality axis.",
     )
     parser.add_argument(
         "--search_results",
-        choices=["naive", "ideal"],
+        choices=["minimal", "rich", "naive", "ideal"],
         default=None,
-        help="Search result richness axis.",
+        help="How much metadata rides along with each search hit: minimal is "
+             "dataset_id + s3_uri, rich adds the LLM description, schema and a "
+             "data snippet (default: rich). naive/ideal are the former names.",
     )
     parser.add_argument(
         "--profile",
@@ -403,13 +498,21 @@ def main() -> None:
     # Execution
     parser.add_argument("--parallel", type=int, default=6, help="Number of parallel worker processes")
     parser.add_argument("--only-new", action="store_true", help="Skip tasks already present in the results CSV")
+    parser.add_argument(
+        "--pool-tasks",
+        action="store_true",
+        help=(
+            "With --all-tasks, run every task through one worker pool instead of "
+            "one pool per k-*-d-* directory. Directory batching otherwise caps "
+            "concurrency at the largest directory regardless of --parallel."
+        ),
+    )
     parser.add_argument("--verbose", "-v", action="store_true")
 
     args = parser.parse_args()
     if args.decision_notes:
         args.debug_mode = "decision_notes"
-    if args.task_set is None:
-        args.task_set = _default_task_set_for_benchmark(args.benchmark)
+    args.task_set = resolve_task_set(args.task_set, args.benchmark)
 
     if args.k is not None and args.k <= 0:
         parser.error("--k must be > 0")
@@ -454,6 +557,7 @@ def main() -> None:
         search_free=args.search_free,
         search_lessguide=args.search_lessguide,
         profile_skills_enabled=args.skills == "on",
+        no_s3=args.no_s3,
     )
     variant_condition = _with_debug_suffix(variant_condition, args.debug_mode)
     condition_label = f"modes/{safe_model_name}/{variant_condition}"
@@ -484,6 +588,7 @@ def main() -> None:
         profile_skills_enabled=args.skills == "on",
         search_free=args.search_free,
         search_lessguide=args.search_lessguide,
+        no_s3=args.no_s3,
         benchmark=args.benchmark,
         condition_config=ConditionConfig(
             condition=condition_label,
@@ -519,6 +624,16 @@ def main() -> None:
 
     if args.task_continue:
         _run_continue(args, agent_config, run_config)
+    elif args.all_tasks and args.pool_tasks:
+        _run_all_tasks_pooled(
+            task_set=args.task_set,
+            agent_config=agent_config,
+            run_config=run_config,
+            verbose=args.verbose,
+            only_new=args.only_new,
+            parallel=args.parallel,
+            tasks_per_dir=args.tasks_per_dir,
+        )
     elif args.all_tasks:
         task_dirs = base_eval.find_all_task_dirs(args.task_set)
         logger.info("Found %d task directories in '%s'", len(task_dirs), args.task_set)

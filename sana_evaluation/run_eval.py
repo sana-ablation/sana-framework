@@ -17,6 +17,7 @@ construct one. Both run_mode_eval and run_sana_eval do this at module load.
 
 import csv
 import glob
+import hashlib
 import json
 import logging
 import os
@@ -56,6 +57,27 @@ def _display_name(agent_config) -> str:
     return slug
 
 
+# OpenAI caps prompt_cache_key at 64 characters. /v1/chat/completions accepts
+# longer values silently; /v1/responses rejects them with HTTP 400.
+_MAX_PROMPT_CACHE_KEY = 64
+
+
+def _bounded_cache_key(raw: str) -> str:
+    """Fit a cache key into OpenAI's 64-character limit without losing identity.
+
+    Plain truncation would collide, because these variant labels are a shared
+    prefix followed by the axis settings that distinguish them -- the tail is
+    exactly the part that differs. Keeping a prefix and appending a digest of the
+    whole label stays under the cap, stays stable across rounds (so the router
+    still lands repeat requests on the same shard), and keeps distinct variants
+    distinct.
+    """
+    if len(raw) <= _MAX_PROMPT_CACHE_KEY:
+        return raw
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:10]
+    return f"{raw[: _MAX_PROMPT_CACHE_KEY - len(digest) - 1]}-{digest}"
+
+
 def _maybe_autoset_openai_cache_key(agent_config, variant_label: str) -> None:
     """Auto-derive a variant-stable OpenAI prompt_cache_key when none was provided.
 
@@ -67,7 +89,9 @@ def _maybe_autoset_openai_cache_key(agent_config, variant_label: str) -> None:
         return
     if os.getenv("OPENAI_PROMPT_CACHE_KEY"):
         return
-    agent_config.openai_prompt_cache_key = f"{_display_name(agent_config)}:{variant_label}"
+    agent_config.openai_prompt_cache_key = _bounded_cache_key(
+        f"{_display_name(agent_config)}:{variant_label}"
+    )
 
 
 def _results_root(run_config: RunConfig) -> str:
@@ -111,15 +135,31 @@ def run_evaluation(
     only_new: bool = False,
     parallel: int = 6,
     tasks_per_dir: Optional[int] = None,
+    task_files: Optional[list] = None,
 ) -> dict:
-    """Run evaluation on a task directory and return {model_id -> {summary, results}}."""
+    """Run evaluation on a task directory and return {model_id -> {summary, results}}.
+
+    ``task_files`` overrides the per-directory glob. Passing an explicit list lets
+    a caller pool every task across all ``k-*-d-*`` directories into ONE worker
+    pool. Without it, ``--all-tasks`` calls this once per directory and each call
+    builds its own pool, so directories run sequentially and concurrency is capped
+    by the largest directory rather than by ``parallel``.
+
+    The paths are used verbatim: runtime-profile lookup keys off the path suffix
+    after ``benchmarks/<bench>/tasks-mini/tasks``, so the ``k-*-d-*`` segment must
+    survive. Pooling the file list rather than flattening the tree preserves it,
+    and keeps colliding basenames distinct.
+    """
     cond = run_config.condition_config
     condition_label = cond.condition
     safe_model = _display_name(agent_config)
     output_dir = _results_dir(run_config, agent_config)
     os.makedirs(output_dir, exist_ok=True)
 
-    task_files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
+    if task_files is None:
+        task_files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
+    else:
+        task_files = list(task_files)
     if not task_files:
         logger.info(f"No task files found in {task_dir}")
         return {}
@@ -309,6 +349,7 @@ def _normalize_main_csv_row(row: dict) -> dict:
         "cycle_count": row.get("cycle_count", ""),
         "input_tokens": row.get("input_tokens", 0),
         "cached_input_tokens": row.get("cached_input_tokens", 0),
+        "cache_write_input_tokens": row.get("cache_write_input_tokens", 0),
         "uncached_input_tokens": row.get(
             "uncached_input_tokens",
             max(0, int(row.get("input_tokens", 0) or 0) - int(row.get("cached_input_tokens", 0) or 0)),
@@ -342,7 +383,8 @@ def _write_main_csv(csv_path: str, results: list, tasks_by_id: dict) -> None:
         "expected_answer", "predicted_answer", "exact_match", "f1_score",
         "required_dataset_count", "sources_used_count",
         "runtime_seconds", "cycle_count",
-        "input_tokens", "cached_input_tokens", "uncached_input_tokens",
+        "input_tokens", "cached_input_tokens", "cache_write_input_tokens",
+        "uncached_input_tokens",
         "output_tokens", "total_tokens", "cost_usd",
         "tool_calls_total", "api_tool_calls",
         "execute_ideal_agent_repair_calls", "query_ideal_agent_repair_calls",

@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 def _load_description_module():
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "scripts" / "build_task_manifest_descriptions.py"
+    module_path = repo_root / "dataindexing" / "cli" / "build_task_manifest_descriptions.py"
     spec = importlib.util.spec_from_file_location(
         "_test_build_task_manifest_descriptions", module_path
     )

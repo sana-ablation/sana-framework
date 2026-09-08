@@ -38,29 +38,31 @@ repository root:
 python sana-profiling/skills/benchmark-lakeqa-conversion-auditor/scripts/sample_benchmark_artifacts.py \
   other-benchmarks/tasks-hotpotqa-mini \
   --limit 10 \
-  > sana-profiling/runs/hotpotqa-generated-conversion/sampled-artifacts.json
+  > sana-profiling/examples/hotpotqa-conversion/sampled-artifacts.json
 ```
 
 ```bash
 python sana-profiling/skills/benchmark-lakeqa-skill-scaffolder/scripts/scaffold_benchmark_skill.py \
-  sana-profiling/runs/hotpotqa-generated-conversion/hotpotqa-lakeqa-conversion-report.md \
+  sana-profiling/examples/hotpotqa-conversion/hotpotqa-lakeqa-conversion-report.md \
   --benchmark hotpotqa \
-  --output-root sana-profiling/runs/hotpotqa-generated-conversion/generated-skills \
+  --output-root sana-profiling/examples/hotpotqa-conversion/generated-skills \
   --force
 ```
 
 The generated `hotpotqa-lakeqa-transform` skill was then applied to five
-sampled imports. The output is intentionally kept under the run folder so it
-does not mutate maintained benchmark artifacts:
+sampled imports. The output is intentionally kept under the example folder so
+it does not mutate maintained benchmark artifacts:
 
-- `runs/hotpotqa-generated-conversion/generated-skills/hotpotqa-lakeqa-transform/SKILL.md`
-- `runs/hotpotqa-generated-conversion/converted/benchmarks/hotpotqa/tasks-mini/tasks/`
-- `runs/hotpotqa-generated-conversion/converted/benchmarks/hotpotqa/tasks-mini/runtime-profiles/`
-- `runs/hotpotqa-generated-conversion/source-mirroring-manifest.json`
-- `runs/hotpotqa-generated-conversion/validation.json`
-- `runs/hotpotqa-generated-conversion/error_log.json`
+- `examples/hotpotqa-conversion/generated-skills/hotpotqa-lakeqa-transform/SKILL.md`
+- `examples/hotpotqa-conversion/converted/benchmarks/hotpotqa/tasks-mini/tasks/`
+- `examples/hotpotqa-conversion/converted/benchmarks/hotpotqa/tasks-mini/runtime-profiles/`
+- `examples/hotpotqa-conversion/source-mirroring-manifest.json`
+- `examples/hotpotqa-conversion/validation.json`
+- `examples/hotpotqa-conversion/error_log.json`
 
-## Example runs
+## Example
 
-- `runs/hotpotqa-generated-conversion/`: dry-run output from applying a
-  generated HotpotQA transform skill to five `other-benchmarks` examples.
+- `examples/hotpotqa-conversion/`: output from applying a generated HotpotQA
+  transform skill to five `other-benchmarks` examples. Kept as the end-to-end
+  demonstration that auditor -> scaffolder -> transform produces valid,
+  leak-free output; `test/test_sana_profiling_skill_artifacts.py` asserts on it.

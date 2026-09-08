@@ -12,7 +12,7 @@ from typing import Callable, Optional, Sequence
 
 from sana_evaluation.env import load_repo_dotenv
 
-_SEARCH_MODE_CHOICES = ("naive", "preloaded", "standard", "ideal")
+_SEARCH_MODE_CHOICES = ("naive", "preloaded", "standard", "ideal", "web")
 _MANAGEMENT_MODE_CHOICES = ("naive", "standard", "ideal")
 _RESULT_MODE_CHOICES = ("naive", "ideal")
 _COMPUTATION_MODE_CHOICES = ("standard", "ideal")
@@ -123,6 +123,13 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="search_lessguide",
         action="store_true",
         help="Hide search_ideal plan_exhausted guidance fields from tool payloads.",
+    )
+    common.add_argument(
+        "--no-s3",
+        "--no_s3",
+        dest="no_s3",
+        action="store_true",
+        help="Drop data-lake tools; download fetches search_web URLs. Requires --search web.",
     )
     common.add_argument(
         "--verbose",
@@ -332,6 +339,8 @@ def _build_run_mode_command(args: argparse.Namespace, cwd: Path) -> tuple[list[s
         command.append("--search-free")
     if args.search_lessguide:
         command.append("--search-lessguide")
+    if args.no_s3:
+        command.append("--no-s3")
     if args.verbose:
         command.append("--verbose")
 

@@ -11,6 +11,8 @@ that wires together:
 import concurrent.futures
 import json
 import os
+import resource
+import sys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -77,6 +79,7 @@ from sana_evaluation.tools.agent_tools_v2 import (
     set_sandbox_dir,
 )
 from sana_evaluation.tools.agent_tools import download
+from sana_evaluation.tools.external.web_fetch_tools import download_web
 from sana_evaluation.tools.external.plan_tools import plan
 from sana_evaluation.tools.external.ideal.plan_ideal import (
     inject_reasoning_chain_prompt,
@@ -124,8 +127,15 @@ except ImportError:
 # Mode composition (inlined in this module)
 # ---------------------------------------------------------------------------
 
-_MODES = {"naive", "standard", "ideal", "preloaded"}
-_RESULT_MODES = {"naive", "ideal"}
+_MODES = {"naive", "standard", "ideal", "preloaded", "web"}
+# search_results controls how much metadata rides along with each search hit --
+# minimal is dataset_id + s3_uri, rich adds the LLM description, the schema and a
+# data snippet. It is not one of the paper's axes, so it is named for what it
+# varies rather than borrowed from the naive/ideal tier vocabulary those axes use.
+# The old names remain accepted so existing scripts and result trees still
+# resolve.
+_RESULT_MODES = {"minimal", "rich"}
+_RESULT_MODE_ALIASES = {"naive": "minimal", "ideal": "rich"}
 _COMPUTATION_MODES = {"standard", "ideal"}
 
 
@@ -147,8 +157,9 @@ def _normalize_mode(value: Optional[str], default: str, label: str) -> str:
     return mode
 
 
-def _normalize_result_mode(value: Optional[str], default: str, label: str) -> str:
+def _normalize_result_mode(value: Optional[str], default: str = "rich", label: str = "search_results") -> str:
     mode = (value or default).strip().lower()
+    mode = _RESULT_MODE_ALIASES.get(mode, mode)
     if mode not in _RESULT_MODES:
         raise ValueError(
             f"Unsupported {label} mode '{value}'. Expected one of: {', '.join(sorted(_RESULT_MODES))}"
@@ -165,14 +176,77 @@ def _normalize_computation_mode(value: Optional[str], default: str = "standard")
     return mode
 
 
+def _validate_search_mode_combination(
+    *,
+    search_tool_mode: str,
+    search_results_mode: str,
+    profile_mode: str,
+    computation_tool_mode: str,
+    no_s3: bool = False,
+) -> None:
+    """Reject axis combinations that would make a web-search run unmeasurable.
+
+    Every ideal axis is backed by the task's runtime profile, which is authored
+    against data-lake sources. Combining any of them with web search produces a
+    run whose result is independent of what web search actually returned:
+
+    - computation_tool=ideal: execute_ideal/query_ideal return the authored
+      ``record.answer`` for a semantically matching record, and _records_for_target
+      falls back to *all* records when the submitted source matches none. The
+      agent is handed gold node answers no matter what it retrieved.
+    - profile=ideal: the gold reasoning chain is injected into the prompt.
+    - search_results=rich: reshape_search_payload expects lake-shaped result
+      fields that web results do not carry.
+    """
+    if no_s3 and search_tool_mode != "web":
+        raise ValueError(
+            "--no-s3 removes every data-lake tool, so it is only meaningful with "
+            f"--search_tool web (got '{search_tool_mode}'). Without lake tools and "
+            "without web search the agent has no retrieval path at all."
+        )
+
+    if search_tool_mode != "web":
+        return
+
+    conflicts = [
+        ("--computation_tool ideal", computation_tool_mode == "ideal"),
+        ("--profile ideal", profile_mode == "ideal"),
+        # Normalised here so the deprecated spelling (--search_results ideal) is
+        # caught too; callers may pass either.
+        ("--search_results rich",
+         _normalize_result_mode(search_results_mode, "rich", "search_results") == "rich"),
+    ]
+    active = [label for label, hit in conflicts if hit]
+    if active:
+        raise ValueError(
+            "search_tool=web cannot be combined with "
+            + ", ".join(active)
+            + ". Ideal axes are backed by data-lake runtime profiles, so the run's "
+            "outcome would not depend on what web search retrieved. Use "
+            "--search_results naive --profile naive|standard --computation_tool standard."
+        )
+
+
 def build_search(
     mode: str,
     *,
     task_context: Optional[Dict[str, Any]] = None,
     search_lessguide: bool = False,
+    fixed_k: Optional[int] = None,
 ) -> List[DecoratedFunctionTool]:
     """Return the base search tool surface for a mode."""
     search_mode = _normalize_mode(mode, "standard", "search_tool")
+
+    if search_mode == "web":
+        # Web search is not reshaped by the results axis (see search_wrapper._WEB_TOOLS),
+        # so --k has to be applied here rather than by build_results.
+        from sana_evaluation.tools.external.search_web_tools import (
+            search_web,
+            set_max_results,
+        )
+
+        set_max_results(fixed_k)
+        return [search_web]
 
     if search_mode == "naive":
         if not _NAIVE_SEARCH_TOOLS_AVAILABLE:
@@ -211,6 +285,7 @@ def build_management(
     task_context: Optional[Dict[str, Any]],
     profile_skills_enabled: bool = False,
     benchmark: str = "lakeqa",
+    no_s3: bool = False,
 ) -> tuple[str, List[Any], bool, bool, str]:
     """Return stable system prompt, management tools, behavior toggles, and a task-specific trailer.
 
@@ -235,7 +310,7 @@ def build_management(
     if management_mode == "naive":
         if benchmark_name == "kramabench":
             return compose_kramabench_prompt(search_tool_mode, include_skills=False), [], False, False, task_trailer
-        return compose_baseline_prompt(search_tool_mode), [], False, False, task_trailer
+        return compose_baseline_prompt(search_tool_mode, no_s3=no_s3), [], False, False, task_trailer
 
     if benchmark_name == "kramabench":
         prompt = compose_kramabench_prompt(
@@ -246,6 +321,7 @@ def build_management(
         prompt = compose_managed_prompt(
             search_tool_mode,
             include_skills=bool(profile_skills_enabled),
+            no_s3=no_s3,
         )
     if management_mode == "standard":
         return prompt, [plan], bool(profile_skills_enabled), True, task_trailer
@@ -270,6 +346,33 @@ def build_results(
     )
 
 
+_S3_DATA_TOOLS = (
+    "list_files", "peek_file", "peek_multiple", "read_file", "grep_file",
+    "parse_xml_records", "query_file",
+)
+
+
+def build_data_tools(*, no_s3: bool = False, search_tool_mode: Optional[str] = None) -> List[Any]:
+    """Return the core data-manipulation tool surface.
+
+    Without the lake, every S3-backed tool is dropped rather than left in place
+    to fail at call time, and ``download`` is swapped for the web fetcher. What
+    remains is fetch-then-compute.
+
+    Web search implies this. The lake tools reject an ``http(s)`` URL, and web
+    mode has no lake search to find lake sources with, so leaving them in place
+    only offers the agent tools that cannot work -- and would contradict the web
+    overlay, which tells it there is no data lake.
+    """
+    if no_s3 or _normalize_mode(search_tool_mode, "naive", "search_tool") == "web":
+        return [download_web, execute_code, submit_answer]
+    return [
+        list_files, peek_file, peek_multiple, read_file, grep_file,
+        parse_xml_records, query_file, download, execute_code,
+        submit_answer,
+    ]
+
+
 def build_mode_bundle(
     run_config: RunConfig,
     *,
@@ -278,7 +381,7 @@ def build_mode_bundle(
 ) -> ModeBundle:
     """Build final tools/prompt/plugin toggles from multi-axis modes."""
     search_tool_mode = _normalize_mode(run_config.search_tool_mode, "standard", "search_tool")
-    search_results_mode = _normalize_result_mode(run_config.search_results_mode, "naive", "search_results")
+    search_results_mode = _normalize_result_mode(run_config.search_results_mode, "rich", "search_results")
     profile_mode = _normalize_mode(
         run_config.profile_mode or run_config.profile_mode,
         "standard",
@@ -290,10 +393,19 @@ def build_mode_bundle(
     if search_tool_mode == "ideal" or profile_mode == "ideal" or computation_tool_mode == "ideal":
         set_ideal_profile_task_context(task_context or {})
 
+    _validate_search_mode_combination(
+        search_tool_mode=search_tool_mode,
+        search_results_mode=search_results_mode,
+        profile_mode=profile_mode,
+        computation_tool_mode=computation_tool_mode,
+        no_s3=bool(getattr(run_config, "no_s3", False)),
+    )
+
     raw_search_tools = build_search(
         search_tool_mode,
         task_context=task_context,
         search_lessguide=bool(run_config.search_lessguide),
+        fixed_k=run_config.search_k,
     )
     search_tools = build_results(
         search_results_mode,
@@ -306,6 +418,7 @@ def build_mode_bundle(
         task_context=task_context,
         profile_skills_enabled=bool(run_config.profile_skills_enabled),
         benchmark=benchmark,
+        no_s3=bool(getattr(run_config, "no_s3", False)),
     )
     system_prompt = inject_debug_prompt(system_prompt, run_config.debug_mode)
     system_prompt = _inject_computation_file_family_prompt(
@@ -625,11 +738,10 @@ class DataLakeAgent:
                 raise RuntimeError("Naive sparse search tools are unavailable (import failed).")
 
         # Core data-manipulation tools shared across all conditions
-        _data_tools = [
-            list_files, peek_file, peek_multiple, read_file, grep_file,
-            parse_xml_records, query_file, download, execute_code,
-            submit_answer,
-        ]
+        _data_tools = build_data_tools(
+            no_s3=bool(getattr(self.run_config, "no_s3", False)),
+            search_tool_mode=getattr(self.run_config, "search_tool_mode", None),
+        )
 
         task_trailer = ""
         if mode_overrides_enabled:
@@ -940,6 +1052,60 @@ class DataLakeAgent:
 # Worker function (must be module-level for ProcessPoolExecutor pickling)
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# Worker memory cap
+# ---------------------------------------------------------------------------
+
+# Three grid runs were killed by the kernel OOM killer; twice a single process
+# reached ~27.5 GB while the pool workers sat at 0.58 GB each on a 31 GB box.
+# The allocation is unidentified -- DuckDB's limit, result materialisation,
+# execute_ideal, the artifact caches, the JSON reader and the failing SQL were
+# each measured and ruled out.
+#
+# Capping the worker heap converts that kill into a MemoryError in one task,
+# which the existing handler reports as a task error, so the grid survives. It
+# also preserves the traceback naming the allocation site, which an OOM kill
+# destroys -- that is the evidence every previous diagnosis lacked.
+#
+# DISABLED BY DEFAULT -- RLIMIT_DATA is the wrong instrument here.
+#
+# On Linux it counts anonymous mmap *reservations*, i.e. virtual address space,
+# not resident memory. torch, DuckDB and lance reserve enormous arenas: the
+# OOM-killed process showed total-vm 179 GB against 27.5 GB resident, and a
+# healthy worker is not far off. An 8 GB cap therefore fires during module
+# import, before the task does any work.
+#
+# Measured: with the cap at 8 GB, up to 13 of 20 tasks per cell failed with
+# MemoryError inside `from ... import OpenAICachedUsageModel`. It corrupted
+# results rather than containing anything.
+#
+# Bounding resident memory needs a cgroup (systemd-run -p MemoryMax=...), not an
+# rlimit. Until that exists, supervise_grid.sh handles crashes instead. Set
+# SANA_WORKER_MEMORY_CAP_GB explicitly to re-enable, knowing the above.
+_DEFAULT_WORKER_MEMORY_CAP_GB = ""
+
+
+def _apply_worker_memory_cap() -> Optional[int]:
+    """Cap this process's heap. Returns the cap in bytes, or None if not applied."""
+    raw = os.getenv("SANA_WORKER_MEMORY_CAP_GB", _DEFAULT_WORKER_MEMORY_CAP_GB)
+    try:
+        gb = float(str(raw).strip())
+    except (TypeError, ValueError):
+        return None
+    if gb <= 0:
+        return None
+
+    cap = int(gb * 1024**3)
+    try:
+        resource.setrlimit(resource.RLIMIT_DATA, (cap, cap))
+    except (OSError, ValueError, AttributeError) as exc:
+        # A restricted sandbox may forbid this. Losing the cap is worse than
+        # nothing, but far better than refusing to run the task.
+        logger.warning("Could not apply worker memory cap: %s", exc)
+        return None
+    return cap
+
+
 def _run_task_worker(
     task: Dict[str, Any],
     task_index: int,
@@ -954,6 +1120,7 @@ def _run_task_worker(
     `agent_class` lets callers swap in a DataLakeAgent subclass (e.g. for SANA).
     Defaults to `DataLakeAgent`.
     """
+    _apply_worker_memory_cap()
     from sana_evaluation.helper.metrics import compute_exact_match, compute_f1_score, normalize_text
 
     log_model_name = agent_config.model_name or agent_config.model_id
@@ -1058,6 +1225,10 @@ def _run_task_worker(
         result_dict["input_tokens"]     = result.input_tokens
         result_dict["cached_input_tokens"] = result.cached_input_tokens
         result_dict["uncached_input_tokens"] = result.uncached_input_tokens
+        # Priced differently from both other kinds on some models, and only
+        # derivable from the other three by subtraction, which stops being
+        # reconstructable the moment any of them changes meaning.
+        result_dict["cache_write_input_tokens"] = result.cache_write_input_tokens
         result_dict["output_tokens"]    = result.output_tokens
         result_dict["total_tokens"]     = result.total_tokens
         result_dict["cost_usd"]         = result.cost_usd

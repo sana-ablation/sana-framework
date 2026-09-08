@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sana_analysis.running_analysis.trajectory_pair_analysis import (
+from sana_analysis.metrics.trajectory_pair_analysis import (
     IDEAL_MODE,
     PAIR_MODES,
     build_pair_rows,
@@ -223,7 +223,7 @@ def test_judge_pending_rows_writes_prompt_response_json_and_journal(tmp_path: Pa
         kwargs["last_message_path"].write_text(text, encoding="utf-8")
         return text
 
-    monkeypatch.setattr("sana_analysis.running_analysis.trajectory_pair_analysis.call_judge_model", fake_call_judge_model)
+    monkeypatch.setattr("sana_analysis.metrics.trajectory_pair_analysis.call_judge_model", fake_call_judge_model)
 
     judged = judge_pending_rows(
         [row],
@@ -460,7 +460,7 @@ def test_judge_pending_rows_retries_invalid_json_until_valid(tmp_path: Path, mon
         ]
     )
 
-    monkeypatch.setattr("sana_analysis.running_analysis.trajectory_pair_analysis.call_judge_model", lambda *_args, **_kwargs: next(responses))
+    monkeypatch.setattr("sana_analysis.metrics.trajectory_pair_analysis.call_judge_model", lambda *_args, **_kwargs: next(responses))
 
     judged = judge_pending_rows(
         [row],

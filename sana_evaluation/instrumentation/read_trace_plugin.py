@@ -2,7 +2,7 @@
 ReadTracePlugin — Strands Plugin that writes per-read-call JSONL traces.
 
 Records which datasets were opened via read tools so D_read can be computed
-in sana_analysis/running_analysis/discovery_metrics.py. Shares the same per-task JSONL file as
+in sana_analysis/metrics/discovery.py. Shares the same per-task JSONL file as
 TracePlugin (tool field distinguishes record types).
 
 Call set_trace_context(...) once per task before agent.run() — same call used

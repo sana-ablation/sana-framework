@@ -8,6 +8,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
+import os
+
+from botocore import UNSIGNED
+from botocore.config import Config as BotoConfig
+
 import aioboto3
 import ijson
 
@@ -22,6 +27,15 @@ class S3Config:
     # Concurrency
     max_threads: int = 50           # sync ThreadPoolExecutor workers
     max_async: int = 16             # async semaphore slots
+
+    # The source bucket is public. The eval-side tools read it unsigned
+    # (agent_tools.py builds a signature_version=UNSIGNED client), and this side
+    # must be able to as well: signing with absent or stale credentials turns a
+    # plain 404 into a 403, which reads as an access problem and sends you
+    # looking for credentials that were never needed.
+    unsigned: bool = field(
+        default_factory=lambda: os.getenv("SANA_S3_UNSIGNED", "1") not in ("0", "false", "False")
+    )
 
     # Size gate
     max_file_size_gb: float = 100.0
@@ -244,6 +258,13 @@ async def s3_fetch(s3, cfg: S3Config, bucket: str, key: str) -> str:
     return await s3_fetch_json(s3, cfg, bucket, key, file_size)
 
 
+def _client_kwargs(cfg: S3Config) -> dict:
+    """Unsigned access for the public source bucket; signed when asked."""
+    if getattr(cfg, "unsigned", False):
+        return {"config": BotoConfig(signature_version=UNSIGNED)}
+    return {}
+
+
 async def fetch_bytes(
     session: aioboto3.Session,
     cfg: S3Config,
@@ -253,7 +274,7 @@ async def fetch_bytes(
 ) -> bytes:
     """Fetch raw bytes from S3."""
     bucket, key = parse_s3_uri(uri)
-    async with session.client("s3", region_name=cfg.region) as s3:
+    async with session.client("s3", region_name=cfg.region, **_client_kwargs(cfg)) as s3:
         if end is None:
             resp = await s3.get_object(Bucket=bucket, Key=key)
         else:
@@ -269,14 +290,14 @@ async def fetch_whole(session: aioboto3.Session, cfg: S3Config, uri: str) -> str
 async def smart_fetch(session: aioboto3.Session, cfg: S3Config, uri: str) -> str:
     """Fetch an S3 object through size/family gates."""
     bucket, key = parse_s3_uri(uri)
-    async with session.client("s3", region_name=cfg.region) as s3:
+    async with session.client("s3", region_name=cfg.region, **_client_kwargs(cfg)) as s3:
         return await s3_fetch(s3, cfg, bucket, key)
 
 
 async def smart_fetch_whole(session: aioboto3.Session, cfg: S3Config, uri: str) -> str:
     """Fetch a whole object after only a size check."""
     bucket, key = parse_s3_uri(uri)
-    async with session.client("s3", region_name=cfg.region) as s3:
+    async with session.client("s3", region_name=cfg.region, **_client_kwargs(cfg)) as s3:
         file_size = await s3_head(s3, bucket, key)
         max_bytes = cfg.max_file_size_gb * 1024**3
         if file_size > max_bytes:

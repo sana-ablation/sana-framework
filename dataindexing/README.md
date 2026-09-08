@@ -82,3 +82,67 @@ from dataindexing.hybrid_search import api as _api
 The exported API includes `setup_hybrid()`, `setup_sparse()`,
 `hybrid_search()`, `hybrid_search_schema()`, `sparse_search()`,
 `sparse_search_schema()`, and `hybrid_search_with_reranker()`.
+
+## Benchmark artifacts
+
+The offline artifacts the ideal-mode tools read at runtime are built by one CLI:
+
+    python -m dataindexing.cli.benchmark_artifacts --benchmark lakeqa all
+
+Stages run in dependency order -- `manifest` -> `describe` ->
+`merge-descriptions` -> `check` -- each consuming the previous one's output.
+`snippets PARQUET` is separate because its input is a parquet path the caller
+supplies. Arguments after the stage name pass through and override the defaults
+derived from `--benchmark`.
+
+These moved here from `scripts/`, which now holds only experiment execution.
+
+## Deriving table schemas from the bucket
+
+`table_schemas_full.jsonl` as shipped has no generator anywhere -- it came from
+data.gov's catalogue, which is why it advertises a `.csv` and a `.json`
+distribution for a single stored object, and why it carries a `/v1/` path
+segment the bucket does not use. Every reader compensates for both.
+
+To derive schemas from what is actually stored:
+
+    python -m dataindexing.cli.build_table_schemas \
+        --prefix datagov/ \
+        --output benchmarks/lakeqa/tasks-mini/artifacts/table_schemas_bucket.jsonl
+
+It lists the bucket, skips metadata siblings (`catalog`, `dcat-us`, `headers`,
+licence text, Socrata ids, bare numbers), and for each remaining object sniffs
+the content family -- never the extension, since the crawler stored every
+payload as `.txt` whatever it held -- then derives columns and delimiter from
+the bytes. Output matches the shape `load_table_schemas` already reads.
+
+It runs 64 range GETs in flight and resumes: a `<output>.done` checkpoint
+records finished dataset slugs, so a run that dies part-way continues rather
+than repeating. `--concurrency 1` forces a strictly sequential pass; on a
+400-dataset check the two produced byte-identical output, in 8s and 61s. That
+holds because `asyncio.gather` preserves order and a dataset is checkpointed
+only once every one of its files has been read.
+
+What actually loses datasets is not ordering. A fetch error that is caught and
+returned as "no table here" is indistinguishable from an empty result, and the
+dataset is then checkpointed as done, so a transient S3 blip becomes a
+permanently missing schema. Reads are retried with backoff, unreadable files are
+reported, and a dataset with any unread file is deliberately left out of the
+checkpoint so a later run revisits it.
+
+Whether a first line is a header or a data row is decided by its shape: several
+short identifier-like fields. That is a heuristic, and the two cases it exists
+to handle are both in the corpus -- a list of `Surname, Given` author names
+reads as a consistent two-column table, and a real table's quoted WKT geometry
+spans lines and defeats delimiter-consistency checks. Measured against the
+datasets the benchmark tasks actually use, it derived a correct schema for 14 of
+the 14 that have an eligible file.
+
+A 3,000-dataset sample is what shaped the rest of the filtering, and each guard
+exists for something that sample turned up: ZIP archives stored under a `.txt`
+name whose compressed bytes parsed as a 2,180-column header, JSON-LD catalogue
+records, ArcGIS service descriptors, and single-key API envelopes. Large
+pretty-printed JSON is streamed with ijson, because a GeoJSON FeatureCollection
+never parses whole from a peek and would otherwise be lost. Yield on that sample
+is about 15% of datasets -- most of the rest hold citation or licence text
+rather than tables.

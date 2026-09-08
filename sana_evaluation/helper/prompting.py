@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _PROMPTS_DIR = _REPO_ROOT / "sana_evaluation" / "prompts"
-_MODES = {"naive", "standard", "ideal", "preloaded"}
+_MODES = {"naive", "standard", "ideal", "preloaded", "web"}
 _DEBUG_MODES = {"decision_notes"}
 
 _PLAN_AGENT_SKILL = "sana_evaluation/tools/skills/plan-agent"
@@ -53,13 +53,35 @@ def load_prompt_text(path: str | Path) -> str:
     return prompt_path.read_text()
 
 
+def search_overlay_name(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
+    """Return the overlay stem for a search mode.
+
+    ``no_s3`` is accepted and ignored: web mode has a single overlay now. It used
+    to select between an excerpts-only variant (web search, no fetch) and the
+    fetch-and-compute one; only the latter survives, and web mode implies it.
+    """
+    del no_s3
+    return _normalize_mode(search_tool_mode, "naive", "search_tool")
+
+
 def _compose_search_overlay_prompt(
     base_prompt_path: str | Path,
     search_tool_mode: Optional[str],
     *,
     benchmark: str = "lakeqa",
+    no_s3: bool = False,
 ) -> str:
-    mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
+    mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
+    # Web mode has no data lake, so it needs its own base rather than the lake
+    # one. The lake base advertises list_files/peek_file/read_file/query_file and
+    # devotes four sections to S3 file handling; appending the web overlay to it
+    # produced a prompt that listed eight tools the agent did not have and then
+    # said, two sections later, that they did not exist.
+    mode_specific_base = Path(base_prompt_path).with_name(
+        f"{Path(base_prompt_path).stem}_{mode}{Path(base_prompt_path).suffix}"
+    )
+    if mode_specific_base.is_file():
+        base_prompt_path = mode_specific_base
     base_prompt = load_prompt_text(base_prompt_path).rstrip()
     benchmark_name = (benchmark or "lakeqa").strip().lower()
     benchmark_overlay = _PROMPTS_DIR / f"search_{mode}_{benchmark_name}.txt"
@@ -96,10 +118,16 @@ def _remove_skill_references(prompt: str) -> str:
     return "\n".join(lines).strip()
 
 
-def compose_managed_prompt(search_tool_mode: Optional[str], *, include_skills: bool = True) -> str:
+def compose_managed_prompt(
+    search_tool_mode: Optional[str],
+    *,
+    include_skills: bool = True,
+    no_s3: bool = False,
+) -> str:
     prompt = _compose_search_overlay_prompt(
         _PROMPTS_DIR / "managed.txt",
         search_tool_mode,
+        no_s3=no_s3,
     )
     if not include_skills:
         prompt = _remove_skill_references(prompt)
@@ -117,10 +145,11 @@ def compose_kramabench_prompt(search_tool_mode: Optional[str], *, include_skills
     return prompt
 
 
-def compose_baseline_prompt(search_tool_mode: Optional[str]) -> str:
+def compose_baseline_prompt(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
     return _compose_search_overlay_prompt(
         _PROMPTS_DIR / "baseline.txt",
         search_tool_mode,
+        no_s3=no_s3,
     )
 
 
@@ -153,6 +182,8 @@ def discover_skill_path(search_tool_mode: Optional[str]) -> str:
     mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
     if mode == "preloaded":
         raise ValueError("Preloaded mode does not use a discover-data skill.")
+    if mode == "web":
+        raise ValueError("Web mode does not use a discover-data skill.")
     return _DISCOVER_SKILL_PATHS[mode]
 
 
@@ -161,7 +192,8 @@ def skill_paths_for_modes(
     profile_mode: Optional[str],
 ) -> List[str]:
     mode = _normalize_mode(search_tool_mode, "naive", "search_tool")
-    if mode == "preloaded":
+    # Neither mode does lake discovery, so neither gets a discover-data skill.
+    if mode in {"preloaded", "web"}:
         return [
             planning_skill_path(profile_mode),
             _QUERY_DATA_SKILL,

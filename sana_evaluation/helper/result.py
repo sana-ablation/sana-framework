@@ -74,7 +74,14 @@ class AgentResult:
 
     @property
     def uncached_input_tokens(self) -> int:
-        return max(0, self.input_tokens - self.cached_input_tokens)
+        # Cache writes are part of input_tokens but priced separately, so they
+        # must come out of the uncached remainder rather than be counted twice.
+        return max(0, self.input_tokens - self.cached_input_tokens
+                   - self.cache_write_input_tokens)
+
+    @property
+    def cache_write_input_tokens(self) -> int:
+        return self.metrics.accumulated_usage.get("cacheWriteInputTokens", 0) if self.metrics else 0
 
     @property
     def output_tokens(self) -> int:
@@ -102,9 +109,13 @@ class AgentResult:
             pricing = MODEL_PRICING.get(key)
             if pricing:
                 cached_input_rate = pricing.get("cache_read_input", pricing["input"])
+                # A model without a published write rate bills writes as input,
+                # which is what happened for every model before this existed.
+                write_rate = pricing.get("cache_write_input", pricing["input"])
                 return (
                     pricing["input"] * self.uncached_input_tokens / 1_000_000
                     + cached_input_rate * self.cached_input_tokens / 1_000_000
+                    + write_rate * self.cache_write_input_tokens / 1_000_000
                     + pricing["output"] * self.output_tokens / 1_000_000
                 )
 

@@ -100,7 +100,7 @@ class RunModeEvalTests(unittest.TestCase):
                 search_results=None,
                 profile=None,
             ),
-            ("standard", "naive", "standard", "standard"),
+            ("standard", "rich", "standard", "standard"),
         )
 
     def test_resolve_mode_axes_honors_explicit_override(self):
@@ -110,7 +110,7 @@ class RunModeEvalTests(unittest.TestCase):
                 search_results=None,
                 profile=None,
             ),
-            ("naive", "naive", "standard", "standard"),
+            ("naive", "rich", "standard", "standard"),
         )
 
     def test_variant_condition_label_uses_explicit_mode_names(self):

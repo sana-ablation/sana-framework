@@ -6,6 +6,7 @@ model/API call, so missing or corrupt dependencies fail loudly and cheaply.
 
 from __future__ import annotations
 
+import os
 import sys
 import json
 from dataclasses import dataclass
@@ -40,17 +41,21 @@ def _prompt_files_for_modes(
     profile_mode: str,
     *,
     benchmark: str = "lakeqa",
+    no_s3: bool = False,
 ) -> List[Path]:
+    from sana_evaluation.helper.prompting import search_overlay_name
+
+    overlay_mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
     if benchmark == "kramabench":
         base_path = _PROMPTS_DIR / "managed_kramabench.txt"
-        overlay_name = f"search_{search_tool_mode}_kramabench.txt"
+        overlay_name = f"search_{overlay_mode}_kramabench.txt"
         overlay_path = _PROMPTS_DIR / overlay_name
         if not overlay_path.is_file():
-            overlay_path = _PROMPTS_DIR / f"search_{search_tool_mode}.txt"
+            overlay_path = _PROMPTS_DIR / f"search_{overlay_mode}.txt"
         return [base_path, overlay_path]
 
     base_name = "baseline.txt" if profile_mode == "naive" else "managed.txt"
-    overlay_name = f"search_{search_tool_mode}.txt"
+    overlay_name = f"search_{overlay_mode}.txt"
     return [_PROMPTS_DIR / base_name, _PROMPTS_DIR / overlay_name]
 
 
@@ -68,6 +73,41 @@ def _check_lance_db(path: Path) -> PreflightCheck:
     if not lakeqa.exists():
         return PreflightCheck(label, False, f"missing table: {lakeqa}")
     return PreflightCheck(label, True, f"found: {lakeqa}")
+
+
+def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str, no_s3: bool = False) -> PreflightCheck:
+    """Fail fast on axis combos that would make the run unmeasurable.
+
+    Without this the guard in build_mode_bundle only fires inside each task
+    worker, so a bad combination burns one crash per task instead of one upfront.
+    """
+    from sana_evaluation.agent_with_mode import _validate_search_mode_combination
+
+    label = f"mode_combination:search={st}"
+    try:
+        _validate_search_mode_combination(
+            search_tool_mode=st,
+            search_results_mode=sr,
+            profile_mode=pm,
+            computation_tool_mode=ct,
+            no_s3=no_s3,
+        )
+    except ValueError as exc:
+        return PreflightCheck(label, False, str(exc))
+    return PreflightCheck(
+        label, True, f"search={st} results={sr} profile={pm} compute={ct} no_s3={no_s3}"
+    )
+
+
+def _check_web_search_credentials() -> PreflightCheck:
+    label = "web_search:PARALLEL_API_KEY"
+    if os.getenv("PARALLEL_API_KEY"):
+        return PreflightCheck(label, True, "found")
+    return PreflightCheck(
+        label,
+        False,
+        "PARALLEL_API_KEY is not set; search_tool=web cannot reach the Parallel Search API.",
+    )
 
 
 def _check_desc_cache_for_enrichment() -> PreflightCheck:
@@ -403,7 +443,13 @@ def run_preflight(
 
     checks: List[PreflightCheck] = []
 
-    for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark):
+    no_s3 = bool(getattr(run_config, "no_s3", False))
+    checks.append(_check_search_mode_combination(st, sr, pm, ct, no_s3))
+
+    if st == "web":
+        checks.append(_check_web_search_credentials())
+
+    for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark, no_s3=no_s3):
         checks.append(_check_file_exists(prompt_path, f"prompt:{prompt_path.name}"))
 
     if st in {"standard", "naive"}:

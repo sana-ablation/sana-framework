@@ -52,3 +52,4 @@ elasticsearch>=8.0
 # analysis figures
 matplotlib>=3.8
 seaborn>=0.13
+anthropic==1.4.0

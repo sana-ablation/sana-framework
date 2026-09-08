@@ -7,6 +7,7 @@ results/
 results*/
 **/__pycache__/
 *.pyc
+*.egg-info/
 lance_data/
 setup_credentials.sh
 analysis_results/
@@ -22,7 +23,7 @@ legacy/
 legacy*/
 old_semantic/
 *.pem
-paper/
+/paper/
 paper_figure_review/
 lance_table_descriptions
 analysis_results_*
@@ -41,3 +42,14 @@ reference_papers
 other-benchmarks
 extras/
 pytest*
+experiments/README.md
+
+# Experiment records are not part of the framework. Individual sweeps -- their
+# drivers, task-set copies, plans, result trees and paper output -- are working
+# records of one study, not something a borrower of this repo needs or can use.
+# The reusable half lives in scripts/run_experiment.sh, which drives whatever
+# experiments/<name>/inputs/run.sh happens to be on disk.
+experiments/
+
+# Default --review-path output of sana_analysis/answer_failure/migrate_taxonomy.py
+answer_failure_taxonomy_migration_review.csv

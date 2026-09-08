@@ -16,6 +16,7 @@ Create a concise bullet-point summary that:
 - Preserves datasets inspected, file paths, SQL queries, and important tool findings
 - Preserves verified facts, failed approaches, and important constraints
 - Preserves the best current answer candidate and remaining uncertainty
+- Preserves the most recent recorded plan verbatim, under its original heading
 - Omits conversational filler and meta commentary
 - Uses precise technical language
 

@@ -70,5 +70,5 @@ def test_format_artifact_report_includes_run_and_analysis_commands(tmp_path):
 
     assert "Kramabench" in report
     assert "python -m sana_evaluation.setup_run smoke --benchmark kramabench" in report
-    assert "python -m sana_analysis.run_mode_analysis_semantic" in report
+    assert "python -m sana_analysis.run_mode_analysis" in report
     assert "benchmarks/kramabench/tasks-mini/tasks" in report

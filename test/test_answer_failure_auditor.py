@@ -6,13 +6,13 @@ from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_analysis.running_analysis.answer_failure_validation import (
+from sana_analysis.answer_failure.validation import (
     VALIDATION_NOTES_FIELD,
     VALIDATION_STATUS_FIELD,
     validate_answer_failure_root,
     validate_answer_failure_row,
 )
-from sana_analysis.report_generator.build_answer_failure_report import build_answer_failure_report
+from sana_analysis.answer_failure.report import build_answer_failure_report
 
 
 class TestAnswerFailureAuditor(unittest.TestCase):

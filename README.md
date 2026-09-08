@@ -130,22 +130,22 @@ HotpotQA generated-conversion example:
 python sana-profiling/skills/benchmark-lakeqa-conversion-auditor/scripts/sample_benchmark_artifacts.py \
   other-benchmarks/tasks-hotpotqa-mini \
   --limit 10 \
-  > sana-profiling/runs/hotpotqa-generated-conversion/sampled-artifacts.json
+  > sana-profiling/examples/hotpotqa-conversion/sampled-artifacts.json
 
 python sana-profiling/skills/benchmark-lakeqa-skill-scaffolder/scripts/scaffold_benchmark_skill.py \
-  sana-profiling/runs/hotpotqa-generated-conversion/hotpotqa-lakeqa-conversion-report.md \
+  sana-profiling/examples/hotpotqa-conversion/hotpotqa-lakeqa-conversion-report.md \
   --benchmark hotpotqa \
-  --output-root sana-profiling/runs/hotpotqa-generated-conversion/generated-skills \
+  --output-root sana-profiling/examples/hotpotqa-conversion/generated-skills \
   --force
 ```
 
 That run generated a `hotpotqa-lakeqa-transform` skill and applied it to five
 sampled imports. The dry-run output is under:
 
-- `sana-profiling/runs/hotpotqa-generated-conversion/generated-skills/`
-- `sana-profiling/runs/hotpotqa-generated-conversion/converted/benchmarks/hotpotqa/tasks-mini/tasks/`
-- `sana-profiling/runs/hotpotqa-generated-conversion/converted/benchmarks/hotpotqa/tasks-mini/runtime-profiles/`
-- `sana-profiling/runs/hotpotqa-generated-conversion/validation.json`
+- `sana-profiling/examples/hotpotqa-conversion/generated-skills/`
+- `sana-profiling/examples/hotpotqa-conversion/converted/benchmarks/hotpotqa/tasks-mini/tasks/`
+- `sana-profiling/examples/hotpotqa-conversion/converted/benchmarks/hotpotqa/tasks-mini/runtime-profiles/`
+- `sana-profiling/examples/hotpotqa-conversion/validation.json`
 
 Maintained benchmark examples live under:
 
@@ -275,7 +275,7 @@ flowchart LR
 LakeQA semantic mode analysis:
 
 ```bash
-python -m sana_analysis.run_mode_analysis_semantic \
+python -m sana_analysis.run_mode_analysis \
   --results-dir results_semantic/modes \
   --base-results-dir results/modes \
   --traces-dir results/traces/modes \
@@ -286,7 +286,7 @@ python -m sana_analysis.run_mode_analysis_semantic \
 Kramabench semantic mode analysis:
 
 ```bash
-python -m sana_analysis.run_mode_analysis_semantic \
+python -m sana_analysis.run_mode_analysis \
   --results-dir results-kramabench_semantic/modes \
   --base-results-dir results-kramabench/modes \
   --traces-dir results-kramabench/traces/modes \
