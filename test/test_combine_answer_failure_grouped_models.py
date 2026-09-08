@@ -328,6 +328,101 @@ class TestCanonicalConditionMatching(unittest.TestCase):
             self.assertIsInstance(axes, dict)
             self.assertEqual(set(axes), {"search", "plan", "compute"})
 
+    def test_condition_group_counts_groups_canonical_variants(self):
+        """Integration test: condition_group_counts must correctly group modern canonical directory names."""
+        # Create rows with canonical directory names (the real names on disk)
+        rows = [
+            # No Plan
+            {
+                "task_id": "task_1",
+                "model_variant": "openai_gpt-5-mini",
+                "mode_variant": "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Wrong source target failures",
+            },
+            # Standard Plan
+            {
+                "task_id": "task_2",
+                "model_variant": "openai_gpt-5-mini",
+                "mode_variant": "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Wrong source target failures",
+            },
+            # BM25
+            {
+                "task_id": "task_3",
+                "model_variant": "openai_gpt-5.4-nano",
+                "mode_variant": "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Execution/computation failures",
+            },
+            # Pneuma Hybrid
+            {
+                "task_id": "task_4",
+                "model_variant": "openai_gpt-5.4-nano",
+                "mode_variant": "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Execution/computation failures",
+            },
+            # Standard Computation
+            {
+                "task_id": "task_5",
+                "model_variant": "gpt-5-mini",
+                "mode_variant": "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Task/planning failures",
+            },
+            # Ideal
+            {
+                "task_id": "task_6",
+                "model_variant": "gpt-5-mini",
+                "mode_variant": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Task/planning failures",
+            },
+            # Preloaded
+            {
+                "task_id": "task_7",
+                "model_variant": "openai_gpt-5-mini",
+                "mode_variant": "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Finalization failures",
+            },
+            # Invalid variant that should be excluded
+            {
+                "task_id": "task_8",
+                "model_variant": "openai_gpt-5-mini",
+                "mode_variant": "search_bogus__plan_bogus__compute_bogus__results_rich__k5__skills_off",
+                "answer_failure_figure_group": "Tool blocker failures",
+            },
+        ]
+
+        from sana_analysis.answer_failure.combine_grouped_models import (
+            CONDITION_FIGURE_ORDER,
+        )
+
+        active_conditions, ordered_groups, counts = condition_group_counts(rows)
+
+        # Verify all seven conditions are present
+        self.assertEqual(len(active_conditions), 7)
+
+        # Verify order matches CONDITION_ORDER
+        expected_labels = [label for label, _axes in CONDITION_FIGURE_ORDER]
+        actual_labels = [label for label, _variant in active_conditions]
+        self.assertEqual(actual_labels, expected_labels)
+
+        # Verify actual canonical names are returned
+        expected_pairs = [
+            ("No Plan", "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off"),
+            ("Standard Plan", "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off"),
+            ("BM25", "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off"),
+            ("Pneuma Hybrid", "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off"),
+            ("Standard Computation", "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off"),
+            ("Ideal", "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"),
+            ("Preloaded", "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off"),
+        ]
+        self.assertEqual(active_conditions, expected_pairs)
+
+        # Verify counts are non-empty
+        self.assertGreater(len(ordered_groups), 0)
+
+        # Verify invalid variant was excluded (no counts for it)
+        for (variant, _), group_counts in counts.items():
+            self.assertNotIn("search_bogus", variant)
+
 
 if __name__ == "__main__":
     unittest.main()
