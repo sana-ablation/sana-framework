@@ -22,7 +22,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_n_results_i_plann_k5_skills_off",
                 "search_tool": "naive",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "naive",
                 "computation_tool": "standard",
                 "n": 135,
@@ -36,7 +36,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_d_results_i_pland_k5_skills_off",
                 "search_tool": "standard",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "standard",
                 "computation_tool": "standard",
                 "n": 135,
@@ -50,7 +50,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_i_results_i_plani_computei_k5_skills_off",
                 "search_tool": "ideal",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "ideal",
                 "computation_tool": "ideal",
                 "n": 135,
@@ -354,6 +354,55 @@ class ExportPaperResultsTests(unittest.TestCase):
         self.assertIn("Ret Tool Call", latex)
         self.assertIn("Acc Tool Call", latex)
         self.assertNotIn("Compute naive", latex)
+
+
+class TestCanonicalExportAxes(unittest.TestCase):
+    CANONICAL = "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+
+    def test_canonical_variant_resolves_every_axis(self):
+        from sana_analysis.paper.export import _parse_variant_axes
+
+        axes = _parse_variant_axes(self.CANONICAL)
+        self.assertEqual(axes["search_tool"], "ideal")
+        self.assertEqual(axes["agent_management"], "ideal")
+        self.assertEqual(axes["computation_tool"], "ideal")
+        self.assertEqual(axes["search_results"], "rich")
+
+    def test_gen1_literal_resolves_every_axis(self):
+        from sana_analysis.paper.export import _parse_variant_axes
+
+        axes = _parse_variant_axes("search_i_results_i_plani_computei_k5_skills_off")
+        self.assertEqual(axes["search_tool"], "ideal")
+        self.assertEqual(axes["agent_management"], "ideal")
+        self.assertEqual(axes["computation_tool"], "ideal")
+        self.assertEqual(axes["search_results"], "rich")
+
+    def test_standard_compute_is_not_reported_as_ideal(self):
+        from sana_analysis.paper.export import _parse_variant_axes
+
+        axes = _parse_variant_axes(
+            "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off"
+        )
+        self.assertEqual(axes["computation_tool"], "standard")
+
+    def test_canonical_mode_specs_spell_the_results_axis_as_rich(self):
+        from sana_analysis.paper.export import CANONICAL_MODE_SPECS
+
+        for _mode, axes in CANONICAL_MODE_SPECS:
+            self.assertEqual(axes["search_results"], "rich")
+
+    def test_every_canonical_mode_spec_matches_a_real_directory(self):
+        from sana_analysis.paper.export import CANONICAL_MODE_SPECS, _parse_variant_axes
+
+        directories = {
+            "Naive": "search_naive__plan_naive__compute_standard__results_rich__k5__skills_off",
+            "Standard": "search_standard__plan_standard__compute_standard__results_rich__k5__skills_off",
+            "Ideal": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        }
+        for mode, expected_axes in CANONICAL_MODE_SPECS:
+            observed = _parse_variant_axes(directories[mode])
+            for field, value in expected_axes.items():
+                self.assertEqual(observed[field], value, f"{mode}.{field}")
 
 
 if __name__ == "__main__":

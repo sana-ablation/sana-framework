@@ -11,6 +11,8 @@ import shutil
 from pathlib import Path
 from typing import Iterable, Mapping
 
+from sana_analysis.variants import try_parse_variant
+
 
 MODEL_SPECS = [
     ("gpt-5.4-nano", ("gpt-5.4-nano", "openai_gpt-5.4-nano", "openai/gpt-5.4-nano")),
@@ -38,20 +40,20 @@ PLANNED_CONDITIONS = [
 CANONICAL_MODE_SPECS = [
     (
         "Naive",
-        {"agent_management": "naive", "search_tool": "naive", "search_results": "ideal", "computation_tool": "standard"},
+        {"agent_management": "naive", "search_tool": "naive", "search_results": "rich", "computation_tool": "standard"},
     ),
     (
         "Standard",
         {
             "agent_management": "standard",
             "search_tool": "standard",
-            "search_results": "ideal",
+            "search_results": "rich",
             "computation_tool": "standard",
         },
     ),
     (
         "Ideal",
-        {"agent_management": "ideal", "search_tool": "ideal", "search_results": "ideal", "computation_tool": "ideal"},
+        {"agent_management": "ideal", "search_tool": "ideal", "search_results": "rich", "computation_tool": "ideal"},
     ),
 ]
 
@@ -84,8 +86,6 @@ MODE_DISPLAY = {
     "ideal": "Ideal",
     "preloaded": "Preloaded",
 }
-
-LETTER_TO_MODE = {"n": "naive", "d": "standard", "s": "standard", "i": "ideal", "p": "preloaded"}
 
 SUPPORTING_FIGURES = {
     "results_cost_vs_semantic.pdf": ("cost_vs_semantic.pdf", "fig6_cost_vs_semantic.pdf"),
@@ -122,33 +122,21 @@ def _short_model_name(model: str) -> str:
 
 
 def _parse_variant_axes(variant: str) -> dict[str, str | None]:
-    axes: dict[str, str | None] = {
-        "agent_management": None,
-        "search_tool": None,
-        "computation_tool": "standard",
-        "search_results": None,
+    """Decode a variant name into this module's axis field names."""
+    decoded = try_parse_variant(str(variant))
+    if decoded is None:
+        return {
+            "agent_management": None,
+            "search_tool": None,
+            "computation_tool": "standard",
+            "search_results": None,
+        }
+    return {
+        "agent_management": decoded.plan,
+        "search_tool": decoded.search,
+        "computation_tool": decoded.compute,
+        "search_results": decoded.results,
     }
-    parts = variant.split("_")
-    for idx, token in enumerate(parts):
-        if token == "search" and idx + 1 < len(parts):
-            axes["search_tool"] = LETTER_TO_MODE.get(parts[idx + 1])
-        elif token == "results" and idx + 1 < len(parts):
-            axes["search_results"] = LETTER_TO_MODE.get(parts[idx + 1])
-        elif token.startswith("plan") and len(token) > 4:
-            axes["agent_management"] = LETTER_TO_MODE.get(token[4:])
-        elif token.startswith("compute") and len(token) > 7:
-            axes["computation_tool"] = LETTER_TO_MODE.get(token[7:])
-        elif len(token) == 2 and token[0] in {"s", "r", "p", "c"}:
-            mode = LETTER_TO_MODE.get(token[1])
-            if token[0] == "s":
-                axes["search_tool"] = mode
-            elif token[0] == "r":
-                axes["search_results"] = mode
-            elif token[0] == "p":
-                axes["agent_management"] = mode
-            elif token[0] == "c":
-                axes["computation_tool"] = mode
-    return axes
 
 
 def _axes_for_summary_row(row: Mapping[str, object]) -> dict[str, str | None]:
