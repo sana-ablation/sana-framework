@@ -7,6 +7,12 @@ from contextlib import ExitStack
 from pathlib import Path
 from unittest import mock
 
+# lake.py reads its detection substrate and bucket constants from dataindexing.
+# Import them for real up front: the botocore stub installed below would break
+# aioboto3's import inside dataindexing.sources.s3.
+import dataindexing.formats  # noqa: F401
+import dataindexing.sources.s3  # noqa: F401
+
 
 _MODULE_NAMES = [
     "strands",
@@ -21,8 +27,6 @@ _MODULE_NAMES = [
     "sana_evaluation.runtime",
     "sana_evaluation.runtime.peek_profile",
     "sana_evaluation.tools",
-    "sana_evaluation.tools.helper",
-    "sana_evaluation.tools.helper.detect",
     "sana_evaluation.tools.lake",
 ]
 
@@ -89,14 +93,6 @@ def _load_lake_module():
     tools_package.__path__ = [str(repo_root / "sana_evaluation" / "tools")]
     sys.modules["sana_evaluation.tools"] = tools_package
 
-    helper_package = types.ModuleType("sana_evaluation.tools.helper")
-    helper_package.__path__ = [str(repo_root / "sana_evaluation" / "tools" / "helper")]
-    sys.modules["sana_evaluation.tools.helper"] = helper_package
-
-    _load_module(
-        "sana_evaluation.tools.helper.detect",
-        repo_root / "sana_evaluation" / "tools" / "helper" / "detect.py",
-    )
     module = _load_module(
         "sana_evaluation.tools.lake",
         repo_root / "sana_evaluation" / "tools" / "lake.py",

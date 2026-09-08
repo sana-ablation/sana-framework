@@ -5,6 +5,12 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+# lake.py reads its detection substrate and bucket constants from dataindexing.
+# Import them for real up front: the botocore stub installed below would break
+# aioboto3's import inside dataindexing.sources.s3.
+import dataindexing.formats  # noqa: F401
+import dataindexing.sources.s3  # noqa: F401
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -21,8 +27,6 @@ _MODULE_NAMES = [
     "sana_evaluation.runtime",
     "sana_evaluation.runtime.peek_profile",
     "sana_evaluation.tools",
-    "sana_evaluation.tools.helper",
-    "sana_evaluation.tools.helper.detect",
     "sana_evaluation.tools.lake",
 ]
 
@@ -86,16 +90,10 @@ def _install_import_stubs():
     for name, path in (
         ("sana_evaluation", REPO_ROOT / "sana_evaluation"),
         ("sana_evaluation.tools", REPO_ROOT / "sana_evaluation" / "tools"),
-        ("sana_evaluation.tools.helper", REPO_ROOT / "sana_evaluation" / "tools" / "helper"),
     ):
         package = types.ModuleType(name)
         package.__path__ = [str(path)]
         sys.modules[name] = package
-
-    _load_module(
-        "sana_evaluation.tools.helper.detect",
-        REPO_ROOT / "sana_evaluation" / "tools" / "helper" / "detect.py",
-    )
 
     return previous
 

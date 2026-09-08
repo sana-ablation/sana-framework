@@ -5,7 +5,7 @@ Interactive human-agent REPL.
 Lets you manually run a benchmark task using the same tools the LLM agent has:
   search, search_keyword, list_files, peek_file, peek_multiple, read_file,
   grep_file, query_file, download, execute_code, submit_answer
-  sparse, hybrid, graph  (search backends)
+  sparse, hybrid  (search backends)
 
 Usage:
     python human_agent.py                        # pick a random task
@@ -289,27 +289,6 @@ def cmd_search_hybrid():
     print(_short(result))
 
 
-def cmd_search_graph():
-    query = input("  query: ").strip()
-    if not query:
-        print("  [!] Query required.")
-        return
-    try:
-        # Legacy optional backend; not present in all checkouts.
-        from sana_evaluation.tools.external.search_tools import search_graph
-    except Exception as e:
-        print(
-            "  [ERROR] graph backend unavailable "
-            "(legacy module sana_evaluation.tools.external.search_tools is missing): "
-            f"{e}"
-        )
-        return
-    t0 = time.time()
-    result = search_graph(query=query)
-    print(f"  [{time.time()-t0:.1f}s]")
-    print(_short(result))
-
-
 # ---------------------------------------------------------------------------
 # Command dispatch
 # ---------------------------------------------------------------------------
@@ -328,7 +307,6 @@ COMMANDS = {
     "sandbox":  ("show sandbox info / downloaded files",           cmd_sandbox_info),
     "sparse":   ("search_sparse — BM25/SPLADE sparse search",      cmd_search_sparse),
     "hybrid":   ("search_hybrid — hybrid dense+sparse + rerank",   cmd_search_hybrid),
-    "graph":    ("search_graph — knowledge-graph semantic search",  cmd_search_graph),
 }
 
 

@@ -13,7 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from strands import tool
 from strands.tools.decorator import DecoratedFunctionTool
-from sana_evaluation.tools.external.description_rows import reject_forbidden_description_row
+from dataindexing.descriptions.rows import reject_forbidden_description_row
 
 _QUERY_TOOLS = {"search_value", "search_schema", "search_reranked", "search_ideal"}
 _PREFIX_TOOLS = {"search_prefix"}

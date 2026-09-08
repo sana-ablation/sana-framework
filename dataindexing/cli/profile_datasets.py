@@ -29,19 +29,22 @@ except Exception:  # pragma: no cover
     def tqdm(iterable=None, **_kwargs):
         return iterable if iterable is not None else _NullTqdm()
 
-from sana_evaluation.tools.lake import (
-    BUCKET,
-    REGION,
-    _build_s3_client,
-    _build_xml_preview,
-    _local_xml_name,
-    _normalize_xml_record_tag,
-    _xml_record_to_row,
+from dataindexing.descriptions.rows import reject_forbidden_description_row
+from dataindexing.formats import (
+    build_xml_preview,
+    detect_family,
+    local_xml_name,
+    normalize_xml_record_tag,
+    xml_record_to_row,
 )
-from sana_evaluation.tools.external.description_rows import reject_forbidden_description_row
-from sana_evaluation.tools.helper.detect import detect_family
+from dataindexing.sources.s3 import DEFAULT_BUCKET, REGION, build_s3_client
 
 load_dotenv()
+
+# Same resolution the agent runtime applies: LAKEQA_BUCKET wins, else the
+# LakeQA default. Read here rather than imported so dataindexing stays free of
+# any sana_evaluation import.
+BUCKET = os.getenv("LAKEQA_BUCKET", DEFAULT_BUCKET)
 
 
 class _NullTqdm:
@@ -242,11 +245,11 @@ def _parse_s3_uri(uri: str) -> Tuple[str, str]:
 def _build_s3_client_for_runtime():
     requested = (os.getenv("S3_ACCESS_MODE", "auto") or "auto").strip().lower()
     if requested in {"unsigned", "public", "anonymous", "anon", "no-sign-request"}:
-        return _build_s3_client(unsigned=True)
+        return build_s3_client(unsigned=True)
     try:
-        return _build_s3_client(unsigned=False)
+        return build_s3_client(unsigned=False)
     except Exception:
-        return _build_s3_client(unsigned=True)
+        return build_s3_client(unsigned=True)
 
 
 def _head_size_bytes(source_ref: str) -> int:
@@ -1046,10 +1049,10 @@ def _iter_xml_rows(source_ref: str, record_tag: str) -> Tuple[List[Dict[str, str
         else:
             body = Path(source_ref).open("rb")
         for _event, elem in ET.iterparse(body, events=("end",)):
-            if _local_xml_name(elem.tag) != record_tag:
+            if local_xml_name(elem.tag) != record_tag:
                 continue
             scanned += 1
-            row = _xml_record_to_row(elem)
+            row = xml_record_to_row(elem)
             if row:
                 rows.append(row)
             elem.clear()
@@ -1091,9 +1094,9 @@ def _build_xml_profile(
     snippet_cache: Dict[str, str],
 ) -> Dict[str, Any]:
     text = _read_prefix_bytes(source_ref, _SNIFF_BYTES).decode("utf-8", errors="replace")
-    preview = _build_xml_preview(text, size_bytes)
+    preview = build_xml_preview(text, size_bytes)
     candidates = preview.get("xml_record_tag_candidates") or []
-    record_tag = _normalize_xml_record_tag(candidates[0]) if candidates else None
+    record_tag = normalize_xml_record_tag(candidates[0]) if candidates else None
     if not record_tag:
         profile = _build_non_tabular_profile(
             slug=slug,

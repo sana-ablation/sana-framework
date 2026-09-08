@@ -31,31 +31,37 @@ from io import StringIO
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Callable, Tuple
 
-import boto3
 import duckdb
 import requests
-from botocore import UNSIGNED
-from botocore.config import Config
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from strands import tool
 
 from sana_evaluation.runtime.peek_profile import load_dataset_profile, select_dataset_profile_fields
 
-from .helper.detect import detect_family, should_skip
+from dataindexing.formats import (
+    build_xml_preview,
+    detect_family,
+    local_xml_name,
+    normalize_xml_record_tag,
+    should_skip,
+    xml_record_to_row,
+)
+from dataindexing.sources.s3 import (
+    BENCHMARK_BUCKETS,
+    DEFAULT_BUCKET,
+    FOLDERS,
+    REGION,
+    build_s3_client,
+)
 
 # Load AWS credentials from .env
 load_dotenv()
 
-# Configuration
-DEFAULT_BUCKET = "lakeqa-yc4103-datalake"
-BENCHMARK_BUCKETS = {
-    "lakeqa": DEFAULT_BUCKET,
-    "kramabench": "sana-kramabench",
-}
+# The active bucket. Unlike the imported constants it is mutable runtime state
+# the agent owns: configure_benchmark() rebinds it (and drops the cached S3
+# clients) when a run switches benchmark.
 BUCKET = os.getenv("LAKEQA_BUCKET", DEFAULT_BUCKET)
-FOLDERS = ["wikipedia", "datagov"]
-REGION = "us-east-1"
 
 # Sandbox directory on main disk (500G) instead of /tmp (63G tmpfs)
 SANDBOX_BASE_DIR = Path(__file__).resolve().parent.parent.parent / ".sandbox"
@@ -206,42 +212,17 @@ def set_sandbox_dir(path: Path) -> None:
     _SANDBOX_DIR = _SANDBOX_OVERRIDE
 
 
-def _build_s3_client(unsigned: bool):
-    """Build an S3 client in signed or unsigned mode."""
-    s3_config = {"addressing_style": "path"}
-    if unsigned:
-        return boto3.client(
-            "s3",
-            region_name=REGION,
-            config=Config(signature_version=UNSIGNED, s3=s3_config),
-        )
-
-    kwargs: Dict[str, Any] = {
-        "region_name": REGION,
-        "config": Config(s3=s3_config),
-    }
-    access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    session_token = os.getenv("AWS_SESSION_TOKEN")
-    if access_key and secret_key:
-        kwargs["aws_access_key_id"] = access_key
-        kwargs["aws_secret_access_key"] = secret_key
-        if session_token:
-            kwargs["aws_session_token"] = session_token
-    return boto3.client("s3", **kwargs)
-
-
 def _get_signed_s3_client():
     global _S3_SIGNED_CLIENT
     if _S3_SIGNED_CLIENT is None:
-        _S3_SIGNED_CLIENT = _build_s3_client(unsigned=False)
+        _S3_SIGNED_CLIENT = build_s3_client(unsigned=False)
     return _S3_SIGNED_CLIENT
 
 
 def _get_unsigned_s3_client():
     global _S3_UNSIGNED_CLIENT
     if _S3_UNSIGNED_CLIENT is None:
-        _S3_UNSIGNED_CLIENT = _build_s3_client(unsigned=True)
+        _S3_UNSIGNED_CLIENT = build_s3_client(unsigned=True)
     return _S3_UNSIGNED_CLIENT
 
 
@@ -1565,20 +1546,6 @@ _MAX_OBJECT_SIZE_RE = re.compile(
     r'"maximum_object_size".*?bytes\s*exceeded.*?\(>(\d+)\s*bytes\)',
     re.DOTALL,
 )
-_XML_NAMESPACE_RE = re.compile(r'\bxmlns(?::([A-Za-z_][\w.-]*))?=["\']([^"\']+)["\']')
-_XML_SIMPLE_FIELD_RE = re.compile(
-    r'<(?:[\w.-]+:)?SimpleField\b[^>]*\bname=["\']([^"\']+)["\']',
-    re.IGNORECASE,
-)
-_XML_SIMPLE_DATA_RE = re.compile(
-    r'<(?:[\w.-]+:)?SimpleData\b[^>]*\bname=["\']([^"\']+)["\']',
-    re.IGNORECASE,
-)
-_XML_OPEN_TAG_RE = re.compile(r"<(?![!?/])([A-Za-z_][\w:.-]*)\b")
-_XML_LEADING_NOISE_RE = re.compile(
-    r"^(?:<\?xml.*?\?>\s*)?(?:<!--.*?-->\s*)*(?:<!DOCTYPE.*?>\s*)*",
-    re.DOTALL | re.IGNORECASE,
-)
 
 
 def _normalize_sql_backticks(sql: str) -> str:
@@ -1766,134 +1733,6 @@ def _strip_folder_prefix(dataset_id: str) -> str:
     return dataset_id
 
 
-def _local_xml_name(tag: str | None) -> str | None:
-    """Return an XML tag without namespace or prefix decoration."""
-    if not tag:
-        return tag
-    if tag.startswith("{") and "}" in tag:
-        tag = tag.split("}", 1)[1]
-    if ":" in tag:
-        tag = tag.split(":", 1)[1]
-    return tag
-
-
-def _unique_preserve_order(values: List[str]) -> List[str]:
-    seen = set()
-    out: List[str] = []
-    for value in values:
-        if value and value not in seen:
-            seen.add(value)
-            out.append(value)
-    return out
-
-
-def _extract_xml_namespaces(text: str) -> Dict[str, str]:
-    namespaces: Dict[str, str] = {}
-    for prefix, uri in _XML_NAMESPACE_RE.findall(text):
-        key = prefix or "default"
-        namespaces[key] = uri
-    return namespaces
-
-
-def _strip_xml_leading_noise(text: str) -> str:
-    return _XML_LEADING_NOISE_RE.sub("", text.lstrip(), count=1)
-
-
-def _extract_xml_root_tag(text: str) -> str | None:
-    stripped = _strip_xml_leading_noise(text)
-    m = _XML_OPEN_TAG_RE.match(stripped)
-    if not m:
-        return None
-    return _local_xml_name(m.group(1))
-
-
-def _extract_xml_schema_fields(text: str) -> List[str]:
-    names = _XML_SIMPLE_FIELD_RE.findall(text) + _XML_SIMPLE_DATA_RE.findall(text)
-    return _unique_preserve_order([name.strip() for name in names if name.strip()])
-
-
-def _extract_xml_record_tag_candidates(text: str, root_tag: str | None) -> List[str]:
-    tags = [_local_xml_name(tag) for tag in _XML_OPEN_TAG_RE.findall(_strip_xml_leading_noise(text))]
-    filtered = [tag for tag in tags if tag]
-    counts = Counter(filtered)
-
-    candidates: List[str] = []
-    if counts.get("Placemark"):
-        candidates.append("Placemark")
-
-    for tag, count in counts.most_common():
-        if tag in {root_tag, "SimpleField", "SimpleData"}:
-            continue
-        if count >= 2:
-            candidates.append(tag)
-
-    if not candidates:
-        for tag, _count in counts.most_common():
-            if tag in {root_tag, "SimpleField", "SimpleData"}:
-                continue
-            candidates.append(tag)
-            if len(candidates) >= 5:
-                break
-
-    return _unique_preserve_order(candidates)[:5]
-
-
-def _build_xml_preview_from_tree(root: ET.Element, text: str) -> Dict[str, Any]:
-    root_tag = _local_xml_name(root.tag)
-    tags = [_local_xml_name(elem.tag) for elem in root.iter() if isinstance(elem.tag, str)]
-    counts = Counter(tag for tag in tags if tag)
-    schema_fields = _unique_preserve_order(
-        [
-            elem.attrib["name"].strip()
-            for elem in root.iter()
-            if _local_xml_name(elem.tag) in {"SimpleField", "SimpleData"}
-            and elem.attrib.get("name", "").strip()
-        ]
-    )
-
-    record_candidates: List[str] = []
-    if counts.get("Placemark"):
-        record_candidates.append("Placemark")
-    for tag, count in counts.most_common():
-        if tag in {root_tag, "SimpleField", "SimpleData"}:
-            continue
-        if count >= 2:
-            record_candidates.append(tag)
-    if not record_candidates:
-        for tag, _count in counts.most_common():
-            if tag in {root_tag, "SimpleField", "SimpleData"}:
-                continue
-            record_candidates.append(tag)
-            if len(record_candidates) >= 5:
-                break
-
-    return {
-        "xml_root_tag": root_tag,
-        "xml_namespaces": _extract_xml_namespaces(text),
-        "xml_schema_fields": schema_fields,
-        "xml_record_tag_candidates": _unique_preserve_order(record_candidates)[:5],
-        "xml_preview_mode": "parsed",
-    }
-
-
-def _build_xml_preview(text: str, size_bytes: int) -> Dict[str, Any]:
-    if size_bytes <= _PEEK_BYTES:
-        try:
-            root = ET.fromstring(text)
-            return _build_xml_preview_from_tree(root, text)
-        except ET.ParseError:
-            pass
-
-    root_tag = _extract_xml_root_tag(text)
-    return {
-        "xml_root_tag": root_tag,
-        "xml_namespaces": _extract_xml_namespaces(text),
-        "xml_schema_fields": _extract_xml_schema_fields(text),
-        "xml_record_tag_candidates": _extract_xml_record_tag_candidates(text, root_tag),
-        "xml_preview_mode": "heuristic",
-    }
-
-
 def _coerce_string_list(value: Any) -> List[str]:
     if value is None:
         return []
@@ -1904,59 +1743,6 @@ def _coerce_string_list(value: Any) -> List[str]:
     else:
         values = [value]
     return [str(item).strip() for item in values if str(item).strip()]
-
-
-def _normalize_xml_record_tag(record_tag: str | None) -> str | None:
-    if not record_tag:
-        return None
-    tag = str(record_tag).strip().strip("<>/")
-    return _local_xml_name(tag)
-
-
-def _xml_text(elem: ET.Element) -> str:
-    return " ".join(part.strip() for part in elem.itertext() if part and part.strip())
-
-
-def _xml_record_to_row(record: ET.Element) -> Dict[str, str]:
-    """
-    Convert one XML/KML record element into a shallow row.
-
-    KML data.gov exports usually store useful attributes as
-    `<SimpleData name="FIELD">value</SimpleData>`. Plain XML often stores
-    useful values in leaf child tags. We support both without inventing a full
-    XML-to-table model.
-    """
-    row: Dict[str, str] = {}
-
-    for name, value in record.attrib.items():
-        field = _local_xml_name(name)
-        text = str(value).strip()
-        if field and text:
-            row[field] = text
-
-    for elem in record.iter():
-        if not isinstance(elem.tag, str):
-            continue
-        local = _local_xml_name(elem.tag)
-        if local == "SimpleData":
-            name = elem.attrib.get("name", "").strip()
-            text = _xml_text(elem)
-            if name and text:
-                row[name] = text
-
-    for elem in record.iter():
-        if elem is record or not isinstance(elem.tag, str):
-            continue
-        local = _local_xml_name(elem.tag)
-        if not local or local in {"ExtendedData", "SchemaData", "SimpleData", "SimpleField"}:
-            continue
-        if list(elem):
-            continue
-        text = _xml_text(elem)
-        if text and local not in row:
-            row[local] = text
-
-    return row
 
 
 def _xml_row_matches_filters(row: Dict[str, str], filters: Dict[str, Any]) -> bool:
@@ -2197,7 +1983,7 @@ def peek_file(
             pass
 
     if family == "xml":
-        result.update(_build_xml_preview(text, size_bytes))
+        result.update(build_xml_preview(text, size_bytes, peek_bytes=_PEEK_BYTES))
 
     try:
         profile = load_dataset_profile(s3_uri)
@@ -2652,11 +2438,11 @@ def _parse_xml_records_impl(
             )
         }
 
-    preview = _build_xml_preview(text, size)
-    chosen_record_tag = _normalize_xml_record_tag(record_tag)
+    preview = build_xml_preview(text, size, peek_bytes=_PEEK_BYTES)
+    chosen_record_tag = normalize_xml_record_tag(record_tag)
     if not chosen_record_tag:
         candidates = preview.get("xml_record_tag_candidates") or []
-        chosen_record_tag = _normalize_xml_record_tag(candidates[0]) if candidates else None
+        chosen_record_tag = normalize_xml_record_tag(candidates[0]) if candidates else None
     if not chosen_record_tag:
         return {
             "error": (
@@ -2676,11 +2462,11 @@ def _parse_xml_records_impl(
         resp = s3.get_object(Bucket=BUCKET, Key=key)
         body = resp["Body"]
         for _event, elem in ET.iterparse(body, events=("end",)):
-            if _local_xml_name(elem.tag) != chosen_record_tag:
+            if local_xml_name(elem.tag) != chosen_record_tag:
                 continue
 
             scanned_records += 1
-            row = _xml_record_to_row(elem)
+            row = xml_record_to_row(elem)
             if filters and not _xml_row_matches_filters(row, filters):
                 elem.clear()
                 continue

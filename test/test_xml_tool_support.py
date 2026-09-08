@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from sana_evaluation.tools import lake
-from sana_evaluation.tools.helper.detect import detect_family
+from dataindexing.formats import detect_family
 
 
 class TestDetectFamilyXml(unittest.TestCase):

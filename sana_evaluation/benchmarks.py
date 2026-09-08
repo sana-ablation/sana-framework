@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
 
-from sana_evaluation.tools.lake import BENCHMARK_BUCKETS
+from dataindexing.sources.s3 import BENCHMARK_BUCKETS
 
 
 # ---------------------------------------------------------------------------
