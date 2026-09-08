@@ -7,6 +7,7 @@ results/
 results*/
 **/__pycache__/
 *.pyc
+*.egg-info/
 lance_data/
 setup_credentials.sh
 analysis_results/
