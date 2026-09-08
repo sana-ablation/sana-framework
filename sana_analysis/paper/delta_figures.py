@@ -10,29 +10,39 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
+from sana_analysis.variants import try_parse_variant
+
 
 PLAN_ABLATION = [
-    ("n", "No Plan"),
-    ("d", "Default Plan"),
-    ("i", "Ideal Plan"),
+    ("naive", "No Plan"),
+    # "Standard Plan", not "Default Plan": run_mode_analysis and
+    # combine_grouped_models both call this condition Standard, and it matches
+    # the axis value's own name.
+    ("standard", "Standard Plan"),
+    ("ideal", "Ideal Plan"),
 ]
 
 SEARCH_ABLATION = [
-    ("n", "BM25 Search"),
-    ("d", "PNEUMA Hybrid Search"),
-    ("i", "Ideal Search"),
-    ("p", "Preloaded Sources"),
+    ("naive", "BM25 Search"),
+    ("standard", "PNEUMA Hybrid Search"),
+    ("ideal", "Ideal Search"),
+    ("preloaded", "Preloaded Sources"),
 ]
 
 EXECUTION_ABLATION = [
-    ("d", "Standard Data Analysis"),
-    ("i", "Ideal Data Analysis"),
+    ("standard", "Standard Data Analysis"),
+    ("ideal", "Ideal Data Analysis"),
 ]
 
+# The held-constant axes are spelled in the canonical vocabulary: the results
+# axis is `rich`, never `ideal`. Holding it at `ideal` would match nothing.
 ABLATIONS = [
-    ("Plan Ablation", "plan", "n", PLAN_ABLATION, {"search": "i", "results": "i", "compute": "i"}),
-    ("Search Ablation", "search", "n", SEARCH_ABLATION, {"plan": "i", "results": "i", "compute": "i"}),
-    ("Data Analysis Ablation", "compute", "d", EXECUTION_ABLATION, {"plan": "i", "search": "i", "results": "i"}),
+    ("Plan Ablation", "plan", "naive", PLAN_ABLATION,
+     {"search": "ideal", "results": "rich", "compute": "ideal"}),
+    ("Search Ablation", "search", "naive", SEARCH_ABLATION,
+     {"plan": "ideal", "results": "rich", "compute": "ideal"}),
+    ("Data Analysis Ablation", "compute", "standard", EXECUTION_ABLATION,
+     {"plan": "ideal", "search": "ideal", "results": "rich"}),
 ]
 
 COMPARISON_MODELS = ["gpt-5.4-nano", "gpt-5-mini"]
@@ -53,19 +63,19 @@ PAIRED_CONDITIONS = [
         "nns",
         "BM25 Search, No Plan, Standard Data Analysis",
         "BM25 Search, No Plan, Standard Data Analysis",
-        {"plan": "n", "search": "n", "results": "i", "compute": "d"},
+        {"plan": "naive", "search": "naive", "results": "rich", "compute": "standard"},
     ),
     (
         "sss",
         "Pneuma Search, Plan, Standard Data Analysis",
         "Pneuma Search, Plan, Standard Data Analysis",
-        {"plan": "d", "search": "d", "results": "i", "compute": "d"},
+        {"plan": "standard", "search": "standard", "results": "rich", "compute": "standard"},
     ),
     (
         "iii",
         "Ideal Search, Ideal Plan, Ideal Data Analysis",
         "Ideal Search, Ideal Plan, Ideal Data Analysis",
-        {"plan": "i", "search": "i", "results": "i", "compute": "i"},
+        {"plan": "ideal", "search": "ideal", "results": "rich", "compute": "ideal"},
     ),
 ]
 
@@ -109,32 +119,26 @@ def _safe_slug(value: str) -> str:
 
 
 def _parse_variant_codes(variant: str) -> Dict[str, Optional[str]]:
-    codes: Dict[str, Optional[str]] = {
-        "search": None,
-        "results": None,
-        "plan": None,
-        "compute": "d",
-        "skills": None,
-        "k": None,
-        "sc": None,
+    """Axis values keyed by short axis name.
+
+    Values are resolved words (`ideal`, `standard`, `rich`), not the gen-1
+    letters this used to return, so the tables below spell axis values in full.
+    """
+    decoded = try_parse_variant(str(variant))
+    if decoded is None:
+        return {
+            "search": None, "results": None, "plan": None,
+            "compute": None, "skills": None, "k": None, "sc": None,
+        }
+    return {
+        "search": decoded.search,
+        "results": decoded.results,
+        "plan": decoded.plan,
+        "compute": decoded.compute,
+        "skills": "on" if decoded.skills else "off",
+        "k": str(decoded.k) if decoded.k is not None else None,
+        "sc": str(decoded.search_calls) if decoded.search_calls is not None else None,
     }
-    parts = str(variant).split("_")
-    for idx, token in enumerate(parts):
-        if token == "search" and idx + 1 < len(parts):
-            codes["search"] = parts[idx + 1]
-        elif token == "results" and idx + 1 < len(parts):
-            codes["results"] = parts[idx + 1]
-        elif token.startswith("plan") and len(token) > 4:
-            codes["plan"] = token[4:]
-        elif token.startswith("compute") and len(token) > 7:
-            codes["compute"] = token[7:]
-        elif token == "skills" and idx + 1 < len(parts):
-            codes["skills"] = parts[idx + 1]
-        elif token.startswith("k") and token[1:].isdigit():
-            codes["k"] = token[1:]
-        elif token.startswith("sc") and token[2:].isdigit():
-            codes["sc"] = token[2:]
-    return codes
 
 
 def _context_key(codes: Dict[str, Optional[str]], axis: str) -> Tuple[Tuple[str, Optional[str]], ...]:
@@ -545,7 +549,7 @@ def _paired_condition_axis_label(condition_id: str) -> str:
 
 def _compact_ablation_label(label: str) -> str:
     replacements = {
-        "Default Plan": "Default",
+        "Standard Plan": "Standard",
         "Ideal Plan": "Ideal",
         "BM25 Search": "BM25",
         "PNEUMA Hybrid Search": "PNEUMA",
