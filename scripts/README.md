@@ -16,19 +16,41 @@ An experiment is any directory under `experiments/` supplying `inputs/run.sh`;
 that file is the only thing `run_experiment.sh` needs to know about it.
 `experiments/` is gitignored, so sweeps stay local while the orchestration ships.
 
-### After `pull`: watch for the old variant label
+### After `pull`: normalise the variant label
 
-The planning axis was renamed from `--profile` to `--plan`, and the variant
-directory label with it (`...__profile_ideal__...` became `...__plan_ideal__...`).
-Local trees were migrated once, by hand, and that migration is done — the
-script that did it is gone. The remote host's trees were never migrated and
-cannot be from here: if `REMOTE_HOST` is still running pre-rename code, a
-`pull` lands `__profile_` directories beside locally-produced `__plan_` ones
-for the same condition, and nothing downstream (aggregation, comparison)
-treats them as the same variant. The fix is to update the remote to the
-current code so it writes `__plan_` itself; there is no longer a script to
-rename a tree after the fact, so a `__profile_` tree found post-pull means the
-remote is stale.
+The variant directory label has changed twice. The planning axis was renamed
+from `--profile` to `--plan` (`...__profile_ideal__...` became
+`...__plan_ideal__...`), and then the layout itself changed: the three ablation
+axes lead -- `search`, `plan`, `compute` -- with the search-result richness
+modifier trailing them, recorded canonically as `rich`/`minimal` rather than as
+whichever alias the caller typed.
+
+So the canonical form is:
+
+    search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off
+
+Local trees are migrated. **The remote host's trees are not**, and cannot be
+migrated from here. If `REMOTE_HOST` is running pre-rename code, a `pull` lands
+old-layout directories beside locally-produced canonical ones for the same
+condition, and nothing downstream treats them as the same variant.
+
+After any pull from a host that might be stale, run:
+
+    python scripts/migrate_variant_label_layout.py experiments          # dry run
+    python scripts/migrate_variant_label_layout.py experiments --apply
+
+One pass fixes both changes: it accepts `profile_` as well as `plan_`, so a
+tree that never saw the first migration does not need two passes. It is
+idempotent -- a second run reports nothing to do -- and it renames directories
+only, never opening a CSV, JSONL or log. Every rename is appended to
+`scripts/variant_label_layout_mapping.tsv` in execution order, so the migration
+reverses by replaying that file bottom-to-top with the columns swapped.
+
+`--expect N` refuses to act unless exactly N directories need renaming, which is
+worth passing when you already know the count from the dry run.
+
+The durable fix is to update the remote to current code so it writes the
+canonical label itself; the script is for trees already written.
 
 ## Preparing the corpus and artifacts
 
