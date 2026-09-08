@@ -116,12 +116,12 @@ the content family -- never the extension, since the crawler stored every
 payload as `.txt` whatever it held -- then derives columns and delimiter from
 the bytes. Output matches the shape `load_table_schemas` already reads.
 
-It is sequential by default and resumes: a `<output>.done` checkpoint records
-finished dataset slugs, so a run that dies part-way continues rather than
-repeating. `--concurrency N` trades determinism for speed -- on a 400-dataset
-check, 1 and 64 produced byte-identical output in 61s and 8s respectively -- but
-the default stays at 1, because the full pass is a background job and being able
-to reason about it matters more than finishing it sooner.
+It runs 64 range GETs in flight and resumes: a `<output>.done` checkpoint
+records finished dataset slugs, so a run that dies part-way continues rather
+than repeating. `--concurrency 1` forces a strictly sequential pass; on a
+400-dataset check the two produced byte-identical output, in 8s and 61s. That
+holds because `asyncio.gather` preserves order and a dataset is checkpointed
+only once every one of its files has been read.
 
 What actually loses datasets is not ordering. A fetch error that is caught and
 returned as "no table here" is indistinguishable from an empty result, and the

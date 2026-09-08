@@ -321,9 +321,11 @@ def main(argv=None) -> int:
                     help="stop after N datasets (for a quick check)")
     ap.add_argument("--signed", action="store_true",
                     help="sign requests; the source bucket is public and does not need it")
-    ap.add_argument("--concurrency", type=int, default=1,
-                    help="in-flight range GETs. Default 1, i.e. strictly "
-                         "sequential; raise it to trade determinism for speed.")
+    ap.add_argument("--concurrency", type=int, default=64,
+                    help="in-flight range GETs (default 64). Pass 1 for a "
+                         "strictly sequential pass; output is identical either "
+                         "way, since asyncio.gather preserves order and a "
+                         "dataset is only checkpointed once all its files read.")
     ap.add_argument("--batch", type=int, default=200,
                     help="datasets per checkpoint flush (default 200)")
     ap.add_argument("--checkpoint", type=Path, default=None,
