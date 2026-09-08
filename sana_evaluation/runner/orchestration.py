@@ -125,6 +125,7 @@ def run_evaluation(
     *,
     batch_runner_cls,
     verbose: bool = False,
+    only_new: bool = False,
     parallel: int = 6,
     tasks_per_dir: Optional[int] = None,
     task_files: Optional[list] = None,
@@ -176,9 +177,22 @@ def run_evaluation(
 
     csv_path = os.path.join(output_dir, "eval_results.csv")
 
+    # --only-new: skip tasks already present in the CSV
+    task_files_to_run = task_files
+    if only_new and os.path.exists(csv_path):
+        existing_ids: set = set()
+        with open(csv_path, newline="") as f:
+            for row in csv.DictReader(f):
+                if row.get("task_id"):
+                    existing_ids.add(row["task_id"])
+        task_files_to_run = [p for p in task_files if p not in existing_ids]
+        if not task_files_to_run:
+            logger.info("  No new tasks to evaluate.")
+            return {model_id: {"summary": _empty_summary(model_id, task_dir_name), "results": []}}
+
     try:
         batch = batch_runner_cls(agent_config=agent_config, run_config=run_config, max_workers=parallel)
-        results = batch.run_from_files(task_files, verbose=verbose)
+        results = batch.run_from_files(task_files_to_run, verbose=verbose)
     except Exception as e:
         logger.error(f"  Error: {e}", exc_info=True)
         return {model_id: {"error": str(e)}}
@@ -221,6 +235,21 @@ def run_evaluation(
     write_agent_results_jsonl(jsonl_path, results)
 
     return {model_id: {"summary": summary, "results": results}}
+
+
+def _empty_summary(model_id: str, task_dir_name: str) -> dict:
+    return {
+        "model": model_id,
+        "task_dir": task_dir_name,
+        "total_tasks": 0,
+        "exact_match_count": 0,
+        "exact_match_rate": 0.0,
+        "avg_f1_score": 0.0,
+        "avg_time": 0.0,
+        "total_cost_usd": 0.0,
+        "avg_cost_usd": 0.0,
+        "avg_tool_calls": 0.0,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -284,6 +313,7 @@ def _run_all_tasks_pooled(
     agent_config,
     run_config,
     verbose: bool,
+    only_new: bool,
     parallel: int,
     tasks_per_dir: Optional[int],
     batch_runner_cls,
@@ -318,74 +348,8 @@ def _run_all_tasks_pooled(
         run_config=run_config,
         batch_runner_cls=batch_runner_cls,
         verbose=verbose,
+        only_new=only_new,
         parallel=parallel,
         task_files=pooled,
     )
     print_comparison_table(results)
-
-
-def _run_continue(
-    *,
-    task_set: str,
-    tasks_per_dir: Optional[int],
-    agent_config: AgentConfig,
-    run_config: RunConfig,
-    verbose: bool,
-    parallel: int,
-    batch_runner_cls,
-) -> None:
-    """Re-run over task_set, skipping tasks already recorded for this variant."""
-    condition_label = run_config.condition_config.condition
-    safe_model = _display_name(agent_config)
-    results_dir = _results_dir(run_config, agent_config)
-    csv_path = os.path.join(results_dir, "eval_results.csv")
-
-    completed_ids: set = set()
-    if os.path.exists(csv_path):
-        with open(csv_path, newline="") as f:
-            for row in csv.DictReader(f):
-                tid = row.get("task_id", "").strip()
-                if tid:
-                    completed_ids.add(tid)
-
-    all_task_dirs = find_all_task_dirs(task_set)
-    pending: dict = {}
-    for task_dir in all_task_dirs:
-        task_files = sorted(glob.glob(os.path.join(task_dir, "*.json")))
-        if tasks_per_dir is not None:
-            task_files = task_files[:tasks_per_dir]
-        remaining = [p for p in task_files if p not in completed_ids]
-        if remaining:
-            pending[task_dir] = remaining
-
-    if not pending:
-        print("Nothing to do — all tasks already recorded.")
-        return
-
-    total_pending = sum(len(v) for v in pending.values())
-    print(f"\nCondition : {condition_label}")
-    print(f"Model     : {safe_model}")
-    print(f"Task set  : {task_set}")
-    print(f"Results   : {results_dir}")
-    print(f"Completed : {len(completed_ids)} tasks already recorded")
-    print(f"\nDirectories to evaluate ({len(pending)} dirs, {total_pending} tasks remaining):")
-    for task_dir, files in sorted(pending.items()):
-        print(f"  {task_dir:<40}  {len(files)} task(s)")
-
-    print()
-    answer = input("Proceed? [y/N] ").strip().lower()
-    if answer != "y":
-        print("Aborted.")
-        return
-
-    print()
-    for task_dir, task_files in sorted(pending.items()):
-        _run_task_files(
-            task_dir=task_dir,
-            task_files=task_files,
-            agent_config=agent_config,
-            run_config=run_config,
-            verbose=verbose,
-            parallel=parallel,
-            batch_runner_cls=batch_runner_cls,
-        )

@@ -143,10 +143,9 @@ def test_smoke_ideal_compute_axis_resolves(repo):
 # full
 # ---------------------------------------------------------------------------
 
-def test_full_no_continue_uses_the_default_task_set_and_output_roots(repo):
+def test_full_uses_the_default_task_set_and_output_roots(repo):
     a = resolved([
         "full",
-        "--no-continue",
         "--search", "ideal",
         "--results", "ideal",
         "--profile", "ideal",
@@ -160,17 +159,18 @@ def test_full_no_continue_uses_the_default_task_set_and_output_roots(repo):
     assert a.results_output_dir == "results"
 
 
-def test_full_no_continue_selects_all_tasks(repo):
+def test_full_selects_all_tasks_and_resumes_via_only_new(repo):
     a = resolved([
         "full",
-        "--no-continue",
         "--model", "openai/gpt-5-mini",
         "--db", "lance_data",
     ])
 
     assert a.all_tasks is True
-    assert a.task_continue is False
-    assert cli._task_scope(a) == "all tasks under benchmarks/lakeqa/tasks-mini/tasks"
+    assert a.only_new is True
+    assert cli._task_scope(a) == (
+        "all tasks under benchmarks/lakeqa/tasks-mini/tasks (only new)"
+    )
 
 
 def test_kramabench_full_defaults_to_kramabench_output_roots(repo):
@@ -192,7 +192,6 @@ def test_kramabench_full_defaults_to_kramabench_output_roots(repo):
 def test_kramabench_full_defaults_to_the_kramabench_task_set(repo):
     a = resolved([
         "full",
-        "--no-continue",
         "--benchmark", "kramabench",
         "--search", "ideal",
         "--results", "naive",
@@ -202,13 +201,15 @@ def test_kramabench_full_defaults_to_the_kramabench_task_set(repo):
     ])
 
     assert a.task_set == "benchmarks/kramabench/tasks-mini/tasks"
-    assert cli._task_scope(a) == "all tasks under benchmarks/kramabench/tasks-mini/tasks"
+    assert cli._task_scope(a) == (
+        "all tasks under benchmarks/kramabench/tasks-mini/tasks (only new)"
+    )
 
 
-def test_continue_alias_and_timeout_passthrough(repo):
+def test_only_new_explicit_flag_and_timeout_passthrough(repo):
     a = resolved([
         "full",
-        "--continue",
+        "--only-new",
         "--search", "ideal",
         "--results", "ideal",
         "--profile", "ideal",
@@ -218,13 +219,13 @@ def test_continue_alias_and_timeout_passthrough(repo):
         "--db", "lance_data",
     ])
 
-    assert a.task_continue is True
-    assert a.all_tasks is False
+    assert a.only_new is True
+    assert a.all_tasks is True          # full always pools every task now
     assert a.timeout == 600
     assert a.submit_grace_seconds == 15
 
 
-def test_full_defaults_to_ideal_axes_verbose_and_continue_with_plans_alias(repo):
+def test_full_defaults_to_ideal_axes_verbose_and_only_new_with_plans_alias(repo):
     a = resolved([
         "full",
         "--benchmark", "kramabench",
@@ -244,13 +245,13 @@ def test_full_defaults_to_ideal_axes_verbose_and_continue_with_plans_alias(repo)
     assert a.profile == "standard"      # --plans is the alias for --profile
     assert a.compute == "ideal"
     assert a.verbose is True
-    assert a.task_continue is True
-    assert a.all_tasks is False
+    assert a.only_new is True
+    assert a.all_tasks is True
     assert a.parallel == 4
     assert a.timeout == 600
     assert a.submit_grace_seconds == 30
     assert cli._task_scope(a) == (
-        "resume pending tasks under benchmarks/kramabench/tasks-mini/tasks"
+        "all tasks under benchmarks/kramabench/tasks-mini/tasks (only new)"
     )
 
 

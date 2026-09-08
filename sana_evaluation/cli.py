@@ -68,9 +68,9 @@ _MODEL_ALIASES = {
 
 PRESETS = {
     "smoke": dict(search="ideal", results="rich", profile="ideal", compute="ideal",
-                  verbose=True, task_continue=False, tasks_per_dir=2),
+                  verbose=True, tasks_per_dir=2),
     "full":  dict(search="ideal", results="rich", profile="ideal", compute="ideal",
-                  verbose=True, task_continue=True),
+                  verbose=True, only_new=True),
 }
 
 
@@ -103,12 +103,9 @@ def build_parser() -> argparse.ArgumentParser:
     bm.add_argument("--task-dir", "-d", help="run this one directory of tasks")
     bm.add_argument("--tasks-per-dir", type=int)
     bm.add_argument("--all-tasks", action="store_true")
-    bm.add_argument("--pool-tasks", action="store_true")
+    bm.add_argument("--only-new", action="store_true", default=False,
+                    help="skip task files already recorded in this variant's eval_results.csv")
     bm.add_argument("--db-path", "--db", dest="db_path")
-    cont = bm.add_mutually_exclusive_group()
-    cont.add_argument("--task-continue", "--continue", dest="task_continue",
-                      action="store_true", default=False)
-    cont.add_argument("--no-continue", dest="task_continue", action="store_false")
 
     md = p.add_argument_group("model")
     md.add_argument("--model", "--model-name", dest="model_name",
@@ -364,7 +361,7 @@ def resolve(args: argparse.Namespace) -> argparse.Namespace:
 
     # A preset picks the task scope when nothing else does: smoke takes one
     # small bucket, full takes the whole set.
-    selected = bool(args.task_dir or args.all_tasks or args.task_continue)
+    selected = bool(args.task_dir or args.all_tasks)
     if not selected and args.preset == "smoke":
         args.task_dir = _default_smoke_task_dir(args.benchmark)
     elif not selected and args.preset == "full":
@@ -389,23 +386,24 @@ def resolve(args: argparse.Namespace) -> argparse.Namespace:
 
 
 def _task_scope(args: argparse.Namespace) -> str:
-    if args.task_continue:
-        return f"resume pending tasks under {args.task_set}"
     if args.all_tasks:
-        return f"all tasks under {args.task_set}"
+        scope = f"all tasks under {args.task_set}"
+        return f"{scope} (only new)" if args.only_new else scope
     if args.task_dir:
         if args.tasks_per_dir is not None:
             return f"{args.task_dir} (first {args.tasks_per_dir} tasks)"
         return args.task_dir
-    return "nothing selected — pass --task-dir, --all-tasks or --task-continue"
+    return "nothing selected — pass --task-dir or --all-tasks"
 
 
 def _collect_task_files(args: argparse.Namespace) -> list:
     """Resolve the full task-file list the run will cover, before preflight.
 
-    Precedence mirrors ``main()``: ``--task-continue`` > ``--all-tasks`` > ``--task-dir``.
+    Precedence mirrors ``main()``: ``--all-tasks`` > ``--task-dir``. This is the
+    pre-``--only-new`` list — the filter is applied inside ``run_evaluation``
+    against ``eval_results.csv``, which preflight has no need to see.
     """
-    if args.task_continue or args.all_tasks:
+    if args.all_tasks:
         task_dirs = base_eval.find_all_task_dirs(args.task_set)
         out: list = []
         for d in task_dirs:
@@ -521,40 +519,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     start_time = datetime.now()
 
-    if args.task_continue:
-        base_eval._run_continue(
-            task_set=args.task_set,
-            tasks_per_dir=args.tasks_per_dir,
-            agent_config=agent_config,
-            run_config=run_config,
-            verbose=args.verbose,
-            parallel=args.parallel,
-            batch_runner_cls=ModeBatchRunner,
-        )
-    elif args.all_tasks and args.pool_tasks:
+    if args.all_tasks:
         base_eval._run_all_tasks_pooled(
             task_set=args.task_set,
             agent_config=agent_config,
             run_config=run_config,
             verbose=args.verbose,
+            only_new=args.only_new,
             parallel=args.parallel,
             tasks_per_dir=args.tasks_per_dir,
             batch_runner_cls=ModeBatchRunner,
         )
-    elif args.all_tasks:
-        task_dirs = base_eval.find_all_task_dirs(args.task_set)
-        logger.info("Found %d task directories in '%s'", len(task_dirs), args.task_set)
-        for task_dir in task_dirs:
-            results = base_eval.run_evaluation(
-                task_dir=task_dir,
-                agent_config=agent_config,
-                run_config=run_config,
-                batch_runner_cls=ModeBatchRunner,
-                verbose=args.verbose,
-                parallel=args.parallel,
-                tasks_per_dir=args.tasks_per_dir,
-            )
-            print_comparison_table(results)
     elif args.task_dir:
         results = base_eval.run_evaluation(
             task_dir=args.task_dir,
@@ -562,6 +537,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             run_config=run_config,
             batch_runner_cls=ModeBatchRunner,
             verbose=args.verbose,
+            only_new=args.only_new,
             parallel=args.parallel,
             tasks_per_dir=args.tasks_per_dir,
         )

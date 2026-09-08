@@ -225,7 +225,7 @@ python -m sana_evaluation.cli full \
   --db lance_kramabench_infused \
   --timeout 600 \
   --submit-grace-seconds 30 \
-  --continue
+  --only-new
 ```
 
 Common feature flags:
@@ -251,8 +251,8 @@ Common feature flags:
 | `--timeout` | seconds | `600` | Per-task soft timeout. |
 | `--submit-grace-seconds` | seconds | `30` | Extra time reserved for final answer submission after timeout. |
 | `--task-dir` | path or bucket name | smoke default | Run one directory of tasks, e.g. `k-5-d-4`. |
-| `--continue` | flag | on for `full` | Resume mode that skips tasks already recorded in the variant CSV. |
-| `--no-continue` | flag | off | Rerun every task even when the variant CSV has rows. |
+| `--all-tasks` | flag | on for `full` | Run every task directory under `--task-set`, pooled into one worker pool. |
+| `--only-new` | flag | on for `full` | Skip task files already recorded as rows in the variant's `eval_results.csv`; composes with `--all-tasks` and any other scope. |
 | `--verbose` | flag | off (on under a preset) | Emits verbose per-task runtime logs. |
 | `--search-free` | flag | off | Makes active search calls free against the global tool-call limit. |
 

@@ -128,15 +128,12 @@ if __name__ == "__main__":
     unittest.main()
 
 
-class PoolTasksFlagTests(unittest.TestCase):
-    """--pool-tasks must gather every directory into a single run_evaluation call."""
+class PooledDispatchTests(unittest.TestCase):
+    """Pooling is unconditional now (--pool-tasks is gone): --all-tasks always
+    gathers every directory into a single run_evaluation call.
+    """
 
-    def test_flag_defaults_to_off(self):
-        from sana_evaluation import cli
-
-        self.assertFalse(cli.parse([]).pool_tasks)
-
-    def test_pool_tasks_collects_every_directory_into_one_call(self):
+    def test_run_all_tasks_pooled_collects_every_directory_into_one_call(self):
         seen = {}
 
         def fake_run_evaluation(task_dir, agent_config, run_config, **kw):
@@ -153,7 +150,7 @@ class PoolTasksFlagTests(unittest.TestCase):
              patch.object(run_eval, "print_comparison_table", lambda *a, **k: None):
             run_eval._run_all_tasks_pooled(
                 task_set="/t", agent_config=object(), run_config=object(),
-                verbose=False, parallel=8, tasks_per_dir=None,
+                verbose=False, only_new=False, parallel=8, tasks_per_dir=None,
                 batch_runner_cls=_FakeBatchRunner,
             )
 
