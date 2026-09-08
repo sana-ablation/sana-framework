@@ -9,7 +9,7 @@ from unittest.mock import patch
 from sana_evaluation import cli
 
 
-def _load_run_eval_module():
+def _load_orchestration_module():
     repo_root = Path(__file__).resolve().parents[1]
     module_path = repo_root / "sana_evaluation" / "runner" / "orchestration.py"
 
@@ -54,7 +54,7 @@ def _load_run_eval_module():
     sys.modules["sana_evaluation.runner.reporting"] = fake_reporting
     sys.modules["sana_evaluation.config"] = fake_config
     try:
-        spec = importlib.util.spec_from_file_location("_test_run_eval_module", module_path)
+        spec = importlib.util.spec_from_file_location("_test_orchestration_module", module_path)
         module = importlib.util.module_from_spec(spec)
         assert spec and spec.loader
         spec.loader.exec_module(module)
@@ -67,10 +67,10 @@ def _load_run_eval_module():
                 sys.modules[name] = original
 
 
-run_eval = _load_run_eval_module()
+orchestration = _load_orchestration_module()
 
 
-class RunModeEvalTests(unittest.TestCase):
+class CliModeHelperTests(unittest.TestCase):
     def test_resolve_mode_axes_uses_defaults(self):
         self.assertEqual(
             cli._resolve_mode_axes(
@@ -212,7 +212,7 @@ class RunModeEvalTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            run_eval._results_dir(run_config, agent_config).replace("\\", "/"),
+            orchestration._results_dir(run_config, agent_config).replace("\\", "/"),
             "results/modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__plan_ideal__compute_standard__k5",
         )
 
@@ -228,7 +228,7 @@ class RunModeEvalTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            run_eval._results_dir(run_config, agent_config).replace("\\", "/"),
+            orchestration._results_dir(run_config, agent_config).replace("\\", "/"),
             "results/baseline/openai_gpt-5.2",
         )
 

@@ -117,7 +117,7 @@ def _load_lake_module():
         _restore_modules(previous)
 
 
-class AgentToolsSandboxTests(unittest.TestCase):
+class LakeSandboxTests(unittest.TestCase):
     def setUp(self):
         self.mod = _load_lake_module()
 

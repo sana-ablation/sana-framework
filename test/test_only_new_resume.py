@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sana_evaluation import cli
-from sana_evaluation.runner import orchestration as run_eval
+from sana_evaluation.runner import orchestration
 
 
 # ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ def test_deleted_flags_are_gone(dead):
 
 
 def test_no_run_continue_attribute():
-    assert not hasattr(run_eval, "_run_continue")
+    assert not hasattr(orchestration, "_run_continue")
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class OnlyNewFilterTests(unittest.TestCase):
 
     def _patched(self):
         return patch.multiple(
-            run_eval,
+            orchestration,
             _display_name=MagicMock(return_value="model"),
             _results_dir=MagicMock(return_value=self.out),
         )
@@ -120,7 +120,7 @@ class OnlyNewFilterTests(unittest.TestCase):
         self._write_csv([self.files[0]])
         agent, run = self._cfg()
         with self._patched():
-            run_eval.run_evaluation(
+            orchestration.run_evaluation(
                 str(self.task_dir), agent, run, batch_runner_cls=_FakeBatchRunner,
                 only_new=True, parallel=2,
             )
@@ -134,7 +134,7 @@ class OnlyNewFilterTests(unittest.TestCase):
         self._write_csv([self.files[0]])
         agent, run = self._cfg()
         with self._patched():
-            run_eval.run_evaluation(
+            orchestration.run_evaluation(
                 str(self.task_dir), agent, run, batch_runner_cls=_FakeBatchRunner,
                 only_new=False, parallel=2,
             )
@@ -146,7 +146,7 @@ class OnlyNewFilterTests(unittest.TestCase):
         self._write_csv(self.files)
         agent, run = self._cfg()
         with self._patched():
-            result = run_eval.run_evaluation(
+            result = orchestration.run_evaluation(
                 str(self.task_dir), agent, run, batch_runner_cls=_FakeBatchRunner,
                 only_new=True, parallel=2,
             )
@@ -176,11 +176,11 @@ class OnlyNewComposesWithPoolingTests(unittest.TestCase):
         files = {"/t/k-3-d-2": ["/t/k-3-d-2/task_6.json"],
                  "/t/k-4-d-3": ["/t/k-4-d-3/task_1.json"]}
 
-        with patch.object(run_eval, "find_all_task_dirs", return_value=dirs), \
-             patch.object(run_eval, "run_evaluation", side_effect=fake_run_evaluation), \
-             patch.object(run_eval.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
-             patch.object(run_eval, "print_comparison_table", lambda *a, **k: None):
-            run_eval._run_all_tasks_pooled(
+        with patch.object(orchestration, "find_all_task_dirs", return_value=dirs), \
+             patch.object(orchestration, "run_evaluation", side_effect=fake_run_evaluation), \
+             patch.object(orchestration.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
+             patch.object(orchestration, "print_comparison_table", lambda *a, **k: None):
+            orchestration._run_all_tasks_pooled(
                 task_set="/t", agent_config=object(), run_config=object(),
                 verbose=False, only_new=True, parallel=8, tasks_per_dir=None,
                 batch_runner_cls=_FakeBatchRunner,

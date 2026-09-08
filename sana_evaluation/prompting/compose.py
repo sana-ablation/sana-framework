@@ -9,7 +9,7 @@ from sana_evaluation.instrumentation.trace_plugin import _normalize_dataset_id
 logger = logging.getLogger(__name__)
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_PROMPTS_DIR = _REPO_ROOT / "sana_evaluation" / "prompting" / "fragments"
+_FRAGMENTS_DIR = _REPO_ROOT / "sana_evaluation" / "prompting" / "fragments"
 _MODES = {"naive", "standard", "ideal", "preloaded", "web"}
 _DEBUG_MODES = {"decision_notes"}
 
@@ -84,23 +84,23 @@ def fragment_paths(
         # two disagree again -- 6b, one axis over.
         plan_mode = "standard"
 
-    paths = [_PROMPTS_DIR / "base" / "framing.txt"]
+    paths = [_FRAGMENTS_DIR / "base" / "framing.txt"]
     # naive contributes the plain tool-list heading; every other plan mode adds
     # skills, planning style and the planning tool itself.
-    paths.append(_PROMPTS_DIR / "plan" / ("naive.txt" if plan_mode == "naive" else "managed.txt"))
+    paths.append(_FRAGMENTS_DIR / "plan" / ("naive.txt" if plan_mode == "naive" else "managed.txt"))
     if search_mode == "web":
         # The web arm has no data lake, so it gets neither the lake tools nor a
         # corpus description. Nothing to fall back to, nothing to contradict.
-        paths.append(_PROMPTS_DIR / "data-access" / "web.txt")
+        paths.append(_FRAGMENTS_DIR / "data-access" / "web.txt")
     else:
-        paths.append(_PROMPTS_DIR / "data-access" / "lake.txt")
+        paths.append(_FRAGMENTS_DIR / "data-access" / "lake.txt")
         if benchmark_name != "kramabench":
             # query_file is disabled for kramabench, so the bullet, the cost
             # ladder and the query discipline it governs are simply not composed.
-            paths.append(_PROMPTS_DIR / "data-access" / "lake-query.txt")
-        paths.append(_PROMPTS_DIR / "benchmark" / f"{benchmark_name}.txt")
-    paths.append(_PROMPTS_DIR / "base" / "limits.txt")
-    paths.append(_PROMPTS_DIR / "search" / f"{search_mode}.txt")
+            paths.append(_FRAGMENTS_DIR / "data-access" / "lake-query.txt")
+        paths.append(_FRAGMENTS_DIR / "benchmark" / f"{benchmark_name}.txt")
+    paths.append(_FRAGMENTS_DIR / "base" / "limits.txt")
+    paths.append(_FRAGMENTS_DIR / "search" / f"{search_mode}.txt")
     return paths
 
 

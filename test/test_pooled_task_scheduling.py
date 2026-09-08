@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.runner import orchestration as run_eval
+from sana_evaluation.runner import orchestration
 
 
 class _FakeBatchRunner:
@@ -69,7 +69,7 @@ class PooledSchedulingTests(unittest.TestCase):
 
     def _patched(self):
         return patch.multiple(
-            run_eval,
+            orchestration,
             _display_name=MagicMock(return_value="model"),
             _results_dir=MagicMock(return_value=self.out),
         )
@@ -79,7 +79,7 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         with self._patched():
             for d in self.dirs:
-                run_eval.run_evaluation(d, agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8)
+                orchestration.run_evaluation(d, agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8)
 
         self.assertEqual(len(_FakeBatchRunner.calls), 3, "one pool per directory")
         self.assertEqual([len(c["files"]) for c in _FakeBatchRunner.calls], [2, 1, 2])
@@ -89,7 +89,7 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         every = sorted(str(p) for p in self.root.rglob("*.json"))
         with self._patched():
-            run_eval.run_evaluation(
+            orchestration.run_evaluation(
                 str(self.root), agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8, task_files=every,
             )
 
@@ -102,7 +102,7 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         every = sorted(str(p) for p in self.root.rglob("*.json"))
         with self._patched():
-            run_eval.run_evaluation(
+            orchestration.run_evaluation(
                 str(self.root), agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8, task_files=every,
             )
 
@@ -115,7 +115,7 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         every = sorted(str(p) for p in self.root.rglob("*.json"))
         with self._patched():
-            run_eval.run_evaluation(
+            orchestration.run_evaluation(
                 str(self.root), agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8, task_files=every,
             )
 
@@ -144,11 +144,11 @@ class PooledDispatchTests(unittest.TestCase):
         files = {"/t/k-3-d-2": ["/t/k-3-d-2/task_6.json", "/t/k-3-d-2/task_11.json"],
                  "/t/k-4-d-3": ["/t/k-4-d-3/task_6.json"]}
 
-        with patch.object(run_eval, "find_all_task_dirs", return_value=dirs), \
-             patch.object(run_eval, "run_evaluation", side_effect=fake_run_evaluation), \
-             patch.object(run_eval.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
-             patch.object(run_eval, "print_comparison_table", lambda *a, **k: None):
-            run_eval._run_all_tasks_pooled(
+        with patch.object(orchestration, "find_all_task_dirs", return_value=dirs), \
+             patch.object(orchestration, "run_evaluation", side_effect=fake_run_evaluation), \
+             patch.object(orchestration.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
+             patch.object(orchestration, "print_comparison_table", lambda *a, **k: None):
+            orchestration._run_all_tasks_pooled(
                 task_set="/t", agent_config=object(), run_config=object(),
                 verbose=False, only_new=False, parallel=8, tasks_per_dir=None,
                 batch_runner_cls=_FakeBatchRunner,
