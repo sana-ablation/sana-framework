@@ -21,8 +21,7 @@ _MODULE_NAMES = [
     "sana_evaluation.tools",
     "sana_evaluation.tools.helper",
     "sana_evaluation.tools.helper.detect",
-    "sana_evaluation.tools.agent_tools",
-    "sana_evaluation.tools.agent_tools_v2",
+    "sana_evaluation.tools.lake",
 ]
 
 
@@ -44,7 +43,7 @@ def _load_module(name: str, path: Path):
     return module
 
 
-def _load_agent_tools_v2_module():
+def _load_lake_module():
     repo_root = Path(__file__).resolve().parents[1]
     previous = {name: sys.modules.get(name) for name in _MODULE_NAMES}
 
@@ -96,13 +95,9 @@ def _load_agent_tools_v2_module():
         "sana_evaluation.tools.helper.detect",
         repo_root / "sana_evaluation" / "tools" / "helper" / "detect.py",
     )
-    _load_module(
-        "sana_evaluation.tools.agent_tools",
-        repo_root / "sana_evaluation" / "tools" / "agent_tools.py",
-    )
     module = _load_module(
-        "sana_evaluation.tools.agent_tools_v2",
-        repo_root / "sana_evaluation" / "tools" / "agent_tools_v2.py",
+        "sana_evaluation.tools.lake",
+        repo_root / "sana_evaluation" / "tools" / "lake.py",
     )
 
     def restore():
@@ -117,7 +112,7 @@ def _load_agent_tools_v2_module():
 
 class AgentToolsV2EmptyS3Tests(unittest.TestCase):
     def setUp(self):
-        self.mod, self.restore_modules = _load_agent_tools_v2_module()
+        self.mod, self.restore_modules = _load_lake_module()
         self.ref = {
             "dataset_id": "datagov/empty-dataset",
             "file_path": "files/empty.txt",

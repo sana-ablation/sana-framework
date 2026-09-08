@@ -21,7 +21,7 @@ except Exception:  # pragma: no cover
     def tqdm(iterable=None, **_kwargs):
         return iterable if iterable is not None else _NullTqdm()
 
-from sana_evaluation.tools.agent_tools import BUCKET, FOLDERS, _build_s3_client
+from sana_evaluation.tools.lake import BUCKET, FOLDERS, _build_s3_client
 
 load_dotenv()
 

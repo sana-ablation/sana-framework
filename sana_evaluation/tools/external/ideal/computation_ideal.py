@@ -18,9 +18,12 @@ from sana_evaluation.tools.external.ideal.subagent_models import (
     repair_model_name,
     semantic_model_name,
 )
-from sana_evaluation.tools.agent_tools import _get_sandbox_dir, execute_code as _execute_code_tool
-from sana_evaluation.tools.agent_tools_v2 import peek_file as _peek_file_tool
-from sana_evaluation.tools.agent_tools_v2 import query_file as _query_file_tool
+from sana_evaluation.tools.lake import (
+    _get_sandbox_dir,
+    execute_code as _execute_code_tool,
+    peek_file as _peek_file_tool,
+    query_file as _query_file_tool,
+)
 from sana_evaluation.tools.external.ideal.runtime_profile_store import (
     IdealComputationRecord,
     IdealRuntimeProfile,

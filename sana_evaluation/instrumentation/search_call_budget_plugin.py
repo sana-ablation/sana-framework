@@ -7,7 +7,7 @@ from typing import Iterable, Optional, Set
 from strands.hooks import AfterToolCallEvent, AgentInitializedEvent
 from strands.plugins import hook
 from strands.vended_plugins.steering import Guide, Proceed, SteeringHandler, ToolSteeringAction
-from sana_evaluation.tools.agent_tools import get_submitted_answer
+from sana_evaluation.tools.lake import get_submitted_answer
 
 _DEFAULT_SEARCH_TOOLS = {
     "search_value",

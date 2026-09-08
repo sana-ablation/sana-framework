@@ -29,7 +29,7 @@ from pathlib import Path
 _ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_ROOT))
 
-from sana_evaluation.tools.agent_tools_v2 import (  # noqa: E402
+from sana_evaluation.tools.lake import (  # noqa: E402
     search,
     search_keyword,
     list_files,

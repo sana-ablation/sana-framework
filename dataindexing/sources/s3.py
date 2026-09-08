@@ -29,7 +29,7 @@ class S3Config:
     max_async: int = 16             # async semaphore slots
 
     # The source bucket is public. The eval-side tools read it unsigned
-    # (agent_tools.py builds a signature_version=UNSIGNED client), and this side
+    # (lake.py builds a signature_version=UNSIGNED client), and this side
     # must be able to as well: signing with absent or stale credentials turns a
     # plain 404 into a 403, which reads as an access problem and sends you
     # looking for credentials that were never needed.

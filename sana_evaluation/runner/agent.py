@@ -47,14 +47,12 @@ from sana_evaluation.helper.sandbox import (
 )
 from sana_evaluation.helper.text_utils import _clean_answer
 from sana_evaluation.llm.llm_factory import build_model
-from sana_evaluation.tools.agent_tools import (
+from sana_evaluation.tools.lake import (
+    cleanup_sandbox,
     clear_submitted_answer,
+    configure_benchmark as configure_data_lake_benchmark,
     get_submitted_answer,
     search_prefix,
-)
-from sana_evaluation.tools.agent_tools_v2 import (
-    cleanup_sandbox,
-    configure_benchmark as configure_data_lake_benchmark,
     set_sandbox_dir,
 )
 from sana_evaluation.tools.external.search_eval_tools import (

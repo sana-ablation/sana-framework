@@ -20,8 +20,7 @@ from sana_evaluation.config import RunConfig
 from sana_evaluation.instrumentation import ideal_subagent_costs
 from sana_evaluation.instrumentation.trace_plugin import set_trace_context
 from sana_evaluation.instrumentation.agent_plugins import LoggingPlugin
-from sana_evaluation.tools.agent_tools import execute_code
-from sana_evaluation.tools.agent_tools_v2 import query_file
+from sana_evaluation.tools.lake import execute_code, query_file
 from sana_evaluation.tools.external.ideal import computation_ideal
 from sana_evaluation.tools.external.ideal.runtime_profile_store import (
     load_runtime_profile_for_task,

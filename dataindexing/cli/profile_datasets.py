@@ -29,8 +29,10 @@ except Exception:  # pragma: no cover
     def tqdm(iterable=None, **_kwargs):
         return iterable if iterable is not None else _NullTqdm()
 
-from sana_evaluation.tools.agent_tools import BUCKET, REGION, _build_s3_client
-from sana_evaluation.tools.agent_tools_v2 import (
+from sana_evaluation.tools.lake import (
+    BUCKET,
+    REGION,
+    _build_s3_client,
     _build_xml_preview,
     _local_xml_name,
     _normalize_xml_record_tag,

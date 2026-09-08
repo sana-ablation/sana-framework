@@ -28,7 +28,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.tools.agent_tools import search_prefix
+from sana_evaluation.tools.lake import search_prefix
 from sana_evaluation.tools.external.ideal import search_ideal as ideal_search
 from sana_evaluation.tools.external.ideal.search_wrapper import build_search_tools
 

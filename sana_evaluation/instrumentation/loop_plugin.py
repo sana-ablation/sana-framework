@@ -1,6 +1,6 @@
 import logging
 from strands.vended_plugins.steering import Guide, Proceed, SteeringHandler, ToolSteeringAction
-from sana_evaluation.tools.agent_tools import get_submitted_answer
+from sana_evaluation.tools.lake import get_submitted_answer
 
 logger = logging.getLogger(__name__)
 

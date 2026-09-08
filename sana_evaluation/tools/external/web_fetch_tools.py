@@ -9,7 +9,7 @@ lets analysis separate pages the agent found by searching from URLs it already
 knew, without constraining what it can reach.
 
 The record is a file rather than module state because `download` runs through
-``agent_tools._run_tool_with_timeout``, which uses a *spawned* subprocess, so
+``lake._run_tool_with_timeout``, which uses a *spawned* subprocess, so
 nothing in the parent's memory reaches it. The sandbox is created and deleted
 per task (``runner.agent`` builds one via ``_create_isolated_sandbox`` and
 removes it in its ``finally``), so it needs no explicit reset between tasks.
@@ -27,7 +27,7 @@ from urllib.parse import urlparse
 import requests
 from strands import tool
 
-from sana_evaluation.tools.agent_tools import (
+from sana_evaluation.tools.lake import (
     _download_manifest_path,
     _get_sandbox_dir,
     _load_download_manifest,

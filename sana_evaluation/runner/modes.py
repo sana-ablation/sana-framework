@@ -23,8 +23,8 @@ from sana_evaluation.helper.prompting import (
     compose_preloaded_block,
     inject_debug_prompt,
 )
-from sana_evaluation.tools.agent_tools import download, search_prefix, submit_answer
-from sana_evaluation.tools.agent_tools_v2 import (
+from sana_evaluation.tools.lake import (
+    download,
     execute_code,
     grep_file,
     list_files,
@@ -33,6 +33,8 @@ from sana_evaluation.tools.agent_tools_v2 import (
     peek_multiple,
     query_file,
     read_file,
+    search_prefix,
+    submit_answer,
 )
 from sana_evaluation.tools.external.web_fetch_tools import download_web
 from sana_evaluation.tools.external.plan_tools import plan

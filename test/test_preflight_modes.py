@@ -353,7 +353,7 @@ class PreflightModeTests(unittest.TestCase):
 
             with ExitStack() as stack:
                 stack.enter_context(patch.object(runtime_profile_store, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
-                stack.enter_context(patch("sana_evaluation.tools.agent_tools._get_s3_client", return_value=fake_s3))
+                stack.enter_context(patch("sana_evaluation.tools.lake._get_s3_client", return_value=fake_s3))
                 check = preflight._check_kramabench_source_objects([str(task_path)])
 
         self.assertTrue(check.ok, check)

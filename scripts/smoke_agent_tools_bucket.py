@@ -260,147 +260,98 @@ def _execute_code_snippet() -> str:
     )
 
 
-def build_agent_tools_cases(agent_tools: Any, target: Target) -> List[ToolCase]:
+def build_lake_cases(lake: Any, target: Target) -> List[ToolCase]:
     return [
         ToolCase(
-            "agent_tools",
+            "lake",
             "configure_benchmark",
-            lambda: agent_tools.configure_benchmark(target.benchmark),
-            f"agent_tools.configure_benchmark({target.benchmark!r})",
+            lambda: lake.configure_benchmark(target.benchmark),
+            f"lake.configure_benchmark({target.benchmark!r})",
         ),
         ToolCase(
-            "agent_tools",
+            "lake",
             "search",
-            lambda: agent_tools.search([target.search_prefix], limit=5),
-            f"agent_tools.search({[target.search_prefix]!r}, limit=5)",
+            lambda: lake.search([target.search_prefix], limit=5),
+            f"lake.search({[target.search_prefix]!r}, limit=5)",
         ),
         ToolCase(
-            "agent_tools",
+            "lake",
             "search_prefix",
-            lambda: agent_tools.search_prefix([target.search_prefix], limit=5),
-            f"agent_tools.search_prefix({[target.search_prefix]!r}, limit=5)",
+            lambda: lake.search_prefix([target.search_prefix], limit=5),
+            f"lake.search_prefix({[target.search_prefix]!r}, limit=5)",
         ),
         ToolCase(
-            "agent_tools",
+            "lake",
             "search_keyword",
-            lambda: agent_tools.search_keyword([target.keyword], limit=5),
-            f"agent_tools.search_keyword({[target.keyword]!r}, limit=5)",
+            lambda: lake.search_keyword([target.keyword], limit=5),
+            f"lake.search_keyword({[target.keyword]!r}, limit=5)",
         ),
         ToolCase(
-            "agent_tools",
+            "lake",
             "list_files",
-            lambda: agent_tools.list_files([target.dataset_id], limit=10),
-            f"agent_tools.list_files({[target.dataset_id]!r}, limit=10)",
+            lambda: lake.list_files([target.dataset_id], limit=10),
+            f"lake.list_files({[target.dataset_id]!r}, limit=10)",
         ),
         ToolCase(
-            "agent_tools",
-            "inspect_file",
-            lambda: agent_tools.inspect_file(target.dataset_id, target.file_path, max_lines=5),
-            f"agent_tools.inspect_file({target.dataset_id!r}, {target.file_path!r}, max_lines=5)",
-        ),
-        ToolCase(
-            "agent_tools",
-            "download",
-            lambda: agent_tools.download(_file_spec(target)),
-            f"agent_tools.download({_file_spec(target)!r})",
-        ),
-        ToolCase("agent_tools", "get_sandbox_info", agent_tools.get_sandbox_info, "agent_tools.get_sandbox_info()"),
-        ToolCase(
-            "agent_tools",
-            "execute_code",
-            lambda: agent_tools.execute_code(_execute_code_snippet()),
-            f"agent_tools.execute_code({_execute_code_snippet()!r})",
-        ),
-        ToolCase(
-            "agent_tools",
-            "submit_answer",
-            lambda: agent_tools.submit_answer("[smoke-test]", "tool smoke test"),
-            "agent_tools.submit_answer('[smoke-test]', 'tool smoke test')",
-        ),
-        ToolCase("agent_tools", "cleanup_sandbox", agent_tools.cleanup_sandbox, "agent_tools.cleanup_sandbox()"),
-    ]
-
-
-def build_agent_tools_v2_cases(agent_tools_v2: Any, target: Target) -> List[ToolCase]:
-    return [
-        ToolCase(
-            "agent_tools_v2",
-            "configure_benchmark",
-            lambda: agent_tools_v2.configure_benchmark(target.benchmark),
-            f"agent_tools_v2.configure_benchmark({target.benchmark!r})",
-        ),
-        ToolCase(
-            "agent_tools_v2",
-            "search",
-            lambda: agent_tools_v2.search([target.search_prefix], limit=5),
-            f"agent_tools_v2.search({[target.search_prefix]!r}, limit=5)",
-        ),
-        ToolCase(
-            "agent_tools_v2",
-            "search_keyword",
-            lambda: agent_tools_v2.search_keyword([target.keyword], limit=5),
-            f"agent_tools_v2.search_keyword({[target.keyword]!r}, limit=5)",
-        ),
-        ToolCase(
-            "agent_tools_v2",
-            "list_files",
-            lambda: agent_tools_v2.list_files([target.dataset_id], limit=10),
-            f"agent_tools_v2.list_files({[target.dataset_id]!r}, limit=10)",
-        ),
-        ToolCase(
-            "agent_tools_v2",
+            "lake",
             "peek_file",
-            lambda: agent_tools_v2.peek_file(s3_uri=target.s3_uri, max_rows=5),
-            f"agent_tools_v2.peek_file(s3_uri={target.s3_uri!r}, max_rows=5)",
+            lambda: lake.peek_file(s3_uri=target.s3_uri, max_rows=5),
+            f"lake.peek_file(s3_uri={target.s3_uri!r}, max_rows=5)",
         ),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "peek_multiple",
-            lambda: agent_tools_v2.peek_multiple(files=_file_spec(target), max_rows=5),
-            f"agent_tools_v2.peek_multiple(files={_file_spec(target)!r}, max_rows=5)",
+            lambda: lake.peek_multiple(files=_file_spec(target), max_rows=5),
+            f"lake.peek_multiple(files={_file_spec(target)!r}, max_rows=5)",
         ),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "read_file",
-            lambda: agent_tools_v2.read_file(s3_uri=target.s3_uri, start_line=0, max_lines=5),
-            f"agent_tools_v2.read_file(s3_uri={target.s3_uri!r}, start_line=0, max_lines=5)",
+            lambda: lake.read_file(s3_uri=target.s3_uri, start_line=0, max_lines=5),
+            f"lake.read_file(s3_uri={target.s3_uri!r}, start_line=0, max_lines=5)",
         ),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "grep_file",
-            lambda: agent_tools_v2.grep_file(s3_uri=target.s3_uri, regex_pattern=target.regex_pattern, context_lines=1),
+            lambda: lake.grep_file(s3_uri=target.s3_uri, regex_pattern=target.regex_pattern, context_lines=1),
             (
-                f"agent_tools_v2.grep_file(s3_uri={target.s3_uri!r}, "
+                f"lake.grep_file(s3_uri={target.s3_uri!r}, "
                 f"regex_pattern={target.regex_pattern!r}, context_lines=1)"
             ),
         ),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "parse_xml_records",
-            lambda: agent_tools_v2.parse_xml_records(s3_uri=target.s3_uri, limit=5),
-            f"agent_tools_v2.parse_xml_records(s3_uri={target.s3_uri!r}, limit=5)",
+            lambda: lake.parse_xml_records(s3_uri=target.s3_uri, limit=5),
+            f"lake.parse_xml_records(s3_uri={target.s3_uri!r}, limit=5)",
             expect_error_substring="XML/KML",
         ),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "query_file",
-            lambda: agent_tools_v2.query_file(s3_uri=target.s3_uri, sql=target.query_sql),
-            f"agent_tools_v2.query_file(s3_uri={target.s3_uri!r}, sql={target.query_sql!r})",
+            lambda: lake.query_file(s3_uri=target.s3_uri, sql=target.query_sql),
+            f"lake.query_file(s3_uri={target.s3_uri!r}, sql={target.query_sql!r})",
         ),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "download",
-            lambda: agent_tools_v2.download(_file_spec(target)),
-            f"agent_tools_v2.download({_file_spec(target)!r})",
+            lambda: lake.download(_file_spec(target)),
+            f"lake.download({_file_spec(target)!r})",
         ),
-        ToolCase("agent_tools_v2", "get_sandbox_info", agent_tools_v2.get_sandbox_info, "agent_tools_v2.get_sandbox_info()"),
+        ToolCase("lake", "get_sandbox_info", lake.get_sandbox_info, "lake.get_sandbox_info()"),
         ToolCase(
-            "agent_tools_v2",
+            "lake",
             "execute_code",
-            lambda: agent_tools_v2.execute_code(_execute_code_snippet()),
-            f"agent_tools_v2.execute_code({_execute_code_snippet()!r})",
+            lambda: lake.execute_code(_execute_code_snippet()),
+            f"lake.execute_code({_execute_code_snippet()!r})",
         ),
-        ToolCase("agent_tools_v2", "cleanup_sandbox", agent_tools_v2.cleanup_sandbox, "agent_tools_v2.cleanup_sandbox()"),
+        ToolCase(
+            "lake",
+            "submit_answer",
+            lambda: lake.submit_answer("[smoke-test]", "tool smoke test"),
+            "lake.submit_answer('[smoke-test]', 'tool smoke test')",
+        ),
+        ToolCase("lake", "cleanup_sandbox", lake.cleanup_sandbox, "lake.cleanup_sandbox()"),
     ]
 
 
@@ -409,8 +360,7 @@ def import_tool_modules(module_names: Iterable[str]) -> tuple[Dict[str, Any], Li
     records: List[Dict[str, Any]] = []
     install_lightweight_package_stubs()
     import_paths = {
-        "agent_tools": "sana_evaluation.tools.agent_tools",
-        "agent_tools_v2": "sana_evaluation.tools.agent_tools_v2",
+        "lake": "sana_evaluation.tools.lake",
     }
     for module_name in module_names:
         started = time.monotonic()
@@ -512,10 +462,8 @@ def run_smoke_tests(
             module.set_sandbox_dir(sandbox_dir)
 
     cases: List[ToolCase] = []
-    if "agent_tools" in modules:
-        cases.extend(build_agent_tools_cases(modules["agent_tools"], target))
-    if "agent_tools_v2" in modules:
-        cases.extend(build_agent_tools_v2_cases(modules["agent_tools_v2"], target))
+    if "lake" in modules:
+        cases.extend(build_lake_cases(modules["lake"], target))
 
     for case in cases:
         record = run_case(case)
@@ -558,10 +506,10 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser.add_argument("--run-label", help="Directory name under --log-dir")
     parser.add_argument(
         "--module",
-        choices=["agent_tools", "agent_tools_v2"],
+        choices=["lake"],
         action="append",
         dest="modules",
-        help="Module to test. Repeat to test both. Defaults to both.",
+        help="Module to test. Defaults to the only tool module, lake.",
     )
     parser.add_argument(
         "--s3-access-mode",
@@ -603,7 +551,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         query_sql=args.query_sql,
     )
     run_label = args.run_label or f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{target.benchmark}"
-    modules_to_test = args.modules or ["agent_tools", "agent_tools_v2"]
+    modules_to_test = args.modules or ["lake"]
 
     result = run_smoke_tests(
         target=target,

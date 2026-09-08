@@ -43,7 +43,7 @@ _DEFAULT_MODE = "advanced"
 _ALLOWED_MODES = ("turbo", "fast", "basic", "advanced")
 
 # Keep a single tool result from dominating the context window. Mirrors the
-# _TOOL_RESULT_CHAR_CAP convention in tools/agent_tools.py.
+# _TOOL_RESULT_CHAR_CAP convention in tools/lake.py.
 _RESULT_CHAR_CAP = 6_000
 _DEFAULT_MAX_RESULTS = 10
 _TIMEOUT_SECONDS = 60

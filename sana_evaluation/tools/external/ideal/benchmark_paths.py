@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
-from sana_evaluation.tools.agent_tools import BENCHMARK_BUCKETS
+from sana_evaluation.tools.lake import BENCHMARK_BUCKETS
 
 
 @dataclass(frozen=True)

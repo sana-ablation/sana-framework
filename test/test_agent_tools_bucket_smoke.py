@@ -53,10 +53,10 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
     def test_expected_error_case_counts_as_passed(self):
         smoke = load_smoke_module()
         case = smoke.ToolCase(
-            module_name="agent_tools_v2",
+            module_name="lake",
             tool_name="parse_xml_records",
             call=lambda: {"error": "parse_xml_records only supports XML/KML files"},
-            call_repr='agent_tools_v2.parse_xml_records(s3_uri="s3://example")',
+            call_repr='lake.parse_xml_records(s3_uri="s3://example")',
             expect_error_substring="only supports XML/KML",
         )
 
@@ -117,15 +117,15 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
         smoke = load_smoke_module()
         smoke.install_dependency_stubs(["strands"])
         smoke.install_lightweight_package_stubs()
-        original_agent_tools = sys.modules.get("sana_evaluation.tools.agent_tools")
-        sys.modules.pop("sana_evaluation.tools.agent_tools", None)
+        original_agent_tools = sys.modules.get("sana_evaluation.tools.lake")
+        sys.modules.pop("sana_evaluation.tools.lake", None)
         try:
-            agent_tools = importlib.import_module("sana_evaluation.tools.agent_tools")
+            lake = importlib.import_module("sana_evaluation.tools.lake")
         finally:
             if original_agent_tools is not None:
-                sys.modules["sana_evaluation.tools.agent_tools"] = original_agent_tools
+                sys.modules["sana_evaluation.tools.lake"] = original_agent_tools
             else:
-                sys.modules.pop("sana_evaluation.tools.agent_tools", None)
+                sys.modules.pop("sana_evaluation.tools.lake", None)
         fake_s3 = Mock()
 
         def list_objects_v2(**kwargs):
@@ -135,8 +135,8 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
 
         fake_s3.list_objects_v2.side_effect = list_objects_v2
 
-        with patch.object(agent_tools, "_get_s3_client", return_value=fake_s3):
-            result = agent_tools.search(["kramabench-archeology"], limit=5)
+        with patch.object(lake, "_get_s3_client", return_value=fake_s3):
+            result = lake.search(["kramabench-archeology"], limit=5)
 
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["results"][0]["dataset_id"], "kramabench-archeology-easy-10")
@@ -145,18 +145,18 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
         smoke = load_smoke_module()
         smoke.install_dependency_stubs(["strands"])
         smoke.install_lightweight_package_stubs()
-        original_agent_tools = sys.modules.get("sana_evaluation.tools.agent_tools")
-        sys.modules.pop("sana_evaluation.tools.agent_tools", None)
+        original_agent_tools = sys.modules.get("sana_evaluation.tools.lake")
+        sys.modules.pop("sana_evaluation.tools.lake", None)
         try:
-            agent_tools = importlib.import_module("sana_evaluation.tools.agent_tools")
+            lake = importlib.import_module("sana_evaluation.tools.lake")
         finally:
             if original_agent_tools is not None:
-                sys.modules["sana_evaluation.tools.agent_tools"] = original_agent_tools
+                sys.modules["sana_evaluation.tools.lake"] = original_agent_tools
             else:
-                sys.modules.pop("sana_evaluation.tools.agent_tools", None)
+                sys.modules.pop("sana_evaluation.tools.lake", None)
 
         with patch.dict("os.environ", {}, clear=True):
-            bucket = agent_tools.configure_benchmark("kramabench")
+            bucket = lake.configure_benchmark("kramabench")
 
             self.assertEqual(bucket, "sana-kramabench")
             self.assertEqual(os.environ["LAKEQA_BENCHMARK"], "kramabench")
@@ -166,16 +166,16 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
         smoke = load_smoke_module()
         records = [
             {
-                "module": "agent_tools",
+                "module": "lake",
                 "tool": "search",
-                "call": "agent_tools.search(['kramabench-archeology'], limit=5)",
+                "call": "lake.search(['kramabench-archeology'], limit=5)",
                 "status": "passed",
                 "result": {"count": 1},
             },
             {
-                "module": "agent_tools_v2",
+                "module": "lake",
                 "tool": "query_file",
-                "call": "agent_tools_v2.query_file(s3_uri='s3://example', sql='SELECT * FROM t LIMIT 5')",
+                "call": "lake.query_file(s3_uri='s3://example', sql='SELECT * FROM t LIMIT 5')",
                 "status": "failed",
                 "error": "duckdb unavailable",
             },
@@ -195,7 +195,7 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
             transcript = transcript_path.read_text()
 
         self.assertIn("CALL:", transcript)
-        self.assertIn("agent_tools.search", transcript)
+        self.assertIn("lake.search", transcript)
         self.assertIn("RETURNED:", transcript)
         self.assertIn("'count': 1", transcript)
         self.assertIn("ERROR:", transcript)

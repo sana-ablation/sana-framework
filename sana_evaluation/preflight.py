@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
 from sana_evaluation.config import RunConfig
-from sana_evaluation.tools.agent_tools import configure_benchmark
+from sana_evaluation.tools.lake import configure_benchmark
 from sana_evaluation.tools.external.ideal.benchmark_paths import (
     artifact_paths,
     canonical_source_uri,
@@ -245,7 +245,7 @@ def _add_task_node_sources(task_path: str, sources: Dict[str, List[str]]) -> Non
 
 
 def _check_kramabench_source_objects(task_files: Sequence[str]) -> PreflightCheck:
-    from sana_evaluation.tools.agent_tools import _get_s3_client
+    from sana_evaluation.tools.lake import _get_s3_client
     from sana_evaluation.tools.external.ideal import runtime_profile_store
 
     label = "kramabench source object existence"

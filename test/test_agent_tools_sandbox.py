@@ -6,14 +6,22 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
 _MODULE_NAMES = [
     "strands",
     "boto3",
     "botocore",
     "botocore.config",
     "botocore.exceptions",
+    "duckdb",
     "dotenv",
     "requests",
+    "sana_evaluation",
+    "sana_evaluation.tools",
+    "sana_evaluation.tools.helper",
+    "sana_evaluation.tools.helper.detect",
+    "sana_evaluation.tools.lake",
 ]
 
 
@@ -24,6 +32,15 @@ class _Config:
 
 class _ClientError(Exception):
     pass
+
+
+def _load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
 
 
 def _install_import_stubs():
@@ -56,6 +73,28 @@ def _install_import_stubs():
     fake_requests = types.ModuleType("requests")
     sys.modules["requests"] = fake_requests
 
+    fake_duckdb = types.ModuleType("duckdb")
+    fake_duckdb.DuckDBPyConnection = object
+    fake_duckdb.connect = lambda *_args, **_kwargs: None
+    sys.modules["duckdb"] = fake_duckdb
+
+    # Stand in for the real packages so ``lake``'s relative imports resolve
+    # without executing ``sana_evaluation/__init__.py`` (which pulls in the
+    # whole agent stack).
+    for name, path in (
+        ("sana_evaluation", REPO_ROOT / "sana_evaluation"),
+        ("sana_evaluation.tools", REPO_ROOT / "sana_evaluation" / "tools"),
+        ("sana_evaluation.tools.helper", REPO_ROOT / "sana_evaluation" / "tools" / "helper"),
+    ):
+        package = types.ModuleType(name)
+        package.__path__ = [str(path)]
+        sys.modules[name] = package
+
+    _load_module(
+        "sana_evaluation.tools.helper.detect",
+        REPO_ROOT / "sana_evaluation" / "tools" / "helper" / "detect.py",
+    )
+
     return previous
 
 
@@ -67,30 +106,20 @@ def _restore_modules(previous):
             sys.modules[name] = old_value
 
 
-def _load_agent_tools_module():
+def _load_lake_module():
     previous = _install_import_stubs()
     try:
-        module_path = (
-            Path(__file__).resolve().parents[1]
-            / "sana_evaluation"
-            / "tools"
-            / "agent_tools.py"
+        return _load_module(
+            "sana_evaluation.tools.lake",
+            REPO_ROOT / "sana_evaluation" / "tools" / "lake.py",
         )
-        spec = importlib.util.spec_from_file_location(
-            "_test_agent_tools_sandbox_module",
-            module_path,
-        )
-        module = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
-        spec.loader.exec_module(module)
-        return module
     finally:
         _restore_modules(previous)
 
 
 class AgentToolsSandboxTests(unittest.TestCase):
     def setUp(self):
-        self.mod = _load_agent_tools_module()
+        self.mod = _load_lake_module()
 
     def test_cleanup_sandbox_clears_override_after_deleting_pinned_sandbox(self):
         with TemporaryDirectory() as tmp:
