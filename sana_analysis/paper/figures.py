@@ -20,13 +20,15 @@ from sana_analysis.answer_failure.combine_grouped_models import (
     write_condition_group_figure,
     write_model_group_figure,
 )
+from sana_analysis.variants import try_parse_variant
 
-
-SEARCH_VARIANTS = {
-    "search_n_results_i_plani_computei_k5_skills_off": ("NII", "BM25"),
-    "search_d_results_i_plani_computei_k5_skills_off": ("DII", "Pneuma"),
-    "search_i_results_i_plani_computei_k5_skills_off": ("III", "Ideal"),
-}
+# The search ablation holds plan and compute at ideal and varies search. Keyed on
+# predicates so any generation of directory name resolves to the same code.
+SEARCH_VARIANTS = [
+    (dict(search="naive", plan="ideal", compute="ideal"), ("NII", "BM25")),
+    (dict(search="standard", plan="ideal", compute="ideal"), ("DII", "Pneuma")),
+    (dict(search="ideal", plan="ideal", compute="ideal"), ("III", "Ideal")),
+]
 SEARCH_ORDER = ["NII", "DII", "III"]
 SEARCH_COLORS = {"NII": "#4C78A8", "DII": "#F58518", "III": "#54A24B"}
 SEARCH_DISPLAY_LABELS = {"NII": "BM25", "DII": "PNEUMA", "III": "Ideal"}
@@ -129,8 +131,13 @@ LEGACY_FIGURE_FALLBACKS = {
 
 
 def _search_variant_label(variant: str) -> Optional[str]:
-    payload = SEARCH_VARIANTS.get(str(variant))
-    return payload[0] if payload else None
+    decoded = try_parse_variant(str(variant))
+    if decoded is None:
+        return None
+    for axes, (code, _display) in SEARCH_VARIANTS:
+        if decoded.matches(**axes):
+            return code
+    return None
 
 
 def _parse_model_filters(model_filter: Optional[str]) -> Optional[list[str]]:
