@@ -35,6 +35,16 @@ def test_no_only_new_overrides_the_full_preset():
     assert cli.parse(["full"]).only_new is True
 
 
+def test_no_verbose_overrides_either_preset():
+    """Same class of defect as --only-new: both presets set verbose=True, and
+    --verbose was a bare store_true, so no flag could turn it back off.
+    """
+    assert cli.parse(["full", "--no-verbose"]).verbose is False
+    assert cli.parse(["full"]).verbose is True
+    assert cli.parse(["smoke", "--no-verbose"]).verbose is False
+    assert cli.parse(["smoke"]).verbose is True
+
+
 @pytest.mark.parametrize("argv,attr,expected", [
     (["--search_tool", "ideal"], "search", "ideal"),
     (["--search_results", "minimal"], "results", "minimal"),

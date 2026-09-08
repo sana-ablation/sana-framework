@@ -153,7 +153,10 @@ def build_parser() -> argparse.ArgumentParser:
     out.add_argument("--logs-output-dir", default="logs")
     out.add_argument("--results-output-dir", default="results")
     out.add_argument("--debug-mode", choices=("none", "decision_notes"), default="none")
-    out.add_argument("--verbose", "-v", action="store_true", default=False)
+    verbose = out.add_mutually_exclusive_group()
+    verbose.add_argument("--verbose", "-v", dest="verbose", action="store_true", default=False)
+    verbose.add_argument("--no-verbose", dest="verbose", action="store_false",
+                         help="explicitly turn off --verbose, e.g. to override a preset")
     return p
 
 
