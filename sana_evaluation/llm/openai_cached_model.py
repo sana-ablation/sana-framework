@@ -29,6 +29,17 @@ def extract_chat_cached_input_tokens(usage: Any) -> int | None:
     return _coerce_int(getattr(details, "cached_tokens", None))
 
 
+def extract_chat_cache_write_tokens(usage: Any) -> int | None:
+    """Cache writes are priced above ordinary input on some models.
+
+    They arrive alongside cached_tokens and were being discarded, so they fell
+    through to the uncached-input rate -- a quiet undercount wherever the write
+    rate is higher than the input rate.
+    """
+    details = getattr(usage, "prompt_tokens_details", None)
+    return _coerce_int(getattr(details, "cache_write_tokens", None))
+
+
 def extract_responses_cached_input_tokens(usage: Any) -> int | None:
     details = getattr(usage, "input_tokens_details", None)
     return _coerce_int(getattr(details, "cached_tokens", None))
@@ -49,6 +60,9 @@ class OpenAICachedUsageModel(OpenAIModel):
         cached_tokens = extract_chat_cached_input_tokens(event["data"])
         if cached_tokens is not None:
             usage_payload["cacheReadInputTokens"] = cached_tokens
+        write_tokens = extract_chat_cache_write_tokens(event["data"])
+        if write_tokens is not None:
+            usage_payload["cacheWriteInputTokens"] = write_tokens
 
         return {
             "metadata": {
@@ -75,6 +89,10 @@ class OpenAIResponsesCachedUsageModel(OpenAIResponsesModel):
         cached_tokens = extract_responses_cached_input_tokens(event["data"])
         if cached_tokens is not None:
             usage_payload["cacheReadInputTokens"] = cached_tokens
+        details = getattr(event["data"], "input_tokens_details", None)
+        write_tokens = _coerce_int(getattr(details, "cache_write_tokens", None))
+        if write_tokens is not None:
+            usage_payload["cacheWriteInputTokens"] = write_tokens
 
         return {
             "metadata": {
