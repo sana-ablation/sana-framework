@@ -102,7 +102,7 @@ class CliModeHelperTests(unittest.TestCase):
 
         self.assertEqual(
             label,
-            "search_ideal__results_naive__plan_naive__compute_standard__k5__sc2__skills_off",
+            "search_ideal__plan_naive__compute_standard__results_minimal__k5__sc2__skills_off",
         )
 
     def test_variant_condition_label_uses_preloaded_mode_name(self):
@@ -114,7 +114,7 @@ class CliModeHelperTests(unittest.TestCase):
             search_calls=None,
         )
 
-        self.assertEqual(label, "search_preloaded__results_ideal__plan_standard__compute_standard__skills_off")
+        self.assertEqual(label, "search_preloaded__plan_standard__compute_standard__results_rich__skills_off")
 
     def test_variant_condition_label_appends_search_flags(self):
         label = cli._variant_condition_label(
@@ -128,7 +128,7 @@ class CliModeHelperTests(unittest.TestCase):
 
         self.assertEqual(
             label,
-            "search_ideal__results_ideal__plan_standard__compute_standard__free__skills_off",
+            "search_ideal__plan_standard__compute_standard__results_rich__free__skills_off",
         )
 
     def test_variant_condition_label_appends_ideal_computation_axis(self):
@@ -139,7 +139,7 @@ class CliModeHelperTests(unittest.TestCase):
             computation_tool="ideal",
         )
 
-        self.assertEqual(label, "search_preloaded__results_ideal__plan_standard__compute_ideal__skills_off")
+        self.assertEqual(label, "search_preloaded__plan_standard__compute_ideal__results_rich__skills_off")
 
     def test_variant_condition_label_appends_plan_skills_when_enabled(self):
         label = cli._variant_condition_label(
@@ -149,7 +149,7 @@ class CliModeHelperTests(unittest.TestCase):
             plan_skills_enabled=True,
         )
 
-        self.assertEqual(label, "search_preloaded__results_ideal__plan_standard__compute_standard__skills_on")
+        self.assertEqual(label, "search_preloaded__plan_standard__compute_standard__results_rich__skills_on")
 
     def test_benchmark_choices_include_supported_external_benchmarks(self):
         self.assertIn("kramabench", cli.BENCHMARKS)
@@ -207,13 +207,13 @@ class CliModeHelperTests(unittest.TestCase):
         run_config = types.SimpleNamespace(
             results_output_dir="results",
             condition_config=types.SimpleNamespace(
-                condition="modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__plan_ideal__compute_standard__k5",
+                condition="modes/openai_gpt-5.2-xhigh/search_ideal__plan_ideal__compute_standard__results_rich__k5",
             ),
         )
 
         self.assertEqual(
             orchestration._results_dir(run_config, agent_config).replace("\\", "/"),
-            "results/modes/openai_gpt-5.2-xhigh/search_ideal__results_ideal__plan_ideal__compute_standard__k5",
+            "results/modes/openai_gpt-5.2-xhigh/search_ideal__plan_ideal__compute_standard__results_rich__k5",
         )
 
     def test_standard_results_dir_layout_is_unchanged(self):

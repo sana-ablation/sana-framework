@@ -29,6 +29,7 @@ from sana_evaluation.prompting.compose import normalize_debug_mode
 from sana_evaluation.preflight import PreflightError, run_preflight
 from sana_evaluation.runner import orchestration as base_eval
 from sana_evaluation.runner.batch import BatchRunner as ModeBatchRunner
+from sana_evaluation.runner.modes import _normalize_result_mode
 from sana_evaluation.runner.reporting import print_comparison_table
 from sana_evaluation.tools.oracle.subagent_models import (
     IDEAL_SUBAGENT_MODEL_ENV,
@@ -203,11 +204,17 @@ def _variant_condition_label(
     plan_skills_enabled: bool = False,
     no_s3: bool = False,
 ) -> str:
+    # The three ablation axes lead, in the order the paper reports them; the
+    # search-result richness modifier trails them. `search_results` is
+    # canonicalised here rather than recorded as typed: `--results` accepts
+    # `ideal`/`naive` as aliases for `rich`/`minimal`, and without this the same
+    # condition lands in two different directories depending on which spelling
+    # the caller used -- which silently defeats `--only-new` resume.
     parts = [
         f"search_{search_tool}",
-        f"results_{search_results}",
         f"plan_{plan}",
         f"compute_{computation_tool}",
+        f"results_{_normalize_result_mode(search_results)}",
     ]
     if k is not None:
         parts.append(f"k{k}")

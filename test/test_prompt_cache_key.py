@@ -7,14 +7,14 @@ model was added.
 from sana_evaluation.runner.orchestration import _MAX_PROMPT_CACHE_KEY, _bounded_cache_key
 
 VARIANTS = [
-    "search_ideal__results_ideal__plan_ideal__compute_ideal__k5__skills_off",
-    "search_naive__results_ideal__plan_ideal__compute_ideal__k5__skills_off",
-    "search_standard__results_ideal__plan_ideal__compute_ideal__k5__skills_off",
-    "search_preloaded__results_ideal__plan_ideal__compute_ideal__k5__skills_off",
-    "search_ideal__results_ideal__plan_naive__compute_ideal__k5__skills_off",
-    "search_ideal__results_ideal__plan_standard__compute_ideal__k5__skills_off",
-    "search_ideal__results_ideal__plan_ideal__compute_standard__k5__skills_off",
-    "search_web__results_naive__plan_standard__compute_standard__nos3__skills_off",
+    "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+    "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+    "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+    "search_web__plan_standard__compute_standard__results_minimal__nos3__skills_off",
 ]
 MODELS = ["openai_gpt-5.6-luna", "openai_gpt-5-mini", "openai_gpt-5.2", "openai_gpt-5.4-nano"]
 
@@ -44,6 +44,6 @@ def test_bounding_is_stable_across_calls():
 
 def test_labels_differing_only_in_the_tail_get_different_keys():
     # The failure plain truncation would produce: these differ at the very end.
-    base = "openai_gpt-5.6-luna:search_ideal__results_ideal__plan_ideal__compute_"
-    assert _bounded_cache_key(base + "ideal__k5__skills_off") != _bounded_cache_key(
-        base + "standard__k5__skills_off")
+    base = "openai_gpt-5.6-luna:search_ideal__plan_ideal__compute_ideal__results_"
+    assert _bounded_cache_key(base + "rich__k5__skills_off") != _bounded_cache_key(
+        base + "minimal__k5__skills_off")
