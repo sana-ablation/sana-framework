@@ -5,14 +5,19 @@ generation, and audit aggregation.
 
 ## Contents
 
-- `prepare_sana_result_tree.py`: stages raw SANA result trees into the
-  `modes/`/`logs/`/`traces/` layout `run_mode_analysis.py` reads.
-- `run_mode_analysis.py`: main mode-analysis entry point for semantic
-  result trees.
-- `answer_failure_audit_runner.py` and `answer_failure_rerun_queue.py`: answer
-  failure audit helpers.
-- `metrics/`: reusable metric and validation modules.
-- `paper/`: paper figure and export helpers.
+Mode analysis runs in two steps:
+
+1. `prepare_sana_result_tree.py`: stage raw SANA runs into the
+   `modes/`, `logs/`, `traces/` layout the analyzer reads. Only needed for
+   result trees that are not already in that shape.
+2. `run_mode_analysis.py`: the analysis itself, over semantic-audited
+   `eval_results.csv` files.
+
+- `answer_failure/`: a separate pipeline that classifies *why* wrong answers
+  were wrong, using external model calls. See its `__init__.py` for the pass
+  ordering.
+- `metrics/`: reusable metric computations.
+- `paper/`: figure generation and paper-ready export.
 
 Generated artifacts should be written to `analysis_results*`, `agent_analysis/`,
 or `paper_figures/`, not back into this package.
