@@ -197,3 +197,101 @@ def try_parse_variant(name: str) -> Optional[Variant]:
         return parse_variant(name)
     except ValueError:
         return None
+
+
+# The seven conditions every figure and metric reports, in the order the paper
+# reports them. `run_mode_analysis.TURN_WASTE_CONDITION_FIGURE_ORDER` and
+# `answer_failure.combine_grouped_models.CONDITION_FIGURE_ORDER` held these same
+# rows as variant literals; this is the single definition they now share.
+#
+# Only the three ablation axes take part in condition identity. `results`, `k`,
+# `skills` and the flags are deliberately unconstrained, so a predicate cannot
+# over-match on a modifier -- see `Variant.matches`.
+CONDITION_ORDER: List[Tuple[str, Dict[str, str]]] = [
+    ("No Plan", dict(search="ideal", plan="naive", compute="ideal")),
+    ("Standard Plan", dict(search="ideal", plan="standard", compute="ideal")),
+    ("BM25", dict(search="naive", plan="ideal", compute="ideal")),
+    ("Pneuma Hybrid", dict(search="standard", plan="ideal", compute="ideal")),
+    ("Standard Computation", dict(search="ideal", plan="ideal", compute="standard")),
+    ("Ideal", dict(search="ideal", plan="ideal", compute="ideal")),
+    ("Preloaded", dict(search="preloaded", plan="ideal", compute="ideal")),
+]
+
+_CONDITION_AXES: Dict[str, Dict[str, str]] = {label: axes for label, axes in CONDITION_ORDER}
+
+# The variant directory names present in `experiments/` as of 2026-09-08.
+# `experiments/` is gitignored, so the round-trip test cannot read the tree; this
+# is the committed corpus it reads instead. Refresh with:
+#   find experiments -type d -name 'search_*' | sed 's|.*/||' | sort -u
+DISK_VARIANT_NAMES: Tuple[str, ...] = (
+    "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+    "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+    "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+    "search_ideal__plan_standard__compute_standard__results_minimal__skills_off",
+    "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_naive__plan_naive__compute_standard__results_rich__k5__skills_off",
+    "search_naive__plan_standard__compute_standard__results_minimal__skills_off",
+    "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "search_standard__plan_standard__compute_standard__results_minimal__skills_off",
+    "search_standard__plan_standard__compute_standard__results_rich__k5__skills_off",
+    "search_web__plan_standard__compute_standard__results_minimal__nos3__skills_off",
+)
+
+
+def condition_label(name: str) -> Optional[str]:
+    """The CONDITION_ORDER label this variant name names, or None."""
+    variant = try_parse_variant(name)
+    if variant is None:
+        return None
+    for label, axes in CONDITION_ORDER:
+        if variant.matches(**axes):
+            return label
+    return None
+
+
+def find_variant(names: Iterable[str], **axes: str) -> Optional[str]:
+    """The one observed name in `names` matching `axes`, or None.
+
+    Returns the name as observed, so callers can use it both as a key into
+    on-disk lookups and as a value written to output. Raises ValueError when
+    more than one name matches: picking one silently is the failure this module
+    exists to retire.
+    """
+    matched = []
+    for name in names:
+        variant = try_parse_variant(name)
+        if variant is not None and variant.matches(**axes):
+            matched.append(name)
+    if not matched:
+        return None
+    if len(matched) > 1:
+        raise ValueError(
+            f"axes {axes!r} match {len(matched)} variants: {sorted(matched)}"
+        )
+    return matched[0]
+
+
+def select_conditions(
+    names: Iterable[str], labels: Optional[Iterable[str]] = None
+) -> List[Tuple[str, str]]:
+    """Pair each condition present in `names` with its observed variant name.
+
+    Ordered by CONDITION_ORDER regardless of the order of `names` or `labels`.
+    Conditions with no matching name are omitted rather than yielded blank.
+    """
+    pool = list(names)
+    wanted = set(labels) if labels is not None else None
+    if wanted is not None:
+        unknown = wanted - set(_CONDITION_AXES)
+        if unknown:
+            raise KeyError(f"unknown condition label(s): {sorted(unknown)}")
+    selected: List[Tuple[str, str]] = []
+    for label, axes in CONDITION_ORDER:
+        if wanted is not None and label not in wanted:
+            continue
+        found = find_variant(pool, **axes)
+        if found is not None:
+            selected.append((label, found))
+    return selected

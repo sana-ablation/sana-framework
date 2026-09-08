@@ -6,9 +6,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from sana_analysis.variants import (
     AXIS_DEFAULTS,
+    CONDITION_ORDER,
+    DISK_VARIANT_NAMES,
     RESULT_MODES,
     Variant,
+    condition_label,
+    find_variant,
     parse_variant,
+    select_conditions,
     try_parse_variant,
 )
 
@@ -176,6 +181,156 @@ class TestVariantMatches(unittest.TestCase):
     def test_matches_cannot_be_fooled_by_raw(self):
         with self.assertRaises(TypeError):
             self.v.matches(raw="anything")
+
+
+# The seven gen-1 literals the seven modules used to hardcode, paired with the
+# condition each one named. This is the frozen before-picture: the decoder must
+# assign every one of them the same label the literal did.
+GEN1_LITERALS = [
+    ("No Plan", "search_i_results_i_plann_computei_k5_skills_off"),
+    ("Standard Plan", "search_i_results_i_pland_computei_k5_skills_off"),
+    ("BM25", "search_n_results_i_plani_computei_k5_skills_off"),
+    ("Pneuma Hybrid", "search_d_results_i_plani_computei_k5_skills_off"),
+    ("Standard Computation", "search_i_results_i_plani_k5_skills_off"),
+    ("Ideal", "search_i_results_i_plani_computei_k5_skills_off"),
+    ("Preloaded", "search_p_results_i_plani_computei_k5_skills_off"),
+]
+
+# The gen-4 name each of those seven conditions is written as today.
+GEN4_EQUIVALENTS = {
+    "No Plan": "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+    "Standard Plan": "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+    "BM25": "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "Pneuma Hybrid": "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "Standard Computation": "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+    "Ideal": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    "Preloaded": "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+}
+
+
+class TestConditionOrder(unittest.TestCase):
+    def test_seven_conditions_in_the_reported_order(self):
+        self.assertEqual(
+            [label for label, _axes in CONDITION_ORDER],
+            [
+                "No Plan",
+                "Standard Plan",
+                "BM25",
+                "Pneuma Hybrid",
+                "Standard Computation",
+                "Ideal",
+                "Preloaded",
+            ],
+        )
+
+    def test_every_gen1_literal_keeps_its_label(self):
+        for expected_label, literal in GEN1_LITERALS:
+            self.assertEqual(condition_label(literal), expected_label, literal)
+
+    def test_gen4_names_get_the_same_labels_as_their_gen1_equivalents(self):
+        for expected_label, literal in GEN1_LITERALS:
+            gen4 = GEN4_EQUIVALENTS[expected_label]
+            self.assertEqual(condition_label(gen4), expected_label, gen4)
+            self.assertEqual(condition_label(gen4), condition_label(literal), gen4)
+
+    def test_a_gen1_literal_and_its_gen4_equivalent_decode_alike(self):
+        for label, literal in GEN1_LITERALS:
+            a = parse_variant(literal)
+            b = parse_variant(GEN4_EQUIVALENTS[label])
+            self.assertEqual(
+                (a.search, a.plan, a.compute, a.results),
+                (b.search, b.plan, b.compute, b.results),
+                label,
+            )
+
+    def test_unmatched_variant_has_no_label(self):
+        self.assertIsNone(
+            condition_label(
+                "search_web__plan_standard__compute_standard__results_minimal__nos3__skills_off"
+            )
+        )
+
+    def test_non_variant_input_has_no_label(self):
+        self.assertIsNone(condition_label("not-a-variant-name"))
+
+
+class TestDiskCorpus(unittest.TestCase):
+    def test_every_name_on_disk_parses(self):
+        for name in DISK_VARIANT_NAMES:
+            self.assertIsNotNone(try_parse_variant(name), name)
+
+    def test_no_condition_is_ambiguous_over_the_disk_corpus(self):
+        # CONDITION_ORDER constrains search/plan/compute but not results, so two
+        # directories differing only in results could in principle collide.
+        # None do. If one ever does, find_variant raises rather than guessing.
+        for label, axes in CONDITION_ORDER:
+            matched = [
+                name for name in DISK_VARIANT_NAMES if parse_variant(name).matches(**axes)
+            ]
+            self.assertLessEqual(len(matched), 1, f"{label} matched {matched}")
+
+
+class TestFindVariant(unittest.TestCase):
+    def test_returns_the_observed_name_not_a_synthesised_one(self):
+        found = find_variant(DISK_VARIANT_NAMES, search="ideal", plan="ideal", compute="ideal")
+        self.assertEqual(
+            found, "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+        )
+
+    def test_returns_none_when_absent(self):
+        self.assertIsNone(find_variant(DISK_VARIANT_NAMES, search="quantum"))
+
+    def test_ignores_entries_that_are_not_variant_names(self):
+        names = ["README.md", "search_i_results_i_plani_computei_k5_skills_off"]
+        self.assertEqual(
+            find_variant(names, search="ideal", plan="ideal", compute="ideal"),
+            "search_i_results_i_plani_computei_k5_skills_off",
+        )
+
+    def test_ambiguity_raises_rather_than_guessing(self):
+        names = [
+            "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "search_ideal__plan_ideal__compute_ideal__results_minimal__skills_off",
+        ]
+        with self.assertRaises(ValueError):
+            find_variant(names, search="ideal", plan="ideal", compute="ideal")
+
+
+class TestSelectConditions(unittest.TestCase):
+    def test_returns_label_and_observed_name_in_condition_order(self):
+        names = [
+            GEN4_EQUIVALENTS["Ideal"],
+            GEN4_EQUIVALENTS["BM25"],
+            GEN4_EQUIVALENTS["No Plan"],
+        ]
+        self.assertEqual(
+            select_conditions(names),
+            [
+                ("No Plan", GEN4_EQUIVALENTS["No Plan"]),
+                ("BM25", GEN4_EQUIVALENTS["BM25"]),
+                ("Ideal", GEN4_EQUIVALENTS["Ideal"]),
+            ],
+        )
+
+    def test_absent_conditions_are_omitted_not_blanked(self):
+        self.assertEqual(
+            select_conditions([GEN4_EQUIVALENTS["Ideal"]]),
+            [("Ideal", GEN4_EQUIVALENTS["Ideal"])],
+        )
+
+    def test_label_subset_selects_and_preserves_condition_order(self):
+        names = list(GEN4_EQUIVALENTS.values())
+        self.assertEqual(
+            select_conditions(names, labels=["Ideal", "No Plan"]),
+            [
+                ("No Plan", GEN4_EQUIVALENTS["No Plan"]),
+                ("Ideal", GEN4_EQUIVALENTS["Ideal"]),
+            ],
+        )
+
+    def test_unknown_label_raises(self):
+        with self.assertRaises(KeyError):
+            select_conditions(list(GEN4_EQUIVALENTS.values()), labels=["Nonexistent"])
 
 
 if __name__ == "__main__":
