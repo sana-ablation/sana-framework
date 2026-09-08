@@ -11,7 +11,7 @@ from strands.hooks.events import (
 from sana_evaluation.config import AgentConfig
 from sana_evaluation.instrumentation.agent_plugins import LoggingPlugin, ToolLimitSteeringHandler
 from sana_evaluation.instrumentation.search_call_budget_plugin import SearchCallBudgetHandler
-from sana_evaluation.tools import agent_tools, agent_tools_v2
+from sana_evaluation.tools import lake, lake
 
 
 class FakeModel:
@@ -115,9 +115,9 @@ class TestToolLimitSteeringHandler(unittest.TestCase):
         handler._start_time = time.time() - 5
         agent = self._make_agent()
 
-        agent_tools.clear_submitted_answer()
+        lake.clear_submitted_answer()
         try:
-            agent_tools.submit_answer("[Ward 5]", "done")
+            lake.submit_answer("[Ward 5]", "done")
             action = asyncio.run(
                 handler.steer_after_model(
                     agent=agent,
@@ -126,7 +126,7 @@ class TestToolLimitSteeringHandler(unittest.TestCase):
                 )
             )
         finally:
-            agent_tools.clear_submitted_answer()
+            lake.clear_submitted_answer()
 
         self.assertEqual(action.type, "proceed")
         self.assertIn("already submitted", action.reason)
@@ -154,9 +154,9 @@ class TestSearchCallBudgetHandler(unittest.TestCase):
     def test_submitted_answer_short_circuits_search_budget(self):
         handler = SearchCallBudgetHandler(max_search_calls=1)
 
-        agent_tools.clear_submitted_answer()
+        lake.clear_submitted_answer()
         try:
-            agent_tools.submit_answer("[42]", "done")
+            lake.submit_answer("[42]", "done")
             action = asyncio.run(
                 handler.steer_before_tool(
                     agent=None,
@@ -164,7 +164,7 @@ class TestSearchCallBudgetHandler(unittest.TestCase):
                 )
             )
         finally:
-            agent_tools.clear_submitted_answer()
+            lake.clear_submitted_answer()
 
         self.assertEqual(action.type, "proceed")
         self.assertIn("already submitted", action.reason)
@@ -201,8 +201,8 @@ class TestTokenBudgetDefaults(unittest.TestCase):
         self.assertEqual(AgentConfig().max_tokens, 8096)
 
     def test_tool_result_caps_are_reduced(self):
-        self.assertEqual(agent_tools._TOOL_RESULT_CHAR_CAP, 6_000)
-        self.assertEqual(agent_tools_v2._TOOL_RESULT_CHAR_CAP, 6_000)
+        self.assertEqual(lake._TOOL_RESULT_CHAR_CAP, 6_000)
+        self.assertEqual(lake._TOOL_RESULT_CHAR_CAP, 6_000)
 
 
 class TestLoggingPlugin(unittest.TestCase):

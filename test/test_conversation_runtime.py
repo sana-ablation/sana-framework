@@ -8,8 +8,8 @@ from strands.agent.conversation_manager import (
 )
 
 from sana_evaluation.config import RunConfig
-from sana_evaluation.helper.agent_runtime import invoke_with_watchdog
-from sana_evaluation.helper.conversation import (
+from sana_evaluation.runtime.agent_runtime import invoke_with_watchdog
+from sana_evaluation.runtime.conversation import (
     TECHNICAL_SUMMARIZATION_PROMPT,
     build_conversation_manager,
 )

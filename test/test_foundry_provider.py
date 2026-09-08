@@ -11,7 +11,7 @@ import os
 import pytest
 
 from sana_evaluation.config import AgentConfig
-from sana_evaluation.helper.constants import MODEL_PRICING, MODEL_REGISTRY
+from sana_evaluation.models import MODEL_PRICING, MODEL_REGISTRY
 from sana_evaluation.llm.anthropic_foundry_model import AnthropicFoundryModel
 from sana_evaluation.llm.llm_factory import build_model
 
@@ -122,7 +122,7 @@ def test_absent_cache_field_is_omitted_not_zeroed():
 
 
 def test_cost_uses_the_cache_rate_for_cached_tokens():
-    from sana_evaluation.helper.result import MODEL_PRICING as P
+    from sana_evaluation.runner.record import MODEL_PRICING as P
     p = P["claude-fable-5-1"]
     cost = (p["input"] * 100 / 1e6
             + p["cache_read_input"] * 900 / 1e6

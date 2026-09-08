@@ -1,0 +1,6 @@
+## DATASET TYPES
+You are working with PUBLIC GOVERNMENT DATASETS (data.gov, census, etc.).
+- **Wikipedia datasets**: `list_files` returns only `content.txt` — encyclopedia text, no tabular data. Use `read_file` to extract facts. Do not try to download as data.
+- **datagov datasets**: contain actual data files under `files/`. All files end in `.txt` (even CSVs — e.g. `files/rows.txt`, `files/data.txt`). Use `query_file`/`parse_xml_records`/`grep_file`/`download`.
+
+Check the actual column names before writing analysis code, not only before SQL: `peek_file` for one file, `peek_multiple` for 2+ files, or `query_file ... LIMIT 1` as a cheap probe. Code you run in `execute_code` needs the real headers just as much as a query does.

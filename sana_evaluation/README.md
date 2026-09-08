@@ -4,29 +4,46 @@ Runtime package for SANA benchmark execution.
 
 ## Contents
 
-- `setup_run.py`: builds configured evaluation runs.
-- `run_eval.py` and `run_mode_eval.py`: run evaluation entry points.
-- `artifacts.py` and `preflight.py`: artifact discovery and readiness checks.
-- `helper/`: shared runtime helpers for prompts, metrics, results, logging, and
-  sandbox handling.
+- `cli.py`: the evaluation entry point — resolves the run and calls the
+  orchestrator directly.
+- `runner/orchestration.py` and `runner/reporting.py`: task discovery,
+  per-directory orchestration, and the CSV/JSONL writers it uses.
+- `benchmarks.py` and `preflight.py`: benchmark paths, artifact discovery, and
+  readiness checks.
+- `profiles.py`: loader and process state for a task's runtime profile.
+- `runtime/`: agent-invocation, conversation, logging, profile-peeking,
+  sandbox and answer-cleaning support for a running task.
 - `instrumentation/`: plugins for traces, loop metadata, read traces, costs,
   and search-call budgets.
 - `llm/`: model factory and cached OpenAI model adapter.
-- `prompts/`: baseline, managed, and search-mode prompt templates.
-- `tools/`: agent tools plus external and helper tool wrappers.
+- `prompting/`: prompt composition (`compose.py`, `sections.py`), the
+  baseline/managed/search-mode templates (`fragments/`), and the `SKILL.md`
+  assets the composed prompts point at (`skills/`).
+- `tools/`: grouped by axis, so each directory holds the interchangeable
+  implementations the framework exists to compare. `tools/search/` holds
+  `naive`, `standard`, `web` and `oracle` behind `wrapper.py`; `tools/plan/`
+  holds `standard` and `oracle`; `tools/computation/` holds `standard` and
+  `oracle`. `tools/lake.py` is the shared S3/DuckDB/sandbox substrate the
+  eleven non-swapped lake tools live in and the computation arms import from;
+  `tools/fetch.py` and `tools/subagent_models.py` sit alongside it.
 
 Prefer invoking this package with `python -m sana_evaluation.<module>` from the
 repo root so relative benchmark and result paths resolve consistently.
 
-## setup_run Defaults
-
-`setup_run.py` is the friendly wrapper for `run_mode_eval.py`. Use:
+## Presets
 
 ```bash
-python -m sana_evaluation.setup_run smoke|full [options]
+python -m sana_evaluation.cli [smoke|full] [options]
 ```
 
-The wrapper defaults to ideal search results, ideal planning/profile mode,
-ideal compute mode, verbose logging, and resume mode for `full`. Use `--plans`
-or the compatible `--profile` flag to override the planning axis, and use
-`--no-continue` when a full run should rerun every task.
+A preset is a default set, nothing more: explicit flags always win, and
+omitting the preset reproduces the raw evaluator defaults (`--search standard
+--results rich --plan standard --compute standard`, non-verbose, no resume).
+
+`smoke` runs one small task bucket under `test_logs/` and `test_results/`;
+`full` runs the maintained task set, always pooled into one worker pool, and
+resumes it via `--only-new` (skip task files already recorded in
+`eval_results.csv`). Both shift the four axes to `ideal`, turn on verbose
+logging, and move the output roots to `log-kramabench/` and
+`results-kramabench/` under `--benchmark kramabench`. Use `--plan` (or its
+`--plans` alias) to override the planning axis.

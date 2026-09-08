@@ -1,0 +1,10 @@
+## GENERAL TIPS
+- Always `print()` in `execute_code` to see output
+- `execute_code` does NOT persist state between calls — always reload files at the top of each block
+- Use the full dataset for your final answer, not just a sample
+- Answer format: [value] only, no labels or units
+
+## TURN AND TIME LIMITS
+- You have a maximum of 30 tool calls. Use them wisely.
+- Skill loading does not cost turns.
+- If running low on turns, submit your best answer.

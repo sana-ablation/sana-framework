@@ -9,7 +9,7 @@ longer than the worker count suggests.
 
 Flattening the tasks into one directory is not an option: runtime-profile lookup
 keys off the path suffix after `benchmarks/<bench>/tasks-mini/tasks`
-(`runtime_profile_store._profile_location_from_task`), and subset20b has six
+(`sana_evaluation.profiles._profile_location_from_task`), and subset20b has six
 colliding basenames (`task_6` appears three times), so a flat tree would both
 mis-resolve profiles and silently drop 8 of 20 tasks.
 
@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation import run_eval
+from sana_evaluation.runner import orchestration
 
 
 class _FakeBatchRunner:
@@ -57,12 +57,9 @@ class PooledSchedulingTests(unittest.TestCase):
             for n in names:
                 (self.root / d / f"{n}.json").write_text(json.dumps({"question": "q", "answer": "a"}))
         self.dirs = sorted(str(p) for p in self.root.glob("k-*-d-*"))
-        self._prev = run_eval.BatchRunner
-        run_eval.BatchRunner = _FakeBatchRunner
         self.out = tempfile.mkdtemp()
 
     def tearDown(self):
-        run_eval.BatchRunner = self._prev
         self._tmp.cleanup()
 
     def _cfg(self):
@@ -72,7 +69,7 @@ class PooledSchedulingTests(unittest.TestCase):
 
     def _patched(self):
         return patch.multiple(
-            run_eval,
+            orchestration,
             _display_name=MagicMock(return_value="model"),
             _results_dir=MagicMock(return_value=self.out),
         )
@@ -82,7 +79,7 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         with self._patched():
             for d in self.dirs:
-                run_eval.run_evaluation(d, agent, run, parallel=8)
+                orchestration.run_evaluation(d, agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8)
 
         self.assertEqual(len(_FakeBatchRunner.calls), 3, "one pool per directory")
         self.assertEqual([len(c["files"]) for c in _FakeBatchRunner.calls], [2, 1, 2])
@@ -92,8 +89,8 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         every = sorted(str(p) for p in self.root.rglob("*.json"))
         with self._patched():
-            run_eval.run_evaluation(
-                str(self.root), agent, run, parallel=8, task_files=every,
+            orchestration.run_evaluation(
+                str(self.root), agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8, task_files=every,
             )
 
         self.assertEqual(len(_FakeBatchRunner.calls), 1, "a single pool for every task")
@@ -105,7 +102,9 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         every = sorted(str(p) for p in self.root.rglob("*.json"))
         with self._patched():
-            run_eval.run_evaluation(str(self.root), agent, run, parallel=8, task_files=every)
+            orchestration.run_evaluation(
+                str(self.root), agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8, task_files=every,
+            )
 
         ran = _FakeBatchRunner.calls[0]["files"]
         for p in ran:
@@ -116,7 +115,9 @@ class PooledSchedulingTests(unittest.TestCase):
         agent, run = self._cfg()
         every = sorted(str(p) for p in self.root.rglob("*.json"))
         with self._patched():
-            run_eval.run_evaluation(str(self.root), agent, run, parallel=8, task_files=every)
+            orchestration.run_evaluation(
+                str(self.root), agent, run, batch_runner_cls=_FakeBatchRunner, parallel=8, task_files=every,
+            )
 
         ran = _FakeBatchRunner.calls[0]["files"]
         self.assertEqual(sum(1 for p in ran if p.endswith("task_6.json")), 3)
@@ -127,16 +128,12 @@ if __name__ == "__main__":
     unittest.main()
 
 
-class PoolTasksFlagTests(unittest.TestCase):
-    """--pool-tasks must gather every directory into a single run_evaluation call."""
+class PooledDispatchTests(unittest.TestCase):
+    """Pooling is unconditional now (--pool-tasks is gone): --all-tasks always
+    gathers every directory into a single run_evaluation call.
+    """
 
-    def test_flag_defaults_to_off(self):
-        import sana_evaluation.run_mode_eval as rme
-        parser_args = rme.main.__doc__  # touch module so import errors surface
-        self.assertIsNotNone(rme)
-
-    def test_pool_tasks_collects_every_directory_into_one_call(self):
-        import sana_evaluation.run_mode_eval as rme
+    def test_run_all_tasks_pooled_collects_every_directory_into_one_call(self):
         seen = {}
 
         def fake_run_evaluation(task_dir, agent_config, run_config, **kw):
@@ -147,13 +144,14 @@ class PoolTasksFlagTests(unittest.TestCase):
         files = {"/t/k-3-d-2": ["/t/k-3-d-2/task_6.json", "/t/k-3-d-2/task_11.json"],
                  "/t/k-4-d-3": ["/t/k-4-d-3/task_6.json"]}
 
-        with patch.object(rme.base_eval, "find_all_task_dirs", return_value=dirs), \
-             patch.object(rme.base_eval, "run_evaluation", side_effect=fake_run_evaluation), \
-             patch.object(rme.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
-             patch.object(rme.base_eval, "print_comparison_table", lambda *a, **k: None):
-            rme._run_all_tasks_pooled(
+        with patch.object(orchestration, "find_all_task_dirs", return_value=dirs), \
+             patch.object(orchestration, "run_evaluation", side_effect=fake_run_evaluation), \
+             patch.object(orchestration.glob, "glob", side_effect=lambda pat: sorted(files[os.path.dirname(pat)])), \
+             patch.object(orchestration, "print_comparison_table", lambda *a, **k: None):
+            orchestration._run_all_tasks_pooled(
                 task_set="/t", agent_config=object(), run_config=object(),
                 verbose=False, only_new=False, parallel=8, tasks_per_dir=None,
+                batch_runner_cls=_FakeBatchRunner,
             )
 
         self.assertEqual(len(seen["calls"]), 1, "one pooled call, not one per directory")

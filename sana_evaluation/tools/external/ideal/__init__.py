@@ -1,1 +1,0 @@
-"""Ideal-mode external tools."""

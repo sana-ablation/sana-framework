@@ -1,0 +1,27 @@
+- `query_file` — SQL query directly on a CSV/JSON file via DuckDB (no download needed); XML/KML is detected but not queryable here
+
+`query_file` output is capped and truncated exactly like the tools under OUTPUT LIMITS above.
+
+## QUERY DISCIPLINE — know the schema before SQL
+NEVER call `query_file` on a file you do not know the schema of. The most common failure modes come from guessing the schema:
+- Inventing column names (`county_name` when the column is `County`, `ISSUING_AGENCY_NAME` when it's `IssuingAgency`) -> Binder Error
+- Inventing nested table refs like `t.features` or `properties.X` -> DuckDB only exposes the flat table alias `t`
+- Casting strings to numbers when the column actually contains values like `'>80'`, `'0-5'`, or `'Under Review'` -> Conversion Error
+- Using backtick identifiers (`` `OVERALL GRADE` ``) -> DuckDB requires double quotes: `"OVERALL GRADE"`
+- Calling `query_file` on a plain-text file -> use `read_file` or `grep_file` instead
+- Calling `query_file` on an XML/KML file -> use `parse_xml_records` for structured records/counts, `peek_file` for tags/schema, `grep_file` for text search, or `read_file`; do not use `execute_code` for XML/KML extraction
+
+**Required workflow for any new file:**
+1. If you need to inspect one file, call `peek_file(dataset_id, file_path)` once. If you need to inspect 2+ files, call `peek_multiple(files=[{dataset_id, file_path}, ...], max_rows=5)` once. Read the EXACT column headers and a few sample values
+2. Then write `query_file` SQL using those exact names, quoting with `"` for any name containing spaces or special characters
+3. Reference columns directly off `t` (e.g. `SELECT "Issuing Agency" FROM t`) — never `t.something.column`
+
+You only need to peek a file ONCE per session. After that, query freely.
+Do not spend many turns inspecting schema. One peek, describe, or small row sample is enough before you move on to the computation.
+
+## TOOL COST LADDER — use the cheapest that works
+1. `query_file` — for COUNT, GROUP BY, filter, aggregation on CSV/JSON
+2. `parse_xml_records` — for filtering/grouping XML/KML records such as KML `Placemark`
+3. `grep_file` — for keyword/value search inside a file
+4. `read_file` — for text inspection, Wikipedia content
+5. `download` + `execute_code` — ONLY for joins or complex pandas over tabular/JSON files

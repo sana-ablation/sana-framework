@@ -94,7 +94,11 @@ bootstrap)
   [ -n "$REMOTE_HOST" ] || die "bootstrap is remote-only; set REMOTE_HOST"
   say "shipping source to $REMOTE_HOST:$REMOTE_DIR"
   ssh_cmd "mkdir -p $REMOTE_DIR" || die "cannot reach $REMOTE_HOST"
-  for path in sana_evaluation sana_analysis benchmarks requirements.txt "experiments/$EXP"; do
+  # dataindexing is not optional: importing sana_evaluation pulls in
+  # dataindexing.formats and dataindexing.sources.s3 (tools/lake.py,
+  # benchmarks.py), dataindexing.descriptions.rows (tools/search/wrapper.py)
+  # and dataindexing.hybrid_search (tools/search/standard.py).
+  for path in sana_evaluation dataindexing sana_analysis benchmarks requirements.txt "experiments/$EXP"; do
     [ -e "$REPO/$path" ] || continue
     rsync_to "$REPO/$path" "$(remote_path "$(dirname "$path")")/" \
       || die "failed to ship $path"
@@ -197,6 +201,13 @@ pull)
     fi
   done
   [ "$pulled" -gt 0 ] || say "nothing to pull yet"
+  # If $REMOTE_HOST is still running code from before the --profile -> --plan
+  # rename, its variant directories still carry __profile_ rather than
+  # __plan_, so what just landed under $EXP_ROOT/$EXP won't share a name with
+  # a locally-produced tree for the same condition, and nothing downstream
+  # will treat them as the same variant. There is no migration script anymore
+  # (the one-time local migration is done); update $REMOTE_HOST to the current
+  # code so it writes __plan_ itself. See scripts/README.md.
   ;;
 
 stop)

@@ -14,8 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.tools.external.ideal.plan_ideal import plan_ideal
-from sana_evaluation.tools.external.plan_tools import plan
+from sana_evaluation.tools.plan.oracle import plan_ideal
+from sana_evaluation.tools.plan.standard import plan
 
 
 class _FakeAgent:
@@ -61,7 +61,7 @@ class TestPlanToolsDoNotMutateSystemPrompt(unittest.TestCase):
 class TestSummarizationPreservesPlan(unittest.TestCase):
     def test_summarization_prompt_asks_to_keep_the_plan(self) -> None:
         """Plans now live in message history, which compaction can rewrite."""
-        from sana_evaluation.helper.conversation import TECHNICAL_SUMMARIZATION_PROMPT
+        from sana_evaluation.runtime.conversation import TECHNICAL_SUMMARIZATION_PROMPT
 
         self.assertIn("plan", TECHNICAL_SUMMARIZATION_PROMPT.lower())
 

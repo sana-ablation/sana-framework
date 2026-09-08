@@ -1,7 +1,7 @@
 """Shared agent plugins and callback utilities.
 
 This module centralizes plugin implementations used by both
-`agent.py` and `agent_with_mode.py` to avoid duplicated logic.
+`agent.py` and `runner/agent.py` to avoid duplicated logic.
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ from strands.hooks import (
 from strands.plugins import hook
 from strands.vended_plugins.steering import Guide, ModelSteeringAction, Proceed, SteeringHandler, ToolSteeringAction
 
-from sana_evaluation.tools.agent_tools import get_submitted_answer
+from sana_evaluation.tools.lake import get_submitted_answer
 
 logger = logging.getLogger(__name__)
 

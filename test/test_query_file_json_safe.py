@@ -17,22 +17,22 @@ from unittest import mock
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import sana_evaluation.tools.agent_tools as agent_tools
-from sana_evaluation.tools.agent_tools import (
-    _rewrite_execute_code_error,
-    _parse_s3_reference,
-    _resolve_file_reference,
-    download,
-    execute_code,
-)
-from sana_evaluation.tools.agent_tools_v2 import (
+import sana_evaluation.tools.lake as lake
+from sana_evaluation.tools.lake import (
     _QUERY_MAX_FILE_BYTES,
-    _query_file_impl,
     _normalize_sql_backticks,
+    _parse_s3_reference,
+    _query_file_impl,
+    _resolve_file_reference,
+    _rewrite_execute_code_error,
     _rewrite_query_error,
     _rewrite_unqueryable_family_error,
     _strip_folder_prefix,
     _to_json_safe,
+    download,
+)
+from sana_evaluation.tools.computation.standard import (
+    execute_code,
     query_file,
 )
 
@@ -204,7 +204,7 @@ class TestQueryFileJsonReaderLimit(unittest.TestCase):
 
         with (
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._resolve_file_reference",
+                "sana_evaluation.tools.lake._resolve_file_reference",
                 return_value={
                     "dataset_id": "example",
                     "file_path": "files/data.json",
@@ -212,17 +212,17 @@ class TestQueryFileJsonReaderLimit(unittest.TestCase):
                     "key": "example/files/data.json",
                 },
             ),
-            mock.patch("sana_evaluation.tools.agent_tools_v2._get_s3_client"),
+            mock.patch("sana_evaluation.tools.lake._get_s3_client"),
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._s3_head",
+                "sana_evaluation.tools.lake._s3_head",
                 return_value=_QUERY_MAX_FILE_BYTES,
             ),
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._s3_range_get",
+                "sana_evaluation.tools.lake._s3_range_get",
                 return_value=b'{"features":[]}',
             ),
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._duckdb_connection",
+                "sana_evaluation.tools.lake._duckdb_connection",
                 return_value=FakeConnection(),
             ),
         ):
@@ -256,7 +256,7 @@ class TestQueryFileCsvReader(unittest.TestCase):
 
         with (
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._resolve_file_reference",
+                "sana_evaluation.tools.lake._resolve_file_reference",
                 return_value={
                     "dataset_id": "example",
                     "file_path": "files/data.csv",
@@ -264,17 +264,17 @@ class TestQueryFileCsvReader(unittest.TestCase):
                     "key": "example/files/data.csv",
                 },
             ),
-            mock.patch("sana_evaluation.tools.agent_tools_v2._get_s3_client"),
+            mock.patch("sana_evaluation.tools.lake._get_s3_client"),
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._s3_head",
+                "sana_evaluation.tools.lake._s3_head",
                 return_value=100,
             ),
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._s3_range_get",
+                "sana_evaluation.tools.lake._s3_range_get",
                 return_value=b'name,value\n"contains, comma",1\n',
             ),
             mock.patch(
-                "sana_evaluation.tools.agent_tools_v2._duckdb_connection",
+                "sana_evaluation.tools.lake._duckdb_connection",
                 return_value=FakeConnection(),
             ),
         ):
@@ -367,7 +367,7 @@ class TestDownloadValidation(unittest.TestCase):
     """
 
     def _call(self, **kwargs):
-        from sana_evaluation.tools.agent_tools import download
+        from sana_evaluation.tools.lake import download
         fn = getattr(download, "original_function", download)
         return fn(**kwargs)
 
@@ -399,7 +399,7 @@ class TestDownloadValidation(unittest.TestCase):
         self.assertIn("split", result["error"].lower())
 
     def test_docstring_shows_correct_envelope(self):
-        from sana_evaluation.tools.agent_tools import download
+        from sana_evaluation.tools.lake import download
         fn = getattr(download, "original_function", download)
         doc = fn.__doc__ or ""
         # The docstring is what the agent reads when picking the tool — it
@@ -419,16 +419,16 @@ class TestPeekMultipleRename(unittest.TestCase):
     """
 
     def test_peek_multiple_is_importable(self):
-        from sana_evaluation.tools.agent_tools_v2 import peek_multiple  # noqa: F401
+        from sana_evaluation.tools.lake import peek_multiple  # noqa: F401
 
     def test_peek_files_is_no_longer_exported(self):
-        import sana_evaluation.tools.agent_tools_v2 as mod
+        import sana_evaluation.tools.lake as mod
         self.assertNotIn("peek_files", mod.__all__)
         self.assertIn("peek_multiple", mod.__all__)
         self.assertFalse(hasattr(mod, "peek_files"))
 
     def test_peek_multiple_validates_files_argument(self):
-        from sana_evaluation.tools.agent_tools_v2 import peek_multiple
+        from sana_evaluation.tools.lake import peek_multiple
         # The actual @tool decorator wraps the function — call the underlying
         # function directly via .original_function if present, else via the
         # wrapper.
@@ -750,8 +750,8 @@ class TestExecuteCodeSandboxEnvAndIjson(unittest.TestCase):
         self.assertEqual(result["output"].strip(), "ijson")
 
     def test_download_manifest_path_is_available_during_exec(self):
-        old_sandbox = agent_tools._SANDBOX_DIR
-        old_override = agent_tools._SANDBOX_OVERRIDE
+        old_sandbox = lake._SANDBOX_DIR
+        old_override = lake._SANDBOX_OVERRIDE
         with TemporaryDirectory() as tmpdir:
             sandbox = Path(tmpdir)
             manifest_path = sandbox / ".download_manifest.json"
@@ -767,15 +767,15 @@ class TestExecuteCodeSandboxEnvAndIjson(unittest.TestCase):
                 )
             )
             try:
-                agent_tools.set_sandbox_dir(sandbox)
-                result = agent_tools._execute_code_impl(
+                lake.set_sandbox_dir(sandbox)
+                result = lake._execute_code_impl(
                     "import os\n"
                     "print(DOWNLOAD_MANIFEST_PATH == os.environ['DOWNLOAD_MANIFEST_PATH'])\n"
                     "print(DOWNLOAD_PATHS['example/files/data.csv'])"
                 )
             finally:
-                agent_tools._SANDBOX_DIR = old_sandbox
-                agent_tools._SANDBOX_OVERRIDE = old_override
+                lake._SANDBOX_DIR = old_sandbox
+                lake._SANDBOX_OVERRIDE = old_override
 
         self.assertTrue(result.get("success"), result)
         self.assertIn("True", result["output"])
@@ -795,7 +795,12 @@ class TestExecuteCodeSandboxEnvAndIjson(unittest.TestCase):
         self.assertFalse(result.get("success"))
         self.assertNotIn("hint", result)
 
-    @mock.patch("sana_evaluation.tools.agent_tools._run_tool_with_timeout", return_value=(False, None))
+    # Patched where it is *called*: the execute_code tool surface lives in
+    # tools.computation.standard, which binds the lake helper at import time.
+    @mock.patch(
+        "sana_evaluation.tools.computation.standard._run_tool_with_timeout",
+        return_value=(False, None),
+    )
     def test_execute_code_timeout_returns_failure(self, _patched_timeout):
         result = execute_code("print('hello')")
         self.assertFalse(result.get("success"))
@@ -804,13 +809,17 @@ class TestExecuteCodeSandboxEnvAndIjson(unittest.TestCase):
 
 
 class TestToolTimeoutWrappers(unittest.TestCase):
-    @mock.patch("sana_evaluation.tools.agent_tools._run_tool_with_timeout", return_value=(False, None))
+    @mock.patch("sana_evaluation.tools.lake._run_tool_with_timeout", return_value=(False, None))
     def test_download_timeout_returns_error(self, _patched_timeout):
         result = download([{"dataset_id": "example", "file_path": "files/data.txt"}])
         self.assertIn("timed out after 150s", result.get("error", ""))
         self.assertEqual(result.get("download_count"), 0)
 
-    @mock.patch("sana_evaluation.tools.agent_tools_v2._run_tool_with_timeout", return_value=(False, None))
+    # Patched where it is *called* -- see the execute_code case above.
+    @mock.patch(
+        "sana_evaluation.tools.computation.standard._run_tool_with_timeout",
+        return_value=(False, None),
+    )
     def test_query_file_timeout_returns_error(self, _patched_timeout):
         result = query_file(dataset_id="example", file_path="files/data.txt", sql="SELECT 1")
         self.assertIn("timed out after 150s", result.get("error", ""))
@@ -819,15 +828,15 @@ class TestToolTimeoutWrappers(unittest.TestCase):
 
 class TestDownloadManifestAndErrors(unittest.TestCase):
     def setUp(self):
-        self.old_sandbox = agent_tools._SANDBOX_DIR
-        self.old_override = agent_tools._SANDBOX_OVERRIDE
-        self.old_bucket = agent_tools.BUCKET
-        agent_tools.configure_benchmark("lakeqa")
+        self.old_sandbox = lake._SANDBOX_DIR
+        self.old_override = lake._SANDBOX_OVERRIDE
+        self.old_bucket = lake.BUCKET
+        lake.configure_benchmark("lakeqa")
 
     def tearDown(self):
-        agent_tools._SANDBOX_DIR = self.old_sandbox
-        agent_tools._SANDBOX_OVERRIDE = self.old_override
-        agent_tools.BUCKET = self.old_bucket
+        lake._SANDBOX_DIR = self.old_sandbox
+        lake._SANDBOX_OVERRIDE = self.old_override
+        lake.BUCKET = self.old_bucket
 
     def test_download_writes_manifest_and_returns_path_map(self):
         class FakeS3:
@@ -836,9 +845,9 @@ class TestDownloadManifestAndErrors(unittest.TestCase):
 
         with TemporaryDirectory() as tmpdir:
             sandbox = Path(tmpdir)
-            agent_tools.set_sandbox_dir(sandbox)
-            with mock.patch("sana_evaluation.tools.agent_tools._get_s3_client", return_value=FakeS3()):
-                result = agent_tools._download_impl(
+            lake.set_sandbox_dir(sandbox)
+            with mock.patch("sana_evaluation.tools.lake._get_s3_client", return_value=FakeS3()):
+                result = lake._download_impl(
                     [
                         {
                             "s3_uri": "s3://lakeqa-yc4103-datalake/datagov/example/files/data.csv",
@@ -861,7 +870,7 @@ class TestDownloadManifestAndErrors(unittest.TestCase):
     def test_download_missing_key_returns_bucket_key_and_close_candidates(self):
         class FakeS3:
             def download_file(self, Bucket, Key, Filename):
-                raise agent_tools.ClientError(
+                raise lake.ClientError(
                     {"Error": {"Code": "NoSuchKey", "Message": "missing"}},
                     "GetObject",
                 )
@@ -875,9 +884,9 @@ class TestDownloadManifestAndErrors(unittest.TestCase):
                 }
 
         with TemporaryDirectory() as tmpdir:
-            agent_tools.set_sandbox_dir(Path(tmpdir))
-            with mock.patch("sana_evaluation.tools.agent_tools._get_s3_client", return_value=FakeS3()):
-                result = agent_tools._download_impl(
+            lake.set_sandbox_dir(Path(tmpdir))
+            with mock.patch("sana_evaluation.tools.lake._get_s3_client", return_value=FakeS3()):
+                result = lake._download_impl(
                     [
                         {
                             "s3_uri": "s3://lakeqa-yc4103-datalake/datagov/example/files/right_fiel.csv",

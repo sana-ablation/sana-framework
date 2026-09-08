@@ -2,8 +2,8 @@
 
 `dataindexing` owns offline artifact generation and hybrid-search index
 construction for SANA data-lake experiments. It also exports the runtime search
-API consumed by `sana_evaluation.tools.external.search_standard_tools` and
-`search_naive_tools`.
+API consumed by `sana_evaluation.tools.search.standard` and
+`sana_evaluation.tools.search.naive`.
 
 ## Generic LakeQA/Data.gov Flow
 

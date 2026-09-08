@@ -36,10 +36,10 @@ from typing import Any, Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.agent_with_mode import DataLakeAgent
+from sana_evaluation.runner.agent import DataLakeAgent
 from sana_evaluation.config import AgentConfig, ConditionConfig, RunConfig
 from sana_evaluation.preflight import run_preflight
-from sana_evaluation.tools.external.ideal import runtime_profile_store
+from sana_evaluation import profiles
 
 _IDEAL_PROMPT = (
     "This is a diagnostic. Do NOT attempt to answer the underlying research "
@@ -87,7 +87,7 @@ def _build_run_config(
         search_db_path=db_path,
         search_tool_mode=mode,
         search_results_mode="ideal" if mode == "ideal" else "naive",
-        profile_mode=mode,
+        plan_mode=mode,
         condition_config=ConditionConfig(
             condition=f"diagnostic/plan_recitation_{mode}",
             base_condition="baseline",
@@ -98,7 +98,7 @@ def _build_run_config(
 
 def _expected_chain(task_file: str) -> Optional[str]:
     try:
-        plan = runtime_profile_store.load_runtime_profile_for_task(task_file)
+        plan = profiles.load_runtime_profile_for_task(task_file)
     except Exception:
         return None
     return plan.reasoning_chain_text
@@ -166,7 +166,7 @@ def run_recitation(
             "reasoning_chain": task.get("reasoning_chain", []),
         }
         if mode == "ideal":
-            import sana_evaluation.tools.external.ideal.search_ideal as _si
+            import sana_evaluation.tools.search.oracle as _si
             _si.set_task_context(task_context)
 
         da = DataLakeAgent(agent_config, run_config)

@@ -13,15 +13,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
-from sana_evaluation.config import RunConfig
-from sana_evaluation.tools.agent_tools import configure_benchmark
-from sana_evaluation.tools.external.ideal.benchmark_paths import (
+from sana_evaluation.config import AXIS_DEFAULTS, RunConfig
+from sana_evaluation.tools.lake import configure_benchmark
+from sana_evaluation.benchmarks import (
     artifact_paths,
     canonical_source_uri,
     normalize_benchmark,
 )
 
-_PROMPTS_DIR = Path("sana_evaluation/prompts")
 _PROFILES_PATH = Path("benchmarks/lakeqa/tasks-mini/artifacts/table_profiles.jsonl")
 
 
@@ -37,26 +36,24 @@ class PreflightError(RuntimeError):
 
 
 def _prompt_files_for_modes(
-    search_tool_mode: str,
-    profile_mode: str,
     *,
+    plan: str,
+    search: str,
     benchmark: str = "lakeqa",
+    skills: bool = False,
     no_s3: bool = False,
 ) -> List[Path]:
-    from sana_evaluation.helper.prompting import search_overlay_name
+    """Delegate to the one resolver, exactly as mode validation already does.
 
-    overlay_mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
-    if benchmark == "kramabench":
-        base_path = _PROMPTS_DIR / "managed_kramabench.txt"
-        overlay_name = f"search_{overlay_mode}_kramabench.txt"
-        overlay_path = _PROMPTS_DIR / overlay_name
-        if not overlay_path.is_file():
-            overlay_path = _PROMPTS_DIR / f"search_{overlay_mode}.txt"
-        return [base_path, overlay_path]
+    Preflight used to re-implement the resolution and never checked for a
+    mode-specific base, so it validated managed.txt while the run read
+    managed_web.txt. There is one resolver now and this calls it. ``no_s3`` is
+    accepted and ignored: it selects no fragment.
+    """
+    from sana_evaluation.prompting.compose import fragment_paths
 
-    base_name = "baseline.txt" if profile_mode == "naive" else "managed.txt"
-    overlay_name = f"search_{overlay_mode}.txt"
-    return [_PROMPTS_DIR / base_name, _PROMPTS_DIR / overlay_name]
+    del no_s3
+    return fragment_paths(plan=plan, search=search, benchmark=benchmark, skills=skills)
 
 
 def _check_file_exists(path: Path, label: str) -> PreflightCheck:
@@ -81,21 +78,21 @@ def _check_search_mode_combination(st: str, sr: str, pm: str, ct: str, no_s3: bo
     Without this the guard in build_mode_bundle only fires inside each task
     worker, so a bad combination burns one crash per task instead of one upfront.
     """
-    from sana_evaluation.agent_with_mode import _validate_search_mode_combination
+    from sana_evaluation.runner.modes import _validate_search_mode_combination
 
     label = f"mode_combination:search={st}"
     try:
         _validate_search_mode_combination(
             search_tool_mode=st,
             search_results_mode=sr,
-            profile_mode=pm,
+            plan_mode=pm,
             computation_tool_mode=ct,
             no_s3=no_s3,
         )
     except ValueError as exc:
         return PreflightCheck(label, False, str(exc))
     return PreflightCheck(
-        label, True, f"search={st} results={sr} profile={pm} compute={ct} no_s3={no_s3}"
+        label, True, f"search={st} results={sr} plan={pm} compute={ct} no_s3={no_s3}"
     )
 
 
@@ -111,7 +108,7 @@ def _check_web_search_credentials() -> PreflightCheck:
 
 
 def _check_desc_cache_for_enrichment() -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
 
     _sw._DESC_CACHE_LOADED = False
     _sw._DESC_BY_URI = {}
@@ -124,7 +121,7 @@ def _check_desc_cache_for_enrichment() -> PreflightCheck:
 
 
 def _check_snippet_cache() -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
 
     _sw._SNIPPET_CACHE_LOADED = False
     _sw._SNIPPET_BY_URI = {}
@@ -137,7 +134,7 @@ def _check_snippet_cache() -> PreflightCheck:
 
 
 def _check_schemas_jsonl_load() -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation.tools.search import wrapper as _sw
 
     _sw._SCHEMAS_CACHE_LOADED = False
     _sw._SCHEMA_BY_SLUG_FILENAME = {}
@@ -158,8 +155,8 @@ def _check_runtime_profile_source_description_coverage(
     *,
     benchmark: str,
 ) -> PreflightCheck:
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
+    from sana_evaluation import profiles
+    from sana_evaluation.tools.search import wrapper as _sw
 
     label = "runtime profile source description coverage"
     missing: List[str] = []
@@ -177,7 +174,7 @@ def _check_runtime_profile_source_description_coverage(
         ):
             continue
         try:
-            profile = runtime_profile_store.load_runtime_profile_for_task(task_str)
+            profile = profiles.load_runtime_profile_for_task(task_str)
         except Exception as exc:
             return PreflightCheck(label, False, f"{task_str}: {exc}")
         for source in profile.source_sequence:
@@ -245,8 +242,8 @@ def _add_task_node_sources(task_path: str, sources: Dict[str, List[str]]) -> Non
 
 
 def _check_kramabench_source_objects(task_files: Sequence[str]) -> PreflightCheck:
-    from sana_evaluation.tools.agent_tools import _get_s3_client
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
+    from sana_evaluation.tools.lake import _get_s3_client
+    from sana_evaluation import profiles
 
     label = "kramabench source object existence"
     sources: Dict[str, List[str]] = {}
@@ -256,7 +253,7 @@ def _check_kramabench_source_objects(task_files: Sequence[str]) -> PreflightChec
         except Exception as exc:
             return PreflightCheck(label, False, f"{task_path}: could not read task nodes: {exc}")
         try:
-            profile = runtime_profile_store.load_runtime_profile_for_task(str(task_path))
+            profile = profiles.load_runtime_profile_for_task(str(task_path))
         except Exception as exc:
             return PreflightCheck(label, False, f"{task_path}: could not load runtime profile: {exc}")
         for index, source in enumerate(profile.source_sequence, start=1):
@@ -323,13 +320,13 @@ def _check_profiles_jsonl(*, required: bool = False) -> PreflightCheck:
 
 
 def _check_runtime_profile_files(task_files: Sequence[str]) -> List[PreflightCheck]:
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
+    from sana_evaluation import profiles
 
     checks: List[PreflightCheck] = []
     for task_path in task_files:
         label = f"runtime_profile:{task_path}"
         try:
-            runtime_profile_store.load_runtime_profile_for_task(task_path)
+            profiles.load_runtime_profile_for_task(task_path)
         except Exception as exc:
             checks.append(PreflightCheck(label, False, str(exc)))
             continue
@@ -342,12 +339,12 @@ def _check_ideal_computation_records(
     *,
     benchmark: str = "lakeqa",
 ) -> List[PreflightCheck]:
-    from sana_evaluation.tools.external.ideal import runtime_profile_store
+    from sana_evaluation import profiles
 
     checks: List[PreflightCheck] = []
     for task_path in task_files:
         try:
-            profile = runtime_profile_store.load_runtime_profile_for_task(task_path)
+            profile = profiles.load_runtime_profile_for_task(task_path)
         except Exception as exc:
             if benchmark != "kramabench":
                 checks.append(PreflightCheck(f"ideal_query:{task_path}", False, str(exc)))
@@ -419,15 +416,20 @@ def run_preflight(
     """
     stream = stream or sys.stdout
 
-    st = (run_config.search_tool_mode or "standard").strip().lower()
-    sr = (run_config.search_results_mode or "naive").strip().lower()
-    pm = (run_config.profile_mode or "standard").strip().lower()
-    ct = (getattr(run_config, "computation_tool_mode", None) or "standard").strip().lower()
+    # Coalesced against AXIS_DEFAULTS, the same table build_mode_bundle uses, so
+    # this upfront check sees exactly the combination the workers will build.
+    st = (run_config.search_tool_mode or AXIS_DEFAULTS["search_tool_mode"]).strip().lower()
+    sr = (run_config.search_results_mode or AXIS_DEFAULTS["search_results_mode"]).strip().lower()
+    pm = (run_config.plan_mode or AXIS_DEFAULTS["plan_mode"]).strip().lower()
+    ct = (
+        getattr(run_config, "computation_tool_mode", None)
+        or AXIS_DEFAULTS["computation_tool_mode"]
+    ).strip().lower()
     benchmark = normalize_benchmark(getattr(run_config, "benchmark", None) or "lakeqa")
     configure_benchmark(benchmark)
 
-    from sana_evaluation.tools.external.ideal import search_wrapper as _sw
-    from sana_evaluation.helper import peek_profile as _pp
+    from sana_evaluation.tools.search import wrapper as _sw
+    from sana_evaluation.runtime import peek_profile as _pp
 
     paths = artifact_paths(benchmark)
     if not _sw._TABLE_DESCRIPTIONS_PATH.is_absolute():
@@ -449,8 +451,11 @@ def run_preflight(
     if st == "web":
         checks.append(_check_web_search_credentials())
 
-    for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark, no_s3=no_s3):
-        checks.append(_check_file_exists(prompt_path, f"prompt:{prompt_path.name}"))
+    for prompt_path in _prompt_files_for_modes(
+        plan=pm, search=st, benchmark=benchmark, no_s3=no_s3
+    ):
+        label = f"prompt:{prompt_path.parent.name}/{prompt_path.name}"
+        checks.append(_check_file_exists(prompt_path, label))
 
     if st in {"standard", "naive"}:
         db_path = Path(run_config.search_db_path or "./lance_data")

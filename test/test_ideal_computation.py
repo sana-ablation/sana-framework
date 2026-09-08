@@ -15,15 +15,14 @@ from strands.hooks.events import (
     BeforeToolCallEvent,
 )
 
-from sana_evaluation.agent_with_mode import build_mode_bundle
+from sana_evaluation.runner.modes import build_mode_bundle
 from sana_evaluation.config import RunConfig
 from sana_evaluation.instrumentation import ideal_subagent_costs
 from sana_evaluation.instrumentation.trace_plugin import set_trace_context
 from sana_evaluation.instrumentation.agent_plugins import LoggingPlugin
-from sana_evaluation.tools.agent_tools import execute_code
-from sana_evaluation.tools.agent_tools_v2 import query_file
-from sana_evaluation.tools.external.ideal import computation_ideal
-from sana_evaluation.tools.external.ideal.runtime_profile_store import (
+from sana_evaluation.tools.computation.standard import execute_code, query_file
+from sana_evaluation.tools.computation import oracle as computation_ideal
+from sana_evaluation.profiles import (
     load_runtime_profile_for_task,
     set_runtime_profiles_root,
     set_task_context,
@@ -853,7 +852,7 @@ class IdealComputationToolTests(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="preloaded",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
             computation_tool_mode="ideal",
         )
         bundle = build_mode_bundle(

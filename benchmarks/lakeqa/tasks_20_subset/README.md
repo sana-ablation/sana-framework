@@ -12,7 +12,7 @@ means a grid gets run once and its variance never measured.
 
 ## Running it
 
-    python -m sana_evaluation.run_mode_eval \
+    python -m sana_evaluation.cli \
         --benchmark lakeqa --task-set tasks_20_subset --all-tasks ...
 
 `--task-set` accepts either the short name or the full path
@@ -21,7 +21,7 @@ means a grid gets run once and its variance never measured.
 ## Runtime profiles are shared, not copied
 
 Tasks keep their `<bucket>/<task>.json` path relative to the set's `tasks/`
-directory, so `runtime_profile_store` resolves them against
+directory, so `sana_evaluation.profiles` resolves them against
 `benchmarks/lakeqa/tasks-mini/runtime-profiles` — the parent set's profiles.
 There is nothing to regenerate and nothing to keep in sync.
 

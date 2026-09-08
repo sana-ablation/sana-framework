@@ -5,7 +5,7 @@
 SANA is a diagnostic ablation framework for exploratory QA over data lakes. It
 turns benchmark tasks into runtime profiles containing gold source sequences,
 sanitized subquestions, and execution records, then uses those profiles to
-ablate search, profile guidance, and data-analysis tools under a fixed agent
+ablate search, planning guidance, and data-analysis tools under a fixed agent
 runtime.
 
 ## How SANA Works
@@ -157,7 +157,7 @@ Maintained benchmark examples live under:
 ## 2. sana-evaluation
 
 `sana_evaluation/` runs task sets with controlled runtime axes for search,
-retrieved results, profile guidance, optional skills, and computation. Use
+retrieved results, planning guidance, optional skills, and computation. Use
 `smoke` while checking installation and `full` for the maintained task set.
 
 <img src="assets/images/fig3-sana-runtime-operators-white-bg.png" alt="SANA runtime operators" width="720">
@@ -175,18 +175,18 @@ flowchart LR
 Inspect maintained artifacts:
 
 ```bash
-python -m sana_evaluation.artifacts --benchmark lakeqa --check
-python -m sana_evaluation.artifacts --benchmark kramabench --check
+python -m sana_evaluation.benchmarks --benchmark lakeqa --check
+python -m sana_evaluation.benchmarks --benchmark kramabench --check
 ```
 
 LakeQA smoke run:
 
 ```bash
-python -m sana_evaluation.setup_run smoke \
+python -m sana_evaluation.cli smoke \
   --benchmark lakeqa \
   --search ideal \
   --results ideal \
-  --profile ideal \
+  --plan ideal \
   --compute ideal \
   --skills off \
   --k 5 \
@@ -197,11 +197,11 @@ python -m sana_evaluation.setup_run smoke \
 Kramabench smoke run:
 
 ```bash
-python -m sana_evaluation.setup_run smoke \
+python -m sana_evaluation.cli smoke \
   --benchmark kramabench \
   --search ideal \
   --results ideal \
-  --profile ideal \
+  --plan ideal \
   --compute ideal \
   --skills off \
   --k 5 \
@@ -212,11 +212,11 @@ python -m sana_evaluation.setup_run smoke \
 Full maintained-task run:
 
 ```bash
-python -m sana_evaluation.setup_run full \
+python -m sana_evaluation.cli full \
   --benchmark kramabench \
   --search ideal \
   --results ideal \
-  --profile standard \
+  --plan standard \
   --compute ideal \
   --skills off \
   --k 5 \
@@ -225,38 +225,36 @@ python -m sana_evaluation.setup_run full \
   --db lance_kramabench_infused \
   --timeout 600 \
   --submit-grace-seconds 30 \
-  --continue
+  --only-new
 ```
 
 Common feature flags:
 
 | Option | Values | Default | Use |
 | --- | --- | --- | --- |
-| `smoke` / `full` | subcommand | required | `smoke` runs a lightweight sample; `full` runs the maintained task set. |
+| `smoke` / `full` | preset | optional | A preset only shifts defaults. `smoke` runs one small bucket; `full` runs the maintained task set. Omit it for the raw evaluator defaults. |
 | `--benchmark` | `lakeqa`, `kramabench` | `lakeqa` | Selects task roots, output roots, and benchmark-specific tool behavior. |
-| `--search` | `naive`, `preloaded`, `standard`, `ideal` | `ideal` | Chooses the search-tool implementation exposed to the agent. |
-| `--results` | `naive`, `ideal` | `ideal` | Chooses live retrieved results or profile-backed ideal result payloads. |
-| `--profile` | `naive`, `standard`, `ideal` | `ideal` | Chooses how much runtime-profile guidance is exposed. |
-| `--compute` | `standard`, `ideal` | `ideal` | Chooses regular data-analysis tools or profile-backed ideal computation. |
+| `--search` | `naive`, `preloaded`, `standard`, `ideal`, `web` | `standard` (`ideal` under a preset) | Chooses the search-tool implementation exposed to the agent. |
+| `--results` | `minimal`, `rich` (`naive`, `ideal` are the former names) | `rich` | Chooses how much metadata rides along with each search hit. |
+| `--plan` (alias `--plans`) | `naive`, `standard`, `ideal` | `standard` (`ideal` under a preset) | Chooses the planning treatment: no planning, the managed prompt with skills and planning style, or an injected gold reasoning chain. |
+| `--compute` | `standard`, `ideal` | `standard` (`ideal` under a preset) | Chooses regular data-analysis tools or profile-backed ideal computation. |
 | `--skills` | `on`, `off` | omitted/off | Enables or disables the AgentSkills plugin. |
-| `--k` | positive integer | mode default | Search result limit passed to runtime tools. |
-| `--parallel` | positive integer | mode default | Number of parallel worker processes. |
+| `--k` | positive integer | unset | Search result limit passed to runtime tools. |
+| `--parallel` | positive integer | `6` | Number of parallel worker processes. |
 | `--model` | model name | `bedrock/claude-sonnet-4.5` | Model adapter name, for example `openai/gpt-5-mini`. |
 | `--reasoning-effort` | `none`, `minimal`, `low`, `medium`, `high`, `xhigh` | unset | Reasoning-effort metadata for supported model adapters. |
 | `--selector-model` | model name | `--model` | Optional weaker model for selector-style ideal helper calls. |
 | `--repair-model` | model name | `--model` | Optional stronger model for ideal computation repair calls. |
 | `--openai-prompt-cache-key` | string | unset | Prompt-cache key for OpenAI-backed adapters. |
 | `--openai-prompt-cache-retention` | string | unset | Prompt-cache retention policy for OpenAI-backed adapters. |
-| `--db` | path | required | LanceDB root, for example `lance_data` or `lance_kramabench_infused`. |
-| `--condition` | `baseline` | `baseline` | Output condition label. |
-| `--timeout` | seconds | mode default | Per-task soft timeout. |
-| `--submit-grace-seconds` | seconds | mode default | Extra time reserved for final answer submission after timeout. |
-| `--task-dir` | path | smoke default | Smoke-only task directory override. |
-| `--continue` | flag | on for `full` | Full-only resume mode that skips existing rows in the variant CSV. |
-| `--no-continue` | flag | off | Full-only rerun mode. |
-| `--verbose` | flag | on | Emits verbose per-task runtime logs. |
+| `--db` | path | `./lance_data` | LanceDB root, for example `lance_data` or `lance_kramabench_infused`. Preflight checks that it exists only under `--search standard` or `--search naive`, the two modes that query the index; the `smoke` and `full` examples above run `--search ideal`, which is served from runtime profiles and so never touches it. |
+| `--timeout` | seconds | `600` | Per-task soft timeout. |
+| `--submit-grace-seconds` | seconds | `30` | Extra time reserved for final answer submission after timeout. |
+| `--task-dir` | path or bucket name | smoke default | Run one directory of tasks, e.g. `k-5-d-4`. |
+| `--all-tasks` | flag | on for `full` | Run every task directory under `--task-set`, pooled into one worker pool. |
+| `--only-new` | flag | on for `full` | Skip task files already recorded as rows in the variant's `eval_results.csv`; composes with `--all-tasks` and any other scope. |
+| `--verbose` | flag | off (on under a preset) | Emits verbose per-task runtime logs. |
 | `--search-free` | flag | off | Makes active search calls free against the global tool-call limit. |
-| `--search-lessguide` | flag | off | Hides exhausted-search guidance fields from ideal search payloads. |
 
 ## 3. sana-analysis
 

@@ -6,12 +6,12 @@ from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from sana_evaluation.tools.external.ideal.plan_ideal import (
+from sana_evaluation.tools.plan.oracle import (
     inject_reasoning_chain_prompt,
     plan_ideal,
 )
-import sana_evaluation.tools.external.ideal.runtime_profile_store as runtime_profile_store
-from sana_evaluation.tools.external.ideal.runtime_profile_store import (
+from sana_evaluation import profiles
+from sana_evaluation.profiles import (
     load_runtime_profile_for_context,
     load_runtime_profile_for_task,
     set_runtime_profiles_root,
@@ -32,7 +32,7 @@ class _FakeToolContext:
 class TestPlanIdealFileBacked(unittest.TestCase):
     def tearDown(self) -> None:
         set_runtime_profiles_root("runtime-profiles")
-        runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = Path("runtime-profiles")
+        profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = Path("runtime-profiles")
         set_task_context({})
 
     def _write_computation_plan(self, target: Path) -> None:
@@ -205,7 +205,7 @@ class TestPlanIdealFileBacked(unittest.TestCase):
                 kramabench_root / "k-2-d-2-s-1" / "task_1.json"
             )
 
-            runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = kramabench_root
+            profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = kramabench_root
             profile = load_runtime_profile_for_task("benchmarks/kramabench/tasks-mini/tasks/k-2-d-2-s-1/task_1.json")
 
             self.assertEqual(
