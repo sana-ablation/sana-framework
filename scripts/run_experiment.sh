@@ -197,6 +197,11 @@ pull)
     fi
   done
   [ "$pulled" -gt 0 ] || say "nothing to pull yet"
+  # Results made before the --profile -> --plan rename reached $REMOTE_HOST still
+  # carry __profile_ in their variant directory names, and arrive beside the
+  # migrated __plan_ ones. Fix with (idempotent, dry-run by default):
+  #   python scripts/migrate_profile_label_to_plan.py experiments --apply
+  # See "After pull: migrate the variant label" in scripts/README.md.
   ;;
 
 stop)
