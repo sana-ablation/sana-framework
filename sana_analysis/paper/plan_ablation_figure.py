@@ -10,9 +10,12 @@ from collections import Counter
 from pathlib import Path
 from typing import Iterable, Optional
 
+from sana_analysis.variants import find_variant
 
-CANONICAL_PLAN_D_MODE = "search_i_results_i_pland_computei_k5_skills_off"
-CANONICAL_PLAN_I_MODE = "search_i_results_i_plani_computei_k5_skills_off"
+# The plan ablation's two arms: standard plan against ideal plan, everything
+# else held at ideal.
+PLAN_D_AXES = dict(search="ideal", plan="standard", compute="ideal")
+PLAN_I_AXES = dict(search="ideal", plan="ideal", compute="ideal")
 
 BENCHMARK_ROOTS = {
     "lakeqa": Path("agent_analysis/plan_default_analysis/logs"),
@@ -87,11 +90,31 @@ def load_plan_default_rows(input_root: Path) -> list[dict]:
 
 
 def _summarize_rows(rows: Iterable[dict]) -> dict[tuple[str, str], dict]:
+    rows_list = list(rows)
+
+    # Extract observed modes
+    observed_plan_d_modes = []
+    observed_plan_i_modes = []
+    for row in rows_list:
+        plan_d = str(row.get("plan_d_mode", "")).strip()
+        plan_i = str(row.get("plan_i_mode", "")).strip()
+        if plan_d and plan_d not in observed_plan_d_modes:
+            observed_plan_d_modes.append(plan_d)
+        if plan_i and plan_i not in observed_plan_i_modes:
+            observed_plan_i_modes.append(plan_i)
+
+    # Find the canonical modes
+    plan_d_mode = find_variant(observed_plan_d_modes, **PLAN_D_AXES)
+    plan_i_mode = find_variant(observed_plan_i_modes, **PLAN_I_AXES)
+    if plan_d_mode is None or plan_i_mode is None:
+        return {}
+
+    # Process rows
     summary: dict[tuple[str, str], dict] = {}
-    for row in rows:
-        if str(row.get("plan_d_mode", "")) != CANONICAL_PLAN_D_MODE:
+    for row in rows_list:
+        if str(row.get("plan_d_mode", "")) != plan_d_mode:
             continue
-        if str(row.get("plan_i_mode", "")) != CANONICAL_PLAN_I_MODE:
+        if str(row.get("plan_i_mode", "")) != plan_i_mode:
             continue
         bucket = _normalize_plan_similarity(row)
         if bucket is None:
