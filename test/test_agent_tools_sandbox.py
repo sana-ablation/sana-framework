@@ -18,6 +18,8 @@ _MODULE_NAMES = [
     "dotenv",
     "requests",
     "sana_evaluation",
+    "sana_evaluation.helper",
+    "sana_evaluation.helper.peek_profile",
     "sana_evaluation.tools",
     "sana_evaluation.tools.helper",
     "sana_evaluation.tools.helper.detect",

@@ -665,23 +665,6 @@ def _download_error_entry(
     return entry
 
 
-def _guess_delimiter(line: str) -> str:
-    candidates = [",", "\t", "|", ";"]
-    best = ""
-    best_count = 0
-    for c in candidates:
-        count = line.count(c)
-        if count > best_count:
-            best_count = count
-            best = c
-    return best if best_count > 0 else ""
-
-
-def _looks_like_json(text: str) -> bool:
-    t = text.strip()
-    return t.startswith("{") or t.startswith("[")
-
-
 def _tokenize(text: str) -> List[str]:
     if not isinstance(text, str):
         text = str(text) if text else ""
