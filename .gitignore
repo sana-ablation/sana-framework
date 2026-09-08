@@ -23,7 +23,7 @@ legacy/
 legacy*/
 old_semantic/
 *.pem
-paper/
+/paper/
 paper_figure_review/
 lance_table_descriptions
 analysis_results_*
@@ -50,3 +50,6 @@ experiments/README.md
 # The reusable half lives in scripts/run_experiment.sh, which drives whatever
 # experiments/<name>/inputs/run.sh happens to be on disk.
 experiments/
+
+# Default --review-path output of sana_analysis/answer_failure/migrate_taxonomy.py
+answer_failure_taxonomy_migration_review.csv
