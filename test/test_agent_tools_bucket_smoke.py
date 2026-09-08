@@ -11,11 +11,11 @@ from botocore.exceptions import ClientError
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-SCRIPT_PATH = REPO_ROOT / "scripts" / "smoke_agent_tools_bucket.py"
+SCRIPT_PATH = REPO_ROOT / "scripts" / "smoke_lake_bucket.py"
 
 
 def load_smoke_module():
-    spec = importlib.util.spec_from_file_location("smoke_agent_tools_bucket", SCRIPT_PATH)
+    spec = importlib.util.spec_from_file_location("smoke_lake_bucket", SCRIPT_PATH)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[spec.name] = module

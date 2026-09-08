@@ -25,7 +25,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_LOG_DIR = REPO_ROOT / "test_logs" / "agent_tools_bucket_smoke"
+DEFAULT_LOG_DIR = REPO_ROOT / "test_logs" / "lake_bucket_smoke"
 RESULT_CHAR_CAP = 20_000
 
 if str(REPO_ROOT) not in sys.path:

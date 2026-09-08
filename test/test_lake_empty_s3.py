@@ -108,7 +108,7 @@ def _load_lake_module():
     return module, restore
 
 
-class AgentToolsV2EmptyS3Tests(unittest.TestCase):
+class LakeEmptyS3Tests(unittest.TestCase):
     def setUp(self):
         self.mod, self.restore_modules = _load_lake_module()
         self.ref = {
