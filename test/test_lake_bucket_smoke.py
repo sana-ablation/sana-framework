@@ -27,7 +27,7 @@ def client_error(code):
     return ClientError({"Error": {"Code": code, "Message": code}}, "ListObjectsV2")
 
 
-class AgentToolsBucketSmokeTests(unittest.TestCase):
+class LakeBucketSmokeTests(unittest.TestCase):
     def test_kramabench_defaults_match_uploaded_sample(self):
         smoke = load_smoke_module()
 
@@ -113,17 +113,17 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
                 if module is not None:
                     sys.modules[name] = module
 
-    def test_agent_tools_search_skips_access_denied_folder(self):
+    def test_lake_search_skips_access_denied_folder(self):
         smoke = load_smoke_module()
         smoke.install_dependency_stubs(["strands"])
         smoke.install_lightweight_package_stubs()
-        original_agent_tools = sys.modules.get("sana_evaluation.tools.lake")
+        original_lake_module = sys.modules.get("sana_evaluation.tools.lake")
         sys.modules.pop("sana_evaluation.tools.lake", None)
         try:
             lake = importlib.import_module("sana_evaluation.tools.lake")
         finally:
-            if original_agent_tools is not None:
-                sys.modules["sana_evaluation.tools.lake"] = original_agent_tools
+            if original_lake_module is not None:
+                sys.modules["sana_evaluation.tools.lake"] = original_lake_module
             else:
                 sys.modules.pop("sana_evaluation.tools.lake", None)
         fake_s3 = Mock()
@@ -145,13 +145,13 @@ class AgentToolsBucketSmokeTests(unittest.TestCase):
         smoke = load_smoke_module()
         smoke.install_dependency_stubs(["strands"])
         smoke.install_lightweight_package_stubs()
-        original_agent_tools = sys.modules.get("sana_evaluation.tools.lake")
+        original_lake_module = sys.modules.get("sana_evaluation.tools.lake")
         sys.modules.pop("sana_evaluation.tools.lake", None)
         try:
             lake = importlib.import_module("sana_evaluation.tools.lake")
         finally:
-            if original_agent_tools is not None:
-                sys.modules["sana_evaluation.tools.lake"] = original_agent_tools
+            if original_lake_module is not None:
+                sys.modules["sana_evaluation.tools.lake"] = original_lake_module
             else:
                 sys.modules.pop("sana_evaluation.tools.lake", None)
 
