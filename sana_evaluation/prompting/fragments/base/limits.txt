@@ -1,8 +1,3 @@
-## VERIFY DATA SOURCES
-Dataset names can be misleading. Always confirm a dataset is the right one before using it:
-- Check metadata files for publisher, geographic coverage, and time period
-- Two datasets with similar names may cover completely different locations
-
 ## GENERAL TIPS
 - Always `print()` in `execute_code` to see output
 - `execute_code` does NOT persist state between calls — always reload files at the top of each block

@@ -1,0 +1,2 @@
+## VERIFY SOURCES
+Page titles and dataset names can mislead. Confirm a source covers the right entity, geography and year before using its numbers.

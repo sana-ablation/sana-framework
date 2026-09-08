@@ -17,7 +17,6 @@ DO NOT:
 ## SKILLS
 Reference material is available via `skills(...)`. Load once at the start of the relevant phase; do not reload unless the skill content is no longer in your recent context.
 - `skills("plan-agent")` / `skills("plan-ideal")` — planning guidance
-- `skills("discover-data")` — search strategy and query shape
 - `skills("query-data")` — column-name gotchas and extraction recipes
 
 ## PLANNING STYLE

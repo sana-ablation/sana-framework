@@ -64,7 +64,7 @@ def fragment_paths(
 
     Order reproduces the historical section order: framing and the operating
     envelope are two fragments precisely so ``limits`` can stay at the end,
-    where VERIFY DATA SOURCES / GENERAL TIPS / TURN AND TIME LIMITS sit today.
+    where the VERIFY section / GENERAL TIPS / TURN AND TIME LIMITS sit today.
     See the spec's "Section order is preserved" section.
 
     ``skills`` selects no file -- it is a text filter applied by :func:`build`.
@@ -99,6 +99,15 @@ def fragment_paths(
             # ladder and the query discipline it governs are simply not composed.
             paths.append(_FRAGMENTS_DIR / "data-access" / "lake-query.txt")
         paths.append(_FRAGMENTS_DIR / "benchmark" / f"{benchmark_name}.txt")
+    # "Confirm the source is the right one" is data-access content, not part of
+    # the axis-neutral envelope: the lake arms check dataset metadata files, and
+    # the web arm has no datasets and no metadata files to check. It stays a
+    # fragment of its own so it lands where both bases had it -- last thing
+    # before GENERAL TIPS -- instead of moving into lake.txt/web.txt, which
+    # would drag it above the benchmark and OUTPUT LIMITS sections.
+    paths.append(
+        _FRAGMENTS_DIR / "data-access" / ("web-verify.txt" if search_mode == "web" else "lake-verify.txt")
+    )
     paths.append(_FRAGMENTS_DIR / "base" / "limits.txt")
     paths.append(_FRAGMENTS_DIR / "search" / f"{search_mode}.txt")
     return paths
@@ -108,18 +117,19 @@ def _unloadable_skill_markers(search_mode: str) -> tuple[str, ...]:
     """Skill bullets the shared plan fragment lists that this search mode never loads.
 
     The SKILLS list is plan-axis content, but one of its bullets is selected by
-    the search axis: ``skill_paths_for_modes`` gives web only planning and
-    query-data, so ``discover_skill_path`` raises for it. Advertising
-    discover-data there is the tool-advertisement bug one axis over, and the
-    section sits above the data-access fragment, so no fragment of the search
-    axis can drop it -- the skills axis is already filtered as text below, and
-    this uses the same mechanism.
+    the search axis: ``skill_paths_for_modes`` withholds discover-data from
+    both ``web`` and ``preloaded`` -- neither does lake discovery -- and
+    ``discover_skill_path`` raises for both. Advertising discover-data there is
+    the tool-advertisement bug one axis over, and the section sits above the
+    data-access fragment, so no fragment of the search axis can drop it -- the
+    skills axis is already filtered as text below, and this uses the same
+    mechanism.
 
-    ``preloaded`` has the identical gap and has had it since before the split.
-    It is deliberately not fixed here: it changes four further golden files that
-    this commit's review did not cover.
+    The set here must stay the set ``skill_paths_for_modes`` filters on; a mode
+    in one and not the other is a prompt that names a skill the run cannot
+    load.
     """
-    return ('skills("discover-data")',) if search_mode == "web" else ()
+    return ('skills("discover-data")',) if search_mode in {"web", "preloaded"} else ()
 
 
 def build(

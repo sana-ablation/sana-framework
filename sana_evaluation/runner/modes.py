@@ -371,6 +371,7 @@ def build_mode_bundle(
     system_prompt = _inject_computation_file_family_prompt(
         system_prompt,
         computation_tool_mode=computation_tool_mode,
+        search_tool_mode=search_tool_mode,
         benchmark=benchmark,
     )
 
@@ -470,8 +471,28 @@ def _inject_computation_file_family_prompt(
     system_prompt: str,
     *,
     computation_tool_mode: str,
+    search_tool_mode: str,
     benchmark: str = "lakeqa",
 ) -> str:
+    """Append the file-family rule, for runs that have the lake file tools.
+
+    Every branch of this section resolves to a lake tool: the eligible-source
+    rule is enforced by naming `parse_xml_records`, `peek_file`, `grep_file`
+    and `read_file` as the alternatives, and the kramabench addendum names
+    `peek_file` again. ``search_tool_mode == "web"`` is exactly the set of runs
+    that has none of them -- ``build_data_tools`` drops every S3 tool when
+    ``no_s3 or search_tool_mode == "web"``, and
+    ``_validate_search_mode_combination`` rejects ``no_s3`` with any other
+    search mode, so web is the whole no-lake case. Injecting this there tells
+    the agent to spend turns of a 30-call budget on five tools it was never
+    bound (6a, one layer above the fragments).
+
+    Nothing in the section is wanted for web: ``data-access/web.txt`` already
+    states the same eligibility rule in web terms under WHAT YOU CAN AND
+    CANNOT COMPUTE, naming only the two tools web actually has.
+    """
+    if _normalize_mode(search_tool_mode, "naive", "search_tool") == "web":
+        return system_prompt
     if computation_tool_mode == "ideal" and benchmark == "kramabench":
         blocked_tools = "`execute_ideal`"
     elif computation_tool_mode == "ideal":

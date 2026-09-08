@@ -37,10 +37,8 @@ Never write analysis code against a file whose columns you have not seen. Print 
 ## WHAT YOU CAN AND CANNOT COMPUTE
 Downloaded CSV/TSV, JSON, JSONL and GeoJSON are computable with pandas. HTML pages are raw markup — parse them only when no data file exists. PDFs and binaries are usually not worth parsing; prefer a linked data file or a figure stated in the page text.
 
-## VERIFY DATA SOURCES
-Dataset names can be misleading. Always confirm a dataset is the right one before using it:
-- Check metadata files for publisher, geographic coverage, and time period
-- Two datasets with similar names may cover completely different locations
+## VERIFY SOURCES
+Page titles and dataset names can mislead. Confirm a source covers the right entity, geography and year before using its numbers.
 
 ## GENERAL TIPS
 - Always `print()` in `execute_code` to see output
