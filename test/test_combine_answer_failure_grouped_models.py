@@ -289,5 +289,45 @@ class TestCombineAnswerFailureGroupedModels(unittest.TestCase):
                 self.assertEqual(list(csv.DictReader(handle)), [])
 
 
+class TestCanonicalConditionMatching(unittest.TestCase):
+    GEN4 = {
+        "No Plan": "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+        "Standard Plan": "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+        "BM25": "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        "Pneuma Hybrid": "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        "Standard Computation": "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+        "Ideal": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        "Preloaded": "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+    }
+
+    def test_all_seven_conditions_resolve_from_canonical_directories(self):
+        from sana_analysis.answer_failure.combine_grouped_models import CONDITION_FIGURE_ORDER
+        from sana_analysis.variants import select_conditions
+
+        resolved = select_conditions(
+            list(self.GEN4.values()),
+            labels=[label for label, _axes in CONDITION_FIGURE_ORDER],
+        )
+        self.assertEqual(
+            resolved, [(label, self.GEN4[label]) for label, _axes in CONDITION_FIGURE_ORDER]
+        )
+
+    def test_every_condition_has_a_display_label(self):
+        from sana_analysis.answer_failure.combine_grouped_models import (
+            CONDITION_FIGURE_LABELS,
+            CONDITION_FIGURE_ORDER,
+        )
+
+        for label, _axes in CONDITION_FIGURE_ORDER:
+            self.assertIn(label, CONDITION_FIGURE_LABELS)
+
+    def test_condition_order_is_predicates_not_literals(self):
+        from sana_analysis.answer_failure.combine_grouped_models import CONDITION_FIGURE_ORDER
+
+        for _label, axes in CONDITION_FIGURE_ORDER:
+            self.assertIsInstance(axes, dict)
+            self.assertEqual(set(axes), {"search", "plan", "compute"})
+
+
 if __name__ == "__main__":
     unittest.main()
