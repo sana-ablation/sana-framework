@@ -201,11 +201,13 @@ pull)
     fi
   done
   [ "$pulled" -gt 0 ] || say "nothing to pull yet"
-  # Results made before the --profile -> --plan rename reached $REMOTE_HOST still
-  # carry __profile_ in their variant directory names, and arrive beside the
-  # migrated __plan_ ones. Fix with (idempotent, dry-run by default):
-  #   python scripts/migrate_profile_label_to_plan.py experiments --apply
-  # See "After pull: migrate the variant label" in scripts/README.md.
+  # If $REMOTE_HOST is still running code from before the --profile -> --plan
+  # rename, its variant directories still carry __profile_ rather than
+  # __plan_, so what just landed under $EXP_ROOT/$EXP won't share a name with
+  # a locally-produced tree for the same condition, and nothing downstream
+  # will treat them as the same variant. There is no migration script anymore
+  # (the one-time local migration is done); update $REMOTE_HOST to the current
+  # code so it writes __plan_ itself. See scripts/README.md.
   ;;
 
 stop)

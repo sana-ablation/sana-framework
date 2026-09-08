@@ -9,6 +9,7 @@ The 6a and 6b guards both assert against the runtime, not against a model of
 it: 6a reads ``build_mode_bundle``'s prompt, injections included, and 6b's
 fragment list is compared with what ``build_plan``'s own dispatch resolves.
 """
+import itertools
 from types import SimpleNamespace
 
 import pytest
@@ -19,6 +20,30 @@ from sana_evaluation.runner.modes import build_data_tools, build_mode_bundle
 
 LAKE_TOOLS = ("list_files", "peek_file", "peek_multiple", "read_file",
               "grep_file", "parse_xml_records", "query_file")
+
+PLANS = ("naive", "standard", "ideal")
+SEARCHES = ("naive", "preloaded", "standard", "ideal", "web")
+BENCHMARKS = ("lakeqa", "kramabench")
+
+
+def _reachable():
+    """Every plan/search/benchmark/skills combination a caller can actually request.
+
+    Used by the preflight-versus-runtime equality test below: it needs one
+    concrete case per reachable axis combination, not the full product --
+    plan=naive rejects --skills, and search=web rejects every ideal axis.
+    """
+    for plan, search, benchmark, skills in itertools.product(
+        PLANS, SEARCHES, BENCHMARKS, (True, False)
+    ):
+        if skills and plan == "naive":
+            continue          # --skills on requires plan standard|ideal
+        if search == "web" and plan == "ideal":
+            continue          # web rejects every ideal axis
+        yield plan, search, benchmark, skills
+
+
+CASES = list(_reachable())
 
 
 def _web_bundle(plan, benchmark):
@@ -88,36 +113,6 @@ def test_kramabench_never_mentions_query_file():
     )
 
 
-def _paths_the_run_really_composes(case):
-    """The fragment list the runtime dispatch actually resolved, not a model of it.
-
-    ``runner.modes`` picks one of three wrappers before any resolver is reached,
-    and a wrapper may normalise an axis on the way -- kramabench composes the
-    managed plan fragment whatever plan mode the caller asked for. Asserting
-    ``_prompt_files_for_modes == fragment_paths`` would compare the two sides of
-    one delegation and prove only that preflight still delegates. Recording the
-    call the wrapper really made is what makes this a check on 6b.
-    """
-    from test import test_prompt_corpus  # _compose mirrors runner/modes.py's dispatch
-
-    recorded = []
-    real = compose.fragment_paths
-
-    def spy(**kwargs):
-        paths = real(**kwargs)
-        recorded.append(paths)
-        return paths
-
-    compose.fragment_paths = spy
-    try:
-        test_prompt_corpus._compose(*case)
-    finally:
-        compose.fragment_paths = real
-
-    assert len(recorded) == 1, f"expected one resolution per prompt, got {len(recorded)}"
-    return recorded[0]
-
-
 def _prompt_the_runtime_dispatch_returns(case, monkeypatch):
     """The prompt ``runner.modes.build_plan`` itself returns for one case.
 
@@ -145,32 +140,41 @@ def _prompt_the_runtime_dispatch_returns(case, monkeypatch):
     return prompt
 
 
-def test_the_corpus_mirror_still_mirrors_the_runtime_dispatch(monkeypatch):
-    """``test_prompt_corpus._compose`` is a hand-written copy of ``build_plan``'s
-    wrapper dispatch, and the golden corpus plus ``_paths_the_run_really_composes``
-    both read the runtime through it. Without this equality a change to
-    ``build_plan``'s dispatch would move no golden and fail no test: the mirror
-    would simply stop describing the runtime, and the 6b guard above would go on
-    checking a model of a dispatch that no longer exists.
+def _paths_the_run_really_composes(case, monkeypatch):
+    """The fragment list the runtime dispatch actually resolved, not a model of it.
+
+    ``runner.modes`` picks one of three wrappers before any resolver is reached,
+    and a wrapper may normalise an axis on the way -- kramabench composes the
+    managed plan fragment whatever plan mode the caller asked for. Asserting
+    ``_prompt_files_for_modes == fragment_paths`` would compare the two sides of
+    one delegation and prove only that preflight still delegates. Spying on the
+    one resolver everything funnels through, while driving the call through
+    ``runner.modes.build_plan`` itself rather than a hand-written stand-in for
+    it, is what makes this a check on 6b.
     """
-    from test.test_prompt_corpus import CASES, _compose
+    recorded = []
+    real = compose.fragment_paths
 
-    for case in CASES:
-        assert _compose(*case) == _prompt_the_runtime_dispatch_returns(case, monkeypatch), (
-            "test_prompt_corpus._compose no longer mirrors runner.modes.build_plan "
-            f"for {case}; the golden corpus and the 6b guard are both reading it"
-        )
+    def spy(**kwargs):
+        paths = real(**kwargs)
+        recorded.append(paths)
+        return paths
+
+    monkeypatch.setattr(compose, "fragment_paths", spy)
+    _prompt_the_runtime_dispatch_returns(case, monkeypatch)
+
+    assert len(recorded) == 1, f"expected one resolution per prompt, got {len(recorded)}"
+    return recorded[0]
 
 
-def test_preflight_and_runtime_resolve_the_same_paths():
+def test_preflight_and_runtime_resolve_the_same_paths(monkeypatch):
     from sana_evaluation.preflight import _prompt_files_for_modes
-    from test.test_prompt_corpus import CASES
 
     for case in CASES:
         plan, search, benchmark, skills = case
         preflight_paths = _prompt_files_for_modes(
             plan=plan, search=search, benchmark=benchmark, skills=skills
         )
-        assert preflight_paths == _paths_the_run_really_composes(case), (
+        assert preflight_paths == _paths_the_run_really_composes(case, monkeypatch), (
             f"preflight validates different files than {plan}+{search}+{benchmark} reads"
         )
