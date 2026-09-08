@@ -46,8 +46,8 @@ class PreflightModeTests(unittest.TestCase):
         )
 
         names = [check.name for check in checks]
-        self.assertIn("prompt:managed.txt", names)
-        self.assertIn("prompt:search_preloaded.txt", names)
+        self.assertIn("prompt:plan/managed.txt", names)
+        self.assertIn("prompt:search/preloaded.txt", names)
         self.assertIn("runtime_profile:benchmarks/lakeqa/tasks-mini/tasks/k-1-d-1/task_2.json", names)
         self.assertNotIn("table_profiles.jsonl", names)
         self.assertNotIn("table_schemas_full.jsonl", names)

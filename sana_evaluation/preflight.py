@@ -21,7 +21,6 @@ from sana_evaluation.benchmarks import (
     normalize_benchmark,
 )
 
-_PROMPTS_DIR = Path("sana_evaluation/prompting/fragments")
 _PROFILES_PATH = Path("benchmarks/lakeqa/tasks-mini/artifacts/table_profiles.jsonl")
 
 
@@ -37,26 +36,24 @@ class PreflightError(RuntimeError):
 
 
 def _prompt_files_for_modes(
-    search_tool_mode: str,
-    plan_mode: str,
     *,
+    plan: str,
+    search: str,
     benchmark: str = "lakeqa",
+    skills: bool = False,
     no_s3: bool = False,
 ) -> List[Path]:
-    from sana_evaluation.prompting.compose import search_overlay_name
+    """Delegate to the one resolver, exactly as mode validation already does.
 
-    overlay_mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
-    if benchmark == "kramabench":
-        base_path = _PROMPTS_DIR / "managed_kramabench.txt"
-        overlay_name = f"search_{overlay_mode}_kramabench.txt"
-        overlay_path = _PROMPTS_DIR / overlay_name
-        if not overlay_path.is_file():
-            overlay_path = _PROMPTS_DIR / f"search_{overlay_mode}.txt"
-        return [base_path, overlay_path]
+    Preflight used to re-implement the resolution and never checked for a
+    mode-specific base, so it validated managed.txt while the run read
+    managed_web.txt. There is one resolver now and this calls it. ``no_s3`` is
+    accepted and ignored: it selects no fragment.
+    """
+    from sana_evaluation.prompting.compose import fragment_paths
 
-    base_name = "baseline.txt" if plan_mode == "naive" else "managed.txt"
-    overlay_name = f"search_{overlay_mode}.txt"
-    return [_PROMPTS_DIR / base_name, _PROMPTS_DIR / overlay_name]
+    del no_s3
+    return fragment_paths(plan=plan, search=search, benchmark=benchmark, skills=skills)
 
 
 def _check_file_exists(path: Path, label: str) -> PreflightCheck:
@@ -454,8 +451,11 @@ def run_preflight(
     if st == "web":
         checks.append(_check_web_search_credentials())
 
-    for prompt_path in _prompt_files_for_modes(st, pm, benchmark=benchmark, no_s3=no_s3):
-        checks.append(_check_file_exists(prompt_path, f"prompt:{prompt_path.name}"))
+    for prompt_path in _prompt_files_for_modes(
+        plan=pm, search=st, benchmark=benchmark, no_s3=no_s3
+    ):
+        label = f"prompt:{prompt_path.parent.name}/{prompt_path.name}"
+        checks.append(_check_file_exists(prompt_path, label))
 
     if st in {"standard", "naive"}:
         db_path = Path(run_config.search_db_path or "./lance_data")

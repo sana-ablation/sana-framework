@@ -325,7 +325,9 @@ class TestParseXmlRecords(unittest.TestCase):
 
 class TestPromptContract(unittest.TestCase):
     def test_system_prompt_mentions_xml_preview_and_query_limit(self):
-        prompt = Path("sana_evaluation/prompting/fragments/baseline.txt").read_text()
+        from sana_evaluation.prompting.compose import compose_baseline_prompt
+
+        prompt = compose_baseline_prompt("standard")
         self.assertIn("CSV/JSON/XML/text", prompt)
         self.assertIn("parse_xml_records", prompt)
         self.assertIn("do not use `execute_code` for XML/KML extraction", prompt)

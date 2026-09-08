@@ -24,7 +24,7 @@ code change.
 
 Unlike the lake search tools this returns open-web pages, so it deliberately does not
 emit `dataset_id` / `s3_uri` fields — nothing it returns is addressable by the
-lake data tools. See `search_web.txt` for how that is surfaced to the agent.
+lake data tools. See `fragments/search/web.txt` for how that is surfaced to the agent.
 """
 
 from __future__ import annotations

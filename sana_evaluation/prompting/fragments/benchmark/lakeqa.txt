@@ -1,0 +1,4 @@
+## DATASET TYPES
+You are working with PUBLIC GOVERNMENT DATASETS (data.gov, census, etc.).
+- **Wikipedia datasets**: `list_files` returns only `content.txt` — encyclopedia text, no tabular data. Use `read_file` to extract facts. Do not try to download as data.
+- **datagov datasets**: contain actual data files under `files/`. All files end in `.txt` (even CSVs — e.g. `files/rows.txt`, `files/data.txt`). Use `query_file`/`parse_xml_records`/`grep_file`/`download`.

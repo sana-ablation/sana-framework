@@ -11,9 +11,8 @@ retrieval tool, and it searches the public web.
 4. If excerpts are thin, either download the underlying page (see below) or reformulate with more specific entity names
 
 ## FETCH AND COMPUTE — READ CAREFULLY
-There is no data lake in this run. `read_file`, `peek_file`, `grep_file`,
-`query_file`, `list_files`, and `parse_xml_records` are not available, and
-dataset_id / file_path / s3_uri mean nothing here.
+There is no data lake in this run. The only tools you have are the ones listed
+above, and dataset_id / file_path / s3_uri mean nothing here.
 
 What you have instead is a two-step loop:
 

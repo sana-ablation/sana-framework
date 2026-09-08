@@ -53,41 +53,65 @@ def load_prompt_text(path: str | Path) -> str:
     return prompt_path.read_text()
 
 
-def search_overlay_name(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
-    """Return the overlay stem for a search mode.
-
-    ``no_s3`` is accepted and ignored: web mode has a single overlay now. It used
-    to select between an excerpts-only variant (web search, no fetch) and the
-    fetch-and-compute one; only the latter survives, and web mode implies it.
-    """
-    del no_s3
-    return _normalize_mode(search_tool_mode, "naive", "search_tool")
-
-
-def _compose_search_overlay_prompt(
-    base_prompt_path: str | Path,
-    search_tool_mode: Optional[str],
+def fragment_paths(
     *,
+    plan: str,
+    search: str,
     benchmark: str = "lakeqa",
-    no_s3: bool = False,
-) -> str:
-    mode = search_overlay_name(search_tool_mode, no_s3=no_s3)
-    # Web mode has no data lake, so it needs its own base rather than the lake
-    # one. The lake base advertises list_files/peek_file/read_file/query_file and
-    # devotes four sections to S3 file handling; appending the web overlay to it
-    # produced a prompt that listed eight tools the agent did not have and then
-    # said, two sections later, that they did not exist.
-    mode_specific_base = Path(base_prompt_path).with_name(
-        f"{Path(base_prompt_path).stem}_{mode}{Path(base_prompt_path).suffix}"
-    )
-    if mode_specific_base.is_file():
-        base_prompt_path = mode_specific_base
-    base_prompt = load_prompt_text(base_prompt_path).rstrip()
+    skills: bool = True,
+) -> List[Path]:
+    """The ordered fragment list for one axis combination.
+
+    Order reproduces the historical section order: framing and the operating
+    envelope are two fragments precisely so ``limits`` can stay at the end,
+    where VERIFY DATA SOURCES / GENERAL TIPS / TURN AND TIME LIMITS sit today.
+    See the spec's "Section order is preserved" section.
+
+    ``skills`` selects no file -- it is a text filter applied by :func:`build`.
+    It is in the signature so preflight and the runtime call this with one
+    shape and cannot drift apart.
+    """
+    del skills
+    plan_mode = _normalize_mode(plan, "standard", "plan")
+    search_mode = _normalize_mode(search, "naive", "search_tool")
     benchmark_name = (benchmark or "lakeqa").strip().lower()
-    benchmark_overlay = _PROMPTS_DIR / f"search_{mode}_{benchmark_name}.txt"
-    overlay_path = benchmark_overlay if benchmark_overlay.is_file() else _PROMPTS_DIR / f"search_{mode}.txt"
-    overlay = load_prompt_text(overlay_path).strip()
-    return f"{base_prompt}\n\n{overlay}"
+
+    paths = [_PROMPTS_DIR / "base" / "framing.txt"]
+    # naive contributes the plain tool-list heading; every other plan mode adds
+    # skills, planning style and the planning tool itself.
+    paths.append(_PROMPTS_DIR / "plan" / ("naive.txt" if plan_mode == "naive" else "managed.txt"))
+    if search_mode == "web":
+        # The web arm has no data lake, so it gets neither the lake tools nor a
+        # corpus description. Nothing to fall back to, nothing to contradict.
+        paths.append(_PROMPTS_DIR / "data-access" / "web.txt")
+    else:
+        paths.append(_PROMPTS_DIR / "data-access" / "lake.txt")
+        if benchmark_name != "kramabench":
+            # query_file is disabled for kramabench, so the bullet, the cost
+            # ladder and the query discipline it governs are simply not composed.
+            paths.append(_PROMPTS_DIR / "data-access" / "lake-query.txt")
+        paths.append(_PROMPTS_DIR / "benchmark" / f"{benchmark_name}.txt")
+    paths.append(_PROMPTS_DIR / "base" / "limits.txt")
+    paths.append(_PROMPTS_DIR / "search" / f"{search_mode}.txt")
+    return paths
+
+
+def build(
+    *,
+    plan: str,
+    search: str,
+    benchmark: str = "lakeqa",
+    skills: bool = True,
+) -> str:
+    """Compose one prompt by concatenating one fragment per axis, in order."""
+    parts = [
+        load_prompt_text(path).strip()
+        for path in fragment_paths(plan=plan, search=search, benchmark=benchmark, skills=skills)
+    ]
+    prompt = "\n\n".join(part for part in parts if part)
+    if not skills:
+        prompt = _remove_skill_references(prompt)
+    return prompt
 
 
 def _remove_prompt_section(prompt: str, heading: str) -> str:
@@ -124,33 +148,29 @@ def compose_managed_prompt(
     include_skills: bool = True,
     no_s3: bool = False,
 ) -> str:
-    prompt = _compose_search_overlay_prompt(
-        _PROMPTS_DIR / "managed.txt",
-        search_tool_mode,
-        no_s3=no_s3,
-    )
-    if not include_skills:
-        prompt = _remove_skill_references(prompt)
-    return prompt
+    """Managed lakeqa prompt. ``no_s3`` is accepted and ignored: web mode has a
+    single overlay now, and it used to be what selected between two."""
+    del no_s3
+    return build(plan="standard", search=search_tool_mode, skills=include_skills)
 
 
 def compose_kramabench_prompt(search_tool_mode: Optional[str], *, include_skills: bool = True) -> str:
-    prompt = _compose_search_overlay_prompt(
-        _PROMPTS_DIR / "managed_kramabench.txt",
-        search_tool_mode,
+    """Kramabench prompt. Composes the managed plan fragment for every plan
+    mode, including naive -- which is what the kramabench base did before the
+    split, since there was never a baseline_kramabench.txt to select."""
+    return build(
+        plan="standard",
+        search=search_tool_mode,
         benchmark="kramabench",
+        skills=include_skills,
     )
-    if not include_skills:
-        prompt = _remove_skill_references(prompt)
-    return prompt
 
 
 def compose_baseline_prompt(search_tool_mode: Optional[str], *, no_s3: bool = False) -> str:
-    return _compose_search_overlay_prompt(
-        _PROMPTS_DIR / "baseline.txt",
-        search_tool_mode,
-        no_s3=no_s3,
-    )
+    """Naive-plan lakeqa prompt: no skills, no planning tool. ``no_s3`` is
+    accepted and ignored for the same reason as in the managed wrapper."""
+    del no_s3
+    return build(plan="naive", search=search_tool_mode, skills=False)
 
 
 def compose_preloaded_block(source_sequence: List[str]) -> str:
@@ -229,11 +249,13 @@ def inject_debug_prompt(prompt: str, debug_mode: Optional[str]) -> str:
 
 
 __all__ = [
+    "build",
     "compose_baseline_prompt",
     "compose_kramabench_prompt",
     "compose_managed_prompt",
     "compose_preloaded_block",
     "discover_skill_path",
+    "fragment_paths",
     "inject_debug_prompt",
     "load_prompt_text",
     "normalize_debug_mode",
