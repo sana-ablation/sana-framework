@@ -126,6 +126,21 @@ class TestParseVariant(unittest.TestCase):
         with self.assertRaises(Exception):
             v.search = "naive"
 
+    def test_an_unknown_results_token_passes_through_rather_than_being_coerced(self):
+        # Deliberate. `naive`/`ideal` are absorbed to `minimal`/`rich` because they
+        # are the retired spellings of known values. A genuinely unknown token is
+        # not: coercing it to `rich` would average a distinct experimental arm into
+        # the rich cell, and raising would crash a whole analysis run on one
+        # unrecognised directory. Passing it through leaves the arm absent from
+        # figures, which is what the spec asks for.
+        v = parse_variant("search_ideal__plan_ideal__compute_ideal__results_quantum__skills_off")
+        self.assertEqual(v.results, "quantum")
+
+    def test_retired_results_spellings_are_always_absorbed(self):
+        for spelling, expected in (("naive", "minimal"), ("ideal", "rich")):
+            name = f"search_ideal__plan_ideal__compute_ideal__results_{spelling}__skills_off"
+            self.assertEqual(parse_variant(name).results, expected, name)
+
 
 class TestVariantMatches(unittest.TestCase):
     def setUp(self):
@@ -141,7 +156,15 @@ class TestVariantMatches(unittest.TestCase):
         self.assertFalse(self.v.matches(search="naive"))
 
     def test_unnamed_axes_are_ignored(self):
-        self.assertTrue(self.v.matches(search="ideal"))  # k, skills, flags not consulted
+        # Verify that k, skills, and flags do not affect matching by constructing
+        # two variants that differ only in those attributes, then asserting both
+        # match the same three-axis predicate.
+        v1 = parse_variant("search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off")
+        v2 = parse_variant("search_ideal__plan_ideal__compute_ideal__results_rich__k10__sc3__free__skills_on")
+        # Both variants have identical axes (search, plan, compute, results)
+        # but differ in k, search_calls, flags, and skills
+        self.assertTrue(v1.matches(search="ideal", plan="ideal", compute="ideal", results="rich"))
+        self.assertTrue(v2.matches(search="ideal", plan="ideal", compute="ideal", results="rich"))
 
     def test_no_axes_matches_everything(self):
         self.assertTrue(self.v.matches())
