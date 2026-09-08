@@ -117,3 +117,38 @@ class TestLargeJsonFallback:
         rec = derive_table(_key("data.txt"), truncated)
         assert rec is not None, "truncated GeoJSON should still yield columns"
         assert rec["columns"] == ["ADDDATE", "CITY", "DETAILS", "WARD"]
+
+
+class TestFetchFailuresAreNotSilentGaps:
+    """A file that could not be read must not look like a file with no table.
+
+    Conflating them, then checkpointing the dataset as done, is how a transient
+    S3 error becomes a permanently missing schema. Ordering has nothing to do
+    with it -- a sequential loop drops the error just as quietly.
+    """
+
+    def test_fetch_failure_and_no_table_are_different_outcomes(self):
+        import asyncio
+
+        from dataindexing.cli.build_table_schemas import FetchFailed, _derive_dataset
+
+        class FakeSem:
+            async def __aenter__(self): return self
+            async def __aexit__(self, *a): return False
+
+        class FakeS3:
+            """One key reads as a real table, one always fails."""
+            async def get_object(self, Bucket, Key, Range):
+                if "broken" in Key:
+                    raise RuntimeError("503 Slow Down")
+                class B:
+                    async def read(self): return b"a,b,c\n1,2,3\n"
+                return {"Body": B()}
+
+        recs, failures = asyncio.run(_derive_dataset(
+            FakeS3(), FakeSem(), "bucket", "slug",
+            ["datagov/s/files/good.txt", "datagov/s/files/broken.txt"],
+        ))
+        assert len(recs) == 1, "the readable file should still yield a schema"
+        assert len(failures) == 1, "the unreadable file must be reported, not dropped"
+        assert "broken" in failures[0]

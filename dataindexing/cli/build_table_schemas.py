@@ -224,27 +224,50 @@ def derive_table(key: str, head: str) -> dict | None:
     }
 
 
-async def _derive_dataset(s3, sem, bucket: str, slug: str, keys: list[str]) -> list[dict]:
-    """Peek every candidate file in one dataset and derive whatever schemas exist."""
-    async def one(key: str):
+class FetchFailed(Exception):
+    """A file could not be read, as distinct from holding no table."""
+
+
+async def _peek(s3, sem, bucket: str, key: str, attempts: int = 3) -> str:
+    last: Exception | None = None
+    for attempt in range(attempts):
         async with sem:
             try:
                 obj = await s3.get_object(Bucket=bucket, Key=key,
                                           Range=f"bytes=0-{PEEK_BYTES - 1}")
                 body = await obj["Body"].read()
-            except Exception:
-                return None
-        return derive_table(key, body.decode("utf-8", errors="replace"))
+                return body.decode("utf-8", errors="replace")
+            except Exception as exc:  # noqa: BLE001 - re-raised below
+                last = exc
+        await asyncio.sleep(0.5 * (2 ** attempt))
+    raise FetchFailed(f"{key}: {last}")
+
+
+async def _derive_dataset(s3, sem, bucket: str, slug: str,
+                          keys: list[str]) -> tuple[list[dict], list[str]]:
+    """Return (schemas, failures) for one dataset.
+
+    The two are kept apart deliberately. Swallowing a fetch error as "no table
+    here" and then checkpointing the dataset as done is how a transient S3 blip
+    turns into a permanently missing schema -- serial or concurrent alike, since
+    nothing about the ordering makes a dropped error visible.
+    """
+    async def one(key: str):
+        try:
+            return key, derive_table(key, await _peek(s3, sem, bucket, key)), None
+        except FetchFailed as exc:
+            return key, None, str(exc)
 
     results = await asyncio.gather(*(one(k) for k in sorted(keys)))
-    return [r for r in results if r]
+    return ([r for _, r, _ in results if r],
+            [e for _, _, e in results if e])
 
 
 async def _run(args, by_dataset: dict[str, list[str]], done: set[str]) -> tuple[int, int]:
     session = aioboto3.Session()
     sem = asyncio.Semaphore(args.concurrency)
     slugs = [s for s in sorted(by_dataset) if s not in done]
-    written = tables = 0
+    written = tables = incomplete = 0
 
     # Append, never truncate: the checkpoint file is what makes a re-run resume
     # rather than repeat, and a 30-minute job that dies at minute 28 with no
@@ -259,18 +282,27 @@ async def _run(args, by_dataset: dict[str, list[str]], done: set[str]) -> tuple[
                     _derive_dataset(s3, sem, args.bucket, slug, by_dataset[slug])
                     for slug in chunk
                 ))
-                for slug, recs in zip(chunk, found):
+                for slug, (recs, failures) in zip(chunk, found):
                     if recs:
                         out.write(json.dumps({"dataset_slug": slug, "document_id": slug,
                                               "tables": recs}) + "\n")
                         written += 1
                         tables += len(recs)
+                    if failures:
+                        # Not checkpointed: a re-run must revisit this dataset
+                        # rather than inherit a gap that looks like a decision.
+                        incomplete += len(failures)
+                        for f in failures:
+                            print(f"  UNREAD {f}", file=sys.stderr)
+                        continue
                     ck.write(slug + "\n")
                 out.flush(); ck.flush()
                 done_n = i + len(chunk)
                 print(f"  {done_n}/{len(slugs)} datasets, {written} with schemas, "
-                      f"{tables} tables", file=sys.stderr)
-    return written, tables
+                      f"{tables} tables"
+                      + (f", {incomplete} files unread" if incomplete else ""),
+                      file=sys.stderr)
+    return written, tables, incomplete
 
 
 def _async_client_kwargs(args) -> dict:
@@ -289,8 +321,9 @@ def main(argv=None) -> int:
                     help="stop after N datasets (for a quick check)")
     ap.add_argument("--signed", action="store_true",
                     help="sign requests; the source bucket is public and does not need it")
-    ap.add_argument("--concurrency", type=int, default=64,
-                    help="in-flight range GETs (default 64)")
+    ap.add_argument("--concurrency", type=int, default=1,
+                    help="in-flight range GETs. Default 1, i.e. strictly "
+                         "sequential; raise it to trade determinism for speed.")
     ap.add_argument("--batch", type=int, default=200,
                     help="datasets per checkpoint flush (default 200)")
     ap.add_argument("--checkpoint", type=Path, default=None,
@@ -338,8 +371,11 @@ def main(argv=None) -> int:
         print("nothing to do")
         return 0
 
-    written, tables = asyncio.run(_run(args, by_dataset, done))
+    written, tables, incomplete = asyncio.run(_run(args, by_dataset, done))
     print(f"Wrote {written} datasets / {tables} tables to {args.output}")
+    if incomplete:
+        print(f"{incomplete} files could not be read; their datasets are NOT "
+              f"checkpointed -- re-run to retry them.", file=sys.stderr)
     if written == 0:
         print("ERROR: no schemas derived; check the bucket and prefix.", file=sys.stderr)
         return 1

@@ -116,10 +116,19 @@ the content family -- never the extension, since the crawler stored every
 payload as `.txt` whatever it held -- then derives columns and delimiter from
 the bytes. Output matches the shape `load_table_schemas` already reads.
 
-It runs concurrently and resumes: a `<output>.done` checkpoint records finished
-dataset slugs, so a run that dies part-way continues rather than repeating. On
-this corpus it sustains roughly 35 datasets/second, so all 311,588 datagov
-datasets are a couple of hours rather than the day a serial pass would take.
+It is sequential by default and resumes: a `<output>.done` checkpoint records
+finished dataset slugs, so a run that dies part-way continues rather than
+repeating. `--concurrency N` trades determinism for speed -- on a 400-dataset
+check, 1 and 64 produced byte-identical output in 61s and 8s respectively -- but
+the default stays at 1, because the full pass is a background job and being able
+to reason about it matters more than finishing it sooner.
+
+What actually loses datasets is not ordering. A fetch error that is caught and
+returned as "no table here" is indistinguishable from an empty result, and the
+dataset is then checkpointed as done, so a transient S3 blip becomes a
+permanently missing schema. Reads are retried with backoff, unreadable files are
+reported, and a dataset with any unread file is deliberately left out of the
+checkpoint so a later run revisits it.
 
 Whether a first line is a header or a data row is decided by its shape: several
 short identifier-like fields. That is a heuristic, and the two cases it exists
