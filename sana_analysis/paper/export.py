@@ -14,10 +14,30 @@ from typing import Iterable, Mapping
 from sana_analysis.variants import RESULT_MODE_ALIASES, try_parse_variant
 
 
-MODEL_SPECS = [
-    ("gpt-5.4-nano", ("gpt-5.4-nano", "openai_gpt-5.4-nano", "openai/gpt-5.4-nano")),
-    ("gpt-5-mini", ("gpt-5-mini", "openai_gpt-5-mini", "openai/gpt-5-mini")),
-]
+# Models are discovered from the analysis bundle rather than enumerated. The
+# hardcoded pair this replaced dropped every model beyond two -- the model-tiers
+# tree carries five.
+MODEL_NAME_PREFIXES = ("openai_", "openai/")
+
+
+def model_display_name(model: str) -> str:
+    """Strip the provider prefix; leave the model's own name alone."""
+    name = str(model).strip()
+    for prefix in MODEL_NAME_PREFIXES:
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
+def discover_models(rows: Iterable[Mapping[str, object]]) -> list[str]:
+    """Distinct display names in the order first seen."""
+    seen: list[str] = []
+    for row in rows:
+        name = model_display_name(str(row.get("model") or ""))
+        if name and name not in seen:
+            seen.append(name)
+    return seen
+
 
 TOOL_CALL_CAPTION_NOTE = (
     "Ret Tool Call and Acc Tool Call are average calls per task; "
@@ -107,11 +127,7 @@ SUPPORTING_FIGURES = {
 
 
 def _normalize_model_name(model: str) -> str:
-    normalized = model.strip().replace("openai_", "").replace("openai/", "")
-    for display, aliases in MODEL_SPECS:
-        if normalized == display or model in aliases:
-            return display
-    return normalized
+    return model_display_name(model)
 
 
 def _short_model_name(model: str) -> str:
@@ -338,7 +354,7 @@ def _find_observed_row(
 
 def build_main_result_rows(summary_rows: list[Mapping[str, object]]) -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
-    for model, _aliases in MODEL_SPECS:
+    for model in discover_models(summary_rows):
         for condition, plan, search, compute, results in PLANNED_CONDITIONS:
             observed = _find_observed_row(
                 summary_rows,
@@ -391,7 +407,7 @@ def build_main_result_rows(summary_rows: list[Mapping[str, object]]) -> list[dic
 
 def build_canonical_mode_rows(summary_rows: list[Mapping[str, object]]) -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
-    for model, _aliases in MODEL_SPECS:
+    for model in discover_models(summary_rows):
         observed_by_mode: dict[str, Mapping[str, object] | None] = {}
         for mode, axes in CANONICAL_MODE_SPECS:
             observed_by_mode[mode] = _find_observed_row(
@@ -440,7 +456,7 @@ def build_canonical_mode_rows(summary_rows: list[Mapping[str, object]]) -> list[
 
 def build_main_ablation_table_rows(summary_rows: list[Mapping[str, object]]) -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
-    for model, _aliases in MODEL_SPECS:
+    for model in discover_models(summary_rows):
         for plan, search, compute in MAIN_ABLATION_TABLE_SPECS:
             observed = _find_observed_row(
                 summary_rows,
@@ -585,7 +601,7 @@ def render_main_ablation_table(rows: list[Mapping[str, str]], *, benchmark: str,
         f"{_wrapped_header('Acc Tool', 'Call')} \\\\",
         "    \\midrule",
     ]
-    for model_index, (model, _aliases) in enumerate(MODEL_SPECS):
+    for model_index, model in enumerate(discover_models(rows)):
         model_rows = rows_by_model.get(model, [])
         if not model_rows:
             continue
@@ -651,7 +667,7 @@ def render_canonical_modes_table(rows: list[Mapping[str, str]], *, benchmark: st
     rows_by_model: dict[str, list[Mapping[str, str]]] = {}
     for row in rows:
         rows_by_model.setdefault(str(row["model"]), []).append(row)
-    for model_index, (model, _aliases) in enumerate(MODEL_SPECS):
+    for model_index, model in enumerate(discover_models(rows)):
         model_rows = rows_by_model.get(model, [])
         if not model_rows:
             continue
@@ -688,7 +704,7 @@ def write_semantic_heatmap(rows: list[Mapping[str, str]], output_path: Path) -> 
     import matplotlib.pyplot as plt
     import numpy as np
 
-    models = [model for model, _aliases in MODEL_SPECS]
+    models = discover_models(rows)
     condition_ids = [condition for condition, *_rest in PLANNED_CONDITIONS]
     values = np.full((len(models), len(condition_ids)), np.nan)
     for row in rows:

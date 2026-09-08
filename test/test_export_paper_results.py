@@ -264,6 +264,29 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "avg_search_calls": 4.5,
                 "avg_read_calls": 11.5,
             },
+            {
+                # Models are discovered from summary_rows now, not enumerated
+                # from a hardcoded pair -- gpt-5-mini needs at least one real
+                # row to be discovered at all. This one matches PLANNED_CONDITIONS[1]
+                # ("S-I-I-I"), not [0] ("N-I-I-I"), so the pending_mini lookup
+                # below (which finds mini's first emitted row, "N-I-I-I") still
+                # exercises the Pending path.
+                "model": "openai_gpt-5-mini",
+                "variant": "search_i_results_i_plans_computei_k5_skills_off",
+                "search_tool": "ideal",
+                "search_results": "rich",
+                "agent_management": "standard",
+                "computation_tool": "ideal",
+                "n": 60,
+                "semantic_match": 0.42,
+                "avg_total_cost_with_ideal_subagents_usd": 0.05,
+                "avg_tool_calls_total": 14.0,
+                "D_acc_recall": None,
+                "D_acc": None,
+                "D_ret": None,
+                "avg_search_calls": 2.5,
+                "avg_read_calls": 8.0,
+            },
         ]
 
         rows = build_main_result_rows(summary_rows)
@@ -475,6 +498,48 @@ class TestCanonicalExportAxes(unittest.TestCase):
             "build_main_ablation_table_rows may still be asking for the "
             "retired 'ideal' spelling instead of 'rich'",
         )
+
+
+class TestModelDiscovery(unittest.TestCase):
+    ROWS = [
+        {"model": "openai_gpt-5.4-nano"},
+        {"model": "openai_gpt-5-mini"},
+        {"model": "openai_gpt-5.2"},
+        {"model": "openai_gpt-5.6-luna"},
+        {"model": "openai_gpt-5.4-nano"},
+    ]
+
+    def test_models_are_discovered_from_the_rows(self):
+        from sana_analysis.paper.export import discover_models
+
+        self.assertEqual(
+            set(discover_models(self.ROWS)),
+            {"gpt-5.4-nano", "gpt-5-mini", "gpt-5.2", "gpt-5.6-luna"},
+        )
+
+    def test_models_absent_from_the_old_hardcoded_pair_are_kept(self):
+        from sana_analysis.paper.export import discover_models
+
+        found = discover_models(self.ROWS)
+        self.assertIn("gpt-5.2", found)
+        self.assertIn("gpt-5.6-luna", found)
+
+    def test_discovery_deduplicates_and_is_deterministic(self):
+        from sana_analysis.paper.export import discover_models
+
+        self.assertEqual(discover_models(self.ROWS), discover_models(self.ROWS))
+        self.assertEqual(len(discover_models(self.ROWS)), 4)
+
+    def test_label_shortening_still_applies_to_discovered_models(self):
+        from sana_analysis.paper.export import model_display_name
+
+        self.assertEqual(model_display_name("openai_gpt-5.4-nano"), "gpt-5.4-nano")
+        self.assertEqual(model_display_name("openai_gpt-5.2"), "gpt-5.2")
+
+    def test_empty_rows_discover_nothing(self):
+        from sana_analysis.paper.export import discover_models
+
+        self.assertEqual(discover_models([]), [])
 
 
 if __name__ == "__main__":

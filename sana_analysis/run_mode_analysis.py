@@ -302,7 +302,15 @@ TURN_WASTE_CONDITION_FIGURE_ORDER = [
     for label, axes in CONDITION_ORDER
     if label != "Preloaded"
 ]
-TURN_WASTE_CONDITION_FIGURE_MODEL_ORDER = ["openai_gpt-5.4-nano", "openai_gpt-5-mini", "gpt-5.4-nano", "gpt-5-mini"]
+# Preferred ordering only. Any model present in the data but unlisted here is
+# appended rather than dropped -- the hardcoded list silently hid three of the
+# five models in the model-tiers tree.
+TURN_WASTE_CONDITION_FIGURE_MODEL_PREFERENCE = [
+    "openai_gpt-5.4-nano",
+    "openai_gpt-5-mini",
+    "gpt-5.4-nano",
+    "gpt-5-mini",
+]
 TURN_WASTE_CONDITION_FIGURE_MODEL_LABELS = {
     "openai_gpt-5.4-nano": "5.4\nnano",
     "gpt-5.4-nano": "5.4\nnano",
@@ -3432,7 +3440,7 @@ def _plot_turn_waste_reconciled_groups_by_condition(
         if sum(counts_by_variant_model_group[(variant, model)].values()) > 0:
             observed_by_variant[variant].add(model)
     model_order: List[str] = []
-    for model in TURN_WASTE_CONDITION_FIGURE_MODEL_ORDER:
+    for model in TURN_WASTE_CONDITION_FIGURE_MODEL_PREFERENCE:
         if model in observed_models and model not in model_order:
             model_order.append(model)
     for model in sorted(observed_models):

@@ -114,3 +114,18 @@ class TestCanonicalVariantDecoding(unittest.TestCase):
                 parse_variant(names[label]).matches(**axes),
                 f"{label} does not match {names[label]}",
             )
+
+
+class TestModelOrderKeepsUnlistedModels(unittest.TestCase):
+    def test_preference_list_orders_but_does_not_filter(self):
+        from sana_analysis.run_mode_analysis import (
+            TURN_WASTE_CONDITION_FIGURE_MODEL_PREFERENCE as PREFERENCE,
+        )
+
+        observed = {"openai_gpt-5-mini", "openai_gpt-5.2", "openai_gpt-5.4-nano"}
+        order = [m for m in PREFERENCE if m in observed]
+        order += [m for m in sorted(observed) if m not in order]
+        self.assertEqual(
+            order, ["openai_gpt-5.4-nano", "openai_gpt-5-mini", "openai_gpt-5.2"]
+        )
+        self.assertEqual(set(order), observed)
