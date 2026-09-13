@@ -419,7 +419,13 @@ def generate_delta_figures(summary_rows: List[dict], output_dir: Path) -> Dict[s
     return {"semantic_delta_rows": delta_rows, "paired_mode_rows": paired_rows}
 
 
-def _delta_color(delta: Optional[float]) -> str:
+def delta_color(delta: Optional[float]) -> str:
+    """Bar colour from the sign of the delta.
+
+    A delta of exactly zero -- which every baseline bar has, since it is
+    compared against itself -- reads neutral grey. The signed number is printed
+    on the bar as well, so direction is never carried by colour alone.
+    """
     if delta is None:
         return "#8A8F98"
     if delta > 0.0001:
@@ -429,17 +435,17 @@ def _delta_color(delta: Optional[float]) -> str:
     return "#8A8F98"
 
 
-def _delta_label(delta: Optional[float]) -> str:
+def delta_label(delta: Optional[float]) -> str:
     if delta is None:
         return "n/a"
     return f"{delta:+.1f}%"
 
 
-def _delta_value_label(value: float, delta: Optional[float]) -> str:
-    return f"{value:.1f}% ({_delta_label(delta)})"
+def delta_value_label(value: float, delta: Optional[float]) -> str:
+    return f"{value:.1f}% ({delta_label(delta)})"
 
 
-def _plot_horizontal_delta_bars(
+def plot_horizontal_delta_bars(
     ax,
     labels: List[str],
     values: List[Optional[float]],
@@ -452,7 +458,15 @@ def _plot_horizontal_delta_bars(
     title_fontsize: Optional[float] = None,
     x_limit: float = 124.0,
     inside_label_reserved: float = 45.0,
+    slots: Optional[int] = None,
 ) -> None:
+    """One horizontal delta-bar panel.
+
+    `slots` reserves a fixed number of bar rows. Panels in a grid whose axes
+    hold different numbers of modes -- Search has four, Data Analysis two --
+    then share one bar pitch instead of stretching each panel's bars to fill
+    its own height.
+    """
     if not labels:
         ax.set_title(title, fontsize=title_fontsize)
         ax.set_xticks([])
@@ -490,7 +504,7 @@ def _plot_horizontal_delta_bars(
         bar = ax.barh(
             [y_position],
             [value],
-            color=_delta_color(delta),
+            color=delta_color(delta),
             alpha=0.42,
             height=0.62,
         )[0]
@@ -502,14 +516,24 @@ def _plot_horizontal_delta_bars(
         ax.text(
             label_x,
             bar.get_y() + bar.get_height() / 2,
-            _delta_value_label(value, delta),
+            delta_value_label(value, delta),
             ha=label_ha,
             va="center",
             fontsize=value_fontsize,
             fontweight="medium",
             color="#111827",
         )
-    ax.set_ylim(len(labels) - 0.5, -0.5)
+    ax.set_ylim(max(len(labels), slots or 0) - 0.5, -0.5)
+
+
+# The pre-promotion private names. `paper.tier_ablation` draws the same bars
+# from raw replicate trees, so the palette, the `NN.N% (+D.D%)` label and the
+# panel geometry are shared rather than reimplemented; these aliases keep the
+# existing call sites and tests untouched.
+_delta_color = delta_color
+_delta_label = delta_label
+_delta_value_label = delta_value_label
+_plot_horizontal_delta_bars = plot_horizontal_delta_bars
 
 
 def _comparison_models(rows_by_model: Dict[str, List[dict]]) -> List[str]:
