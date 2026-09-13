@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from sana_evaluation.config import RunConfig
 import sana_evaluation.preflight as preflight
-from sana_evaluation.tools.external.ideal import search_wrapper
+from sana_evaluation.tools.search import wrapper as search_wrapper
 
 
 class SanaPreflightTests(unittest.TestCase):
@@ -105,7 +105,7 @@ class SanaPreflightTests(unittest.TestCase):
         run_config = RunConfig(
             search_tool_mode="standard",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             search_db_path=str(self._db_path),
         )
         run_config.sana_flags = SimpleNamespace(results=True)

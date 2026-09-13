@@ -5,15 +5,15 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import sana_evaluation.tools.external.search_web_tools as search_web_tools
-from sana_evaluation.agent_with_mode import (
+import sana_evaluation.tools.search.web as search_web_tools
+from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_mode_bundle,
     build_search,
 )
 from sana_evaluation.config import RunConfig
-from sana_evaluation.helper.prompting import skill_paths_for_modes
-from sana_evaluation.tools.external.ideal.search_wrapper import search_tool_names_in
+from sana_evaluation.prompting.compose import skill_paths_for_modes
+from sana_evaluation.tools.search.wrapper import search_tool_names_in
 
 
 def _response(payload):
@@ -127,7 +127,7 @@ class TestWebSearchMode(unittest.TestCase):
         base = dict(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
             computation_tool_mode="standard",
             search_k=5,
             benchmark="lakeqa",
@@ -169,7 +169,7 @@ class TestWebModeAxisGuard(unittest.TestCase):
         args = dict(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="naive",
+            plan_mode="naive",
             computation_tool_mode="standard",
         )
         args.update(overrides)
@@ -180,9 +180,9 @@ class TestWebModeAxisGuard(unittest.TestCase):
             self._validate(computation_tool_mode="ideal")
         self.assertIn("--computation_tool ideal", str(ctx.exception))
 
-    def test_rejects_ideal_profile(self) -> None:
+    def test_rejects_ideal_plan(self) -> None:
         with self.assertRaises(ValueError):
-            self._validate(profile_mode="ideal")
+            self._validate(plan_mode="ideal")
 
     def test_rejects_rich_results(self) -> None:
         with self.assertRaises(ValueError):
@@ -196,21 +196,21 @@ class TestWebModeAxisGuard(unittest.TestCase):
     def test_reports_every_conflicting_axis_at_once(self) -> None:
         with self.assertRaises(ValueError) as ctx:
             self._validate(
-                computation_tool_mode="ideal", profile_mode="ideal", search_results_mode="rich"
+                computation_tool_mode="ideal", plan_mode="ideal", search_results_mode="rich"
             )
         message = str(ctx.exception)
-        for label in ("--computation_tool ideal", "--profile ideal", "--search_results rich"):
+        for label in ("--computation_tool ideal", "--plan ideal", "--search_results rich"):
             self.assertIn(label, message)
 
     def test_allows_the_supported_web_combination(self) -> None:
         self._validate()
-        self._validate(profile_mode="standard")
+        self._validate(plan_mode="standard")
 
     def test_does_not_constrain_non_web_search_modes(self) -> None:
         _validate_search_mode_combination(
             search_tool_mode="ideal",
             search_results_mode="ideal",
-            profile_mode="ideal",
+            plan_mode="ideal",
             computation_tool_mode="ideal",
         )
 
@@ -229,7 +229,7 @@ class TestWebBasePrompt(unittest.TestCase):
     """
 
     def _base_of(self, mode: str, **kw) -> str:
-        from sana_evaluation.helper.prompting import compose_managed_prompt
+        from sana_evaluation.prompting.compose import compose_managed_prompt
         return compose_managed_prompt(mode, **kw).split("## AVAILABLE SEARCH TOOLS")[0]
 
     def test_web_base_advertises_no_lake_tools(self) -> None:

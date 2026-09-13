@@ -21,9 +21,14 @@ except Exception:  # pragma: no cover
     def tqdm(iterable=None, **_kwargs):
         return iterable if iterable is not None else _NullTqdm()
 
-from sana_evaluation.tools.agent_tools import BUCKET, FOLDERS, _build_s3_client
+from dataindexing.sources.s3 import DEFAULT_BUCKET, FOLDERS, build_s3_client
 
 load_dotenv()
+
+# Same resolution the agent runtime applies: LAKEQA_BUCKET wins, else the
+# LakeQA default. Read here rather than imported so dataindexing stays free of
+# any sana_evaluation import.
+BUCKET = os.getenv("LAKEQA_BUCKET", DEFAULT_BUCKET)
 
 
 class _NullTqdm:
@@ -71,11 +76,11 @@ def _collect_dataset_usage(task_root: Path) -> Dict[str, set[str]]:
 def _build_s3_client_for_runtime():
     requested = (os.getenv("S3_ACCESS_MODE", "auto") or "auto").strip().lower()
     if requested in {"unsigned", "public", "anonymous", "anon", "no-sign-request"}:
-        return _build_s3_client(unsigned=True)
+        return build_s3_client(unsigned=True)
     try:
-        return _build_s3_client(unsigned=False)
+        return build_s3_client(unsigned=False)
     except Exception:
-        return _build_s3_client(unsigned=True)
+        return build_s3_client(unsigned=True)
 
 
 def _dataset_exists(s3_client, *, bucket: str, folder: str, dataset_id: str) -> bool:

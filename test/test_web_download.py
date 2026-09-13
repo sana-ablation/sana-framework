@@ -15,15 +15,15 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import sana_evaluation.tools.agent_tools as agent_tools
-import sana_evaluation.tools.external.search_web_tools as search_web_tools
-import sana_evaluation.tools.external.web_fetch_tools as web_fetch_tools
-from sana_evaluation.agent_with_mode import (
+import sana_evaluation.tools.lake as lake
+import sana_evaluation.tools.search.web as search_web_tools
+import sana_evaluation.tools.fetch as web_fetch_tools
+from sana_evaluation.runner.modes import (
     _validate_search_mode_combination,
     build_data_tools,
 )
-from sana_evaluation.helper.prompting import compose_managed_prompt
-from sana_evaluation.run_mode_eval import _variant_condition_label
+from sana_evaluation.prompting.compose import compose_managed_prompt
+from sana_evaluation.cli import _variant_condition_label
 
 
 def _search_response(payload):
@@ -70,7 +70,7 @@ class _SandboxTestCase(unittest.TestCase):
 
         self._tmp = tempfile.TemporaryDirectory()
         self.sandbox = Path(self._tmp.name)
-        agent_tools.set_sandbox_dir(self.sandbox)
+        lake.set_sandbox_dir(self.sandbox)
         search_web_tools.set_max_results(None)
         self._env = patch.dict("os.environ", {"PARALLEL_API_KEY": "test-key"}, clear=False)
         self._env.start()
@@ -121,8 +121,8 @@ class TestUrlAllowlist(_SandboxTestCase):
 
 
 def _read_allowlist_in_child(queue, sandbox_dir: str) -> None:
-    import sana_evaluation.tools.agent_tools as at
-    import sana_evaluation.tools.external.web_fetch_tools as wft
+    import sana_evaluation.tools.lake as at
+    import sana_evaluation.tools.fetch as wft
 
     at.set_sandbox_dir(Path(sandbox_dir))
     queue.put(wft.allowed_urls())
@@ -234,7 +234,7 @@ class TestManifestIntegration(_SandboxTestCase):
         with patch.object(web_fetch_tools.requests, "get", return_value=_get_response([b"a,b\n1,2\n"])):
             web_fetch_tools._download_web_impl([{"url": _URL}])
 
-        out = agent_tools._execute_code_impl(
+        out = lake._execute_code_impl(
             "print(len(FILES)); print(sorted(DOWNLOAD_PATHS)[0])"
         )
 
@@ -244,7 +244,7 @@ class TestManifestIntegration(_SandboxTestCase):
     def test_execute_code_still_blocks_network(self) -> None:
         # Load-bearing: download is the only network path, which is what makes
         # the allowlist enforceable rather than advisory.
-        out = agent_tools._execute_code_impl("import socket; socket.socket()")
+        out = lake._execute_code_impl("import socket; socket.socket()")
 
         self.assertFalse(out["success"])
         self.assertIn("Network access is disabled", out["error"])
@@ -277,7 +277,7 @@ class TestNoS3Validation(unittest.TestCase):
             _validate_search_mode_combination(
                 search_tool_mode="ideal",
                 search_results_mode="naive",
-                profile_mode="standard",
+                plan_mode="standard",
                 computation_tool_mode="standard",
                 no_s3=True,
             )
@@ -288,7 +288,7 @@ class TestNoS3Validation(unittest.TestCase):
         _validate_search_mode_combination(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             computation_tool_mode="standard",
             no_s3=True,
         )
@@ -297,7 +297,7 @@ class TestNoS3Validation(unittest.TestCase):
         _validate_search_mode_combination(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             computation_tool_mode="standard",
             no_s3=False,
         )
@@ -308,7 +308,7 @@ class TestConditionLabel(unittest.TestCase):
         label = _variant_condition_label(
             search_tool="web",
             search_results="naive",
-            profile="standard",
+            plan="standard",
             computation_tool="standard",
             no_s3=True,
         )
@@ -319,7 +319,7 @@ class TestConditionLabel(unittest.TestCase):
         label = _variant_condition_label(
             search_tool="web",
             search_results="naive",
-            profile="standard",
+            plan="standard",
             computation_tool="standard",
             no_s3=False,
         )
@@ -354,13 +354,13 @@ class TestRunConfigWiring(unittest.TestCase):
     """no_s3 must reach the composed prompt and tool surface through RunConfig."""
 
     def _bundle(self, *, no_s3: bool):
-        from sana_evaluation.agent_with_mode import build_mode_bundle
+        from sana_evaluation.runner.modes import build_mode_bundle
         from sana_evaluation.config import RunConfig
 
         cfg = RunConfig(
             search_tool_mode="web",
             search_results_mode="naive",
-            profile_mode="standard",
+            plan_mode="standard",
             computation_tool_mode="standard",
             benchmark="lakeqa",
             no_s3=no_s3,

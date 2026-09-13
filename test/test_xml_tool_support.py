@@ -3,8 +3,9 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from sana_evaluation.tools import agent_tools_v2
-from sana_evaluation.tools.helper.detect import detect_family
+from sana_evaluation.tools import lake
+from sana_evaluation.tools.computation import standard as computation_standard
+from dataindexing.formats import detect_family
 
 
 class TestDetectFamilyXml(unittest.TestCase):
@@ -30,16 +31,16 @@ class TestDetectFamilyXml(unittest.TestCase):
 class TestPeekFileXmlSupport(unittest.TestCase):
     def _call_peek(self, text: str, size_bytes: int | None = None):
         fn = getattr(
-            agent_tools_v2.peek_file,
+            lake.peek_file,
             "_tool_func",
-            getattr(agent_tools_v2.peek_file, "original_function", agent_tools_v2.peek_file),
+            getattr(lake.peek_file, "original_function", lake.peek_file),
         )
         payload = text.encode("utf-8")
         reported_size = len(payload) if size_bytes is None else size_bytes
         with (
-            patch.object(agent_tools_v2, "_get_s3_client", return_value=Mock()),
-            patch.object(agent_tools_v2, "_s3_head", return_value=reported_size),
-            patch.object(agent_tools_v2, "_s3_range_get", return_value=payload),
+            patch.object(lake, "_get_s3_client", return_value=Mock()),
+            patch.object(lake, "_s3_head", return_value=reported_size),
+            patch.object(lake, "_s3_range_get", return_value=payload),
         ):
             return fn(
                 s3_uri="s3://lakeqa-yc4103-datalake/datagov/demo-dataset/files/data.xml",
@@ -68,7 +69,7 @@ class TestPeekFileXmlSupport(unittest.TestCase):
             '  <record><name>Alice</name></record>\n'
             '  <record>\n'
         )
-        result = self._call_peek(text, size_bytes=agent_tools_v2._PEEK_BYTES + 128)
+        result = self._call_peek(text, size_bytes=lake._PEEK_BYTES + 128)
         self.assertEqual(result["family"], "xml")
         self.assertEqual(result["xml_preview_mode"], "heuristic")
         self.assertEqual(result["xml_root_tag"], "root")
@@ -106,7 +107,7 @@ class TestPeekFileXmlSupport(unittest.TestCase):
 
 class TestQueryFileXmlSupport(unittest.TestCase):
     def test_xml_family_error_is_actionable(self):
-        msg = agent_tools_v2._rewrite_unqueryable_family_error("xml")
+        msg = lake._rewrite_unqueryable_family_error("xml")
         self.assertIn("XML/KML", msg)
         self.assertIn("parse_xml_records", msg)
         self.assertIn("peek_file", msg)
@@ -118,12 +119,12 @@ class TestQueryFileXmlSupport(unittest.TestCase):
     def test_query_file_detects_xml_and_returns_xml_specific_hint(self):
         text = '<?xml version="1.0"?><root><record>1</record></root>'
         with (
-            patch.object(agent_tools_v2, "_resolve_dataset_folder", return_value="datagov"),
-            patch.object(agent_tools_v2, "_get_s3_client", return_value=Mock()),
-            patch.object(agent_tools_v2, "_s3_head", return_value=len(text.encode("utf-8"))),
-            patch.object(agent_tools_v2, "_s3_range_get", return_value=text.encode("utf-8")),
+            patch.object(lake, "_resolve_dataset_folder", return_value="datagov"),
+            patch.object(lake, "_get_s3_client", return_value=Mock()),
+            patch.object(lake, "_s3_head", return_value=len(text.encode("utf-8"))),
+            patch.object(lake, "_s3_range_get", return_value=text.encode("utf-8")),
         ):
-            result = agent_tools_v2._query_file_impl(
+            result = lake._query_file_impl(
                 s3_uri="s3://lakeqa-yc4103-datalake/datagov/demo-dataset/files/data.xml",
                 sql="SELECT * FROM t LIMIT 1",
             )
@@ -136,11 +137,11 @@ class TestQueryFileXmlSupport(unittest.TestCase):
     def test_query_file_rejects_large_xml_txt_before_large_file_hint(self):
         text = '<kml xmlns="http://www.opengis.net/kml/2.2"><Document /></kml>'
         with (
-            patch.object(agent_tools_v2, "_get_s3_client", return_value=Mock()),
-            patch.object(agent_tools_v2, "_s3_head", return_value=agent_tools_v2._QUERY_MAX_FILE_BYTES + 1),
-            patch.object(agent_tools_v2, "_s3_range_get", return_value=text.encode("utf-8")),
+            patch.object(lake, "_get_s3_client", return_value=Mock()),
+            patch.object(lake, "_s3_head", return_value=lake._QUERY_MAX_FILE_BYTES + 1),
+            patch.object(lake, "_s3_range_get", return_value=text.encode("utf-8")),
         ):
-            result = agent_tools_v2._query_file_impl(
+            result = lake._query_file_impl(
                 s3_uri="s3://lakeqa-yc4103-datalake/datagov/demo-dataset/files/data.txt",
                 sql="SELECT * FROM t LIMIT 1",
             )
@@ -154,12 +155,12 @@ class TestQueryFileXmlSupport(unittest.TestCase):
     def test_query_file_does_not_open_duckdb_for_xml_txt_file(self):
         text = '<?xml version="1.0"?><root><record>1</record></root>'
         with (
-            patch.object(agent_tools_v2, "_get_s3_client", return_value=Mock()),
-            patch.object(agent_tools_v2, "_s3_head", return_value=len(text.encode("utf-8"))),
-            patch.object(agent_tools_v2, "_s3_range_get", return_value=text.encode("utf-8")),
-            patch.object(agent_tools_v2, "_duckdb_connection") as duckdb_connection,
+            patch.object(lake, "_get_s3_client", return_value=Mock()),
+            patch.object(lake, "_s3_head", return_value=len(text.encode("utf-8"))),
+            patch.object(lake, "_s3_range_get", return_value=text.encode("utf-8")),
+            patch.object(lake, "_duckdb_connection") as duckdb_connection,
         ):
-            result = agent_tools_v2._query_file_impl(
+            result = lake._query_file_impl(
                 s3_uri="s3://lakeqa-yc4103-datalake/datagov/demo-dataset/files/data.txt",
                 sql="SELECT * FROM t LIMIT 1",
             )
@@ -169,10 +170,11 @@ class TestQueryFileXmlSupport(unittest.TestCase):
         duckdb_connection.assert_not_called()
 
     def test_query_file_docstring_mentions_xml_detection_behavior(self):
+        query_file = computation_standard.query_file
         fn = getattr(
-            agent_tools_v2.query_file,
+            query_file,
             "_tool_func",
-            getattr(agent_tools_v2.query_file, "original_function", agent_tools_v2.query_file),
+            getattr(query_file, "original_function", query_file),
         )
         doc = fn.__doc__ or ""
         self.assertIn("Supported file types: CSV", doc)
@@ -185,11 +187,11 @@ class TestParseXmlRecords(unittest.TestCase):
         s3 = Mock()
         s3.get_object.return_value = {"Body": io.BytesIO(payload)}
         with (
-            patch.object(agent_tools_v2, "_get_s3_client", return_value=s3),
-            patch.object(agent_tools_v2, "_s3_head", return_value=len(payload)),
-            patch.object(agent_tools_v2, "_s3_range_get", return_value=payload),
+            patch.object(lake, "_get_s3_client", return_value=s3),
+            patch.object(lake, "_s3_head", return_value=len(payload)),
+            patch.object(lake, "_s3_range_get", return_value=payload),
         ):
-            result = agent_tools_v2._parse_xml_records_impl(
+            result = lake._parse_xml_records_impl(
                 s3_uri="s3://lakeqa-yc4103-datalake/datagov/demo-dataset/files/data.txt",
                 **kwargs,
             )
@@ -224,11 +226,11 @@ class TestParseXmlRecords(unittest.TestCase):
         s3.get_object.return_value = {"Body": io.BytesIO(payload)}
 
         with (
-            patch.object(agent_tools_v2, "_get_s3_client", return_value=s3),
-            patch.object(agent_tools_v2, "_s3_head", return_value=len(payload)),
-            patch.object(agent_tools_v2, "_s3_range_get", return_value=payload),
+            patch.object(lake, "_get_s3_client", return_value=s3),
+            patch.object(lake, "_s3_head", return_value=len(payload)),
+            patch.object(lake, "_s3_range_get", return_value=payload),
         ):
-            result = agent_tools_v2._parse_xml_records_impl(
+            result = lake._parse_xml_records_impl(
                 s3_uri=(
                     "s3://lakeqa-yc4103-datalake/datagov/"
                     "public-school-locations-current-23297/files/schools.kml"
@@ -325,7 +327,9 @@ class TestParseXmlRecords(unittest.TestCase):
 
 class TestPromptContract(unittest.TestCase):
     def test_system_prompt_mentions_xml_preview_and_query_limit(self):
-        prompt = Path("sana_evaluation/prompts/baseline.txt").read_text()
+        from sana_evaluation.prompting.compose import compose_baseline_prompt
+
+        prompt = compose_baseline_prompt("standard")
         self.assertIn("CSV/JSON/XML/text", prompt)
         self.assertIn("parse_xml_records", prompt)
         self.assertIn("do not use `execute_code` for XML/KML extraction", prompt)

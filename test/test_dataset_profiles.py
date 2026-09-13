@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import sana_evaluation.helper.peek_profile as peek_profile
+import sana_evaluation.runtime.peek_profile as peek_profile
 
 
 class DatasetProfilesTests(unittest.TestCase):

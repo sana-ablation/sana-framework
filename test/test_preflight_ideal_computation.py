@@ -6,7 +6,7 @@ from tempfile import TemporaryDirectory
 
 from sana_evaluation.config import RunConfig
 from sana_evaluation.preflight import run_preflight
-from sana_evaluation.tools.external.ideal.runtime_profile_store import set_runtime_profiles_root, set_task_context
+from sana_evaluation.profiles import set_runtime_profiles_root, set_task_context
 
 
 class IdealComputationPreflightTests(unittest.TestCase):
@@ -37,7 +37,7 @@ class IdealComputationPreflightTests(unittest.TestCase):
                 RunConfig(
                     search_tool_mode="preloaded",
                     search_results_mode="naive",
-                    profile_mode="naive",
+                    plan_mode="naive",
                     computation_tool_mode="ideal",
                 ),
                 ["benchmarks/lakeqa/tasks-mini/tasks/k-1-d-1/task_text.json"],

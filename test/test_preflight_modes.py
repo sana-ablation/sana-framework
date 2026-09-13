@@ -9,8 +9,8 @@ from unittest.mock import patch
 from sana_evaluation.config import RunConfig
 import sana_evaluation.preflight as preflight
 from sana_evaluation.preflight import run_preflight
-from sana_evaluation.tools.external.ideal import search_wrapper
-from sana_evaluation.tools.external.ideal.runtime_profile_store import set_runtime_profiles_root
+from sana_evaluation.tools.search import wrapper as search_wrapper
+from sana_evaluation.profiles import set_runtime_profiles_root
 
 
 class PreflightModeTests(unittest.TestCase):
@@ -36,7 +36,7 @@ class PreflightModeTests(unittest.TestCase):
         cfg = RunConfig(
             search_tool_mode="preloaded",
             search_results_mode="ideal",
-            profile_mode="ideal",
+            plan_mode="ideal",
         )
         output = io.StringIO()
         checks = run_preflight(
@@ -46,8 +46,8 @@ class PreflightModeTests(unittest.TestCase):
         )
 
         names = [check.name for check in checks]
-        self.assertIn("prompt:managed.txt", names)
-        self.assertIn("prompt:search_preloaded.txt", names)
+        self.assertIn("prompt:plan/managed.txt", names)
+        self.assertIn("prompt:search/preloaded.txt", names)
         self.assertIn("runtime_profile:benchmarks/lakeqa/tasks-mini/tasks/k-1-d-1/task_2.json", names)
         self.assertNotIn("table_profiles.jsonl", names)
         self.assertNotIn("table_schemas_full.jsonl", names)
@@ -83,7 +83,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="standard",
                 search_results_mode="ideal",
-                profile_mode="naive",
+                plan_mode="naive",
                 search_db_path=str(db_path),
             )
 
@@ -121,12 +121,12 @@ class PreflightModeTests(unittest.TestCase):
             ]:
                 (root / name).write_text("")
 
-            from sana_evaluation.tools.external.ideal import runtime_profile_store
+            from sana_evaluation import profiles
 
-            old_root = runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT
+            old_root = profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT
             try:
                 with ExitStack() as stack:
-                    stack.enter_context(patch.object(runtime_profile_store, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
+                    stack.enter_context(patch.object(profiles, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
                     stack.enter_context(patch.object(search_wrapper, "_TABLE_DESCRIPTIONS_PATH", root / "kramabench_descriptions.jsonl"))
                     stack.enter_context(patch.object(search_wrapper, "_SNIPPETS_PATH", root / "kramabench_snippets.jsonl"))
                     stack.enter_context(patch.object(search_wrapper, "_SCHEMAS_PATH", root / "kramabench_tables_schemas_full.jsonl"))
@@ -144,7 +144,7 @@ class PreflightModeTests(unittest.TestCase):
                     cfg = RunConfig(
                         search_tool_mode="ideal",
                         search_results_mode="ideal",
-                        profile_mode="ideal",
+                        plan_mode="ideal",
                         benchmark="kramabench",
                     )
                     checks = run_preflight(
@@ -153,7 +153,7 @@ class PreflightModeTests(unittest.TestCase):
                         stream=io.StringIO(),
                     )
             finally:
-                runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
+                profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
 
         names = [check.name for check in checks]
         self.assertIn("kramabench_descriptions.jsonl (ideal enrichment load)", names)
@@ -181,7 +181,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="ideal",
             )
 
@@ -233,7 +233,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="preloaded",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
                 computation_tool_mode="ideal",
             )
 
@@ -272,12 +272,12 @@ class PreflightModeTests(unittest.TestCase):
                     }
                 )
             )
-            from sana_evaluation.tools.external.ideal import runtime_profile_store
+            from sana_evaluation import profiles
 
-            old_root = runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT
+            old_root = profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT
             try:
                 with ExitStack() as stack:
-                    stack.enter_context(patch.object(runtime_profile_store, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
+                    stack.enter_context(patch.object(profiles, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
                     stack.enter_context(
                         patch.object(
                             preflight,
@@ -292,7 +292,7 @@ class PreflightModeTests(unittest.TestCase):
                     cfg = RunConfig(
                         search_tool_mode="preloaded",
                         search_results_mode="naive",
-                        profile_mode="naive",
+                        plan_mode="naive",
                         computation_tool_mode="ideal",
                         benchmark="kramabench",
                     )
@@ -302,7 +302,7 @@ class PreflightModeTests(unittest.TestCase):
                         stream=io.StringIO(),
                     )
             finally:
-                runtime_profile_store._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
+                profiles._KRAMABENCH_RUNTIME_PROFILES_ROOT = old_root
 
         by_name = {check.name: check for check in checks}
         self.assertIn("ideal_query:benchmarks/kramabench/tasks-mini/tasks/k-1-d-1/task_1.json", by_name)
@@ -349,11 +349,11 @@ class PreflightModeTests(unittest.TestCase):
 
             fake_s3 = FakeS3()
 
-            from sana_evaluation.tools.external.ideal import runtime_profile_store
+            from sana_evaluation import profiles
 
             with ExitStack() as stack:
-                stack.enter_context(patch.object(runtime_profile_store, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
-                stack.enter_context(patch("sana_evaluation.tools.agent_tools._get_s3_client", return_value=fake_s3))
+                stack.enter_context(patch.object(profiles, "_KRAMABENCH_RUNTIME_PROFILES_ROOT", runtime_profiles_root))
+                stack.enter_context(patch("sana_evaluation.tools.lake._get_s3_client", return_value=fake_s3))
                 check = preflight._check_kramabench_source_objects([str(task_path)])
 
         self.assertTrue(check.ok, check)
@@ -394,7 +394,7 @@ class PreflightModeTests(unittest.TestCase):
             cfg = RunConfig(
                 search_tool_mode="ideal",
                 search_results_mode="naive",
-                profile_mode="naive",
+                plan_mode="naive",
             )
 
             with patch.object(search_wrapper, "_TABLE_DESCRIPTIONS_PATH", table_desc_path):

@@ -13,7 +13,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from sana_evaluation.tools.external.description_rows import (  # noqa: E402
+from dataindexing.descriptions.rows import (  # noqa: E402
     description_uri,
     has_valid_description,
     reject_forbidden_description_row,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict
 
-from sana_evaluation.helper.constants import MODEL_PRICING
+from sana_evaluation.models import MODEL_PRICING
 from sana_evaluation.instrumentation.trace_plugin import write_trace_record
 
 logger = logging.getLogger(__name__)

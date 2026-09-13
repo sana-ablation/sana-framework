@@ -4,12 +4,12 @@
 A model with no MODEL_PRICING entry logs a warning and records 0.0, so rows
 collected before the entry landed carry a zero indistinguishable from a free
 run. Token counts are recorded either way, and the pricing formula is the one
-in helper/result.py and instrumentation/ideal_subagent_costs.py, so the cost is
+in runner/record.py and instrumentation/ideal_subagent_costs.py, so the cost is
 recoverable exactly.
 
 Three columns are involved, not one. The hidden ideal-mode helper agents bill
 separately into ideal_subagent_cost_usd, and the two totals are defined in
-run_eval.py as:
+runner/reporting.py as:
 
     total_cost_with_ideal_subagents_usd = cost_usd + ideal_subagent_cost_usd
     total_cost_with_all_subagents_usd   = that + delegation_subagent_cost_usd
@@ -36,7 +36,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from sana_evaluation.helper.constants import MODEL_PRICING  # noqa: E402
+from sana_evaluation.models import MODEL_PRICING  # noqa: E402
 
 # Every tree a sweep may have produced, raw and audited. The audited trees are
 # separate copies of the rows, so a repair applied only to the raw side never

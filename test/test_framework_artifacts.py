@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from sana_evaluation.artifacts import (
+from sana_evaluation.benchmarks import (
     ArtifactValidationError,
     benchmark_artifacts,
     format_artifact_report,
@@ -44,7 +44,7 @@ def test_validate_benchmark_artifacts_reports_missing_required_roots(tmp_path):
 
     message = str(excinfo.value)
     assert "runtime-profiles" in message
-    assert "prompts" in message
+    assert "prompting/fragments" in message
 
 
 def test_format_artifact_report_includes_run_and_analysis_commands(tmp_path):
@@ -55,7 +55,7 @@ def test_format_artifact_report_includes_run_and_analysis_commands(tmp_path):
         "benchmarks/kramabench/tasks-mini/artifacts/descriptions.jsonl",
         "benchmarks/kramabench/tasks-mini/artifacts/snippets.jsonl",
         "benchmarks/kramabench/tasks-mini/artifacts/table_schemas_full.jsonl",
-        "sana_evaluation/prompts",
+        "sana_evaluation/prompting/fragments",
         "results-kramabench",
         "results-kramabench_semantic",
     ):
@@ -69,6 +69,6 @@ def test_format_artifact_report_includes_run_and_analysis_commands(tmp_path):
     report = format_artifact_report("kramabench", root=tmp_path)
 
     assert "Kramabench" in report
-    assert "python -m sana_evaluation.setup_run smoke --benchmark kramabench" in report
+    assert "python -m sana_evaluation.cli smoke --benchmark kramabench" in report
     assert "python -m sana_analysis.run_mode_analysis" in report
     assert "benchmarks/kramabench/tasks-mini/tasks" in report

@@ -10,8 +10,8 @@ from strands import tool
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import sana_evaluation.tools.external.ideal.search_wrapper as search_wrapper
-from sana_evaluation.tools.external.ideal.search_wrapper import (
+import sana_evaluation.tools.search.wrapper as search_wrapper
+from sana_evaluation.tools.search.wrapper import (
     reshape_search_payload,
     search_tool_names_in,
 )

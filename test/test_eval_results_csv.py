@@ -1,47 +1,22 @@
 import csv
 import importlib.util
-import sys
 import tempfile
-import types
 import unittest
 from pathlib import Path
 
 
 def _load_write_main_csv():
+    # reporting.py has no dependency on the rest of sana_evaluation (stdlib
+    # only), so it can be loaded standalone without faking out sibling
+    # modules the way the old run_eval.py loader had to.
     repo_root = Path(__file__).resolve().parents[1]
-    module_path = repo_root / "sana_evaluation" / "run_eval.py"
+    module_path = repo_root / "sana_evaluation" / "runner" / "reporting.py"
 
-    fake_pkg = types.ModuleType("sana_evaluation")
-    fake_pkg.__path__ = [str(module_path.parent)]
-
-    fake_agent = types.ModuleType("sana_evaluation.agent")
-    fake_agent.BatchRunner = object
-
-    fake_config = types.ModuleType("sana_evaluation.config")
-    fake_config.AgentConfig = object
-    fake_config.ConditionConfig = object
-    fake_config.RunConfig = object
-
-    saved = {
-        "sana_evaluation": sys.modules.get("sana_evaluation"),
-        "sana_evaluation.agent": sys.modules.get("sana_evaluation.agent"),
-        "sana_evaluation.config": sys.modules.get("sana_evaluation.config"),
-    }
-    sys.modules["sana_evaluation"] = fake_pkg
-    sys.modules["sana_evaluation.agent"] = fake_agent
-    sys.modules["sana_evaluation.config"] = fake_config
-    try:
-        spec = importlib.util.spec_from_file_location("_test_run_eval_module", module_path)
-        module = importlib.util.module_from_spec(spec)
-        assert spec and spec.loader
-        spec.loader.exec_module(module)
-        return module._write_main_csv
-    finally:
-        for name, original in saved.items():
-            if original is None:
-                sys.modules.pop(name, None)
-            else:
-                sys.modules[name] = original
+    spec = importlib.util.spec_from_file_location("_test_reporting_module", module_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module.write_main_csv
 
 
 _write_main_csv = _load_write_main_csv()

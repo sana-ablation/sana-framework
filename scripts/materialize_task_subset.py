@@ -10,7 +10,7 @@ Tasks are copied, not linked, so a set is self-contained and a source edit does
 not silently change a set someone has already reported numbers from.
 
 Runtime profiles are NOT copied. A task keeps its ``<bucket>/<task>.json`` path
-relative to the set's ``tasks/`` directory, and runtime_profile_store resolves
+relative to the set's ``tasks/`` directory, and sana_evaluation.profiles resolves
 ``benchmarks/<benchmark>/<set>/tasks/...`` against the benchmark's shared
 runtime-profiles directory, so every set reuses one copy.
 

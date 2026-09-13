@@ -40,7 +40,7 @@ import boto3
 from botocore import UNSIGNED
 from botocore.config import Config as BotoConfig
 
-from sana_evaluation.tools.helper.detect import detect_family, should_skip
+from dataindexing.formats import detect_family, should_skip
 
 DEFAULT_BUCKET = "lakeqa-yc4103-datalake"
 # 32 KiB is ample for a header line. At ~1M candidate objects the difference

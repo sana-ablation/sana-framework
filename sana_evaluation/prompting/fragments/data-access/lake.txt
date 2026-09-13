@@ -1,0 +1,27 @@
+- `list_files` — list files inside a dataset
+- `peek_file` — preview ONE file's structure (CSV/JSON/XML/text) and column headers or XML schema hints (first 64KB); dataset_id is the bare ID only, no prefix (e.g. "index-crimes-by-county" not "datagov/index-crimes-by-county")
+- `peek_multiple` — preview SEVERAL files in one call (batch wrapper); use this for 2+ files and pass `files=[{dataset_id, file_path}, ...]`. For ONE file use `peek_file` instead
+- `read_file` — read lines from a file directly (paginated, no download needed)
+- `grep_file` — regex search inside a file (no download needed); saves 2-3 tool calls vs download+execute_code
+- `parse_xml_records` — parse/filter/group XML/KML records directly; use for KML `Placemark` or XML record tags after `peek_file`
+- `download` — download files to the sandbox
+- `execute_code` — run Python against downloaded files; ONLY use when the direct file tools above are not enough
+- `submit_answer(answer, reasoning)` — submit your final answer and stop
+  - answer: wrap in square brackets e.g. [42]
+  - reasoning: brief explanation of how you found the answer
+
+All file tools accept either `(dataset_id, file_path)` or a single `s3_uri`. `list_files` returns `s3_uri` for each file, so you can pass that directly.
+
+## OUTPUT LIMITS — read_file, grep_file, execute_code
+These tools cap their output at ~6,000 characters (~1.5k tokens) to protect context.
+If a result is too large, you will receive:
+- `truncation_note` — explains the limit was hit and how many rows/lines fit
+- `local_result_path` — full result written to the sandbox (e.g. `/path/rows.txt.query_result.json`)
+- As many rows/lines/matches as fit within the 6k limit
+
+**When you see a truncation_note:**
+1. Use a more targeted query: `SELECT specific_col FROM t WHERE ... GROUP BY ... LIMIT n`
+2. Use `grep_file` to search for specific values instead
+3. Or read the full dump: `execute_code("import json; data = json.load(open('<local_result_path>')); print(data['rows'][:10])")`
+
+`execute_code` stdout is also capped at ~6,000 chars (~1.5k tokens). If output is truncated, print less or query more specifically.

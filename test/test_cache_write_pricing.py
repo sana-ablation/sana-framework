@@ -8,8 +8,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from sana_evaluation.helper.constants import MODEL_PRICING
-from sana_evaluation.helper.result import AgentResult
+from sana_evaluation.models import MODEL_PRICING
+from sana_evaluation.runner.record import AgentResult
 from sana_evaluation.llm.openai_cached_model import (
     extract_chat_cache_write_tokens,
     extract_chat_cached_input_tokens,

@@ -26,8 +26,9 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def _load_wrapper(module_name: str):
-    path = _REPO_ROOT / "sana_evaluation" / "tools" / "external" / f"{module_name}.py"
-    spec = importlib.util.spec_from_file_location(f"test_{module_name}", path)
+    """Load ``sana_evaluation/tools/search/<module_name>.py`` under a private name."""
+    path = _REPO_ROOT / "sana_evaluation" / "tools" / "search" / f"{module_name}.py"
+    spec = importlib.util.spec_from_file_location(f"test_search_{module_name}", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[spec.name] = module
@@ -37,14 +38,14 @@ def _load_wrapper(module_name: str):
 
 class ExternalSearchToolsSmokeTest(unittest.TestCase):
     def test_wrappers_import_dataindexing_runtime_api(self) -> None:
-        search_naive_tools = _load_wrapper("search_naive_tools")
-        search_standard_tools = _load_wrapper("search_standard_tools")
+        search_naive_tools = _load_wrapper("naive")
+        search_standard_tools = _load_wrapper("standard")
 
         self.assertEqual(search_standard_tools._api.__name__, "dataindexing.hybrid_search.api")
         self.assertEqual(search_naive_tools._api.__name__, "dataindexing.hybrid_search.api")
 
     def test_standard_setup_uses_hybrid_setup_without_sparse_or_legacy_setup(self) -> None:
-        search_standard_tools = _load_wrapper("search_standard_tools")
+        search_standard_tools = _load_wrapper("standard")
 
         with (
             patch.object(search_standard_tools._api, "setup_hybrid") as setup_hybrid,
@@ -58,7 +59,7 @@ class ExternalSearchToolsSmokeTest(unittest.TestCase):
         legacy_setup.assert_not_called()
 
     def test_naive_setup_uses_sparse_setup_without_hybrid_or_legacy_setup(self) -> None:
-        search_naive_tools = _load_wrapper("search_naive_tools")
+        search_naive_tools = _load_wrapper("naive")
 
         with (
             patch.object(search_naive_tools._api, "setup_sparse") as setup_sparse,
@@ -72,7 +73,7 @@ class ExternalSearchToolsSmokeTest(unittest.TestCase):
         legacy_setup.assert_not_called()
 
     def test_standard_tools_route_to_hybrid_rrf_searches(self) -> None:
-        search_standard_tools = _load_wrapper("search_standard_tools")
+        search_standard_tools = _load_wrapper("standard")
 
         with (
             patch.object(
@@ -103,7 +104,7 @@ class ExternalSearchToolsSmokeTest(unittest.TestCase):
         sparse_search_schema.assert_not_called()
 
     def test_naive_tools_route_to_sparse_searches(self) -> None:
-        search_naive_tools = _load_wrapper("search_naive_tools")
+        search_naive_tools = _load_wrapper("naive")
 
         with (
             patch.object(

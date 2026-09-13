@@ -3,7 +3,7 @@
 import unittest
 from types import SimpleNamespace
 
-from sana_evaluation.helper.result import AgentResult
+from sana_evaluation.runner.record import AgentResult
 
 
 class _DummyMetrics:
@@ -101,7 +101,7 @@ class PricingLookupTests(unittest.TestCase):
 
     def test_unknown_model_returns_zero_and_logs_warning(self) -> None:
         result = _build_result("unknown/provider-model", input_tokens=1000, output_tokens=1000)
-        with self.assertLogs("sana_evaluation.helper.result", level="WARNING") as captured:
+        with self.assertLogs("sana_evaluation.runner.record", level="WARNING") as captured:
             cost = result.cost_usd
         self.assertEqual(cost, 0.0)
         self.assertTrue(any("No pricing configured for model_name=unknown/provider-model" in m for m in captured.output))

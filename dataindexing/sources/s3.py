@@ -6,15 +6,39 @@ import re
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Any, Dict
 
 import os
 
+import boto3
 from botocore import UNSIGNED
 from botocore.config import Config as BotoConfig
 
 import aioboto3
 import ijson
+
+# One implementation, XML-aware. This module used to carry a second copy whose
+# ContentFamily had no "xml" member. is_metadata_filename and is_table_content
+# are re-exported rather than used here: they are part of this module's
+# detection surface for the ingestion writers that read it.
+from dataindexing.formats import (  # noqa: F401
+    ContentFamily,
+    detect_family,
+    is_metadata_filename,
+    is_table_content,
+    should_skip,
+)
+
+# The benchmark lake. `LAKEQA_BUCKET` overrides the active bucket at runtime;
+# that read belongs to the agent runtime (sana_evaluation/tools/lake.py) and to
+# the CLIs, not here, so this module only owns the immutable defaults.
+DEFAULT_BUCKET = "lakeqa-yc4103-datalake"
+BENCHMARK_BUCKETS = {
+    "lakeqa": DEFAULT_BUCKET,
+    "kramabench": "sana-kramabench",
+}
+FOLDERS = ["wikipedia", "datagov"]
+REGION = "us-east-1"
 
 
 @dataclass
@@ -29,7 +53,7 @@ class S3Config:
     max_async: int = 16             # async semaphore slots
 
     # The source bucket is public. The eval-side tools read it unsigned
-    # (agent_tools.py builds a signature_version=UNSIGNED client), and this side
+    # (lake.py builds a signature_version=UNSIGNED client), and this side
     # must be able to as well: signing with absent or stale credentials turns a
     # plain 404 into a 403, which reads as an access problem and sends you
     # looking for credentials that were never needed.
@@ -54,7 +78,7 @@ class S3Config:
 
     # Optional filename-level filter for ingestion writers.
     # When enabled, callers can skip metadata-like and binary files using
-    # the heuristics in detect.py before fetching content from S3.
+    # the heuristics in dataindexing/formats.py before fetching content from S3.
     skip_unimportant_files: bool = False
 
     # Parquet cache: if set, process.py will load documents from this local
@@ -62,46 +86,6 @@ class S3Config:
     # copy it here before running the indexers.
     # Schema: dataset_uri (string), content (string)
     parquet_cache_path: str | None = "../datalake_silver.parquet"
-
-
-ContentFamily = Literal["csv", "json", "text"]
-DELIMITERS = (",", "\t", "|", ";")
-
-_SOCRATA_ID_RE = re.compile(r"^[a-z0-9]{4}-[a-z0-9]{4}$")
-_PURE_NUMBER_RE = re.compile(r"^\d+(-\d+)?$")
-_RANDOM_SUFFIX_RE = re.compile(r"^.+-[A-Za-z0-9]{6}$")
-_METADATA_EXACT: frozenset[str] = frozenset(
-    {
-        "metadata",
-        "gmi",
-        "open-licenses",
-        "legalcode",
-        "government-works",
-        "index",
-        "odc-odbl",
-        "wmsserver",
-        "resolve",
-        "request",
-        "edit",
-        "search",
-        "contact",
-        "policyinformation",
-        "gmxcodelists",
-        "bios",
-        "hires",
-        "cwhr",
-        "license",
-        "readme",
-        "signed-metadata",
-        "headers",
-        "dcat-us",
-        "catalog",
-        "iso",
-        "cc-zero",
-        "cc-by",
-    }
-)
-_SKIP_EXTENSIONS: frozenset[str] = frozenset({".jpg", ".jpeg", ".png", ".pdf", ".zip"})
 
 
 def parse_s3_uri(uri: str) -> tuple[str, str]:
@@ -115,62 +99,6 @@ def parse_s3_uri(uri: str) -> tuple[str, str]:
 def extract_slug(uri: str) -> str:
     """Return the filename stem as a dataset slug."""
     return Path(uri).stem
-
-
-def is_metadata_filename(filename: str) -> bool:
-    """Return true when a filename looks like metadata rather than data."""
-    stem = filename.rsplit(".", 1)[0].lower()
-    if stem in _METADATA_EXACT:
-        return True
-    if _SOCRATA_ID_RE.match(stem):
-        return True
-    if _PURE_NUMBER_RE.match(stem):
-        return True
-    return bool(_RANDOM_SUFFIX_RE.match(stem))
-
-
-def should_skip(filename: str) -> bool:
-    """Return true for binary/metadata files that should not be ingested."""
-    lower = filename.lower()
-    if any(lower.endswith(ext) for ext in _SKIP_EXTENSIONS):
-        return True
-    return is_metadata_filename(lower.rsplit("/", 1)[-1])
-
-
-def detect_family(content: str) -> ContentFamily:
-    """Detect a simple content family from leading text."""
-    stripped = content.lstrip()
-    if stripped.startswith("{") or stripped.startswith("["):
-        return "json"
-    first_line = stripped.split("\n", 1)[0]
-    if any(d in first_line for d in DELIMITERS):
-        return "csv"
-    return "text"
-
-
-def is_table_content(content: str) -> bool:
-    """Return true when a text sample looks structurally tabular."""
-    lines = [ln.strip() for ln in content.split("\n") if ln.strip()]
-    if len(lines) < 3:
-        return False
-
-    jsonl = sum(1 for ln in lines[:5] if ln.startswith("{") and ln.endswith("}"))
-    if jsonl >= 3:
-        return True
-
-    first_char = content.strip()[0]
-    if first_char in ("{", "["):
-        return False
-
-    for delim in DELIMITERS:
-        counts = []
-        for ln in lines[:5]:
-            clean = re.sub(r'"[^"]*"', "", ln)
-            counts.append(clean.count(delim))
-        valid = [c for c in counts if c > 0]
-        if len(valid) >= 3 and len(set(valid[:3])) == 1 and valid[0] >= 1:
-            return True
-    return False
 
 
 async def s3_head(s3, bucket: str, key: str) -> int:
@@ -251,7 +179,10 @@ async def s3_fetch(s3, cfg: S3Config, bucket: str, key: str) -> str:
         )
 
     peek_text, family = await s3_peek(s3, cfg, bucket, key, file_size)
-    if family == "text":
+    # "xml" rides the text budget: ijson cannot parse markup, so the json
+    # branch would range-GET the whole json budget only to hand back the same
+    # decoded bytes. The trailing return stays json-only by elimination.
+    if family in ("text", "xml"):
         return peek_text[: cfg.max_text_chars]
     if family == "csv":
         return await s3_fetch_csv(s3, cfg, bucket, key, file_size)
@@ -263,6 +194,31 @@ def _client_kwargs(cfg: S3Config) -> dict:
     if getattr(cfg, "unsigned", False):
         return {"config": BotoConfig(signature_version=UNSIGNED)}
     return {}
+
+
+def build_s3_client(unsigned: bool):
+    """Build a synchronous S3 client in signed or unsigned mode."""
+    s3_config = {"addressing_style": "path"}
+    if unsigned:
+        return boto3.client(
+            "s3",
+            region_name=REGION,
+            config=BotoConfig(signature_version=UNSIGNED, s3=s3_config),
+        )
+
+    kwargs: Dict[str, Any] = {
+        "region_name": REGION,
+        "config": BotoConfig(s3=s3_config),
+    }
+    access_key = os.getenv("AWS_ACCESS_KEY_ID")
+    secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    session_token = os.getenv("AWS_SESSION_TOKEN")
+    if access_key and secret_key:
+        kwargs["aws_access_key_id"] = access_key
+        kwargs["aws_secret_access_key"] = secret_key
+        if session_token:
+            kwargs["aws_session_token"] = session_token
+    return boto3.client("s3", **kwargs)
 
 
 async def fetch_bytes(
