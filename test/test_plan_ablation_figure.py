@@ -107,6 +107,20 @@ class TestCanonicalPlanModes(unittest.TestCase):
             {k: v for k, v in PLAN_I_AXES.items() if k != "plan"},
         )
 
+    def test_the_figure_title_names_the_condition_the_way_every_table_does(self):
+        # The plan=standard condition is "Standard Plan" in run_mode_analysis,
+        # combine_grouped_models and delta_figures. A figure captioned "Default
+        # Plan" beside a CSV saying "Standard Plan" is the same condition under
+        # two names, which is how the naming drift this package just retired
+        # began.
+        from sana_analysis.paper.plan_ablation_figure import FIGURE_TITLE
+        from sana_analysis.paper.delta_figures import PLAN_ABLATION
+
+        self.assertIn("Standard Plan", FIGURE_TITLE)
+        self.assertNotIn("Default Plan", FIGURE_TITLE)
+        # And the label the CSV beside it uses, so the two cannot drift apart.
+        self.assertIn("Standard Plan", [label for _code, label in PLAN_ABLATION])
+
 
 if __name__ == "__main__":
     unittest.main()

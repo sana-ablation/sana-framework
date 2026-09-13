@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Generate the default-plan vs ideal-plan comparison figure."""
+"""Generate the standard-plan vs ideal-plan comparison figure.
+
+The plan axis value is `standard`; `run_mode_analysis`, `combine_grouped_models`
+and `delta_figures` all label this condition "Standard Plan", and so does this
+figure's title. The `plan_default_analysis` paths below are directory names on
+disk and keep their existing spelling.
+"""
 
 from __future__ import annotations
 
@@ -16,6 +22,11 @@ from sana_analysis.variants import find_variant
 # else held at ideal.
 PLAN_D_AXES = dict(search="ideal", plan="standard", compute="ideal")
 PLAN_I_AXES = dict(search="ideal", plan="ideal", compute="ideal")
+
+# "Standard Plan", matching run_mode_analysis, combine_grouped_models and
+# delta_figures. The same condition under two names in figure and table is how
+# the naming drift this package just retired began.
+FIGURE_TITLE = "Standard Plan vs Ideal Plan Similarity"
 
 BENCHMARK_ROOTS = {
     "lakeqa": Path("agent_analysis/plan_default_analysis/logs"),
@@ -217,7 +228,7 @@ def render_plan_default_similarity_figure(rows: Iterable[dict], output_path: Pat
 
     ax.set_ylim(0, 108)
     ax.set_ylabel("Rows with ideal plan available (%)")
-    ax.set_title("Default Plan vs Ideal Plan Similarity")
+    ax.set_title(FIGURE_TITLE)
     ax.set_xticks(x_positions)
     ax.set_xticklabels(bar_labels, rotation=0, ha="center")
     ax.grid(axis="y", alpha=0.22, linestyle="--", linewidth=0.7)
