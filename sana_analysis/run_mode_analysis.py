@@ -77,6 +77,7 @@ from sana_analysis.metrics.search_bottleneck import (
 from sana_analysis.paper.delta_figures import generate_delta_figures
 from sana_analysis.variants import (
     CONDITION_ORDER,
+    axis_codes as _parse_variant_mode_codes,
     select_conditions,
     try_parse_variant,
 )
@@ -332,7 +333,14 @@ TURN_WASTE_PREFERRED_GROUP_ORDER = [
     "Final-hop retrieval/finalization failure",
 ]
 
-_MODE_PRIORITY = {"ideal": 0, "standard": 1, "naive": 2, None: 3}
+_MODE_PRIORITY = {
+    "ideal": 0,
+    "standard": 1,
+    "naive": 2,
+    "rich": 0,
+    "minimal": 1,
+    None: 3,
+}
 _UNIMPORTANT_TOOLS = {"get_sandbox_info", "submit_answer", "plan", "think"}
 _MODE_DISPLAY = {
     "ideal": "Ideal",
@@ -422,29 +430,6 @@ def _parse_variant(variant: str) -> Dict[str, Optional[object]]:
         "plan_skills": "on" if decoded.skills else "off",
         "k": decoded.k,
         "sc": decoded.search_calls,
-    }
-
-
-def _parse_variant_mode_codes(variant: str) -> Dict[str, Optional[str]]:
-    """Axis values keyed by short axis name, for label rendering.
-
-    Values are resolved words now, not gen-1 letters, so callers must not run
-    them through `_LETTER_TO_MODE` a second time.
-    """
-    decoded = try_parse_variant(variant)
-    if decoded is None:
-        return {
-            "search": None, "results": None, "plan": None,
-            "compute": None, "skills": None, "k": None, "sc": None,
-        }
-    return {
-        "search": decoded.search,
-        "results": decoded.results,
-        "plan": decoded.plan,
-        "compute": decoded.compute,
-        "skills": "on" if decoded.skills else "off",
-        "k": str(decoded.k) if decoded.k is not None else None,
-        "sc": str(decoded.search_calls) if decoded.search_calls is not None else None,
     }
 
 

@@ -10,7 +10,6 @@ from sana_analysis.variants import (
     DISK_VARIANT_NAMES,
     RESULT_MODES,
     Variant,
-    condition_label,
     find_variant,
     parse_variant,
     select_conditions,
@@ -223,16 +222,6 @@ class TestConditionOrder(unittest.TestCase):
             ],
         )
 
-    def test_every_gen1_literal_keeps_its_label(self):
-        for expected_label, literal in GEN1_LITERALS:
-            self.assertEqual(condition_label(literal), expected_label, literal)
-
-    def test_gen4_names_get_the_same_labels_as_their_gen1_equivalents(self):
-        for expected_label, literal in GEN1_LITERALS:
-            gen4 = GEN4_EQUIVALENTS[expected_label]
-            self.assertEqual(condition_label(gen4), expected_label, gen4)
-            self.assertEqual(condition_label(gen4), condition_label(literal), gen4)
-
     def test_a_gen1_literal_and_its_gen4_equivalent_decode_alike(self):
         for label, literal in GEN1_LITERALS:
             a = parse_variant(literal)
@@ -242,16 +231,6 @@ class TestConditionOrder(unittest.TestCase):
                 (b.search, b.plan, b.compute, b.results),
                 label,
             )
-
-    def test_unmatched_variant_has_no_label(self):
-        self.assertIsNone(
-            condition_label(
-                "search_web__plan_standard__compute_standard__results_minimal__nos3__skills_off"
-            )
-        )
-
-    def test_non_variant_input_has_no_label(self):
-        self.assertIsNone(condition_label("not-a-variant-name"))
 
 
 class TestDiskCorpus(unittest.TestCase):

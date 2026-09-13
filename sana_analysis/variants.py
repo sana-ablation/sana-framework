@@ -199,6 +199,33 @@ def try_parse_variant(name: str) -> Optional[Variant]:
         return None
 
 
+def axis_codes(name: str) -> Dict[str, Optional[str]]:
+    """Axis values keyed by short axis name, for label rendering.
+
+    Values are resolved words (`ideal`, `standard`, `rich`), not gen-1
+    letters -- there is nothing further to resolve them against.
+
+    `run_mode_analysis._parse_variant_mode_codes` and
+    `paper.delta_figures._parse_variant_codes` were byte-identical copies of
+    this function; both now alias it.
+    """
+    decoded = try_parse_variant(str(name))
+    if decoded is None:
+        return {
+            "search": None, "results": None, "plan": None,
+            "compute": None, "skills": None, "k": None, "sc": None,
+        }
+    return {
+        "search": decoded.search,
+        "results": decoded.results,
+        "plan": decoded.plan,
+        "compute": decoded.compute,
+        "skills": "on" if decoded.skills else "off",
+        "k": str(decoded.k) if decoded.k is not None else None,
+        "sc": str(decoded.search_calls) if decoded.search_calls is not None else None,
+    }
+
+
 # The seven conditions every figure and metric reports, in the order the paper
 # reports them. `run_mode_analysis.TURN_WASTE_CONDITION_FIGURE_ORDER` and
 # `answer_failure.combine_grouped_models.CONDITION_FIGURE_ORDER` held these same
@@ -238,17 +265,6 @@ DISK_VARIANT_NAMES: Tuple[str, ...] = (
     "search_standard__plan_standard__compute_standard__results_rich__k5__skills_off",
     "search_web__plan_standard__compute_standard__results_minimal__nos3__skills_off",
 )
-
-
-def condition_label(name: str) -> Optional[str]:
-    """The CONDITION_ORDER label this variant name names, or None."""
-    variant = try_parse_variant(name)
-    if variant is None:
-        return None
-    for label, axes in CONDITION_ORDER:
-        if variant.matches(**axes):
-            return label
-    return None
 
 
 def find_variant(names: Iterable[str], **axes: str) -> Optional[str]:

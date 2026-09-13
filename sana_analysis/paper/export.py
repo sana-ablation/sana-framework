@@ -603,8 +603,6 @@ def render_main_ablation_table(rows: list[Mapping[str, str]], *, benchmark: str,
     ]
     for model_index, model in enumerate(discover_models(rows)):
         model_rows = rows_by_model.get(model, [])
-        if not model_rows:
-            continue
         if model_index > 0:
             lines.append("    \\midrule")
         lines.append(f"    \\multirow{{{len(model_rows)}}}{{*}}{{{_wrapped_model_cell(model)}}}")
@@ -669,8 +667,6 @@ def render_canonical_modes_table(rows: list[Mapping[str, str]], *, benchmark: st
         rows_by_model.setdefault(str(row["model"]), []).append(row)
     for model_index, model in enumerate(discover_models(rows)):
         model_rows = rows_by_model.get(model, [])
-        if not model_rows:
-            continue
         if model_index > 0:
             lines.append("    \\midrule")
         for row_index, row in enumerate(model_rows):

@@ -10,7 +10,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from sana_analysis.variants import try_parse_variant
+from sana_analysis.variants import axis_codes as _parse_variant_codes, try_parse_variant
 
 
 PLAN_ABLATION = [
@@ -116,29 +116,6 @@ def _safe_slug(value: str) -> str:
     while "__" in slug:
         slug = slug.replace("__", "_")
     return slug.strip("_") or "unknown"
-
-
-def _parse_variant_codes(variant: str) -> Dict[str, Optional[str]]:
-    """Axis values keyed by short axis name.
-
-    Values are resolved words (`ideal`, `standard`, `rich`), not the gen-1
-    letters this used to return, so the tables below spell axis values in full.
-    """
-    decoded = try_parse_variant(str(variant))
-    if decoded is None:
-        return {
-            "search": None, "results": None, "plan": None,
-            "compute": None, "skills": None, "k": None, "sc": None,
-        }
-    return {
-        "search": decoded.search,
-        "results": decoded.results,
-        "plan": decoded.plan,
-        "compute": decoded.compute,
-        "skills": "on" if decoded.skills else "off",
-        "k": str(decoded.k) if decoded.k is not None else None,
-        "sc": str(decoded.search_calls) if decoded.search_calls is not None else None,
-    }
 
 
 def _context_key(codes: Dict[str, Optional[str]], axis: str) -> Tuple[Tuple[str, Optional[str]], ...]:

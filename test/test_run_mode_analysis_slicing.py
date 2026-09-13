@@ -242,3 +242,16 @@ class TestTurnWasteConditionFigureRealFunction(unittest.TestCase):
         # CONDITION_ORDER says No Plan comes first -- this is the ordering
         # Task 4 left unpinned.
         self.assertEqual(condition_labels, ["No\nPlan", "Ideal"])
+
+
+def test_variant_sort_key_orders_rich_before_minimal_on_the_results_axis():
+    # Same search/plan/compute; only the results axis differs. _MODE_PRIORITY
+    # is the only thing standing between this and a silent fall-through to
+    # the shared default (4), which would leave ordering to the k/sc/variant
+    # tiebreak instead of an explicit priority.
+    from sana_analysis.run_mode_analysis import _variant_sort_key
+
+    rich = "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+    minimal = "search_ideal__plan_ideal__compute_ideal__results_minimal__k5__skills_off"
+
+    assert _variant_sort_key(rich) < _variant_sort_key(minimal)

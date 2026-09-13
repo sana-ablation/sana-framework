@@ -92,7 +92,6 @@ def load_plan_default_rows(input_root: Path) -> list[dict]:
 def _summarize_rows(rows: Iterable[dict]) -> dict[tuple[str, str], dict]:
     rows_list = list(rows)
 
-    # Extract observed modes
     observed_plan_d_modes = []
     observed_plan_i_modes = []
     for row in rows_list:
@@ -103,13 +102,11 @@ def _summarize_rows(rows: Iterable[dict]) -> dict[tuple[str, str], dict]:
         if plan_i and plan_i not in observed_plan_i_modes:
             observed_plan_i_modes.append(plan_i)
 
-    # Find the canonical modes
     plan_d_mode = find_variant(observed_plan_d_modes, **PLAN_D_AXES)
     plan_i_mode = find_variant(observed_plan_i_modes, **PLAN_I_AXES)
     if plan_d_mode is None or plan_i_mode is None:
         return {}
 
-    # Process rows
     summary: dict[tuple[str, str], dict] = {}
     for row in rows_list:
         if str(row.get("plan_d_mode", "")) != plan_d_mode:

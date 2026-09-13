@@ -426,7 +426,7 @@ class TestCanonicalSearchVariantLabels(unittest.TestCase):
             SEARCH_VARIANTS,
         )
 
-        for _axes, (code, _display) in SEARCH_VARIANTS:
+        for _axes, code in SEARCH_VARIANTS:
             self.assertIn(code, SEARCH_ORDER)
             self.assertIn(code, SEARCH_COLORS)
 

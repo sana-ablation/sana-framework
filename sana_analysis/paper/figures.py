@@ -25,9 +25,9 @@ from sana_analysis.variants import try_parse_variant
 # The search ablation holds plan and compute at ideal and varies search. Keyed on
 # predicates so any generation of directory name resolves to the same code.
 SEARCH_VARIANTS = [
-    (dict(search="naive", plan="ideal", compute="ideal"), ("NII", "BM25")),
-    (dict(search="standard", plan="ideal", compute="ideal"), ("DII", "Pneuma")),
-    (dict(search="ideal", plan="ideal", compute="ideal"), ("III", "Ideal")),
+    (dict(search="naive", plan="ideal", compute="ideal"), "NII"),
+    (dict(search="standard", plan="ideal", compute="ideal"), "DII"),
+    (dict(search="ideal", plan="ideal", compute="ideal"), "III"),
 ]
 SEARCH_ORDER = ["NII", "DII", "III"]
 SEARCH_COLORS = {"NII": "#4C78A8", "DII": "#F58518", "III": "#54A24B"}
@@ -134,7 +134,7 @@ def _search_variant_label(variant: str) -> Optional[str]:
     decoded = try_parse_variant(str(variant))
     if decoded is None:
         return None
-    for axes, (code, _display) in SEARCH_VARIANTS:
+    for axes, code in SEARCH_VARIANTS:
         if decoded.matches(**axes):
             return code
     return None
