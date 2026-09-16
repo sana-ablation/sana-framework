@@ -13,6 +13,17 @@
 #   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep run
 #   REMOTE_HOST=box ./scripts/run_experiment.sh my-sweep pull
 #   REMOTE_HOST=box ./scripts/run_experiment.sh "sweep-a sweep-b" queue
+#   ./scripts/run_experiment.sh my-sweep rounds       # status, runs nothing
+#   ./scripts/run_experiment.sh my-sweep run-next     # one round, then stop
+#
+# run-next runs exactly one round per invocation, so calling it twice gives you
+# two rounds. It resumes the earliest incomplete round rather than advancing past
+# it -- a sweep the OOM killer ended leaves a results directory behind, and a
+# half-finished rep would skew the across-round summary. Plain `run` still runs
+# every round in ROUNDS.
+#
+# Round status is computed from the local results tree. After a remote sweep,
+# `pull` first, or run-next will pick a round the box has already done.
 #
 # queue runs several experiments back to back in one session, sequentially --
 # overlapping sweeps is what OOM-killed this box, since the search cells load a
@@ -20,7 +31,8 @@
 # it started; killing the session alone leaves them running and writing rows.
 #
 # Driver tunables (ROUNDS, MODELS, PARALLEL, TASKSET, TIMEOUT, GRACE,
-# MAX_RESTARTS) are forwarded to the driver both locally and remotely:
+# MAX_RESTARTS) are forwarded to the driver both locally and remotely, for
+# `run` and `run-next` only -- `queue` does not forward them:
 #
 #   ROUNDS="2 3" ./scripts/run_experiment.sh my-sweep run
 #
@@ -50,6 +62,8 @@ REMOTE_HOST="${REMOTE_HOST:-}"
 REMOTE_DIR="${REMOTE_DIR:-sana-framework}"     # relative: resolved against the remote home
 REMOTE_IDENTITY="${REMOTE_IDENTITY:-}"
 SESSION="${SESSION:-exp-${EXP##*/}}"
+PY_LOCAL="${PY_LOCAL:-$REPO/.venv/bin/python}"
+[ -x "$PY_LOCAL" ] || PY_LOCAL=python3
 
 # The tunables every experiment driver reads. Locally these reach the driver
 # because `run` invokes it in a subshell; remotely the driver is launched inside
@@ -75,7 +89,7 @@ usage () {
   # the usage text cannot drift from the file's length.
   awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"
   echo
-  echo "commands: bootstrap | run | queue | status | logs | pull | stop"
+  echo "commands: bootstrap | run | run-next | rounds | queue | status | logs | pull | stop"
   echo
   echo "experiments:"
   for d in "$EXP_ROOT"/*/; do
@@ -133,33 +147,35 @@ bootstrap)
   ;;
 
 run)
-  say "driver: experiments/$EXP/inputs/run.sh"
-  if [ -n "$REMOTE_HOST" ]; then
-    ssh_cmd "test -f $REMOTE_DIR/experiments/$EXP/inputs/run.sh" \
-      || die "driver missing on $REMOTE_HOST -- run 'bootstrap' first"
-    # Refuse rather than clobber. SESSION defaults to exp-<dirname>, so a second
-    # `run` against the same experiment would otherwise silently kill a sweep
-    # that is hours in.
-    if ssh_cmd "tmux has-session -t $SESSION 2>/dev/null"; then
-      die "session '$SESSION' is already running on $REMOTE_HOST. \
-Use '$0 $EXP status' to check it, or '$0 $EXP stop' to end it first."
-    fi
-    # Ship the driver tunables ahead of the launch. Without this, ROUNDS=2
-    # silently runs all three rounds on the box.
-    driver_env_file | ssh_cmd "cat > $REMOTE_DIR/experiments/$EXP/.driver_env" \
-      || die "could not write the driver environment to $REMOTE_HOST"
-    if [ -n "$(driver_env_file)" ]; then
-      say "forwarding to the driver:"
-      driver_env_file | sed 's/^export /  /'
-    fi
-    ssh_cmd "cd $REMOTE_DIR && \
-             tmux new-session -d -s $SESSION \
-             'cd $REMOTE_DIR && . experiments/$EXP/.driver_env; ./experiments/$EXP/inputs/run.sh > experiments/$EXP/run.log 2>&1'"
-    say "started in tmux session '$SESSION' on $REMOTE_HOST"
-    say "follow with: REMOTE_HOST=$REMOTE_HOST $0 $EXP logs"
-  else
-    ( cd "$REPO" && "./experiments/$EXP/inputs/run.sh" 2>&1 | tee "$EXP_ROOT/$EXP/run.log" )
+  # The real body lives below, in the second `case` after this one closes.
+  # `run-next` needs to rewrite CMD to `run` and land there too, and a bare
+  # `case` cannot fall through from one arm to the next in bash -- so this arm
+  # is a placeholder that only keeps `run` out of the `*) usage 1` catch-all.
+  ;;
+
+rounds)
+  "$PY_LOCAL" -m sana_analysis.analyse_experiment --experiment "$EXP_ROOT/$EXP" --print-rounds
+  ;;
+
+run-next)
+  # One round per invocation, so `run-next` twice gives you two rounds. Plain
+  # `run` runs every round in ROUNDS, and because the drivers pass --only-new a
+  # second `run` resumes the same round rather than advancing to the next one.
+  #
+  # Round status comes from the local results tree, which is stale if a remote
+  # sweep finished since the last `pull` -- guard against picking a round the
+  # box has already done.
+  if [ -n "$REMOTE_HOST" ] && ssh_cmd "tmux has-session -t $SESSION 2>/dev/null"; then
+    die "session '$SESSION' is already running on $REMOTE_HOST -- \
+'$0 $EXP status' to check it, or '$0 $EXP pull' first so round status is current."
   fi
+  NEXT="$("$PY_LOCAL" -m sana_analysis.analyse_experiment \
+            --experiment "$EXP_ROOT/$EXP" --print-next-round)" \
+    || die "could not work out the next round for $EXP"
+  "$PY_LOCAL" -m sana_analysis.analyse_experiment --experiment "$EXP_ROOT/$EXP" --print-rounds
+  say "running round $NEXT only (ROUNDS=$NEXT)"
+  ROUNDS="$NEXT" export ROUNDS
+  CMD=run
   ;;
 
 queue)
@@ -275,4 +291,42 @@ REMOTE
   ;;
 
 *) usage 1 ;;
+esac
+
+# `run-next` rewrites CMD to `run` above and falls through to here with ROUNDS
+# pinned. A bare `case` cannot fall through in bash, so this is a second,
+# separate `case` over the (possibly rewritten) CMD rather than a continuation
+# of the one above; only `run`'s own arm there is a no-op placeholder, so
+# every other command runs exactly once, in the first case, and never reaches
+# this one.
+case "$CMD" in
+run)
+  say "driver: experiments/$EXP/inputs/run.sh"
+  if [ -n "$REMOTE_HOST" ]; then
+    ssh_cmd "test -f $REMOTE_DIR/experiments/$EXP/inputs/run.sh" \
+      || die "driver missing on $REMOTE_HOST -- run 'bootstrap' first"
+    # Refuse rather than clobber. SESSION defaults to exp-<dirname>, so a second
+    # `run` against the same experiment would otherwise silently kill a sweep
+    # that is hours in.
+    if ssh_cmd "tmux has-session -t $SESSION 2>/dev/null"; then
+      die "session '$SESSION' is already running on $REMOTE_HOST. \
+Use '$0 $EXP status' to check it, or '$0 $EXP stop' to end it first."
+    fi
+    # Ship the driver tunables ahead of the launch. Without this, ROUNDS=2
+    # silently runs all three rounds on the box.
+    driver_env_file | ssh_cmd "cat > $REMOTE_DIR/experiments/$EXP/.driver_env" \
+      || die "could not write the driver environment to $REMOTE_HOST"
+    if [ -n "$(driver_env_file)" ]; then
+      say "forwarding to the driver:"
+      driver_env_file | sed 's/^export /  /'
+    fi
+    ssh_cmd "cd $REMOTE_DIR && \
+             tmux new-session -d -s $SESSION \
+             'cd $REMOTE_DIR && . experiments/$EXP/.driver_env; ./experiments/$EXP/inputs/run.sh > experiments/$EXP/run.log 2>&1'"
+    say "started in tmux session '$SESSION' on $REMOTE_HOST"
+    say "follow with: REMOTE_HOST=$REMOTE_HOST $0 $EXP logs"
+  else
+    ( cd "$REPO" && "./experiments/$EXP/inputs/run.sh" 2>&1 | tee "$EXP_ROOT/$EXP/run.log" )
+  fi
+  ;;
 esac

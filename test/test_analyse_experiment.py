@@ -273,5 +273,124 @@ class TestPrintAuditPlan(unittest.TestCase):
             self.assertNotIn("results-rep2", names)
 
 
+class TestRoundStatus(unittest.TestCase):
+    def _exp_with_tasks(self, tmp: Path, n_tasks: int = 3) -> tuple[Path, str]:
+        tasks = tmp / "tasks" / "k-1-d-1"
+        tasks.mkdir(parents=True)
+        for idx in range(n_tasks):
+            (tasks / f"task_{idx + 1}.json").write_text("{}")
+        return tmp / "exp", str(tmp / "tasks")
+
+    def test_a_full_round_is_complete(self):
+        with TemporaryDirectory() as tmp:
+            exp, tasks_root = self._exp_with_tasks(Path(tmp))
+            _write_round(exp, "results", tasks_root=tasks_root, n=3)
+            status = ae.round_statuses(exp)[0]
+            self.assertTrue(status.complete, status.reason)
+            self.assertEqual((status.number, status.cells, status.full_cells), (1, 1, 1))
+
+    def test_a_short_cell_makes_the_round_incomplete(self):
+        with TemporaryDirectory() as tmp:
+            exp, tasks_root = self._exp_with_tasks(Path(tmp))
+            _write_round(exp, "results", tasks_root=tasks_root, n=2)   # 2 of 3 tasks
+            status = ae.round_statuses(exp)[0]
+            self.assertFalse(status.complete)
+            self.assertIn("short of a full task set", status.reason)
+
+    def test_a_missing_cell_is_caught_against_the_fullest_round(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            exp, tasks_root = self._exp_with_tasks(root)
+            # _write_round's extra cell always writes exactly one row, so its task
+            # set must genuinely hold one task for that cell to read as full.
+            extra_tasks = root / "tasks_extra" / "k-1-d-1"
+            extra_tasks.mkdir(parents=True)
+            (extra_tasks / "task_1.json").write_text("{}")
+            _write_round(exp, "results", tasks_root=tasks_root, n=3,
+                         extra_tasks_root=str(root / "tasks_extra"))
+            _write_round(exp, "results-rep2", tasks_root=tasks_root, n=3)  # one cell fewer
+            first, second = ae.round_statuses(exp)
+            self.assertTrue(first.complete, first.reason)
+            self.assertFalse(second.complete)
+            self.assertIn("missing vs the fullest round", second.reason)
+
+    def test_expected_rows_come_from_each_cells_own_task_set(self):
+        """model-tiers/results-rep3 mixes two task sets; a majority rule misjudges it."""
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            exp, tasks_a = self._exp_with_tasks(root, n_tasks=3)
+            tasks_b = root / "tasks_b" / "k-1-d-1"
+            tasks_b.mkdir(parents=True)
+            (tasks_b / "task_1.json").write_text("{}")          # this set has ONE task
+            _write_round(exp, "results", tasks_root=tasks_a, n=3,
+                         extra_tasks_root=str(root / "tasks_b"))
+            status = ae.round_statuses(exp)[0]
+            self.assertEqual(status.cells, 2)
+            self.assertTrue(status.complete, status.reason)
+
+    def test_a_task_set_no_longer_on_disk_is_not_judged_complete(self):
+        with TemporaryDirectory() as tmp:
+            exp = Path(tmp) / "exp"
+            _write_round(exp, "results", tasks_root="gone/tasks", n=3)
+            status = ae.round_statuses(exp)[0]
+            self.assertFalse(status.complete)
+            self.assertIn("task set not on disk", status.reason)
+
+
+class TestNextRound(unittest.TestCase):
+    def _exp(self, tmp: Path, n_tasks: int = 3):
+        tasks = tmp / "tasks" / "k-1-d-1"
+        tasks.mkdir(parents=True)
+        for idx in range(n_tasks):
+            (tasks / f"task_{idx + 1}.json").write_text("{}")
+        return tmp / "exp", str(tmp / "tasks")
+
+    def test_all_complete_starts_the_next_one(self):
+        with TemporaryDirectory() as tmp:
+            exp, tasks_root = self._exp(Path(tmp))
+            for name in ("results", "results-rep2"):
+                _write_round(exp, name, tasks_root=tasks_root, n=3)
+            number, why = ae.next_round(exp)
+            self.assertEqual(number, 3)
+            self.assertIn("complete", why)
+
+    def test_an_empty_experiment_starts_at_round_one(self):
+        with TemporaryDirectory() as tmp:
+            exp = Path(tmp) / "exp"
+            exp.mkdir()
+            number, _why = ae.next_round(exp)
+            self.assertEqual(number, 1)
+
+    def test_it_resumes_the_earliest_gap_not_the_latest(self):
+        """A hole in round 2 matters more than starting round 4."""
+        with TemporaryDirectory() as tmp:
+            exp, tasks_root = self._exp(Path(tmp))
+            _write_round(exp, "results", tasks_root=tasks_root, n=3)
+            _write_round(exp, "results-rep2", tasks_root=tasks_root, n=1)   # short
+            _write_round(exp, "results-rep3", tasks_root=tasks_root, n=3)
+            number, why = ae.next_round(exp)
+            self.assertEqual(number, 2)
+            self.assertIn("resuming round 2", why)
+
+    def test_rep1_naming_still_numbers_from_one(self):
+        with TemporaryDirectory() as tmp:
+            exp, tasks_root = self._exp(Path(tmp))
+            _write_round(exp, "results-rep1", tasks_root=tasks_root, n=3)
+            number, _why = ae.next_round(exp)
+            self.assertEqual(number, 2)
+
+    def test_print_next_round_emits_only_the_number(self):
+        import contextlib
+        import io
+
+        with TemporaryDirectory() as tmp:
+            exp, tasks_root = self._exp(Path(tmp))
+            _write_round(exp, "results", tasks_root=tasks_root, n=3)
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                ae.main(["--experiment", str(exp), "--print-next-round"])
+            self.assertEqual(buffer.getvalue().strip(), "2")
+
+
 if __name__ == "__main__":
     unittest.main()

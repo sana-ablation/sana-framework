@@ -19,6 +19,7 @@ import json
 import statistics
 from collections import Counter
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -119,6 +120,95 @@ def resolve_round(
         semantic_reason=("mirror complete" if semantic else (problems[0] if problems else "no mirror")),
         mirror_dir=mirror if mirror.is_dir() else None,
         tasks_dir_spread=spread,
+    )
+
+
+@lru_cache(maxsize=None)
+def _task_set_size(task_root: str) -> Optional[int]:
+    """How many task JSONs a complete cell should hold. None if the set is gone."""
+    root = Path(task_root)
+    if not root.is_dir():
+        return None
+    return len(list(root.rglob("*.json")))
+
+
+@dataclass(frozen=True)
+class RoundStatus:
+    name: str
+    number: int
+    cells: int
+    full_cells: int
+    complete: bool
+    reason: str
+
+
+def _round_cells(results_dir: Path) -> list[tuple[int, Optional[int]]]:
+    """(rows, expected) per cell.
+
+    `expected` comes from that cell's own task set rather than the round's
+    majority: `model-tiers/results-rep3` mixes two, and a majority rule would
+    misjudge the odd cell out.
+    """
+    out: list[tuple[int, Optional[int]]] = []
+    for csv_path in sorted(results_dir.rglob("eval_results.csv")):
+        with csv_path.open(newline="") as handle:
+            rows = list(csv.DictReader(handle))
+        expected = None
+        if rows and rows[0].get("task_id"):
+            expected = _task_set_size(str(Path(rows[0]["task_id"]).parent.parent))
+        out.append((len(rows), expected))
+    return out
+
+
+def round_statuses(exp: Path) -> list[RoundStatus]:
+    """Every round, numbered by position, with whether its sweep finished.
+
+    A round with a directory is not necessarily a round that completed: an
+    OOM-killed sweep leaves one behind. Advancing past it would put a
+    permanently half-finished rep into the across-round summary.
+    """
+    per_round = [(results_dir, _round_cells(results_dir)) for results_dir in discover_rounds(exp)]
+    fullest = max((len(cells) for _dir, cells in per_round), default=0)
+
+    statuses: list[RoundStatus] = []
+    for number, (results_dir, cells) in enumerate(per_round, start=1):
+        full = sum(1 for rows, expected in cells if expected is not None and rows == expected)
+        if not cells:
+            complete, reason = False, "no eval_results.csv"
+        elif any(expected is None for _rows, expected in cells):
+            complete, reason = False, "task set not on disk; cannot verify row counts"
+        elif full != len(cells):
+            complete, reason = False, f"{len(cells) - full} cell(s) short of a full task set"
+        elif len(cells) < fullest:
+            complete, reason = False, f"{fullest - len(cells)} cell(s) missing vs the fullest round"
+        else:
+            complete, reason = True, "complete"
+        statuses.append(RoundStatus(results_dir.name, number, len(cells), full, complete, reason))
+    return statuses
+
+
+def next_round(exp: Path) -> tuple[int, str]:
+    """The round number to run next, and why.
+
+    The earliest incomplete round wins: a gap in round 2 matters more than
+    starting round 4. The driver maps the number to a directory using its own
+    convention, which is why this returns a number and not a path.
+    """
+    statuses = round_statuses(exp)
+    for status in statuses:
+        if not status.complete:
+            return status.number, f"resuming round {status.number} ({status.name}): {status.reason}"
+    total = len(statuses)
+    return total + 1, f"all {total} round(s) complete; starting round {total + 1}"
+
+
+def format_round_table(statuses: list[RoundStatus]) -> str:
+    if not statuses:
+        return "  (no rounds yet)"
+    return "\n".join(
+        f"  round {status.number}  {status.name:<16} {status.full_cells}/{status.cells} cells  "
+        + ("complete" if status.complete else f"INCOMPLETE ({status.reason})")
+        for status in statuses
     )
 
 
@@ -281,6 +371,11 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
              "per round that has no complete semantic mirror, then exit. Used by "
              "analyse_with_autoaudit.sh; makes no changes and runs no analysis.",
     )
+    parser.add_argument("--print-rounds", action="store_true",
+                        help="Print the round status table and exit. Runs nothing.")
+    parser.add_argument("--print-next-round", action="store_true",
+                        help="Print just the next round number and exit. Used by "
+                             "run_experiment.sh run-next.")
     return parser.parse_args(argv)
 
 
@@ -296,6 +391,17 @@ def resolve_experiment(raw: str) -> Path:
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
+    if args.print_rounds:
+        exp = resolve_experiment(args.experiment)
+        print(format_round_table(round_statuses(exp)))
+        number, why = next_round(exp)
+        print(f"  -> next: round {number} ({why})")
+        return 0
+
+    if args.print_next_round:
+        print(next_round(resolve_experiment(args.experiment))[0])
+        return 0
+
     if args.print_audit_plan:
         exp = resolve_experiment(args.experiment)
         rounds = discover_rounds(exp)
