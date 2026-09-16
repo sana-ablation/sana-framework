@@ -288,6 +288,28 @@ is either computed from the traces or produced by the semantic auditor, which
 adds five columns: `semantic_match`, `semantic_reason`, `semantic_bucket`,
 `log_error_bucket`, `log_error_evidence`.
 
+### Analysing a whole experiment
+
+```bash
+./scripts/analyse.sh --experiment 2026-08-31-model-tiers-subset20b
+```
+
+Finds every round (`results/`, `results-rep2/`, ... -- some experiments name
+round 1 `results-rep1/`), derives all four input paths from the round itself,
+picks the judged path when a complete `<round>_semantic` mirror exists and the
+`exact_match`-only path otherwise, and writes:
+
+```
+<experiment>/analysis/<round>/          one analysis per round
+<experiment>/analysis/combined/         mean and spread per condition across rounds
+```
+
+`--round rep2` narrows to one round. `--tasks-dir` overrides the task set, which
+is otherwise derived from the `task_id` paths the run recorded.
+
+The combined summary pools `semantic_match` only over rounds that actually had a
+judge, because an unjudged round's `semantic_match` is its `exact_match`.
+
 ### Without model judging
 
 The cheapest useful analysis needs no judge and no API key: exact-match accuracy,
