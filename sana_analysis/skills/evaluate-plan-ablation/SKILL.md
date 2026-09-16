@@ -84,8 +84,9 @@ not reach the judge, and `test_plan_ablation_runner.py` asserts the set matches
 Rows the prepare stage already settled -- a missing plan, or a runner model
 mismatch -- are prefilled and never sent to a judge.
 
-The workflow above this section is unchanged: the interactive, subagent-driven
-path still works and is still the right tool when a batch needs human calibration.
+The interactive, subagent-driven workflow described earlier in this skill is
+unchanged. The runner is the scriptable alternative, not a replacement -- use the
+interactive path when a batch needs human calibration.
 
 ## Subagent Policy
 

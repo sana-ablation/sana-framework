@@ -16,9 +16,17 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import time
 from pathlib import Path
-from typing import Iterable
+from typing import Any, Callable, Iterable
 
+from sana_analysis.metrics.trajectory_pair_analysis import (
+    _append_journal_record,
+    _parse_json_object,
+    build_repair_prompt,
+    call_judge_model,
+    write_csv,
+)
 from sana_analysis.paper.plan_ablation_figure import BUCKET_ORDER, PLAN_D_AXES, PLAN_I_AXES
 from sana_analysis.variants import find_variant, try_parse_variant
 
@@ -339,18 +347,6 @@ def format_plan_similarity_definitions() -> str:
         f"- {label}: {definition}"
         for label, definition in PLAN_SIMILARITY_DEFINITIONS.items()
     )
-
-
-import time
-from typing import Any, Callable
-
-from sana_analysis.metrics.trajectory_pair_analysis import (
-    _append_journal_record,
-    _parse_json_object,
-    build_repair_prompt,
-    call_judge_model,
-    write_csv,
-)
 
 
 def build_judge_prompt(row: dict[str, str]) -> str:
