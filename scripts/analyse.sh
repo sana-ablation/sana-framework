@@ -20,4 +20,9 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 PY="${PY:-$REPO/.venv/bin/python}"
 [ -x "$PY" ] || PY=python3
 
+# `python -m sana_analysis.*` needs the repo root on sys.path, and the package is
+# not installed -- so run from there, not from wherever the caller stood. Without
+# this, an absolute-path invocation from anywhere else dies on ModuleNotFoundError.
+cd "$REPO" || exit 1
+
 exec "$PY" -m sana_analysis.analyse_experiment "$@"

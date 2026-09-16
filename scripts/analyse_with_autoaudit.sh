@@ -19,6 +19,10 @@ PY="${PY:-$REPO/.venv/bin/python}"
 [ -x "$PY" ] || PY=python3
 AUDITOR="$REPO/sana_analysis/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py"
 
+# The package is not installed, so `python -m sana_analysis.*` -- here and in the
+# analyse.sh this hands over to -- only resolves from the repo root.
+cd "$REPO" || exit 1
+
 say () { echo "[autoaudit] $*"; }
 die () { echo "error: $*" >&2; exit 1; }
 

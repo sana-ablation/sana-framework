@@ -154,7 +154,13 @@ run)
   ;;
 
 rounds)
-  "$PY_LOCAL" -m sana_analysis.analyse_experiment --experiment "$EXP_ROOT/$EXP" --print-rounds
+  # In a subshell so the caller's cwd is untouched: the package is not installed,
+  # so `python -m sana_analysis.*` only resolves from the repo root. And `|| die`
+  # because this script runs `set -uo pipefail` without `-e` -- without it a
+  # failed status read exits 0 and reads as "no rounds".
+  ( cd "$REPO" && "$PY_LOCAL" -m sana_analysis.analyse_experiment \
+      --experiment "$EXP_ROOT/$EXP" --print-rounds ) \
+    || die "could not read round status for $EXP"
   ;;
 
 run-next)
@@ -169,10 +175,12 @@ run-next)
     die "session '$SESSION' is already running on $REMOTE_HOST -- \
 '$0 $EXP status' to check it, or '$0 $EXP pull' first so round status is current."
   fi
-  NEXT="$("$PY_LOCAL" -m sana_analysis.analyse_experiment \
+  NEXT="$(cd "$REPO" && "$PY_LOCAL" -m sana_analysis.analyse_experiment \
             --experiment "$EXP_ROOT/$EXP" --print-next-round)" \
     || die "could not work out the next round for $EXP"
-  "$PY_LOCAL" -m sana_analysis.analyse_experiment --experiment "$EXP_ROOT/$EXP" --print-rounds
+  ( cd "$REPO" && "$PY_LOCAL" -m sana_analysis.analyse_experiment \
+      --experiment "$EXP_ROOT/$EXP" --print-rounds ) \
+    || die "could not read round status for $EXP"
   say "running round $NEXT only (ROUNDS=$NEXT)"
   ROUNDS="$NEXT" export ROUNDS
   CMD=run
