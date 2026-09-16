@@ -310,6 +310,15 @@ is otherwise derived from the `task_id` paths the run recorded.
 The combined summary pools `semantic_match` only over rounds that actually had a
 judge, because an unjudged round's `semantic_match` is its `exact_match`.
 
+`analyse.sh` calls no model. To audit rounds that have no mirror first:
+
+```bash
+./scripts/analyse_with_autoaudit.sh --experiment <name>
+```
+
+That one spends money per unaudited row, which is why it is a separate script
+rather than a flag. Rounds whose mirror already exists and validates are skipped.
+
 ### Without model judging
 
 The cheapest useful analysis needs no judge and no API key: exact-match accuracy,

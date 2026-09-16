@@ -212,5 +212,30 @@ class TestAnalyseExperimentEndToEnd(unittest.TestCase):
             self.assertIn("no result rounds", str(caught.exception))
 
 
+class TestPrintAuditPlan(unittest.TestCase):
+    def test_lists_only_rounds_without_a_complete_mirror(self):
+        import io
+        import contextlib
+
+        with TemporaryDirectory() as tmp:
+            exp = Path(tmp) / "exp"
+            for name in ("results", "results-rep2"):
+                _write_round(exp, name, tasks_root=str(Path(tmp) / "tasks"))
+            (exp / "logs").mkdir(parents=True)
+
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                ae.main(["--experiment", str(exp), "--print-audit-plan"])
+
+            lines = [line for line in buffer.getvalue().splitlines() if line.strip()]
+            self.assertEqual(len(lines), 2)
+            names = [line.split("\t")[0] for line in lines]
+            self.assertEqual(names, ["results", "results-rep2"])
+            self.assertTrue(lines[0].split("\t")[1].endswith("results"))
+            self.assertTrue(lines[0].split("\t")[2].endswith("results_semantic"))
+            self.assertEqual(lines[0].split("\t")[3], str(exp / "logs"))
+            self.assertEqual(lines[1].split("\t")[3], "")
+
+
 if __name__ == "__main__":
     unittest.main()

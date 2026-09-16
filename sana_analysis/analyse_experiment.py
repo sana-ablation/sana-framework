@@ -20,7 +20,7 @@ import statistics
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, Sequence
+from typing import Optional
 
 from sana_analysis.run_mode_analysis import run_analysis
 from sana_analysis.semantic_mirror import mirror_is_complete
@@ -181,7 +181,6 @@ def analyse_experiment(
     tasks_dir: Optional[str] = None,
     output_dir: Optional[Path] = None,
     no_figures: bool = False,
-    extra: Sequence[str] = (),
 ) -> dict:
     exp = Path(exp)
     rounds = discover_rounds(exp)
@@ -275,6 +274,13 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", default="",
                         help="Default: <experiment>/analysis.")
     parser.add_argument("--no-figures", action="store_true")
+    parser.add_argument(
+        "--print-audit-plan",
+        action="store_true",
+        help="Print one TAB-separated 'round<TAB>source<TAB>mirror<TAB>logs' line "
+             "per round that has no complete semantic mirror, then exit. Used by "
+             "analyse_with_autoaudit.sh; makes no changes and runs no analysis.",
+    )
     return parser.parse_args(argv)
 
 
@@ -290,6 +296,18 @@ def resolve_experiment(raw: str) -> Path:
 
 def main(argv: Optional[list[str]] = None) -> int:
     args = parse_args(argv)
+    if args.print_audit_plan:
+        exp = resolve_experiment(args.experiment)
+        rounds = discover_rounds(exp)
+        if args.round:
+            rounds = [r for r in rounds if args.round in r.name]
+        for results_dir in rounds:
+            paths = resolve_round(exp, results_dir, tasks_dir_override=args.tasks_dir or None)
+            if paths.semantic:
+                continue
+            logs = str(paths.logs_dir) if paths.logs_dir else ""
+            print(f"{paths.name}\t{results_dir}\t{exp / (results_dir.name + '_semantic')}\t{logs}")
+        return 0
     analyse_experiment(
         resolve_experiment(args.experiment),
         round_filter=args.round or None,
