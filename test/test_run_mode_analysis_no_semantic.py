@@ -1,0 +1,155 @@
+import csv
+import json
+import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from sana_analysis import run_mode_analysis
+
+
+EVAL_FIELDS = [
+    "task_id",
+    "model",
+    "expected_answer",
+    "predicted_answer",
+    "exact_match",
+    "runtime_seconds",
+    "cycle_count",
+    "input_tokens",
+    "output_tokens",
+    "total_tokens",
+    "cost_usd",
+    "tool_calls_total",
+    "api_tool_calls",
+]
+
+VARIANT = "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+
+
+def _write_unaudited_tree(root: Path) -> Path:
+    """An eval tree with exact_match and no judge output -- what sana_evaluation writes."""
+    eval_dir = root / "modes" / "openai_gpt-5-mini" / VARIANT
+    eval_dir.mkdir(parents=True)
+    with (eval_dir / "eval_results.csv").open("w", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=EVAL_FIELDS)
+        writer.writeheader()
+        for idx, exact in enumerate(["1.0", "0.0", "1.0", "0.0"], start=1):
+            writer.writerow({
+                "task_id": f"k-1-d-1/task_{idx}.json",
+                "model": "gpt-5-mini",
+                "expected_answer": "1999",
+                "predicted_answer": "1999" if exact == "1.0" else "2000",
+                "exact_match": exact,
+                "runtime_seconds": "12.5",
+                "cycle_count": "4",
+                "input_tokens": "1000",
+                "output_tokens": "100",
+                "total_tokens": "1100",
+                "cost_usd": "0.01",
+                "tool_calls_total": "6",
+                "api_tool_calls": "6",
+            })
+    return root / "modes"
+
+
+class TestUnauditedTreeErrorMessage(unittest.TestCase):
+    def test_error_names_the_remedy(self):
+        with TemporaryDirectory() as tmp:
+            results_dir = _write_unaudited_tree(Path(tmp))
+            with self.assertRaises(ValueError) as caught:
+                run_mode_analysis.load_semantic_results_grouped(str(results_dir))
+            message = str(caught.exception)
+            self.assertIn("semantic_match", message)
+            self.assertIn("--no-semantic", message)
+            self.assertIn(
+                "sana_analysis/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py",
+                message,
+            )
+
+
+class TestNoSemanticLoad(unittest.TestCase):
+    def test_semantic_match_is_sourced_from_exact_match(self):
+        with TemporaryDirectory() as tmp:
+            results_dir = _write_unaudited_tree(Path(tmp))
+            by_key, _fields = run_mode_analysis.load_semantic_results_grouped(
+                str(results_dir), semantic=False
+            )
+            records = by_key["openai_gpt-5-mini/" + VARIANT]
+            self.assertEqual(len(records), 4)
+            for record in records:
+                self.assertEqual(record["_semantic_match"], record["_exact_match"])
+
+    def test_no_semantic_does_not_invent_a_no_error_verdict(self):
+        """Absent log_error_bucket must not normalise to `no_error`.
+
+        `_normalize_log_error_bucket("")` returns "no_error", which is a claim
+        about the run that no judge made. Under --no-semantic it stays blank.
+        """
+        with TemporaryDirectory() as tmp:
+            results_dir = _write_unaudited_tree(Path(tmp))
+            by_key, _fields = run_mode_analysis.load_semantic_results_grouped(
+                str(results_dir), semantic=False
+            )
+            for record in next(iter(by_key.values())):
+                self.assertEqual(record["log_error_bucket_display"], "")
+
+
+class TestNoSemanticOutputShape(unittest.TestCase):
+    def _run(self, tmp: Path) -> Path:
+        results_dir = _write_unaudited_tree(tmp / "results")
+        out_dir = tmp / "analysis"
+        run_mode_analysis.run_analysis(
+            results_dir=str(results_dir),
+            base_results_dir=str(results_dir),
+            turn_waste_grouped_dir=None,
+            traces_dir=str(tmp / "results" / "traces" / "modes"),
+            tasks_dir=str(tmp / "tasks"),
+            output_dir=str(out_dir),
+            no_figures=True,
+            no_semantic=True,
+        )
+        return out_dir
+
+    def test_judgment_dependent_artifacts_are_absent_not_empty(self):
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            for name in run_mode_analysis.SEMANTIC_ONLY_OUTPUTS:
+                self.assertFalse(
+                    (out_dir / name).exists(),
+                    f"{name} must be omitted under --no-semantic, not written empty",
+                )
+
+    def test_judge_free_metrics_are_still_produced(self):
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            summary = json.loads((out_dir / "summary.json").read_text())
+            self.assertEqual(len(summary), 1)
+            row = summary[0]
+            self.assertEqual(row["n"], 4)
+            self.assertEqual(row["exact_match"], 0.5)
+            self.assertEqual(row["semantic_match"], 0.5)
+            self.assertEqual(row["avg_cost_usd"], 0.01)
+            self.assertEqual(row["avg_tool_calls_total"], 6.0)
+
+    def test_summary_rows_carry_no_all_zero_bucket_columns(self):
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            row = json.loads((out_dir / "summary.json").read_text())[0]
+            for bucket in run_mode_analysis.SEMANTIC_BUCKETS:
+                self.assertNotIn(bucket, row)
+            for bucket in run_mode_analysis.DISPLAY_LOG_ERROR_BUCKETS:
+                self.assertNotIn(bucket, row)
+            for bucket in run_mode_analysis.FAILURE_PRIMARY_BUCKETS:
+                self.assertNotIn(f"primary_{bucket}", row)
+
+    def test_output_directory_says_no_judge_ran(self):
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            marker = json.loads((out_dir / "no_semantic.json").read_text())
+            self.assertFalse(marker["semantic"])
+            self.assertEqual(marker["semantic_match_source"], "exact_match")
+            self.assertEqual(sorted(marker["omitted"]), sorted(run_mode_analysis.SEMANTIC_ONLY_OUTPUTS))
+
+
+if __name__ == "__main__":
+    unittest.main()

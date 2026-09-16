@@ -204,6 +204,25 @@ REQUIRED_FIELDS = [
     "log_error_evidence",
 ]
 
+# Under --no-semantic only the lexical score is required; every other member of
+# REQUIRED_FIELDS is a judge's output.
+REQUIRED_FIELDS_NO_SEMANTIC = ["exact_match"]
+
+AUDITOR_SCRIPT = "sana_analysis/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py"
+
+# Artifacts that exist only because a judge ran. Under --no-semantic they are
+# omitted from the output directory rather than written empty: a header-only CSV
+# or an all-zero bucket map that looks like a result is the failure this package
+# spent PR #5 retiring.
+SEMANTIC_ONLY_OUTPUTS = [
+    "failure.json",
+    "semantic_buckets.json",
+    "log_error_buckets.json",
+    "semantic_error_crosstab.json",
+    "semantic_delta_ablation.csv",
+    "paired_mode_metrics.csv",
+]
+
 REQUIRED_TURN_WASTE_GROUP_FIELDS = [
     "task_id",
     "turn_waste_global_group",
@@ -369,6 +388,12 @@ def parse_args() -> argparse.Namespace:
         "--no-figures",
         action="store_true",
         help="Skip graph generation.",
+    )
+    parser.add_argument(
+        "--no-semantic",
+        action="store_true",
+        help="Analyse exact_match only. semantic_match is sourced from exact_match "
+             "and every judgment-dependent output is omitted from the output directory.",
     )
     parser.add_argument(
         "--model-filter",
@@ -870,11 +895,20 @@ def _enrich_trace_records_with_log_sources(records: List[dict], log_path: Option
         })
 
 
-def _validate_required_fields(fieldnames: List[str] | None, path: Path) -> None:
+def _validate_required_fields(fieldnames: List[str] | None, path: Path, *, semantic: bool = True) -> None:
     available = fieldnames or []
-    missing = [field for field in REQUIRED_FIELDS if field not in available]
-    if missing:
-        raise ValueError(f"Missing required semantic columns in {path}: {', '.join(missing)}")
+    required = REQUIRED_FIELDS if semantic else REQUIRED_FIELDS_NO_SEMANTIC
+    missing = [field for field in required if field not in available]
+    if not missing:
+        return
+    if not semantic:
+        raise ValueError(f"Missing required columns in {path}: {', '.join(missing)}")
+    raise ValueError(
+        f"Missing required semantic columns in {path}: {', '.join(missing)}\n\n"
+        "This tree has not been semantically audited. Either run the auditor\n"
+        f"(python {AUDITOR_SCRIPT} --source <tree>), or pass --no-semantic to "
+        "analyse exact_match only."
+    )
 
 
 def _validate_required_turn_waste_group_fields(fieldnames: List[str] | None, path: Path) -> None:
@@ -941,12 +975,16 @@ def _parse_semantic_match(value, csv_path: Path) -> float:
     return semantic_match
 
 
-def _normalize_eval_row(row: dict, model: str, variant: str, csv_path: Path) -> dict:
-    semantic_bucket = str(row.get("semantic_bucket", "") or "").strip()
-    if semantic_bucket not in SEMANTIC_BUCKETS:
-        raise ValueError(f"Unexpected semantic_bucket in {csv_path}: {semantic_bucket!r}")
-
-    semantic_match = _parse_semantic_match(row.get("semantic_match"), csv_path)
+def _normalize_eval_row(row: dict, model: str, variant: str, csv_path: Path, *, semantic: bool = True) -> dict:
+    if semantic:
+        semantic_bucket = str(row.get("semantic_bucket", "") or "").strip()
+        if semantic_bucket not in SEMANTIC_BUCKETS:
+            raise ValueError(f"Unexpected semantic_bucket in {csv_path}: {semantic_bucket!r}")
+        semantic_match = _parse_semantic_match(row.get("semantic_match"), csv_path)
+    else:
+        # No judge ran. The lexical score stands in, and every bucket output
+        # derived from a judgment is omitted downstream rather than defaulted.
+        semantic_match = _parse_semantic_match(row.get("exact_match"), csv_path)
 
     key = _cm_key(model, variant)
     axes = _parse_variant(variant)
@@ -964,7 +1002,9 @@ def _normalize_eval_row(row: dict, model: str, variant: str, csv_path: Path) -> 
     normalized["k"] = axes["k"]
     normalized["sc"] = axes["sc"]
     normalized["task_stem"] = make_task_stem_key(task_id) if task_id else ""
-    normalized["log_error_bucket_display"] = _normalize_log_error_bucket(row.get("log_error_bucket", ""))
+    normalized["log_error_bucket_display"] = (
+        _normalize_log_error_bucket(row.get("log_error_bucket", "")) if semantic else ""
+    )
 
     normalized["_cm_key"] = key
     normalized["_exact_match"] = as_float(row.get("exact_match"))
@@ -989,6 +1029,8 @@ def _normalize_eval_row(row: dict, model: str, variant: str, csv_path: Path) -> 
 def load_semantic_results_grouped(
     results_dir: str,
     model_filters: Optional[List[str]] = None,
+    *,
+    semantic: bool = True,
 ) -> Tuple[Dict[str, List[dict]], List[str]]:
     root = Path(results_dir)
     if not root.exists():
@@ -1011,10 +1053,12 @@ def load_semantic_results_grouped(
         found = True
         with csv_path.open(newline="") as handle:
             reader = csv.DictReader(handle)
-            _validate_required_fields(reader.fieldnames, csv_path)
+            _validate_required_fields(reader.fieldnames, csv_path, semantic=semantic)
             _extend_field_order(field_order, reader.fieldnames or [])
             for row in reader:
-                by_key[_cm_key(model, variant)].append(_normalize_eval_row(row, model, variant, csv_path))
+                by_key[_cm_key(model, variant)].append(
+                    _normalize_eval_row(row, model, variant, csv_path, semantic=semantic)
+                )
 
     if not found:
         raise FileNotFoundError(f"No eval_results.csv files found under {root}")
@@ -1528,6 +1572,8 @@ def build_summary(
     tool_errors: dict,
     base_by_key_records: Dict[str, List[dict]],
     search_bottleneck: Optional[dict] = None,
+    *,
+    semantic: bool = True,
 ) -> List[dict]:
     rows: List[dict] = []
     for key in sorted(by_key_records.keys(), key=_condition_model_sort_key):
@@ -1653,26 +1699,27 @@ def build_summary(
                 row[f"avg_wasted_rounds_top_{cutoff}"] = avg_wasted
                 row[f"avg_wasted_rounds_top{cutoff}"] = avg_wasted
 
-        for bucket in SEMANTIC_BUCKETS:
-            count = semantic_counts.get(bucket, 0)
-            row[bucket] = count
-            row[f"{bucket}_rate"] = round(count / n, 4) if n else 0.0
+        if semantic:
+            for bucket in SEMANTIC_BUCKETS:
+                count = semantic_counts.get(bucket, 0)
+                row[bucket] = count
+                row[f"{bucket}_rate"] = round(count / n, 4) if n else 0.0
 
-        for bucket in DISPLAY_LOG_ERROR_BUCKETS:
-            count = error_counts.get(bucket, 0)
-            row[bucket] = count
-            row[f"{bucket}_rate"] = round(count / n, 4) if n else 0.0
+            for bucket in DISPLAY_LOG_ERROR_BUCKETS:
+                count = error_counts.get(bucket, 0)
+                row[bucket] = count
+                row[f"{bucket}_rate"] = round(count / n, 4) if n else 0.0
 
-        for bucket in FAILURE_PRIMARY_BUCKETS:
-            count = sum(1 for record in records if _primary_failure_bucket(record) == bucket)
-            row[f"primary_{bucket}"] = count
+            for bucket in FAILURE_PRIMARY_BUCKETS:
+                count = sum(1 for record in records if _primary_failure_bucket(record) == bucket)
+                row[f"primary_{bucket}"] = count
 
         rows.append(row)
 
     return _sort_summary_rows(rows)
 
 
-def build_variant_summary(summary_rows: List[dict]) -> List[dict]:
+def build_variant_summary(summary_rows: List[dict], *, semantic: bool = True) -> List[dict]:
     groups: Dict[str, List[dict]] = defaultdict(list)
     for row in summary_rows:
         groups[str(row.get("variant", "unknown"))].append(row)
@@ -1765,22 +1812,23 @@ def build_variant_summary(summary_rows: List[dict]) -> List[dict]:
             variant_row[f"avg_wasted_rounds_top_{cutoff}"] = avg_wasted
             variant_row[f"avg_wasted_rounds_top{cutoff}"] = avg_wasted
 
-        for bucket in SEMANTIC_BUCKETS:
-            count = sum(int(row.get(bucket, 0) or 0) for row in rows)
-            variant_row[bucket] = count
-            variant_row[f"{bucket}_rate"] = round(count / total_n, 4) if total_n else 0.0
+        if semantic:
+            for bucket in SEMANTIC_BUCKETS:
+                count = sum(int(row.get(bucket, 0) or 0) for row in rows)
+                variant_row[bucket] = count
+                variant_row[f"{bucket}_rate"] = round(count / total_n, 4) if total_n else 0.0
 
-        for bucket in DISPLAY_LOG_ERROR_BUCKETS:
-            count = sum(int(row.get(bucket, 0) or 0) for row in rows)
-            variant_row[bucket] = count
-            variant_row[f"{bucket}_rate"] = round(count / total_n, 4) if total_n else 0.0
+            for bucket in DISPLAY_LOG_ERROR_BUCKETS:
+                count = sum(int(row.get(bucket, 0) or 0) for row in rows)
+                variant_row[bucket] = count
+                variant_row[f"{bucket}_rate"] = round(count / total_n, 4) if total_n else 0.0
 
         out.append(variant_row)
 
     return _sort_variant_rows(out)
 
 
-def build_metric_mappings(summary_rows: List[dict]) -> Tuple[dict, dict, dict, dict, dict]:
+def build_metric_mappings(summary_rows: List[dict], *, semantic: bool = True) -> Tuple[dict, dict, dict, dict, dict]:
     semantic_match = {}
     discovery = {}
     runtime = {}
@@ -1823,14 +1871,15 @@ def build_metric_mappings(summary_rows: List[dict]) -> Tuple[dict, dict, dict, d
             "avg_tool_calls_total": row.get("avg_tool_calls_total"),
             "avg_api_tool_calls": row.get("avg_api_tool_calls"),
         }
-        semantic_buckets[key] = {"total": row.get("n")}
-        for bucket in SEMANTIC_BUCKETS:
-            semantic_buckets[key][bucket] = row.get(bucket, 0)
-            semantic_buckets[key][f"{bucket}_rate"] = row.get(f"{bucket}_rate")
-        log_error_buckets[key] = {"total": row.get("n")}
-        for bucket in DISPLAY_LOG_ERROR_BUCKETS:
-            log_error_buckets[key][bucket] = row.get(bucket, 0)
-            log_error_buckets[key][f"{bucket}_rate"] = row.get(f"{bucket}_rate")
+        if semantic:
+            semantic_buckets[key] = {"total": row.get("n")}
+            for bucket in SEMANTIC_BUCKETS:
+                semantic_buckets[key][bucket] = row.get(bucket, 0)
+                semantic_buckets[key][f"{bucket}_rate"] = row.get(f"{bucket}_rate")
+            log_error_buckets[key] = {"total": row.get("n")}
+            for bucket in DISPLAY_LOG_ERROR_BUCKETS:
+                log_error_buckets[key][bucket] = row.get(bucket, 0)
+                log_error_buckets[key][f"{bucket}_rate"] = row.get(f"{bucket}_rate")
 
     return semantic_match, discovery, runtime, semantic_buckets, log_error_buckets
 
@@ -3538,6 +3587,8 @@ def generate_figures(
     reasoning_density_curve: dict,
     reasoning_density_curve_by_cm: dict,
     output_dir: Path,
+    *,
+    semantic: bool = True,
 ) -> None:
     fig_dir = output_dir / "figures"
     _cleanup_figure_dir(fig_dir)
@@ -3571,38 +3622,39 @@ def generate_figures(
         else None
     )
 
-    _plot_stacked_buckets(
-        variant_rows,
-        SEMANTIC_BUCKETS,
-        SEMANTIC_BUCKET_COLORS,
-        lambda row: _pretty_variant_tick_label(str(row.get("variant", "")), int(row.get("n_total", 0) or 0)),
-        "n_total",
-        "Semantic Bucket Distribution by Variant",
-        fig_dir / "semantic_buckets_by_variant.pdf",
-        label_min_pct=0.0,
-    )
-    _plot_stacked_buckets(
-        variant_rows,
-        DISPLAY_LOG_ERROR_BUCKETS,
-        LOG_ERROR_BUCKET_COLORS,
-        lambda row: _compact_variant_label(str(row.get("variant", "")), multiline=True),
-        "n_total",
-        "Log Error Bucket Distribution by Variant",
-        fig_dir / "log_error_buckets_by_variant.pdf",
-        rate_field_suffix="_rate",
-        annotate_counts=False,
-    )
-    _plot_variant_crosstab_heatmap(
-        plt,
-        crosstab_rows,
-        variant_rows,
-        fig_dir / "semantic_error_crosstab_by_variant.pdf",
-    )
-    _plot_error_vs_semantic_variant(
-        plt,
-        variant_rows,
-        fig_dir / "error_vs_semantic_by_variant.pdf",
-    )
+    if semantic:
+        _plot_stacked_buckets(
+            variant_rows,
+            SEMANTIC_BUCKETS,
+            SEMANTIC_BUCKET_COLORS,
+            lambda row: _pretty_variant_tick_label(str(row.get("variant", "")), int(row.get("n_total", 0) or 0)),
+            "n_total",
+            "Semantic Bucket Distribution by Variant",
+            fig_dir / "semantic_buckets_by_variant.pdf",
+            label_min_pct=0.0,
+        )
+        _plot_stacked_buckets(
+            variant_rows,
+            DISPLAY_LOG_ERROR_BUCKETS,
+            LOG_ERROR_BUCKET_COLORS,
+            lambda row: _compact_variant_label(str(row.get("variant", "")), multiline=True),
+            "n_total",
+            "Log Error Bucket Distribution by Variant",
+            fig_dir / "log_error_buckets_by_variant.pdf",
+            rate_field_suffix="_rate",
+            annotate_counts=False,
+        )
+        _plot_variant_crosstab_heatmap(
+            plt,
+            crosstab_rows,
+            variant_rows,
+            fig_dir / "semantic_error_crosstab_by_variant.pdf",
+        )
+        _plot_error_vs_semantic_variant(
+            plt,
+            variant_rows,
+            fig_dir / "error_vs_semantic_by_variant.pdf",
+        )
     _plot_turn_waste_reconciled_groups_by_model(
         plt,
         turn_waste_condition_model_groups,
@@ -3693,7 +3745,8 @@ def generate_figures(
         condition_label_formatter=lambda row: _compact_variant_label(str(row.get("variant", ""))),
     )
 
-    generate_delta_figures(summary_rows, fig_dir)
+    if semantic:
+        generate_delta_figures(summary_rows, fig_dir)
 
 
 def run_analysis(
@@ -3706,14 +3759,25 @@ def run_analysis(
     output_dir: str,
     model_filter: Optional[str] = None,
     no_figures: bool = False,
+    no_semantic: bool = False,
 ) -> dict:
     model_filters = _parse_model_filters(model_filter)
+    semantic = not no_semantic
 
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print("Loading semantic eval results...")
-    by_key_records, source_field_order = load_semantic_results_grouped(results_dir, model_filters=model_filters)
+    if semantic:
+        print("Loading semantic eval results...")
+    else:
+        print(
+            "Loading eval results without semantic judging (--no-semantic): "
+            "semantic_match is sourced from exact_match, and these outputs are "
+            "omitted rather than written empty: " + ", ".join(SEMANTIC_ONLY_OUTPUTS)
+        )
+    by_key_records, source_field_order = load_semantic_results_grouped(
+        results_dir, model_filters=model_filters, semantic=semantic
+    )
 
     print("Skipping grouped turn-waste load (legacy analysis removed).")
 
@@ -3728,7 +3792,7 @@ def run_analysis(
 
     print("Computing search-style side analyses...")
     efficiency = run_efficiency(by_key_records)
-    failure = build_failure(by_key_records)
+    failure = build_failure(by_key_records) if semantic else {}
     tools_discovery = run_tools_discovery(grouped_traces, tasks_dir)
     tool_errors = run_tool_errors(base_by_key_records)
     search_depth_curve, search_depth_curve_by_cm = build_search_depth_curves(by_key_records, task_metrics_by_key)
@@ -3751,10 +3815,13 @@ def run_analysis(
         tool_errors,
         base_by_key_records,
         search_bottleneck.get("condition_model_summary"),
+        semantic=semantic,
     )
-    variant_rows = build_variant_summary(summary_rows)
-    semantic_match, discovery, runtime, semantic_buckets, log_error_buckets = build_metric_mappings(summary_rows)
-    crosstab_rows = build_semantic_error_crosstab(by_key_records, variant_rows)
+    variant_rows = build_variant_summary(summary_rows, semantic=semantic)
+    semantic_match, discovery, runtime, semantic_buckets, log_error_buckets = build_metric_mappings(
+        summary_rows, semantic=semantic
+    )
+    crosstab_rows = build_semantic_error_crosstab(by_key_records, variant_rows) if semantic else []
     turn_waste_global_groups, turn_waste_global_group_rows, turn_waste_joined_failed_rows = {}, [], []
     turn_waste_condition_model_groups = {}
     per_task_rows, per_task_fieldnames = build_per_task_rows(by_key_records, task_metrics_by_key, source_field_order)
@@ -3783,10 +3850,27 @@ def run_analysis(
         "variant_summary.json": variant_rows,
     }
 
+    if not semantic:
+        files = {name: data for name, data in files.items() if name not in SEMANTIC_ONLY_OUTPUTS}
+
     for filename, data in files.items():
         path = out_dir / filename
         write_json(path, data)
         print(f"  Wrote {path}")
+
+    if not semantic:
+        marker_path = out_dir / "no_semantic.json"
+        write_json(marker_path, {
+            "semantic": False,
+            "semantic_match_source": "exact_match",
+            "omitted": SEMANTIC_ONLY_OUTPUTS,
+            "reason": (
+                "Run with --no-semantic. No model judged these rows, so semantic_match "
+                "is the lexical exact_match score and every judgment-dependent artifact "
+                "is absent rather than zero."
+            ),
+        })
+        print(f"  Wrote {marker_path}")
 
     per_task_path = out_dir / "per_task_semantic.csv"
     write_csv(per_task_path, per_task_rows, per_task_fieldnames)
@@ -4008,6 +4092,7 @@ def run_analysis(
             reasoning_density_curve,
             reasoning_density_curve_by_cm,
             out_dir,
+            semantic=semantic,
         )
         print(f"  Wrote figures to {out_dir / 'figures'}")
 
@@ -4059,6 +4144,7 @@ def main() -> None:
         output_dir=args.output_dir,
         model_filter=args.model_filter,
         no_figures=args.no_figures,
+        no_semantic=args.no_semantic,
     )
 
 
