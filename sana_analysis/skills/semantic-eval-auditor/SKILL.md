@@ -89,6 +89,20 @@ This writes only mirrored semantic CSVs under `sana-results_semantic/...`. When 
 
 This path uses the OpenAI SDK plus local API credentials such as `OPENAI_API_KEY`.
 
+## Re-running is safe
+
+Cells whose mirror already exists and passes `verify_semantic_mirror.py` are
+skipped, so pointing the auditor at a whole tree is a no-op on finished work.
+The judge is not deterministic: re-judging a finished cell moves numbers that
+may already be in a published table.
+
+A mirror is skipped only if it *validates*. A truncated mirror, one whose row
+count or `task_id` order drifted from the source, or one whose `exact_match`
+column was overwritten, is re-judged automatically.
+
+Pass `--force` to re-judge anyway. Do that only when you mean to replace
+existing results.
+
 ## Required Workflow
 
 For each `eval_results.csv` under the source tree:

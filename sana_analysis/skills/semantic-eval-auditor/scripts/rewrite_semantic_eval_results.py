@@ -6,10 +6,17 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import sys
 from collections import Counter
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Protocol
+
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
+from sana_analysis.semantic_mirror import collect_mirror_issues  # noqa: E402
 
 
 SEMANTIC_COLUMNS = [
@@ -173,6 +180,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--tail-lines-fallback", type=int, default=50)
     parser.add_argument("--limit-files", type=int, default=0)
     parser.add_argument("--limit-rows", type=int, default=0)
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-judge cells whose mirror already exists and validates. The judge "
+             "is not deterministic, so this moves numbers that may already be published.",
+    )
     return parser.parse_args()
 
 
@@ -509,6 +522,7 @@ class SemanticEvalAuditor:
         tail_lines_fallback: int,
         limit_files: int = 0,
         limit_rows: int = 0,
+        force: bool = False,
     ) -> None:
         self.source_root = source_root
         self.output_root = output_root
@@ -518,12 +532,24 @@ class SemanticEvalAuditor:
         self.tail_lines_fallback = tail_lines_fallback
         self.limit_files = limit_files
         self.limit_rows = limit_rows
+        self.force = force
 
     def _iter_eval_paths(self) -> list[Path]:
         paths = sorted(eval_search_root(self.source_root).rglob("eval_results.csv"))
         if self.limit_files > 0:
             return paths[: self.limit_files]
         return paths
+
+    def _mirror_is_current(self, eval_path: Path) -> list[str]:
+        """Reasons this cell must be re-judged. Empty means skip it.
+
+        Validates rather than merely testing existence, so a truncated or stale
+        mirror is re-judged instead of trusted. `--force` bypasses this entirely.
+        """
+        output_path = mirrored_output_path(self.source_root, self.output_root, eval_path)
+        if not output_path.exists():
+            return [f"no mirror at {output_path}"]
+        return collect_mirror_issues(eval_path, output_path)
 
     def _augment_row(
         self,
@@ -620,14 +646,27 @@ class SemanticEvalAuditor:
         if not eval_paths:
             raise FileNotFoundError(f"No eval_results.csv files found under {self.source_root}")
         total_rows = 0
+        skipped = 0
         aggregate_counts: Counter = Counter()
         for idx, eval_path in enumerate(eval_paths, start=1):
             output_path = mirrored_output_path(self.source_root, self.output_root, eval_path)
+            if not self.force:
+                issues = self._mirror_is_current(eval_path)
+                if not issues:
+                    print(f"[{idx}/{len(eval_paths)}] Skipping {eval_path} (mirror already complete)")
+                    skipped += 1
+                    continue
+                if output_path.exists():
+                    print(f"[{idx}/{len(eval_paths)}] Re-judging {eval_path}: {issues[0]}")
             print(f"[{idx}/{len(eval_paths)}] Auditing {eval_path} -> {output_path}")
             row_count, counts = self._process_file(eval_path)
             total_rows += row_count
             aggregate_counts.update(counts)
-        print(f"Audited {total_rows} rows across {len(eval_paths)} files into {self.output_root}")
+        judged_files = len(eval_paths) - skipped
+        print(
+            f"Audited {total_rows} rows across {judged_files} files into {self.output_root} "
+            f"({skipped} of {len(eval_paths)} files skipped as already complete)"
+        )
         if aggregate_counts:
             print("Semantic buckets:", dict(sorted(aggregate_counts.items())))
 
@@ -653,6 +692,7 @@ def main() -> None:
         tail_lines_fallback=args.tail_lines_fallback,
         limit_files=args.limit_files,
         limit_rows=args.limit_rows,
+        force=args.force,
     ).run()
 
 
