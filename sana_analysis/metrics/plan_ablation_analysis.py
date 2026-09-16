@@ -9,16 +9,24 @@ for the project's other model-judged measurement, so the two read alike.
 `paper/plan_ablation_figure._summarize_rows` reads. "plan_d" is the retired
 spelling of `plan=standard`; the names stay, the selection does not -- arms are
 resolved through `variants.find_variant`, never matched against literals.
+
+Every run merges the judged rows already under `--output-dir` onto the freshly
+prepared ones before anything writes (`merge_existing_audits`). `write_outputs`
+truncates, and the prepare stage reads logs rather than output, so without that
+merge the documented prepare-only "costs nothing" run silently destroyed the
+labels a `--judge` run paid for.
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
+import sys
 import time
 from pathlib import Path
-from typing import Any, Callable, Iterable
+from typing import Any, Callable, Iterable, Optional
 
 from sana_analysis.metrics.trajectory_pair_analysis import (
     _append_journal_record,
@@ -126,6 +134,18 @@ def observed_modes(log_root: Path) -> list[str]:
         if variant_dir.is_dir()
     }
     return sorted(names)
+
+
+def observed_models(log_root: Path) -> list[str]:
+    """Every runner-model directory name present under `log_root/modes/`.
+
+    Named in the "prepared 0 pairs" error: `--model` here filters THIS list, not
+    the judge model, and the two conventions are easy to confuse.
+    """
+    modes_root = log_root / "modes"
+    if not modes_root.is_dir():
+        return []
+    return sorted(model_dir.name for model_dir in modes_root.iterdir() if model_dir.is_dir())
 
 
 def resolve_plan_modes(
@@ -443,6 +463,74 @@ def write_outputs(output_dir: Path, rows: list[dict[str, str]], log_root_name: s
     return written
 
 
+def _pair_key(row: dict[str, str]) -> tuple[str, str, str, str]:
+    """A pair's identity across runs: the four fields that name one comparison."""
+    return (
+        str(row.get("model_variant", "")),
+        str(row.get("task_id", "")),
+        str(row.get("plan_d_mode", "")),
+        str(row.get("plan_i_mode", "")),
+    )
+
+
+def read_existing_audits(
+    output_dir: Path, log_root_name: Optional[str] = None
+) -> dict[tuple[str, str, str, str], dict[str, str]]:
+    """Judged rows already on disk, keyed by pair identity.
+
+    Only rows a judge actually finished are returned: `audit_status == "complete"`
+    AND a label that is in the vocabulary. A blank label is absence, not a
+    verdict, and adopting one would launder it into the figure as a bucket.
+    """
+    root = output_dir / log_root_name if log_root_name else output_dir
+    existing: dict[tuple[str, str, str, str], dict[str, str]] = {}
+    if not root.is_dir():
+        return existing
+    for path in sorted(root.rglob("plan_similarity.csv")):
+        try:
+            with path.open(newline="") as handle:
+                for row in csv.DictReader(handle):
+                    if str(row.get("audit_status", "")).strip() != "complete":
+                        continue
+                    if str(row.get("plan_similarity", "")).strip() not in PLAN_SIMILARITY_LABELS:
+                        continue
+                    existing[_pair_key(row)] = dict(row)
+        except OSError as exc:
+            print(f"warning: could not read {path}: {exc}", file=sys.stderr)
+    return existing
+
+
+def merge_existing_audits(
+    rows: list[dict[str, str]],
+    output_dir: Path,
+    *,
+    log_root_name: Optional[str] = None,
+) -> int:
+    """Carry finished judgments from a previous run onto freshly prepared rows.
+
+    `build_plan_pair_rows` reads logs, never output, so a fresh row carries no
+    `audit_status` at all -- and `write_outputs` truncates. Without this, the
+    documented "costs nothing" prepare-only run wipes the labels the judged run
+    paid for. Returns how many rows adopted a stored judgment.
+    """
+    existing = read_existing_audits(Path(output_dir), log_root_name)
+    if not existing:
+        return 0
+    adopted = 0
+    for row in rows:
+        if row.get("prefill_plan_similarity"):
+            # The prepare stage settles these mechanically from the current
+            # logs; a stored judgment must not override what the logs now say.
+            continue
+        stored = existing.get(_pair_key(row))
+        if stored is None:
+            continue
+        for column in AUDIT_COLUMNS:
+            row[column] = str(stored.get(column, ""))
+        adopted += 1
+    return adopted
+
+
 def judge_pending_rows(
     rows: list[dict[str, str]],
     *,
@@ -457,13 +545,21 @@ def judge_pending_rows(
     tmp_root: Path,
     journal_path: Path,
     max_retries: int,
-    call: Callable[..., str] = call_judge_model,
+    call: Optional[Callable[..., str]] = None,
 ) -> int:
     """Judge every row that is neither prefilled nor already complete.
 
+    A row is "already complete" because `merge_existing_audits` adopted a
+    finished judgment from a previous run; nothing else in this process sets it,
+    because `build_plan_pair_rows` reads logs and never output.
+
     `call` is the stub-judge seam, mirroring the `SemanticJudge` Protocol the
-    semantic auditor uses: tests substitute it so nothing reaches a real API.
+    semantic auditor uses: tests substitute it so nothing reaches a real API. It
+    is resolved here rather than bound as a default so that patching
+    `plan_ablation_analysis.call_judge_model` reaches `main()` too.
     """
+    if call is None:
+        call = call_judge_model
     judged = 0
     for row in rows:
         if row.get("prefill_plan_similarity"):
@@ -574,6 +670,13 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--plan-i-mode", default="")
     parser.add_argument("--all-modes", action="store_true")
     parser.add_argument("--judge", action="store_true", help="Judge pending pairs.")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-judge pairs whose stored row is already marked complete, instead "
+             "of adopting it. The judge is not deterministic, so this moves "
+             "numbers that may already be published.",
+    )
     parser.add_argument("--backend", choices=["codex", "openai"], default="codex")
     parser.add_argument("--judge-model", default="gpt-5.4-mini")
     parser.add_argument("--reasoning-effort", default="low")
@@ -599,7 +702,26 @@ def main(argv: list[str] | None = None) -> int:
     if args.limit_files > 0:
         keep = sorted({row["model_variant"] for row in rows})[: args.limit_files]
         rows = [row for row in rows if row["model_variant"] in keep]
-    print(f"Prepared {len(rows)} plan pairs from {log_root}")
+    print(f"Prepared {len(rows)} plan pairs from {log_root}", flush=True)
+    if not rows:
+        print(
+            f"error: no plan pairs to analyse under {log_root}.\n"
+            f"  --model filters the runner-model folder under {log_root / 'modes'}; "
+            "the judge model is --judge-model.\n"
+            f"  Observed model folders: {', '.join(observed_models(log_root)) or '(none)'}\n"
+            f"  Observed modes: {', '.join(observed_modes(log_root)) or '(none)'}"
+            + (f"\n  Requested --model {args.model!r}." if args.model else "")
+            + (f"\n  Requested --task {args.task!r}." if args.task else ""),
+            file=sys.stderr,
+        )
+        return 2
+
+    if args.force:
+        print("--force: ignoring stored judgments; every judgable pair is re-judged.")
+    else:
+        adopted = merge_existing_audits(rows, output_dir, log_root_name=log_root.name)
+        if adopted:
+            print(f"Adopted {adopted} already-complete row(s) from {output_dir}")
 
     if args.judge:
         judge_pending_rows(

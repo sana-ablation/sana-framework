@@ -1,7 +1,10 @@
+import contextlib
 import csv
+import io
 import json
 import re
 import unittest
+from unittest import mock
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -148,6 +151,23 @@ class TestVocabularyCannotDrift(unittest.TestCase):
             sorted(plan_ablation_analysis.PLAN_SIMILARITY_LABELS),
         )
 
+    def test_the_skill_prose_carries_every_label_in_the_vocabulary(self):
+        """SKILL.md restates all six labels, in prose and in a JSON shape.
+
+        The agent-driven path reads that copy, not `PLAN_SIMILARITY_LABELS`, so a
+        label added in Python and not there would silently never be offered by a
+        subagent -- the same drift the prompt test guards on the scripted path.
+        """
+        skill = (
+            Path(plan_ablation_analysis.__file__).resolve().parents[2]
+            / "sana_analysis" / "skills" / "evaluate-plan-ablation" / "SKILL.md"
+        )
+        text = skill.read_text()
+        for label in plan_ablation_analysis.PLAN_SIMILARITY_LABELS:
+            self.assertIn(f"`{label}`", text, f"SKILL.md never names the label {label}")
+            self.assertIn(label, text.split("Return JSON only:", 1)[-1],
+                          f"the subagent JSON shape in SKILL.md omits {label}")
+
     def test_the_prompt_carries_both_plans(self):
         with TemporaryDirectory() as tmp:
             log_root = _write_log_root(Path(tmp))
@@ -280,28 +300,197 @@ class TestJudgeEndToEnd(unittest.TestCase):
             self.assertEqual(rows[0]["audit_status"], "prefilled")
 
     def test_rejudging_skips_rows_already_complete(self):
+        """Two INDEPENDENT prepares, as two processes would do it.
+
+        Reusing one in-memory list proves nothing: `build_plan_pair_rows` reads
+        logs and never output, so a fresh row carries no `audit_status` at all
+        and the skip can only fire if something read the CSV back.
+        """
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             log_root = _write_log_root(root)
-            rows = plan_ablation_analysis.build_plan_pair_rows(log_root)
-            kwargs = dict(
-                output_dir=root / "out",
-                log_root_name=log_root.name,
-                repo_root=root,
-                backend="openai",
-                model="stub",
-                reasoning_effort="low",
-                limit=0,
-                timeout=10,
-                tmp_root=root / "tmp",
-                journal_path=root / "journal.jsonl",
-                max_retries=1,
-            )
+            out_dir = root / "out"
+            kwargs = _judge_kwargs(root, log_root, out_dir)
+
             first = _StubJudge()
-            plan_ablation_analysis.judge_pending_rows(rows, call=first, **kwargs)
-            second = _StubJudge()
-            self.assertEqual(plan_ablation_analysis.judge_pending_rows(rows, call=second, **kwargs), 0)
+            plan_ablation_analysis.judge_pending_rows(
+                plan_ablation_analysis.build_plan_pair_rows(log_root), call=first, **kwargs
+            )
+            self.assertEqual(len(first.prompts), 1)
+
+            reprepared = plan_ablation_analysis.build_plan_pair_rows(log_root)
+            adopted = plan_ablation_analysis.merge_existing_audits(
+                reprepared, out_dir, log_root_name=log_root.name
+            )
+            self.assertEqual(adopted, 1)
+
+            second = _StubJudge("not_similar")
+            self.assertEqual(
+                plan_ablation_analysis.judge_pending_rows(reprepared, call=second, **kwargs), 0
+            )
             self.assertEqual(second.prompts, [])
+            self.assertEqual(_csv_rows(out_dir), [("missing_details", "complete")])
+
+
+def _judge_kwargs(root: Path, log_root: Path, out_dir: Path) -> dict:
+    return dict(
+        output_dir=out_dir,
+        log_root_name=log_root.name,
+        repo_root=root,
+        backend="openai",
+        model="stub",
+        reasoning_effort="low",
+        limit=0,
+        timeout=10,
+        tmp_root=root / "tmp",
+        journal_path=root / "journal.jsonl",
+        max_retries=1,
+    )
+
+
+def _csv_rows(out_dir: Path) -> list[tuple[str, str]]:
+    """(plan_similarity, audit_status) for every row written under `out_dir`."""
+    out = []
+    for path in sorted(out_dir.rglob("plan_similarity.csv")):
+        with path.open(newline="") as handle:
+            for row in csv.DictReader(handle):
+                out.append((row["plan_similarity"], row["audit_status"]))
+    return out
+
+
+class TestJudgedLabelsSurviveTheNextRun(unittest.TestCase):
+    """Judging costs money. Nothing that "costs nothing" may destroy its output."""
+
+    def test_a_prepare_only_run_does_not_wipe_the_judged_labels(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_root = _write_log_root(root)
+            out_dir = root / "out"
+
+            plan_ablation_analysis.judge_pending_rows(
+                plan_ablation_analysis.build_plan_pair_rows(log_root),
+                call=_StubJudge(),
+                **_judge_kwargs(root, log_root, out_dir),
+            )
+            self.assertEqual(_csv_rows(out_dir), [("missing_details", "complete")])
+
+            # The sequence README documents as costing nothing.
+            exit_code = plan_ablation_analysis.main(
+                [str(log_root), "--output-dir", str(out_dir)]
+            )
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(_csv_rows(out_dir), [("missing_details", "complete")])
+
+    def test_a_blank_stored_label_is_never_adopted(self):
+        """A prepare-only row is `pending` with no label. Adopting it as a
+        judgment would be the same laundering the figure fix removes."""
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_root = _write_log_root(root)
+            out_dir = root / "out"
+            self.assertEqual(
+                plan_ablation_analysis.main([str(log_root), "--output-dir", str(out_dir)]), 0
+            )
+            self.assertEqual(_csv_rows(out_dir), [("", "pending")])
+
+            reprepared = plan_ablation_analysis.build_plan_pair_rows(log_root)
+            self.assertEqual(
+                plan_ablation_analysis.merge_existing_audits(
+                    reprepared, out_dir, log_root_name=log_root.name
+                ),
+                0,
+            )
+
+    def test_a_bogus_stored_label_is_never_adopted(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_root = _write_log_root(root)
+            out_dir = root / "out"
+            rows = plan_ablation_analysis.build_plan_pair_rows(log_root)
+            rows[0].update({"plan_similarity": "quite_close", "audit_status": "complete"})
+            plan_ablation_analysis.write_outputs(out_dir, rows, log_root.name)
+
+            reprepared = plan_ablation_analysis.build_plan_pair_rows(log_root)
+            self.assertEqual(
+                plan_ablation_analysis.merge_existing_audits(
+                    reprepared, out_dir, log_root_name=log_root.name
+                ),
+                0,
+            )
+
+    def test_a_second_judge_run_adopts_instead_of_re_judging(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_root = _write_log_root(root)
+            out_dir = root / "out"
+            plan_ablation_analysis.judge_pending_rows(
+                plan_ablation_analysis.build_plan_pair_rows(log_root),
+                call=_StubJudge(),
+                **_judge_kwargs(root, log_root, out_dir),
+            )
+            second = _StubJudge("not_similar")
+            with mock.patch.object(plan_ablation_analysis, "call_judge_model", second):
+                self.assertEqual(
+                    plan_ablation_analysis.main(
+                        [str(log_root), "--output-dir", str(out_dir), "--judge"]
+                    ),
+                    0,
+                )
+            self.assertEqual(second.prompts, [])
+            self.assertEqual(_csv_rows(out_dir), [("missing_details", "complete")])
+
+    def test_force_re_judges_a_complete_row(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_root = _write_log_root(root)
+            out_dir = root / "out"
+            plan_ablation_analysis.judge_pending_rows(
+                plan_ablation_analysis.build_plan_pair_rows(log_root),
+                call=_StubJudge(),
+                **_judge_kwargs(root, log_root, out_dir),
+            )
+            second = _StubJudge("not_similar")
+            with mock.patch.object(plan_ablation_analysis, "call_judge_model", second):
+                self.assertEqual(
+                    plan_ablation_analysis.main(
+                        [str(log_root), "--output-dir", str(out_dir), "--judge", "--force"]
+                    ),
+                    0,
+                )
+            self.assertEqual(len(second.prompts), 1)
+            self.assertEqual(_csv_rows(out_dir), [("not_similar", "complete")])
+
+    def test_force_is_documented_with_its_consequence(self):
+        """The flag that moves published numbers must say so in --help."""
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            with self.assertRaises(SystemExit):
+                plan_ablation_analysis.parse_args(["logs", "--help"])
+        help_text = " ".join(buffer.getvalue().split())
+        self.assertIn("--force", help_text)
+        self.assertIn("not deterministic", help_text)
+        self.assertIn("published", help_text)
+
+
+class TestZeroPairsIsAnError(unittest.TestCase):
+    def test_a_judge_model_passed_as_model_fails_loudly(self):
+        """`--model` here filters the runner-model folder, not the judge model.
+
+        Copying the auditor's convention prepared 0 pairs, judged nothing and
+        exited 0, which reads as success.
+        """
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            log_root = _write_log_root(root)
+            buffer = io.StringIO()
+            with contextlib.redirect_stderr(buffer):
+                exit_code = plan_ablation_analysis.main(
+                    [str(log_root), "--output-dir", str(root / "out"), "--model", "gpt-5.4-mini"]
+                )
+            self.assertNotEqual(exit_code, 0)
+            message = buffer.getvalue()
+            self.assertIn("openai_gpt-5-mini", message)
+            self.assertIn("--judge-model", message)
 
 
 if __name__ == "__main__":

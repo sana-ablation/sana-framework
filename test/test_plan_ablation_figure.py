@@ -21,6 +21,43 @@ class TestPlanDefaultFigureGenerator(unittest.TestCase):
             "incomplete_plan",
         )
 
+    def test_a_blank_label_is_skipped_but_an_explicit_not_comparable_counts(self):
+        """A blank `plan_similarity` means no judge ever ran on that row.
+
+        Bucketing it as `not_comparable` rendered a never-judged prepare-only
+        run as 100% "Not comparable" -- an all-zero bucket map wearing the name
+        of a real category. Absence is skipped; a judged `not_comparable` is not.
+        """
+        self.assertIsNone(_normalize_plan_similarity({"missing_plan_type": "", "plan_similarity": ""}))
+        self.assertIsNone(_normalize_plan_similarity({"missing_plan_type": ""}))
+        self.assertIsNone(
+            _normalize_plan_similarity({"missing_plan_type": "", "plan_similarity": "   "})
+        )
+        self.assertIsNone(
+            _normalize_plan_similarity({"missing_plan_type": "", "plan_similarity": "quite_close"})
+        )
+        self.assertEqual(
+            _normalize_plan_similarity({"missing_plan_type": "", "plan_similarity": "not_comparable"}),
+            "not_comparable",
+        )
+
+    def test_an_unjudged_tree_summarizes_to_nothing_rather_than_a_full_bar(self):
+        canonical_d = "search_i_results_i_pland_computei_k5_skills_off"
+        canonical_i = "search_i_results_i_plani_computei_k5_skills_off"
+        unjudged = [
+            {
+                "benchmark": "lakeqa",
+                "model_variant": "openai_gpt-5-mini",
+                "plan_d_mode": canonical_d,
+                "plan_i_mode": canonical_i,
+                "missing_plan_type": "",
+                "plan_similarity": "",
+                "audit_status": "pending",
+            }
+            for _ in range(5)
+        ]
+        self.assertEqual(_summarize_rows(unjudged), {})
+
     def test_summarize_rows_filters_to_canonical_d_vs_i(self):
         canonical_d = "search_i_results_i_pland_computei_k5_skills_off"
         canonical_i = "search_i_results_i_plani_computei_k5_skills_off"

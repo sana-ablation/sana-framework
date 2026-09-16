@@ -71,8 +71,21 @@ python -m sana_analysis.metrics.plan_ablation_analysis <log-root> --judge \
 
 Without `--judge` it prepares pairs and writes the CSV with every judgable row
 marked `pending`, which costs nothing and is the cheap way to check discovery.
-`--limit-files` and `--limit-rows` bound a smoke run. Re-running skips rows
-already marked `complete`, so an interrupted run resumes.
+`--limit-files` and `--limit-rows` bound a smoke run.
+
+Every run -- judging or prepare-only -- first reads back the `plan_similarity.csv`
+files already under `--output-dir` and adopts each row whose stored
+`audit_status` is `complete` and whose `plan_similarity` is one of the labels
+below. Those rows are preserved on the next write and are never sent to a judge
+again, so an interrupted run resumes and a prepare-only run after a judged run
+does not throw the paid labels away. A stored row with a blank or unrecognised
+label is not adopted: absence is not a judgment. Pass `--force` to ignore stored
+judgments and re-judge every pair -- the judge is not deterministic, so that
+moves numbers that may already be published.
+
+If the run prepares 0 pairs it names the model folders it saw and exits
+non-zero. `--model` filters the runner-model folder under `<log-root>/modes/`;
+the judge model is `--judge-model`.
 
 The label vocabulary is `PLAN_SIMILARITY_LABELS` in
 `sana_analysis/metrics/plan_ablation_analysis.py`, and the prompt is built from

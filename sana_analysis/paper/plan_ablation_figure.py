@@ -65,6 +65,14 @@ BUCKET_COLORS = {
 
 
 def _normalize_plan_similarity(row: dict) -> Optional[str]:
+    """The bucket this row belongs in, or None to leave it out of the figure.
+
+    A blank `plan_similarity` means no judge ever looked at this pair -- a
+    prepare-only run writes exactly that. It is absence, not a verdict, so it is
+    skipped rather than bucketed: mapping it to `not_comparable` rendered a
+    never-judged run as 100% "Not comparable", a named category that reads as a
+    result. An explicitly judged `not_comparable` still counts.
+    """
     missing_type = str(row.get("missing_plan_type", "") or "").strip()
     if missing_type in {"missing_both", "missing_plan_i"}:
         return None
@@ -73,7 +81,7 @@ def _normalize_plan_similarity(row: dict) -> Optional[str]:
     label = str(row.get("plan_similarity", "") or "").strip()
     if label in BUCKET_ORDER:
         return label
-    return "not_comparable"
+    return None
 
 
 def _pretty_model(model: str) -> str:

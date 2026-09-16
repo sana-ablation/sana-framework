@@ -380,7 +380,14 @@ python -m sana_analysis.metrics.plan_ablation_analysis logs --judge
 ```
 
 Without `--judge` it prepares the pairs and costs nothing, which is the quick way
-to check that both arms are present in a tree.
+to check that both arms are present in a tree. Both forms first read back the
+`plan_similarity.csv` files already under `--output-dir` and keep every row a
+judge already finished, so the prepare-only run cannot wipe what the judged run
+paid for and an interrupted judging run resumes. `--force` re-judges everything;
+the judge is not deterministic, so it moves numbers that may already be
+published. A run that prepares 0 pairs names the model folders it saw and exits
+non-zero -- `--model` filters the runner-model folder, the judge model is
+`--judge-model`.
 
 Package ownership:
 
