@@ -52,7 +52,6 @@ class RoundPaths:
     logs_dir: Optional[Path]
     semantic: bool
     semantic_reason: str
-    mirror_dir: Optional[Path]
     tasks_dir_spread: list[tuple[str, int]] = field(default_factory=list)
 
 
@@ -118,7 +117,6 @@ def resolve_round(
         logs_dir=logs if logs.is_dir() else None,
         semantic=semantic,
         semantic_reason=("mirror complete" if semantic else (problems[0] if problems else "no mirror")),
-        mirror_dir=mirror if mirror.is_dir() else None,
         tasks_dir_spread=spread,
     )
 
@@ -326,18 +324,31 @@ def analyse_experiment(
 
     combined = combine_rounds(collected)
     combined_dir = out_root / "combined"
-    combined_dir.mkdir(parents=True, exist_ok=True)
-    (combined_dir / "combined_summary.json").write_text(json.dumps(combined, indent=2) + "\n")
-    with (combined_dir / "combined_summary.csv").open("w", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=combined_fieldnames(), extrasaction="ignore")
-        writer.writeheader()
-        for row in combined:
-            writer.writerow({**row, "rounds": ";".join(row["rounds"])})
-    (combined_dir / "rounds.json").write_text(
-        json.dumps({"experiment": exp.name, "rounds": manifest}, indent=2) + "\n"
-    )
 
-    print(f"\n=== combined across {len(collected)} round(s) -> {combined_dir} ===")
+    # A `--round rep2` re-run analysed one round; `combined/` summarises whatever
+    # was analysed. Writing it here would replace a three-round summary with a
+    # one-round one under the same name, and nothing in the file says it was
+    # narrowed. An existing combined/ is left alone instead.
+    skip_combined = bool(round_filter) and (combined_dir / "combined_summary.json").exists()
+    if skip_combined:
+        print(
+            f"\n=== combined across {len(collected)} round(s): NOT written ===\n"
+            f"  --round {round_filter!r} narrowed this run to "
+            f"{', '.join(r['round'] for r in collected)}, and {combined_dir} already\n"
+            f"  summarises a wider set. Re-run without --round to rebuild it."
+        )
+    else:
+        combined_dir.mkdir(parents=True, exist_ok=True)
+        (combined_dir / "combined_summary.json").write_text(json.dumps(combined, indent=2) + "\n")
+        with (combined_dir / "combined_summary.csv").open("w", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=combined_fieldnames(), extrasaction="ignore")
+            writer.writeheader()
+            for row in combined:
+                writer.writerow({**row, "rounds": ";".join(row["rounds"])})
+        (combined_dir / "rounds.json").write_text(
+            json.dumps({"experiment": exp.name, "rounds": manifest}, indent=2) + "\n"
+        )
+        print(f"\n=== combined across {len(collected)} round(s) -> {combined_dir} ===")
     judged = [r for r in collected if r["semantic"]]
     metric = "semantic_match" if judged else "exact_match"
     if judged and len(judged) != len(collected):
@@ -350,7 +361,12 @@ def analyse_experiment(
         sd_text = f"{sd * 100:.1f}pp" if sd is not None else "N/A"
         print(f"  {str(row['condition_model']):<72} {row['n_rounds']:>6} {mean_text:>20} {sd_text:>8}")
 
-    return {"rounds": manifest, "combined": combined, "output_dir": str(out_root)}
+    return {
+        "rounds": manifest,
+        "combined": combined,
+        "output_dir": str(out_root),
+        "combined_written": not skip_combined,
+    }
 
 
 def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:

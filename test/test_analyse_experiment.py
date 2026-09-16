@@ -231,6 +231,46 @@ class TestAnalyseExperimentEndToEnd(unittest.TestCase):
             report = ae.analyse_experiment(exp, round_filter="rep2", no_figures=True)
             self.assertEqual([r["round"] for r in report["rounds"]], ["results-rep2"])
 
+    def test_a_narrowed_rerun_does_not_replace_the_all_rounds_combined(self):
+        """`combined/` summarises whatever was analysed, under a fixed name.
+
+        A `--round rep2` re-run analysed one round, so writing it would replace a
+        three-round summary with a one-round one and nothing in the file would
+        say it had been narrowed.
+        """
+        with TemporaryDirectory() as tmp:
+            exp = Path(tmp) / "exp"
+            for name in ("results", "results-rep2"):
+                _write_round(exp, name, tasks_root=str(Path(tmp) / "tasks"))
+            (Path(tmp) / "tasks").mkdir()
+
+            ae.analyse_experiment(exp, no_figures=True)
+            combined_dir = exp / "analysis" / "combined"
+            before = (combined_dir / "combined_summary.json").read_text()
+            rounds_before = json.loads((combined_dir / "rounds.json").read_text())
+            self.assertEqual(len(rounds_before["rounds"]), 2)
+
+            report = ae.analyse_experiment(exp, round_filter="rep2", no_figures=True)
+
+            self.assertFalse(report["combined_written"])
+            self.assertEqual((combined_dir / "combined_summary.json").read_text(), before)
+            self.assertEqual(
+                len(json.loads((combined_dir / "rounds.json").read_text())["rounds"]), 2
+            )
+            # The narrowed round's own output IS refreshed.
+            self.assertTrue((exp / "analysis" / "results-rep2" / "summary.json").exists())
+
+    def test_a_first_narrowed_run_still_writes_combined(self):
+        """Skipping is about not overwriting; with nothing there, write it."""
+        with TemporaryDirectory() as tmp:
+            exp = Path(tmp) / "exp"
+            for name in ("results", "results-rep2"):
+                _write_round(exp, name, tasks_root=str(Path(tmp) / "tasks"))
+            (Path(tmp) / "tasks").mkdir()
+            report = ae.analyse_experiment(exp, round_filter="rep2", no_figures=True)
+            self.assertTrue(report["combined_written"])
+            self.assertTrue((exp / "analysis" / "combined" / "combined_summary.json").exists())
+
     def test_an_experiment_with_no_rounds_says_so(self):
         with TemporaryDirectory() as tmp:
             exp = Path(tmp) / "exp"

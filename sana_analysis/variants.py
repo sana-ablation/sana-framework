@@ -21,6 +21,7 @@ non-event. Gen 2 is the only generation that spells the planning axis
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Dict, FrozenSet, Iterable, List, Optional, Tuple
 
@@ -197,6 +198,46 @@ def try_parse_variant(name: str) -> Optional[Variant]:
         return parse_variant(name)
     except ValueError:
         return None
+
+
+# `short_name` drops these. `results`, `k` and `skills` are the three segments
+# `Variant.matches` ignores, so they are not part of condition identity either.
+_SHORTEN_DROPPED_PAIRS: FrozenSet[str] = frozenset({"results", "skills"})
+_SHORTEN_DROPPED_K = re.compile(r"k\d+")
+
+
+def short_name(name: str) -> str:
+    """`name` with the segments that are not condition identity removed.
+
+    `results`, `k` and `skills` go; everything else stays, including flags such
+    as `nos3`, which are what distinguish the web arm from its no-S3 twin. A
+    string this module cannot decode is returned unchanged.
+
+    The decoder decides what to drop, but it filters the RAW tokens rather than
+    re-rendering them, so a gen-1 name shortens exactly as it always has -- which
+    is what `answer_failure.audit_runner` needs, because the result is a journal
+    filename and journals written by earlier runs still have to resolve.
+    Re-deriving the grammar instead of filtering produced trailing underscores on
+    every gen-4 name.
+    """
+    if try_parse_variant(name) is None:
+        return name
+
+    tokens = [token for token in str(name).replace("__", "_").split("_") if token]
+    kept: List[str] = []
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token in _SHORTEN_DROPPED_PAIRS:
+            # `results rich`, `skills off`: the value travels with the key.
+            index += 2
+            continue
+        if _SHORTEN_DROPPED_K.fullmatch(token):
+            index += 1
+            continue
+        kept.append(token)
+        index += 1
+    return "_".join(kept)
 
 
 def axis_codes(name: str) -> Dict[str, Optional[str]]:
