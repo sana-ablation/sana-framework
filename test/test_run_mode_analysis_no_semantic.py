@@ -94,9 +94,33 @@ class TestNoSemanticLoad(unittest.TestCase):
                 self.assertEqual(record["log_error_bucket_display"], "")
 
 
+def _write_discovery_fixture(tmp: Path) -> None:
+    """Enough of a task + trace to give one real record a populated bin.
+
+    `build_search_depth_buckets` and `build_reasoning_density_buckets` only
+    place a record into a bin once discovery has a matching task (for gold
+    dataset counts) and a matching trace (for the search-call count). Without
+    this, every bin stays at n=0 and the "no zeroed judgment columns" test
+    below would have nothing populated to check.
+    """
+    task_dir = tmp / "tasks" / "k-1-d-1"
+    task_dir.mkdir(parents=True, exist_ok=True)
+    (task_dir / "task_1.json").write_text(json.dumps({"datasets_used": ["ds_a"]}))
+
+    trace_dir = tmp / "results" / "traces" / "modes" / "openai_gpt-5-mini" / VARIANT / "k-1-d-1"
+    trace_dir.mkdir(parents=True, exist_ok=True)
+    trace_line = json.dumps({
+        "task_id": "k-1-d-1/task_1.json",
+        "tool": "search_ideal",
+        "result_dataset_ids": ["ds_a"],
+    })
+    (trace_dir / "task_1.jsonl").write_text(trace_line + "\n")
+
+
 class TestNoSemanticOutputShape(unittest.TestCase):
     def _run(self, tmp: Path) -> Path:
         results_dir = _write_unaudited_tree(tmp / "results")
+        _write_discovery_fixture(tmp)
         out_dir = tmp / "analysis"
         run_mode_analysis.run_analysis(
             results_dir=str(results_dir),
@@ -149,6 +173,40 @@ class TestNoSemanticOutputShape(unittest.TestCase):
             self.assertFalse(marker["semantic"])
             self.assertEqual(marker["semantic_match_source"], "exact_match")
             self.assertEqual(sorted(marker["omitted"]), sorted(run_mode_analysis.SEMANTIC_ONLY_OUTPUTS))
+
+    def _populated_bins(self, payload) -> list[dict]:
+        """Every bin entry that actually holds records."""
+        found = []
+        def walk(node):
+            if isinstance(node, dict):
+                if isinstance(node.get("n"), int) and node["n"] > 0 and "bins" not in node:
+                    found.append(node)
+                for value in node.values():
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+        walk(payload)
+        return found
+
+    def test_bucket_files_carry_no_zeroed_judgment_columns(self):
+        """A bin with real records must not report semantic_correct: 0.
+
+        Four runs reported as none-correct, none-incorrect and none-blank reads
+        as a result and is not one.
+        """
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            for name in ("search_depth_buckets.json", "reasoning_density_buckets.json"):
+                payload = json.loads((out_dir / name).read_text())
+                populated = self._populated_bins(payload)
+                self.assertTrue(populated, f"{name} had no populated bin to check")
+                for entry in populated:
+                    for bucket in run_mode_analysis.SEMANTIC_BUCKETS:
+                        self.assertNotIn(bucket, entry, f"{name} bin: {entry}")
+                        self.assertNotIn(f"{bucket}_rate", entry)
+                    for bucket in run_mode_analysis.DISPLAY_LOG_ERROR_BUCKETS:
+                        self.assertNotIn(bucket, entry)
 
 
 if __name__ == "__main__":

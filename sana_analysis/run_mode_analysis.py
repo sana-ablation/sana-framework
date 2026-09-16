@@ -1469,8 +1469,10 @@ def build_reasoning_density_curves(
     )
 
 
-def _empty_bucket_entry() -> dict:
+def _empty_bucket_entry(*, semantic: bool = True) -> dict:
     entry = {"n": 0}
+    if not semantic:
+        return entry
     for bucket in SEMANTIC_BUCKETS:
         entry[bucket] = 0
         entry[f"{bucket}_rate"] = 0.0
@@ -1480,7 +1482,9 @@ def _empty_bucket_entry() -> dict:
     return entry
 
 
-def _finalize_bucket_entry(entry: dict) -> dict:
+def _finalize_bucket_entry(entry: dict, *, semantic: bool = True) -> dict:
+    if not semantic:
+        return entry
     total = int(entry.get("n", 0) or 0)
     for bucket in SEMANTIC_BUCKETS:
         count = int(entry.get(bucket, 0) or 0)
@@ -1491,8 +1495,10 @@ def _finalize_bucket_entry(entry: dict) -> dict:
     return entry
 
 
-def _update_bucket_entry(entry: dict, record: dict) -> None:
+def _update_bucket_entry(entry: dict, record: dict, *, semantic: bool = True) -> None:
     entry["n"] = int(entry.get("n", 0) or 0) + 1
+    if not semantic:
+        return
     semantic_bucket = str(record.get("semantic_bucket", ""))
     log_error_bucket = str(record.get("log_error_bucket_display", ""))
     if semantic_bucket in SEMANTIC_BUCKETS:
@@ -1501,7 +1507,9 @@ def _update_bucket_entry(entry: dict, record: dict) -> None:
         entry[log_error_bucket] = int(entry.get(log_error_bucket, 0) or 0) + 1
 
 
-def _init_binned_outcome_row(model: str, variant: str, bin_labels: List[str]) -> dict:
+def _init_binned_outcome_row(
+    model: str, variant: str, bin_labels: List[str], *, semantic: bool = True
+) -> dict:
     axes = _parse_variant(variant)
     return {
         "model": model,
@@ -1513,19 +1521,21 @@ def _init_binned_outcome_row(model: str, variant: str, bin_labels: List[str]) ->
         "plan_skills": axes["plan_skills"],
         "k": axes["k"],
         "sc": axes["sc"],
-        "bins": {label: _empty_bucket_entry() for label in bin_labels},
+        "bins": {label: _empty_bucket_entry(semantic=semantic) for label in bin_labels},
     }
 
 
 def build_search_depth_buckets(
     by_key_records: Dict[str, List[dict]],
     task_metrics_by_key: Dict[str, Dict[str, dict]],
+    *,
+    semantic: bool = True,
 ) -> dict:
     bin_labels = [label for label, _ in _SEARCH_DEPTH_BINS]
     out: dict = {}
     for key in sorted(by_key_records.keys(), key=_condition_model_sort_key):
         model, variant = _split_cm_key(key)
-        row = _init_binned_outcome_row(model, variant, bin_labels)
+        row = _init_binned_outcome_row(model, variant, bin_labels, semantic=semantic)
         task_metrics = task_metrics_by_key.get(key, {})
         for record in by_key_records[key]:
             task_metric = task_metrics.get(str(record.get("task_stem", "")))
@@ -1535,9 +1545,9 @@ def build_search_depth_buckets(
             if search_calls <= 0:
                 continue
             bin_label = _assign_search_depth_bin(search_calls)
-            _update_bucket_entry(row["bins"][bin_label], record)
+            _update_bucket_entry(row["bins"][bin_label], record, semantic=semantic)
         for label in bin_labels:
-            row["bins"][label] = _finalize_bucket_entry(row["bins"][label])
+            row["bins"][label] = _finalize_bucket_entry(row["bins"][label], semantic=semantic)
         out[key] = row
     return out
 
@@ -1545,22 +1555,24 @@ def build_search_depth_buckets(
 def build_reasoning_density_buckets(
     by_key_records: Dict[str, List[dict]],
     tasks_dir: str,
+    *,
+    semantic: bool = True,
 ) -> dict:
     bin_labels = [label for label, _ in _REASONING_DENSITY_BINS]
     task_gold_counts = load_task_gold_counts(tasks_dir)
     out: dict = {}
     for key in sorted(by_key_records.keys(), key=_condition_model_sort_key):
         model, variant = _split_cm_key(key)
-        row = _init_binned_outcome_row(model, variant, bin_labels)
+        row = _init_binned_outcome_row(model, variant, bin_labels, semantic=semantic)
         for record in by_key_records[key]:
             task_stem = str(record.get("task_stem", ""))
             n_docs = task_gold_counts.get(task_stem)
             if n_docs is None:
                 continue
             bin_label = _assign_reasoning_density_bin(n_docs)
-            _update_bucket_entry(row["bins"][bin_label], record)
+            _update_bucket_entry(row["bins"][bin_label], record, semantic=semantic)
         for label in bin_labels:
-            row["bins"][label] = _finalize_bucket_entry(row["bins"][label])
+            row["bins"][label] = _finalize_bucket_entry(row["bins"][label], semantic=semantic)
         out[key] = row
     return out
 
@@ -3797,8 +3809,8 @@ def run_analysis(
     tool_errors = run_tool_errors(base_by_key_records)
     search_depth_curve, search_depth_curve_by_cm = build_search_depth_curves(by_key_records, task_metrics_by_key)
     reasoning_density_curve, reasoning_density_curve_by_cm = build_reasoning_density_curves(by_key_records, tasks_dir)
-    search_depth_buckets = build_search_depth_buckets(by_key_records, task_metrics_by_key)
-    reasoning_density_buckets = build_reasoning_density_buckets(by_key_records, tasks_dir)
+    search_depth_buckets = build_search_depth_buckets(by_key_records, task_metrics_by_key, semantic=semantic)
+    reasoning_density_buckets = build_reasoning_density_buckets(by_key_records, tasks_dir, semantic=semantic)
     search_bottleneck_meta = build_search_bottleneck_meta(grouped_traces)
     search_task_gold = (
         load_task_gold_source_ids(tasks_dir)
