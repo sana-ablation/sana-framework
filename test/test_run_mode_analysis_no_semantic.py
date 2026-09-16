@@ -274,6 +274,116 @@ class TestNoSemanticOutputShape(unittest.TestCase):
             self.assertIn("semantic_match", " ".join(sourced.values()))
             self.assertIn("mean_semantic_match", " ".join(sourced.values()))
 
+    def test_the_marker_names_the_file_whose_name_is_the_measurement(self):
+        """`semantic_match.json` IS written under --no-semantic.
+
+        A reader who opens the obviously-named file sees `"semantic_match": 0.65`
+        where 0.65 is the exact-match score. The marker has to name that file, and
+        `by_model/*/semantic_match.json`, or the disclosure skips the one artifact
+        most likely to be read on its own.
+        """
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            self.assertTrue((out_dir / "semantic_match.json").exists())
+            keys = " ".join(
+                json.loads((out_dir / "no_semantic.json").read_text())[
+                    "fields_sourced_from_exact_match"
+                ]
+            )
+            self.assertIn("semantic_match.json", keys)
+            self.assertIn("by_model/*/semantic_match.json", keys)
+
+    def test_the_marker_names_search_efficiency(self):
+        """`search_efficiency` is semantic_match / avg_search_calls, so it is a
+        lexical number too and nothing else says so."""
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            sourced = json.loads((out_dir / "no_semantic.json").read_text())[
+                "fields_sourced_from_exact_match"
+            ]
+            self.assertIn("search_efficiency", " ".join(sourced.values()))
+
+    def test_per_task_csv_has_no_all_blank_judgment_column(self):
+        """`log_error_bucket_display` is "" on every row when no judge ran."""
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            paths = [out_dir / "per_task_semantic.csv"]
+            paths += sorted((out_dir / "by_model").rglob("per_task_semantic.csv"))
+            self.assertTrue(len(paths) > 1, "no by_model copy was written")
+            for path in paths:
+                with path.open(newline="") as handle:
+                    reader = csv.DictReader(handle)
+                    self.assertNotIn("log_error_bucket_display", reader.fieldnames or [], str(path))
+                    rows = list(reader)
+                if path == paths[0]:
+                    self.assertTrue(rows, f"{path} had no rows to check")
+
+
+class TestStaleSemanticArtifactsAreRemoved(unittest.TestCase):
+    """A --no-semantic re-run must not leave a judged run's numbers behind.
+
+    `analyse_experiment` writes every round to a stable `<exp>/analysis/<round>`
+    and is built to be re-run, so a round that was judged and later flips to
+    --no-semantic lands a fresh `no_semantic.json` -- which lists these files as
+    `omitted` -- right next to the files themselves.
+    """
+
+    def _prepopulate(self, out_dir: Path) -> list[Path]:
+        planted = []
+        dirs = [out_dir, out_dir / "by_model" / "openai_gpt-5-mini", out_dir / "figures"]
+        for directory in dirs:
+            directory.mkdir(parents=True, exist_ok=True)
+            for name in run_mode_analysis.SEMANTIC_ONLY_OUTPUTS:
+                path = directory / name
+                path.write_text('{"stale": "judged numbers from an older row set"}')
+                planted.append(path)
+        return planted
+
+    def test_a_no_semantic_run_deletes_the_judged_artifacts_it_finds(self):
+        with TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            results_dir = _write_unaudited_tree(tmp_path / "results")
+            _write_discovery_fixture(tmp_path)
+            out_dir = tmp_path / "analysis"
+            planted = self._prepopulate(out_dir)
+
+            run_mode_analysis.run_analysis(
+                results_dir=str(results_dir),
+                base_results_dir=str(results_dir),
+                turn_waste_grouped_dir=None,
+                traces_dir=str(tmp_path / "results" / "traces" / "modes"),
+                tasks_dir=str(tmp_path / "tasks"),
+                output_dir=str(out_dir),
+                no_figures=True,
+                no_semantic=True,
+            )
+
+            for path in planted:
+                self.assertFalse(
+                    path.exists(),
+                    f"{path} survived a --no-semantic run while no_semantic.json calls it omitted",
+                )
+            # And the marker that says they are absent is actually there.
+            self.assertTrue((out_dir / "no_semantic.json").exists())
+
+    def test_the_figures_csvs_go_too_even_though_cleanup_only_unlinks_pdfs(self):
+        with TemporaryDirectory() as tmp:
+            out_dir = Path(tmp) / "analysis"
+            (out_dir / "figures").mkdir(parents=True)
+            csv_names = [n for n in run_mode_analysis.SEMANTIC_ONLY_OUTPUTS if n.endswith(".csv")]
+            self.assertTrue(csv_names)
+            for name in csv_names:
+                (out_dir / "figures" / name).write_text("stale\n")
+            keep = out_dir / "figures" / "some_other_figure_data.csv"
+            keep.write_text("keep me\n")
+
+            removed = run_mode_analysis._remove_stale_semantic_outputs(out_dir)
+
+            self.assertEqual(
+                sorted(p.name for p in removed), sorted(csv_names)
+            )
+            self.assertTrue(keep.exists(), "an unrelated CSV must not be swept up")
+
 
 if __name__ == "__main__":
     unittest.main()

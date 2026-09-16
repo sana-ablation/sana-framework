@@ -9,6 +9,12 @@ shapes for downstream paper-generation scripts.
 Reads semantic-audited eval_results.csv files from:
   results-ec2_semantic/modes/{model}/{variant}/eval_results.csv
 
+With --no-semantic it reads an UNAUDITED tree instead: only `exact_match` is
+required, `semantic_match` is that lexical score under a semantic name, and the
+judge-only outputs listed in SEMANTIC_ONLY_OUTPUTS are deleted from the output
+directory rather than written. A `no_semantic.json` marker names every field
+whose value came from `exact_match`.
+
 Joins the richer base run metadata from:
   results-ec2/modes/{model}/{variant}/agent_results.jsonl
 
@@ -41,6 +47,10 @@ Outputs (default: analysis_results_mode_semantic/):
   per_task_search_bottleneck.csv
   per_task_search_tool_bottleneck.csv
   figures/ (unless --no-figures)
+
+Under --no-semantic, failure.json, semantic_buckets.json, log_error_buckets.json
+and semantic_error_crosstab.json are absent rather than empty, and
+no_semantic.json is written in their place.
 """
 
 from __future__ import annotations
@@ -214,6 +224,15 @@ AUDITOR_SCRIPT = "sana_analysis/skills/semantic-eval-auditor/scripts/rewrite_sem
 # omitted from the output directory rather than written empty: a header-only CSV
 # or an all-zero bucket map that looks like a result is the failure this package
 # spent PR #5 retiring.
+#
+# This list is the user-facing manifest -- `no_semantic.json` publishes it as
+# `omitted`, and `_remove_stale_semantic_outputs` deletes exactly these names
+# from a directory a judged run wrote earlier. It is NOT one filter's input:
+# only the four .json members ever reach the `files` dict, so only those four are
+# dropped by the `not semantic` filter below. The two .csv members are written
+# into `figures/` by `generate_delta_figures`, which is suppressed upstream by
+# the `if semantic:` guard in `generate_figures`. Do not "fix" the filter to
+# match the list; the two mechanisms are deliberate and both are needed.
 SEMANTIC_ONLY_OUTPUTS = [
     "failure.json",
     "semantic_buckets.json",
@@ -2081,7 +2100,16 @@ def build_per_task_rows(
     by_key_records: Dict[str, List[dict]],
     task_metrics_by_key: Dict[str, Dict[str, dict]],
     source_field_order: List[str],
+    *,
+    semantic: bool = True,
 ) -> Tuple[List[dict], List[str]]:
+    """Per-task rows, and the fieldnames to write them under.
+
+    Under --no-semantic `log_error_bucket_display` is blank on every row -- it is
+    a judge's output and no judge ran -- so the column is dropped rather than
+    written empty for all of them. `write_csv` ignores extra keys, so the rows
+    themselves need no filtering.
+    """
     discovery_fields = [
         "D_ret",
         "D_ret_precision",
@@ -2146,7 +2174,7 @@ def build_per_task_rows(
         "k",
         "sc",
         "task_stem",
-    ] + source_field_order + ["log_error_bucket_display"] + discovery_fields
+    ] + source_field_order + (["log_error_bucket_display"] if semantic else []) + discovery_fields
 
     deduped_fieldnames: List[str] = []
     for field in fieldnames:
@@ -2354,6 +2382,34 @@ def _cleanup_figure_dir(fig_dir: Path) -> None:
     fig_dir.mkdir(parents=True, exist_ok=True)
     for path in fig_dir.glob("*.pdf"):
         path.unlink()
+
+
+def _remove_stale_semantic_outputs(out_dir: Path) -> List[Path]:
+    """Delete judge-only artifacts an earlier judged run left in `out_dir`.
+
+    `analyse_experiment` writes every round to a stable `<exp>/analysis/<round>`
+    and is designed to be re-run, so a round that was judged and later flips to
+    --no-semantic would otherwise keep its old bucket files -- computed from a
+    smaller, older row set -- right beside a fresh `no_semantic.json` swearing
+    they are absent. Filtering the write list is not enough; the files have to go.
+
+    `_cleanup_figure_dir` only unlinks `*.pdf`, so the two `figures/*.csv`
+    members of SEMANTIC_ONLY_OUTPUTS are removed here too.
+    """
+    targets: List[Path] = [out_dir / name for name in SEMANTIC_ONLY_OUTPUTS]
+    by_model = out_dir / "by_model"
+    if by_model.is_dir():
+        for model_dir in sorted(by_model.iterdir()):
+            if model_dir.is_dir():
+                targets += [model_dir / name for name in SEMANTIC_ONLY_OUTPUTS]
+    targets += [out_dir / "figures" / name for name in SEMANTIC_ONLY_OUTPUTS]
+
+    removed: List[Path] = []
+    for path in targets:
+        if path.is_file():
+            path.unlink()
+            removed.append(path)
+    return removed
 
 
 def _search_call_cumulative_fieldnames() -> List[str]:
@@ -3800,6 +3856,10 @@ def run_analysis(
             "semantic_match is sourced from exact_match, and these outputs are "
             "omitted rather than written empty: " + ", ".join(SEMANTIC_ONLY_OUTPUTS)
         )
+        # Omitting them from the write list leaves any earlier judged run's
+        # copies in place, next to a marker that says they are absent.
+        for path in _remove_stale_semantic_outputs(out_dir):
+            print(f"  Removed stale judged artifact {path}")
     by_key_records, source_field_order = load_semantic_results_grouped(
         results_dir, model_filters=model_filters, semantic=semantic
     )
@@ -3849,7 +3909,9 @@ def run_analysis(
     crosstab_rows = build_semantic_error_crosstab(by_key_records, variant_rows) if semantic else []
     turn_waste_global_groups, turn_waste_global_group_rows, turn_waste_joined_failed_rows = {}, [], []
     turn_waste_condition_model_groups = {}
-    per_task_rows, per_task_fieldnames = build_per_task_rows(by_key_records, task_metrics_by_key, source_field_order)
+    per_task_rows, per_task_fieldnames = build_per_task_rows(
+        by_key_records, task_metrics_by_key, source_field_order, semantic=semantic
+    )
     per_task_retrieval_rows, per_task_retrieval_fieldnames = build_per_task_retrieval_rows(task_metrics_by_key)
 
     files = {
@@ -3890,8 +3952,17 @@ def run_analysis(
             "semantic_match_source": "exact_match",
             "omitted": SEMANTIC_ONLY_OUTPUTS,
             "fields_sourced_from_exact_match": {
-                "summary.json, variant_summary.json, by_model/*/": "semantic_match",
+                "semantic_match.json, by_model/*/semantic_match.json": (
+                    "semantic_match -- every value in the file whose name IS the "
+                    "measurement is the lexical exact_match score"
+                ),
+                "summary.json, variant_summary.json, by_model/*/": (
+                    "semantic_match, and search_efficiency "
+                    "(= semantic_match / avg_search_calls)"
+                ),
                 "search_depth.json, reasoning_density.json": "mean_semantic_match",
+                "per_task_semantic.csv": "semantic_match",
+                "console summary": "the per-row score, printed as 'exact=' under --no-semantic",
                 "figures/": "any axis or title reading 'Semantic Match'",
             },
             "reason": (
@@ -4127,13 +4198,17 @@ def run_analysis(
         print(f"  Wrote figures to {out_dir / 'figures'}")
 
     print(f"\nSummary ({len(summary_rows)} model x variant rows):")
+    # `semantic_match` holds the lexical score under --no-semantic, so the label
+    # says which one it is. A row printed `semantic=65.0%` scrolls far below the
+    # banner that explained no judge ran.
+    score_label = "semantic" if semantic else "exact"
     for row in summary_rows:
         semantic_pct = f"{float(row['semantic_match']) * 100:.1f}%" if row.get("semantic_match") is not None else "N/A"
         d_ret = f"{row.get('D_ret'):.2f}" if row.get("D_ret") is not None else "N/A"
         d_acc = f"{row.get('D_acc'):.2f}" if row.get("D_acc") is not None else "N/A"
         print(
             f"  {row['condition_model']:<70} "
-            f"semantic={semantic_pct:<7} D_ret={d_ret:<5} D_acc={d_acc:<5} n={row.get('n')}"
+            f"{score_label}={semantic_pct:<7} D_ret={d_ret:<5} D_acc={d_acc:<5} n={row.get('n')}"
         )
 
     return {
