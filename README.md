@@ -270,7 +270,59 @@ flowchart LR
   D --> F["paper_figures"]
 ```
 
-LakeQA semantic mode analysis:
+### Input contract
+
+`sana_analysis` reads the tree `sana_evaluation` writes:
+
+```
+<results>/modes/<model>/<variant>/eval_results.csv   per-task rows
+<results>/traces/modes/<model>/<variant>/            per-task trace JSONL
+<logs>/modes/<model>/<variant>/                      per-task run logs
+```
+
+`<variant>` is a variant directory name -- `sana_evaluation.cli` writes them and
+`sana_analysis/variants.py` reads them. All four naming generations parse.
+
+`eval_results.csv` must carry `exact_match`. Everything else the analysis needs
+is either computed from the traces or produced by the semantic auditor, which
+adds five columns: `semantic_match`, `semantic_reason`, `semantic_bucket`,
+`log_error_bucket`, `log_error_evidence`.
+
+### Without model judging
+
+The cheapest useful analysis needs no judge and no API key: exact-match accuracy,
+cost, tool calls, search calls and precision, cycle counts.
+
+```bash
+python -m sana_analysis.run_mode_analysis \
+  --results-dir results/modes \
+  --base-results-dir results/modes \
+  --traces-dir results/traces/modes \
+  --tasks-dir benchmarks/lakeqa/tasks-mini/tasks \
+  --output-dir analysis_results_mode \
+  --no-semantic
+```
+
+`semantic_match` is sourced from `exact_match`, and every output that only a
+judge can produce -- `failure.json`, `semantic_buckets.json`,
+`log_error_buckets.json`, `semantic_error_crosstab.json`,
+`semantic_delta_ablation.csv`, `paired_mode_metrics.csv` -- is **omitted from
+the output directory**, not written empty. `no_semantic.json` records what was
+skipped and why.
+
+### With model judging
+
+Audit the raw tree first. The auditor mirrors it into `<results>_semantic/`,
+leaving the source untouched; cells whose mirror already exists and validates are
+skipped, so re-running is a no-op on finished work.
+
+```bash
+python sana_analysis/skills/semantic-eval-auditor/scripts/rewrite_semantic_eval_results.py \
+  --source results \
+  --logs logs
+```
+
+Then analyse the mirror:
 
 ```bash
 python -m sana_analysis.run_mode_analysis \
@@ -281,20 +333,28 @@ python -m sana_analysis.run_mode_analysis \
   --output-dir analysis_results_mode_semantic
 ```
 
-Kramabench semantic mode analysis:
+For Kramabench, swap `--tasks-dir` for `benchmarks/kramabench/tasks-mini/tasks`
+and the result and trace roots for their `-kramabench` equivalents.
+
+Running the second command against an unaudited tree raises and names both
+remedies rather than silently reporting lexical numbers as semantic ones.
+
+### Plan similarity
+
+The plan ablation's judged measurement -- the standard-plan arm's plan text
+against the ideal arm's -- has its own runner:
 
 ```bash
-python -m sana_analysis.run_mode_analysis \
-  --results-dir results-kramabench_semantic/modes \
-  --base-results-dir results-kramabench/modes \
-  --traces-dir results-kramabench/traces/modes \
-  --tasks-dir benchmarks/kramabench/tasks-mini/tasks \
-  --output-dir analysis_results_mode_kramabench_semantic
+python -m sana_analysis.metrics.plan_ablation_analysis logs --judge
 ```
+
+Without `--judge` it prepares the pairs and costs nothing, which is the quick way
+to check that both arms are present in a tree.
 
 Package ownership:
 
 - `dataindexing/`: offline artifact generation and hybrid-search index build.
 - `sana-profiling/`: benchmark conversion workflow and runtime-profile authoring.
 - `sana_evaluation/`: runners, tool wiring, instrumentation, and model adapters.
-- `sana_analysis/`: result aggregation, semantic analysis, and report generation.
+- `sana_analysis/`: result aggregation, semantic analysis, the judge skills that
+  produce it, and report generation.
