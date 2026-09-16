@@ -7,7 +7,7 @@ from tempfile import TemporaryDirectory
 
 _SCRIPT_DIR = (
     Path(__file__).resolve().parent.parent
-    / ".agents"
+    / "sana_analysis"
     / "skills"
     / "semantic-eval-auditor"
     / "scripts"

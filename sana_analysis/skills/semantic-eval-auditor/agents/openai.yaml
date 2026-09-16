@@ -1,0 +1,4 @@
+interface:
+  display_name: "Semantic Eval Auditor"
+  short_description: "Rewrite eval_results.csv with agent-based semantic labels"
+  default_prompt: "Use $semantic-eval-auditor and start by offering the user a choice between codex backend and api backend before processing any files."
