@@ -25,10 +25,16 @@ die () { echo "error: $*" >&2; exit 1; }
 [ -f "$AUDITOR" ] || die "auditor not found at $AUDITOR"
 
 # Read --experiment / --round without consuming them: analyse.sh needs them too.
+# Both `--experiment foo` and `--experiment=foo` are recognised, matching
+# analyse.sh's argparse pass-through.
 EXPERIMENT=""
 ROUND=""
 prev=""
 for arg in "$@"; do
+  case "$arg" in
+    --experiment=*) EXPERIMENT="${arg#--experiment=}" ;;
+    --round=*) ROUND="${arg#--round=}" ;;
+  esac
   case "$prev" in
     --experiment) EXPERIMENT="$arg" ;;
     --round) ROUND="$arg" ;;

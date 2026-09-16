@@ -45,6 +45,34 @@ def _write_round(exp: Path, round_name: str, *, tasks_root: str, n: int = 2,
     return results
 
 
+def _write_complete_mirror(exp: Path, round_name: str) -> Path:
+    """A mirror that `collect_mirror_issues` accepts, so the round reads complete."""
+    source = exp / round_name
+    mirror = exp / f"{round_name}_semantic"
+    for src_csv in source.rglob("eval_results.csv"):
+        dst_csv = mirror / src_csv.relative_to(source)
+        dst_csv.parent.mkdir(parents=True, exist_ok=True)
+        rows = list(csv.DictReader(src_csv.open(newline="")))
+        fieldnames = list(rows[0]) + [
+            "semantic_match", "semantic_reason", "semantic_bucket",
+            "log_error_bucket", "log_error_evidence",
+        ]
+        with dst_csv.open("w", newline="") as handle:
+            writer = csv.DictWriter(handle, fieldnames=fieldnames)
+            writer.writeheader()
+            for row in rows:
+                correct = str(row["exact_match"]).strip() in {"1", "1.0"}
+                writer.writerow({
+                    **row,
+                    "semantic_match": "1" if correct else "0",
+                    "semantic_reason": "matches the expected answer" if correct else "differs",
+                    "semantic_bucket": "semantic_correct" if correct else "semantic_incorrect",
+                    "log_error_bucket": "",
+                    "log_error_evidence": "",
+                })
+    return mirror
+
+
 class TestDiscoverRounds(unittest.TestCase):
     def test_bare_results_and_reps_are_all_rounds(self):
         with TemporaryDirectory() as tmp:
@@ -214,27 +242,35 @@ class TestAnalyseExperimentEndToEnd(unittest.TestCase):
 
 class TestPrintAuditPlan(unittest.TestCase):
     def test_lists_only_rounds_without_a_complete_mirror(self):
-        import io
+        """A round with a valid mirror must NOT be listed.
+
+        Listing it would send an already-audited round back to the judge, which
+        is the spend this whole separation exists to prevent.
+        """
         import contextlib
+        import io
 
         with TemporaryDirectory() as tmp:
             exp = Path(tmp) / "exp"
-            for name in ("results", "results-rep2"):
+            for name in ("results", "results-rep2", "results-rep3"):
                 _write_round(exp, name, tasks_root=str(Path(tmp) / "tasks"))
             (exp / "logs").mkdir(parents=True)
+            _write_complete_mirror(exp, "results-rep2")
+
+            # Guard the fixture itself: rep2 must actually read as complete.
+            from sana_analysis import analyse_experiment as ae_mod
+            self.assertTrue(
+                ae_mod.resolve_round(exp, exp / "results-rep2").semantic,
+                "fixture is wrong: rep2's mirror is not being accepted as complete",
+            )
 
             buffer = io.StringIO()
             with contextlib.redirect_stdout(buffer):
                 ae.main(["--experiment", str(exp), "--print-audit-plan"])
 
-            lines = [line for line in buffer.getvalue().splitlines() if line.strip()]
-            self.assertEqual(len(lines), 2)
-            names = [line.split("\t")[0] for line in lines]
-            self.assertEqual(names, ["results", "results-rep2"])
-            self.assertTrue(lines[0].split("\t")[1].endswith("results"))
-            self.assertTrue(lines[0].split("\t")[2].endswith("results_semantic"))
-            self.assertEqual(lines[0].split("\t")[3], str(exp / "logs"))
-            self.assertEqual(lines[1].split("\t")[3], "")
+            names = [line.split("\t")[0] for line in buffer.getvalue().splitlines() if line.strip()]
+            self.assertEqual(names, ["results", "results-rep3"])
+            self.assertNotIn("results-rep2", names)
 
 
 if __name__ == "__main__":
