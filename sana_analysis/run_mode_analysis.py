@@ -984,7 +984,13 @@ def _normalize_eval_row(row: dict, model: str, variant: str, csv_path: Path, *, 
     else:
         # No judge ran. The lexical score stands in, and every bucket output
         # derived from a judgment is omitted downstream rather than defaulted.
-        semantic_match = _parse_semantic_match(row.get("exact_match"), csv_path)
+        #
+        # A crashed task records no answer, so exact_match is blank. The judged
+        # path already treats that as 0.0 via as_float, and a run that produced
+        # no answer is not a correct one. --no-semantic must agree, or it cannot
+        # analyse any tree containing a crashed run -- which is most real trees.
+        raw_exact = str(row.get("exact_match", "") or "").strip()
+        semantic_match = _parse_semantic_match(raw_exact, csv_path) if raw_exact else 0.0
 
     key = _cm_key(model, variant)
     axes = _parse_variant(variant)

@@ -93,6 +93,47 @@ class TestNoSemanticLoad(unittest.TestCase):
             for record in next(iter(by_key.values())):
                 self.assertEqual(record["log_error_bucket_display"], "")
 
+    def test_a_crashed_row_with_blank_exact_match_is_scored_zero(self):
+        """A crashed task records no answer. The judged path reads that as 0.0
+        via as_float; --no-semantic must agree rather than raise, or it cannot
+        analyse any tree containing a crashed run.
+        """
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            results_dir = _write_unaudited_tree(root)
+            csv_path = next(results_dir.rglob("eval_results.csv"))
+            rows = list(csv.DictReader(csv_path.open(newline="")))
+            rows[0]["exact_match"] = ""
+            with csv_path.open("w", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+                writer.writeheader()
+                writer.writerows(rows)
+
+            by_key, _fields = run_mode_analysis.load_semantic_results_grouped(
+                str(results_dir), semantic=False
+            )
+            records = next(iter(by_key.values()))
+            self.assertEqual(records[0]["_semantic_match"], 0.0)
+            self.assertEqual(records[0]["_exact_match"], 0.0)
+
+    def test_a_nonsense_exact_match_still_raises(self):
+        """Absence is tolerated; garbage is not."""
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            results_dir = _write_unaudited_tree(root)
+            csv_path = next(results_dir.rglob("eval_results.csv"))
+            rows = list(csv.DictReader(csv_path.open(newline="")))
+            rows[0]["exact_match"] = "2.0"
+            with csv_path.open("w", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+                writer.writeheader()
+                writer.writerows(rows)
+
+            with self.assertRaises(ValueError):
+                run_mode_analysis.load_semantic_results_grouped(
+                    str(results_dir), semantic=False
+                )
+
 
 def _write_discovery_fixture(tmp: Path) -> None:
     """Enough of a task + trace to give one real record a populated bin.
