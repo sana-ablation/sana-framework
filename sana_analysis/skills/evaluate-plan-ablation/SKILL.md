@@ -60,6 +60,33 @@ Use filters when the user gives a model, mode, or task:
 
 If `.venv/bin/python` is unavailable, use the local Python that has the repo dependencies.
 
+## Scripted alternative
+
+The whole loop also runs without an agent:
+
+```bash
+python -m sana_analysis.metrics.plan_ablation_analysis <log-root> --judge \
+  --backend codex --judge-model gpt-5.4-mini --limit-rows 5
+```
+
+Without `--judge` it prepares pairs and writes the CSV with every judgable row
+marked `pending`, which costs nothing and is the cheap way to check discovery.
+`--limit-files` and `--limit-rows` bound a smoke run. Re-running skips rows
+already marked `complete`, so an interrupted run resumes.
+
+The label vocabulary is `PLAN_SIMILARITY_LABELS` in
+`sana_analysis/metrics/plan_ablation_analysis.py`, and the prompt is built from
+it. The rubric below is the judgment *standard* -- what each label means and how
+to calibrate it -- not the list of labels; a label added here and not there would
+not reach the judge, and `test_plan_ablation_runner.py` asserts the set matches
+`plan_ablation_figure.BUCKET_ORDER`.
+
+Rows the prepare stage already settled -- a missing plan, or a runner model
+mismatch -- are prefilled and never sent to a judge.
+
+The workflow above this section is unchanged: the interactive, subagent-driven
+path still works and is still the right tool when a batch needs human calibration.
+
 ## Subagent Policy
 
 For row-level plan comparisons, use cheap subagents by default:
