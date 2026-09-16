@@ -208,6 +208,31 @@ class TestNoSemanticOutputShape(unittest.TestCase):
                     for bucket in run_mode_analysis.DISPLAY_LOG_ERROR_BUCKETS:
                         self.assertNotIn(bucket, entry)
 
+    def test_per_model_outputs_carry_no_zeroed_judgment_columns(self):
+        """by_model/ is a filtered copy of the same rows and must omit the same columns.
+
+        The top-level file omitting them while the per-model copy keeps them is
+        worse than either alone: the two disagree about the same run.
+        """
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            per_model = sorted((out_dir / "by_model").rglob("variant_summary.json"))
+            self.assertTrue(per_model, "no by_model/variant_summary.json was written")
+            for path in per_model:
+                for row in json.loads(path.read_text()):
+                    for bucket in run_mode_analysis.SEMANTIC_BUCKETS:
+                        self.assertNotIn(bucket, row, f"{path}: {row}")
+                    for bucket in run_mode_analysis.DISPLAY_LOG_ERROR_BUCKETS:
+                        self.assertNotIn(bucket, row, f"{path}: {row}")
+
+    def test_marker_names_the_fields_that_hold_lexical_numbers(self):
+        with TemporaryDirectory() as tmp:
+            out_dir = self._run(Path(tmp))
+            marker = json.loads((out_dir / "no_semantic.json").read_text())
+            sourced = marker["fields_sourced_from_exact_match"]
+            self.assertIn("semantic_match", " ".join(sourced.values()))
+            self.assertIn("mean_semantic_match", " ".join(sourced.values()))
+
 
 if __name__ == "__main__":
     unittest.main()

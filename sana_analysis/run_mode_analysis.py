@@ -2260,11 +2260,13 @@ def _filter_rows_for_model(rows: List[dict], model: str) -> List[dict]:
     return out
 
 
-def _filter_json_for_model(filename: str, data: object, model: str, summary_rows: List[dict]) -> object:
+def _filter_json_for_model(
+    filename: str, data: object, model: str, summary_rows: List[dict], *, semantic: bool = True
+) -> object:
     if filename == "summary.json":
         return summary_rows
     if filename == "variant_summary.json":
-        return build_variant_summary(summary_rows)
+        return build_variant_summary(summary_rows, semantic=semantic)
     if isinstance(data, dict):
         filtered = {
             key: value
@@ -2306,6 +2308,8 @@ def write_per_model_outputs(
     out_dir: Path,
     files: Dict[str, object],
     csv_outputs: Dict[str, Tuple[List[dict], List[str]]],
+    *,
+    semantic: bool = True,
 ) -> None:
     models = _models_from_outputs(files, csv_outputs)
     summary = files.get("summary.json")
@@ -2319,7 +2323,10 @@ def write_per_model_outputs(
             model,
         )
         for filename, data in files.items():
-            write_json(model_dir / filename, _filter_json_for_model(filename, data, model, summary_rows))
+            write_json(
+                model_dir / filename,
+                _filter_json_for_model(filename, data, model, summary_rows, semantic=semantic),
+            )
         for filename, (rows, fieldnames) in csv_outputs.items():
             write_csv(model_dir / filename, _filter_rows_for_model(rows, model), fieldnames)
 
@@ -3876,6 +3883,11 @@ def run_analysis(
             "semantic": False,
             "semantic_match_source": "exact_match",
             "omitted": SEMANTIC_ONLY_OUTPUTS,
+            "fields_sourced_from_exact_match": {
+                "summary.json, variant_summary.json, by_model/*/": "semantic_match",
+                "search_depth.json, reasoning_density.json": "mean_semantic_match",
+                "figures/": "any axis or title reading 'Semantic Match'",
+            },
             "reason": (
                 "Run with --no-semantic. No model judged these rows, so semantic_match "
                 "is the lexical exact_match score and every judgment-dependent artifact "
@@ -4081,7 +4093,7 @@ def run_analysis(
     print("Skipping turn-waste CSV outputs (legacy analysis removed).")
 
     print("Writing per-model outputs...")
-    write_per_model_outputs(out_dir, files, csv_outputs)
+    write_per_model_outputs(out_dir, files, csv_outputs, semantic=semantic)
     print(f"  Wrote per-model outputs under {out_dir / 'by_model'}")
 
     if no_figures:
