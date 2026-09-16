@@ -35,6 +35,7 @@ from sana_analysis.answer_failure.validation import (
     validate_answer_failure_root,
 )
 from sana_analysis.answer_failure.report import build_answer_failure_report
+from sana_analysis.variants import try_parse_variant
 
 
 SOURCE_ROOTS = {
@@ -511,15 +512,30 @@ def _compact_slug_for_journal(value: str) -> str:
 
 
 def _short_mode_variant(mode_variant: str) -> str:
-    tokens = mode_variant.split("_")
+    """Shorten a variant name for a journal filename.
+
+    `results`, `k` and `skills` are dropped deliberately -- they are not part of
+    condition identity, the same reason `Variant.matches` ignores them. Flags
+    such as `nos3` are kept, because they are what distinguishes the web arm
+    from its no-S3 twin.
+
+    The decoder decides which segments to drop; the raw spelling of each kept
+    segment survives, so a gen-1 name shortens exactly as it always has and
+    journals written before this rewrite still resolve. Re-deriving the grammar
+    here is what produced trailing underscores on every gen-4 name.
+    """
+    if try_parse_variant(mode_variant) is None:
+        return mode_variant
+
+    tokens = [token for token in mode_variant.replace("__", "_").split("_") if token]
     kept: list[str] = []
     index = 0
     while index < len(tokens):
         token = tokens[index]
-        if token == "results":
+        if token in {"results", "skills"}:
             index += 2
             continue
-        if re.fullmatch(r"k\d+", token) or token in {"skills", "off", "on"}:
+        if re.fullmatch(r"k\d+", token):
             index += 1
             continue
         kept.append(token)
