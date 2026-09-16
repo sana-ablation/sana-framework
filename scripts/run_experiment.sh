@@ -19,6 +19,15 @@
 # ~3.7 GB embedding model per worker. stop ends the session and the eval workers
 # it started; killing the session alone leaves them running and writing rows.
 #
+# Driver tunables (ROUNDS, MODELS, PARALLEL, TASKSET, TIMEOUT, GRACE,
+# MAX_RESTARTS) are forwarded to the driver both locally and remotely:
+#
+#   ROUNDS="2 3" ./scripts/run_experiment.sh my-sweep run
+#
+# Note that a driver invoked with --only-new resumes rather than re-runs: a
+# second `run` over a finished round skips every task already recorded and adds
+# nothing. To genuinely re-run a round, move its results directory aside.
+#
 # Contract: an experiment is any directory under experiments/ that supplies
 # inputs/run.sh. That file is the only thing this script needs to know about
 # it -- put whatever driver you like behind it. experiments/ is gitignored, so
@@ -41,6 +50,22 @@ REMOTE_HOST="${REMOTE_HOST:-}"
 REMOTE_DIR="${REMOTE_DIR:-sana-framework}"     # relative: resolved against the remote home
 REMOTE_IDENTITY="${REMOTE_IDENTITY:-}"
 SESSION="${SESSION:-exp-${EXP##*/}}"
+
+# The tunables every experiment driver reads. Locally these reach the driver
+# because `run` invokes it in a subshell; remotely the driver is launched inside
+# a nested ssh -> tmux -> sh command string, which forwards no environment. They
+# are written to a file the driver sources instead of being quoted through three
+# layers, so `printf %q` runs once, here.
+DRIVER_ENV_VARS="ROUNDS MODELS PARALLEL TASKSET TIMEOUT GRACE MAX_RESTARTS"
+
+driver_env_file () {
+  local name
+  for name in $DRIVER_ENV_VARS; do
+    if [ -n "${!name:-}" ]; then
+      printf 'export %s=%q\n' "$name" "${!name}"
+    fi
+  done
+}
 
 die () { echo "error: $*" >&2; exit 1; }
 say () { echo "[exp $(date -u +%H:%M:%SZ)] $*"; }
@@ -119,9 +144,17 @@ run)
       die "session '$SESSION' is already running on $REMOTE_HOST. \
 Use '$0 $EXP status' to check it, or '$0 $EXP stop' to end it first."
     fi
+    # Ship the driver tunables ahead of the launch. Without this, ROUNDS=2
+    # silently runs all three rounds on the box.
+    driver_env_file | ssh_cmd "cat > $REMOTE_DIR/experiments/$EXP/.driver_env" \
+      || die "could not write the driver environment to $REMOTE_HOST"
+    if [ -n "$(driver_env_file)" ]; then
+      say "forwarding to the driver:"
+      driver_env_file | sed 's/^export /  /'
+    fi
     ssh_cmd "cd $REMOTE_DIR && \
              tmux new-session -d -s $SESSION \
-             'cd $REMOTE_DIR && ./experiments/$EXP/inputs/run.sh > experiments/$EXP/run.log 2>&1'"
+             'cd $REMOTE_DIR && . experiments/$EXP/.driver_env; ./experiments/$EXP/inputs/run.sh > experiments/$EXP/run.log 2>&1'"
     say "started in tmux session '$SESSION' on $REMOTE_HOST"
     say "follow with: REMOTE_HOST=$REMOTE_HOST $0 $EXP logs"
   else
