@@ -10,29 +10,39 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
+from sana_analysis.variants import axis_codes as _parse_variant_codes, try_parse_variant
+
 
 PLAN_ABLATION = [
-    ("n", "No Plan"),
-    ("d", "Default Plan"),
-    ("i", "Ideal Plan"),
+    ("naive", "No Plan"),
+    # "Standard Plan", not "Default Plan": run_mode_analysis and
+    # combine_grouped_models both call this condition Standard, and it matches
+    # the axis value's own name.
+    ("standard", "Standard Plan"),
+    ("ideal", "Ideal Plan"),
 ]
 
 SEARCH_ABLATION = [
-    ("n", "BM25 Search"),
-    ("d", "PNEUMA Hybrid Search"),
-    ("i", "Ideal Search"),
-    ("p", "Preloaded Sources"),
+    ("naive", "BM25 Search"),
+    ("standard", "PNEUMA Hybrid Search"),
+    ("ideal", "Ideal Search"),
+    ("preloaded", "Preloaded Sources"),
 ]
 
 EXECUTION_ABLATION = [
-    ("d", "Standard Data Analysis"),
-    ("i", "Ideal Data Analysis"),
+    ("standard", "Standard Data Analysis"),
+    ("ideal", "Ideal Data Analysis"),
 ]
 
+# The held-constant axes are spelled in the canonical vocabulary: the results
+# axis is `rich`, never `ideal`. Holding it at `ideal` would match nothing.
 ABLATIONS = [
-    ("Plan Ablation", "plan", "n", PLAN_ABLATION, {"search": "i", "results": "i", "compute": "i"}),
-    ("Search Ablation", "search", "n", SEARCH_ABLATION, {"plan": "i", "results": "i", "compute": "i"}),
-    ("Data Analysis Ablation", "compute", "d", EXECUTION_ABLATION, {"plan": "i", "search": "i", "results": "i"}),
+    ("Plan Ablation", "plan", "naive", PLAN_ABLATION,
+     {"search": "ideal", "results": "rich", "compute": "ideal"}),
+    ("Search Ablation", "search", "naive", SEARCH_ABLATION,
+     {"plan": "ideal", "results": "rich", "compute": "ideal"}),
+    ("Data Analysis Ablation", "compute", "standard", EXECUTION_ABLATION,
+     {"plan": "ideal", "search": "ideal", "results": "rich"}),
 ]
 
 COMPARISON_MODELS = ["gpt-5.4-nano", "gpt-5-mini"]
@@ -53,19 +63,19 @@ PAIRED_CONDITIONS = [
         "nns",
         "BM25 Search, No Plan, Standard Data Analysis",
         "BM25 Search, No Plan, Standard Data Analysis",
-        {"plan": "n", "search": "n", "results": "i", "compute": "d"},
+        {"plan": "naive", "search": "naive", "results": "rich", "compute": "standard"},
     ),
     (
         "sss",
         "Pneuma Search, Plan, Standard Data Analysis",
         "Pneuma Search, Plan, Standard Data Analysis",
-        {"plan": "d", "search": "d", "results": "i", "compute": "d"},
+        {"plan": "standard", "search": "standard", "results": "rich", "compute": "standard"},
     ),
     (
         "iii",
         "Ideal Search, Ideal Plan, Ideal Data Analysis",
         "Ideal Search, Ideal Plan, Ideal Data Analysis",
-        {"plan": "i", "search": "i", "results": "i", "compute": "i"},
+        {"plan": "ideal", "search": "ideal", "results": "rich", "compute": "ideal"},
     ),
 ]
 
@@ -106,35 +116,6 @@ def _safe_slug(value: str) -> str:
     while "__" in slug:
         slug = slug.replace("__", "_")
     return slug.strip("_") or "unknown"
-
-
-def _parse_variant_codes(variant: str) -> Dict[str, Optional[str]]:
-    codes: Dict[str, Optional[str]] = {
-        "search": None,
-        "results": None,
-        "plan": None,
-        "compute": "d",
-        "skills": None,
-        "k": None,
-        "sc": None,
-    }
-    parts = str(variant).split("_")
-    for idx, token in enumerate(parts):
-        if token == "search" and idx + 1 < len(parts):
-            codes["search"] = parts[idx + 1]
-        elif token == "results" and idx + 1 < len(parts):
-            codes["results"] = parts[idx + 1]
-        elif token.startswith("plan") and len(token) > 4:
-            codes["plan"] = token[4:]
-        elif token.startswith("compute") and len(token) > 7:
-            codes["compute"] = token[7:]
-        elif token == "skills" and idx + 1 < len(parts):
-            codes["skills"] = parts[idx + 1]
-        elif token.startswith("k") and token[1:].isdigit():
-            codes["k"] = token[1:]
-        elif token.startswith("sc") and token[2:].isdigit():
-            codes["sc"] = token[2:]
-    return codes
 
 
 def _context_key(codes: Dict[str, Optional[str]], axis: str) -> Tuple[Tuple[str, Optional[str]], ...]:
@@ -438,7 +419,13 @@ def generate_delta_figures(summary_rows: List[dict], output_dir: Path) -> Dict[s
     return {"semantic_delta_rows": delta_rows, "paired_mode_rows": paired_rows}
 
 
-def _delta_color(delta: Optional[float]) -> str:
+def delta_color(delta: Optional[float]) -> str:
+    """Bar colour from the sign of the delta.
+
+    A delta of exactly zero -- which every baseline bar has, since it is
+    compared against itself -- reads neutral grey. The signed number is printed
+    on the bar as well, so direction is never carried by colour alone.
+    """
     if delta is None:
         return "#8A8F98"
     if delta > 0.0001:
@@ -448,17 +435,17 @@ def _delta_color(delta: Optional[float]) -> str:
     return "#8A8F98"
 
 
-def _delta_label(delta: Optional[float]) -> str:
+def delta_label(delta: Optional[float]) -> str:
     if delta is None:
         return "n/a"
     return f"{delta:+.1f}%"
 
 
-def _delta_value_label(value: float, delta: Optional[float]) -> str:
-    return f"{value:.1f}% ({_delta_label(delta)})"
+def delta_value_label(value: float, delta: Optional[float]) -> str:
+    return f"{value:.1f}% ({delta_label(delta)})"
 
 
-def _plot_horizontal_delta_bars(
+def plot_horizontal_delta_bars(
     ax,
     labels: List[str],
     values: List[Optional[float]],
@@ -471,7 +458,15 @@ def _plot_horizontal_delta_bars(
     title_fontsize: Optional[float] = None,
     x_limit: float = 124.0,
     inside_label_reserved: float = 45.0,
+    slots: Optional[int] = None,
 ) -> None:
+    """One horizontal delta-bar panel.
+
+    `slots` reserves a fixed number of bar rows. Panels in a grid whose axes
+    hold different numbers of modes -- Search has four, Data Analysis two --
+    then share one bar pitch instead of stretching each panel's bars to fill
+    its own height.
+    """
     if not labels:
         ax.set_title(title, fontsize=title_fontsize)
         ax.set_xticks([])
@@ -509,7 +504,7 @@ def _plot_horizontal_delta_bars(
         bar = ax.barh(
             [y_position],
             [value],
-            color=_delta_color(delta),
+            color=delta_color(delta),
             alpha=0.42,
             height=0.62,
         )[0]
@@ -521,14 +516,24 @@ def _plot_horizontal_delta_bars(
         ax.text(
             label_x,
             bar.get_y() + bar.get_height() / 2,
-            _delta_value_label(value, delta),
+            delta_value_label(value, delta),
             ha=label_ha,
             va="center",
             fontsize=value_fontsize,
             fontweight="medium",
             color="#111827",
         )
-    ax.set_ylim(len(labels) - 0.5, -0.5)
+    ax.set_ylim(max(len(labels), slots or 0) - 0.5, -0.5)
+
+
+# The pre-promotion private names. `paper.tier_ablation` draws the same bars
+# from raw replicate trees, so the palette, the `NN.N% (+D.D%)` label and the
+# panel geometry are shared rather than reimplemented; these aliases keep the
+# existing call sites and tests untouched.
+_delta_color = delta_color
+_delta_label = delta_label
+_delta_value_label = delta_value_label
+_plot_horizontal_delta_bars = plot_horizontal_delta_bars
 
 
 def _comparison_models(rows_by_model: Dict[str, List[dict]]) -> List[str]:
@@ -545,7 +550,7 @@ def _paired_condition_axis_label(condition_id: str) -> str:
 
 def _compact_ablation_label(label: str) -> str:
     replacements = {
-        "Default Plan": "Default",
+        "Standard Plan": "Standard",
         "Ideal Plan": "Ideal",
         "BM25 Search": "BM25",
         "PNEUMA Hybrid Search": "PNEUMA",

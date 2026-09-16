@@ -25,12 +25,12 @@ from sana_analysis.metrics.trajectory_pair_analysis import (
     resolve_judge_limit,
     write_csv,
 )
+from sana_analysis.variants import find_variant
 
-
-TARGET_MODES = {
-    "nii": "search_i_results_i_plann_computei_k5_skills_off",
-    "dii": "search_i_results_i_pland_computei_k5_skills_off",
-    "iii": "search_i_results_i_plani_computei_k5_skills_off",
+TARGET_AXES = {
+    "nii": dict(search="ideal", plan="naive", compute="ideal"),
+    "dii": dict(search="ideal", plan="standard", compute="ideal"),
+    "iii": dict(search="ideal", plan="ideal", compute="ideal"),
 }
 BENCHMARK_LOG_ROOTS = {
     "lakeqa": Path("logs"),
@@ -288,14 +288,17 @@ def build_trajectory_rows(
     benchmark: str,
     log_root: Path,
     repo_root: Path,
-    mode_labels: Iterable[str] = TARGET_MODES.keys(),
+    mode_labels: Iterable[str] = TARGET_AXES.keys(),
     model_filter: str | None = None,
     task_filter: str | None = None,
 ) -> list[dict[str, str]]:
     paths_by_model_mode = _mode_log_paths(log_root)
+    observed_modes = {mode for _model, mode in paths_by_model_mode}
     rows: list[dict[str, str]] = []
     for mode_label in mode_labels:
-        mode = TARGET_MODES[mode_label]
+        mode = find_variant(observed_modes, **TARGET_AXES[mode_label])
+        if mode is None:
+            continue
         models = sorted(model for model, found_mode in paths_by_model_mode if found_mode == mode)
         for model_variant in models:
             if model_filter and model_variant != model_filter:
@@ -429,7 +432,7 @@ def summarize_rows(rows: Iterable[dict[str, str]]) -> tuple[list[dict[str, Any]]
             "benchmark": benchmark,
             "model_variant": model_variant,
             "mode_label": mode_label,
-            "mode": TARGET_MODES[mode_label],
+            "mode": group_rows[0].get("mode", ""),
             "n_total": n_total,
             "n_complete": statuses.get("complete", 0),
             "n_pending": statuses.get("pending", 0),
@@ -460,7 +463,7 @@ def summarize_rows(rows: Iterable[dict[str, str]]) -> tuple[list[dict[str, Any]]
                     "benchmark": benchmark,
                     "model_variant": model_variant,
                     "mode_label": mode_label,
-                    "mode": TARGET_MODES[mode_label],
+                    "mode": group_rows[0].get("mode", ""),
                     "trajectory_alignment": label,
                     "n": count,
                     "fraction_all": _fraction(count, n_total),
@@ -767,7 +770,7 @@ def judge_pending_rows(
 
 def build_all_rows(args: argparse.Namespace) -> list[dict[str, str]]:
     benchmarks = list(BENCHMARK_LOG_ROOTS) if args.benchmark == "all" else [args.benchmark]
-    mode_labels = list(TARGET_MODES) if args.mode == "all" else [args.mode]
+    mode_labels = list(TARGET_AXES) if args.mode == "all" else [args.mode]
     rows: list[dict[str, str]] = []
     for benchmark in benchmarks:
         repo_root = Path(args.input_root)
@@ -837,7 +840,7 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--benchmark", choices=["all", *BENCHMARK_LOG_ROOTS.keys()], default="all")
-    parser.add_argument("--mode", choices=["all", *TARGET_MODES.keys()], default="all")
+    parser.add_argument("--mode", choices=["all", *TARGET_AXES.keys()], default="all")
     parser.add_argument("--model", default="", help="Optional model folder, e.g. openai_gpt-5-mini.")
     parser.add_argument("--task", default="", help="Optional task-id substring filter.")
     parser.add_argument("--judge", action="store_true", help="Judge pending trajectories.")

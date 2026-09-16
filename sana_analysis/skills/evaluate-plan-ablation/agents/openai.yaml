@@ -1,0 +1,4 @@
+interface:
+  display_name: "Evaluate Plan Ablation"
+  short_description: "Compare the standard-plan and ideal-plan arms in logs"
+  default_prompt: "Use $evaluate-plan-ablation to compare explicit plan and plan_ideal calls from a log root and judge whether the plans are semantically similar, citing the model provenance for each run."

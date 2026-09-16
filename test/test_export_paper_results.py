@@ -22,7 +22,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_n_results_i_plann_k5_skills_off",
                 "search_tool": "naive",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "naive",
                 "computation_tool": "standard",
                 "n": 135,
@@ -36,7 +36,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_d_results_i_pland_k5_skills_off",
                 "search_tool": "standard",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "standard",
                 "computation_tool": "standard",
                 "n": 135,
@@ -50,7 +50,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_i_results_i_plani_computei_k5_skills_off",
                 "search_tool": "ideal",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "ideal",
                 "computation_tool": "ideal",
                 "n": 135,
@@ -233,7 +233,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_i_results_i_plani_computei_k5_skills_off",
                 "search_tool": "ideal",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "ideal",
                 "computation_tool": "ideal",
                 "n": 87,
@@ -251,7 +251,7 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "model": "openai_gpt-5.4-nano",
                 "variant": "search_i_results_i_plani_k5_skills_off",
                 "search_tool": "ideal",
-                "search_results": "ideal",
+                "search_results": "rich",
                 "agent_management": "ideal",
                 "computation_tool": "standard",
                 "n": 87,
@@ -264,6 +264,29 @@ class ExportPaperResultsTests(unittest.TestCase):
                 "avg_search_calls": 4.5,
                 "avg_read_calls": 11.5,
             },
+            {
+                # Models are discovered from summary_rows now, not enumerated
+                # from a hardcoded pair -- gpt-5-mini needs at least one real
+                # row to be discovered at all. This one matches PLANNED_CONDITIONS[1]
+                # ("S-I-I-I"), not [0] ("N-I-I-I"), so the pending_mini lookup
+                # below (which finds mini's first emitted row, "N-I-I-I") still
+                # exercises the Pending path.
+                "model": "openai_gpt-5-mini",
+                "variant": "search_i_results_i_plans_computei_k5_skills_off",
+                "search_tool": "ideal",
+                "search_results": "rich",
+                "agent_management": "standard",
+                "computation_tool": "ideal",
+                "n": 60,
+                "semantic_match": 0.42,
+                "avg_total_cost_with_ideal_subagents_usd": 0.05,
+                "avg_tool_calls_total": 14.0,
+                "D_acc_recall": None,
+                "D_acc": None,
+                "D_ret": None,
+                "avg_search_calls": 2.5,
+                "avg_read_calls": 8.0,
+            },
         ]
 
         rows = build_main_result_rows(summary_rows)
@@ -275,7 +298,7 @@ class ExportPaperResultsTests(unittest.TestCase):
             and row["plan"] == "Ideal"
             and row["search"] == "Ideal"
             and row["compute"] == "Ideal"
-            and row["results"] == "Ideal"
+            and row["results"] == "Rich"
         )
         standard_compute = next(
             row for row in rows
@@ -283,7 +306,7 @@ class ExportPaperResultsTests(unittest.TestCase):
             and row["plan"] == "Ideal"
             and row["search"] == "Ideal"
             and row["compute"] == "Standard"
-            and row["results"] == "Ideal"
+            and row["results"] == "Rich"
         )
         preloaded_search = next(
             row for row in rows
@@ -291,7 +314,7 @@ class ExportPaperResultsTests(unittest.TestCase):
             and row["plan"] == "Ideal"
             and row["search"] == "Preloaded"
             and row["compute"] == "Ideal"
-            and row["results"] == "Ideal"
+            and row["results"] == "Rich"
         )
         pending_mini = next(row for row in rows if row["model"] == "gpt-5-mini")
 
@@ -354,6 +377,169 @@ class ExportPaperResultsTests(unittest.TestCase):
         self.assertIn("Ret Tool Call", latex)
         self.assertIn("Acc Tool Call", latex)
         self.assertNotIn("Compute naive", latex)
+
+
+class TestCanonicalExportAxes(unittest.TestCase):
+    CANONICAL = "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+
+    def test_canonical_variant_resolves_every_axis(self):
+        from sana_analysis.paper.export import _parse_variant_axes
+
+        axes = _parse_variant_axes(self.CANONICAL)
+        self.assertEqual(axes["search_tool"], "ideal")
+        self.assertEqual(axes["agent_management"], "ideal")
+        self.assertEqual(axes["computation_tool"], "ideal")
+        self.assertEqual(axes["search_results"], "rich")
+
+    def test_gen1_literal_resolves_every_axis(self):
+        from sana_analysis.paper.export import _parse_variant_axes
+
+        axes = _parse_variant_axes("search_i_results_i_plani_computei_k5_skills_off")
+        self.assertEqual(axes["search_tool"], "ideal")
+        self.assertEqual(axes["agent_management"], "ideal")
+        self.assertEqual(axes["computation_tool"], "ideal")
+        self.assertEqual(axes["search_results"], "rich")
+
+    def test_standard_compute_is_not_reported_as_ideal(self):
+        from sana_analysis.paper.export import _parse_variant_axes
+
+        axes = _parse_variant_axes(
+            "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off"
+        )
+        self.assertEqual(axes["computation_tool"], "standard")
+
+    def test_canonical_mode_specs_spell_the_results_axis_as_rich(self):
+        from sana_analysis.paper.export import CANONICAL_MODE_SPECS
+
+        for _mode, axes in CANONICAL_MODE_SPECS:
+            self.assertEqual(axes["search_results"], "rich")
+
+    def test_every_canonical_mode_spec_matches_a_real_directory(self):
+        from sana_analysis.paper.export import CANONICAL_MODE_SPECS, _parse_variant_axes
+
+        directories = {
+            "Naive": "search_naive__plan_naive__compute_standard__results_rich__k5__skills_off",
+            "Standard": "search_standard__plan_standard__compute_standard__results_rich__k5__skills_off",
+            "Ideal": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+        }
+        for mode, expected_axes in CANONICAL_MODE_SPECS:
+            observed = _parse_variant_axes(directories[mode])
+            for field, value in expected_axes.items():
+                self.assertEqual(observed[field], value, f"{mode}.{field}")
+
+    def test_planned_conditions_spell_the_results_axis_in_current_vocabulary(self):
+        from sana_analysis.paper.export import PLANNED_CONDITIONS
+
+        for condition, _plan, _search, _compute, results in PLANNED_CONDITIONS:
+            self.assertIn(
+                results,
+                {"minimal", "rich"},
+                f"{condition}: results={results!r} is not current vocabulary",
+            )
+
+    def test_axes_for_summary_row_normalises_retired_results_spelling(self):
+        from sana_analysis.paper.export import _axes_for_summary_row
+
+        # No variant string to decode from, so every value below comes
+        # straight from the row-field override path this test targets.
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "ideal"})["search_results"],
+            "rich",
+        )
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "naive"})["search_results"],
+            "minimal",
+        )
+        # Current spellings pass through unchanged.
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "rich"})["search_results"],
+            "rich",
+        )
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "minimal"})["search_results"],
+            "minimal",
+        )
+        # An unrecognised value is preserved rather than coerced, matching
+        # the decoder's own contract (RESULT_MODE_ALIASES.get(value, value)).
+        self.assertEqual(
+            _axes_for_summary_row({"variant": "", "search_results": "exotic"})["search_results"],
+            "exotic",
+        )
+
+    def test_main_ablation_table_rows_match_the_current_results_vocabulary(self):
+        # build_main_ablation_table_rows compares against a `results` literal
+        # that lives in the function body, not in MAIN_ABLATION_TABLE_SPECS
+        # (which only carries plan/search/compute). This row's variant name
+        # decodes to search_results="rich" and nothing else; if the internal
+        # comparison still asked for the retired "ideal" spelling, the row
+        # would be silently dropped and this list would come back empty.
+        from sana_analysis.paper.export import build_main_ablation_table_rows
+
+        summary_rows = [
+            {
+                "model": "openai_gpt-5.4-nano",
+                "variant": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+                "n": 20,
+                "semantic_match": 0.5,
+            },
+        ]
+
+        rows = build_main_ablation_table_rows(summary_rows)
+
+        self.assertTrue(
+            any(
+                row["model"] == "gpt-5.4-nano"
+                and row["plan"] == "Ideal"
+                and row["search"] == "Ideal"
+                and row["compute"] == "Ideal"
+                for row in rows
+            ),
+            "expected a matching row; the results comparison inside "
+            "build_main_ablation_table_rows may still be asking for the "
+            "retired 'ideal' spelling instead of 'rich'",
+        )
+
+
+class TestModelDiscovery(unittest.TestCase):
+    ROWS = [
+        {"model": "openai_gpt-5.4-nano"},
+        {"model": "openai_gpt-5-mini"},
+        {"model": "openai_gpt-5.2"},
+        {"model": "openai_gpt-5.6-luna"},
+        {"model": "openai_gpt-5.4-nano"},
+    ]
+
+    def test_models_are_discovered_from_the_rows(self):
+        from sana_analysis.paper.export import discover_models
+
+        self.assertEqual(
+            set(discover_models(self.ROWS)),
+            {"gpt-5.4-nano", "gpt-5-mini", "gpt-5.2", "gpt-5.6-luna"},
+        )
+
+    def test_models_absent_from_the_old_hardcoded_pair_are_kept(self):
+        from sana_analysis.paper.export import discover_models
+
+        found = discover_models(self.ROWS)
+        self.assertIn("gpt-5.2", found)
+        self.assertIn("gpt-5.6-luna", found)
+
+    def test_discovery_deduplicates_and_is_deterministic(self):
+        from sana_analysis.paper.export import discover_models
+
+        self.assertEqual(discover_models(self.ROWS), discover_models(self.ROWS))
+        self.assertEqual(len(discover_models(self.ROWS)), 4)
+
+    def test_label_shortening_still_applies_to_discovered_models(self):
+        from sana_analysis.paper.export import model_display_name
+
+        self.assertEqual(model_display_name("openai_gpt-5.4-nano"), "gpt-5.4-nano")
+        self.assertEqual(model_display_name("openai_gpt-5.2"), "gpt-5.2")
+
+    def test_empty_rows_discover_nothing(self):
+        from sana_analysis.paper.export import discover_models
+
+        self.assertEqual(discover_models([]), [])
 
 
 if __name__ == "__main__":

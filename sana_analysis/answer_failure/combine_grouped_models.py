@@ -15,6 +15,7 @@ from sana_analysis.answer_failure.taxonomy import (
     OMITTED_ANSWER_FAILURE_TYPES,
 )
 from sana_analysis.answer_failure.report import _load_rows_for_events_file, _trusted_events
+from sana_analysis.variants import CONDITION_ORDER, select_conditions
 
 
 COMBINED_CSV_NAME = "combined_answer_failure_events.csv"
@@ -74,15 +75,10 @@ CONDITION_FIGURE_LEGEND_LABELS = {
     "Finalization failures": "Finalization",
     "Tool blocker failures": "Tool blocker",
 }
-CONDITION_FIGURE_ORDER = [
-    ("No Plan", "search_i_results_i_plann_computei_k5_skills_off"),
-    ("Standard Plan", "search_i_results_i_pland_computei_k5_skills_off"),
-    ("BM25", "search_n_results_i_plani_computei_k5_skills_off"),
-    ("Pneuma Hybrid", "search_d_results_i_plani_computei_k5_skills_off"),
-    ("Standard Computation", "search_i_results_i_plani_k5_skills_off"),
-    ("Ideal", "search_i_results_i_plani_computei_k5_skills_off"),
-    ("Preloaded", "search_p_results_i_plani_computei_k5_skills_off"),
-]
+# All seven conditions, as predicates over the three ablation axes. The literals
+# this replaced named the same seven; `sana_analysis.variants.CONDITION_ORDER` is
+# now the only place they are written down.
+CONDITION_FIGURE_ORDER = list(CONDITION_ORDER)
 CONDITION_FIGURE_MODEL_ORDER = ["openai_gpt-5.4-nano", "openai_gpt-5-mini", "gpt-5.4-nano", "gpt-5-mini"]
 CONDITION_FIGURE_MODEL_LABELS = {
     "openai_gpt-5.4-nano": "5.4\nnano",
@@ -296,7 +292,11 @@ def write_model_group_figure(path: Path, rows: list[dict]) -> bool:
 def condition_group_counts(rows: list[dict]) -> tuple[list[tuple[str, str]], list[str], dict[tuple[str, str], Counter[str]]]:
     counts_by_variant_model_group: dict[tuple[str, str], Counter[str]] = defaultdict(Counter)
     group_totals: Counter[str] = Counter()
-    variant_lookup = {variant: label for label, variant in CONDITION_FIGURE_ORDER}
+    observed_variants = {str(row.get("mode_variant", "")) for row in rows}
+    resolved = select_conditions(
+        observed_variants, labels=[label for label, _axes in CONDITION_FIGURE_ORDER]
+    )
+    variant_lookup = {variant: label for label, variant in resolved}
 
     for row in rows:
         variant = str(row.get("mode_variant", ""))
@@ -309,7 +309,7 @@ def condition_group_counts(rows: list[dict]) -> tuple[list[tuple[str, str]], lis
     ordered_groups = _ordered_groups_from_counts(group_totals)
     active_conditions = [
         (label, variant)
-        for label, variant in CONDITION_FIGURE_ORDER
+        for label, variant in resolved
         if any(
             sum(counts.values()) > 0
             for (observed_variant, _), counts in counts_by_variant_model_group.items()

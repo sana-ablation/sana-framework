@@ -6,10 +6,12 @@ from collections import Counter
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from sana_analysis import semantic_mirror as verifier
+
 
 _SCRIPT_DIR = (
     Path(__file__).resolve().parent.parent
-    / ".agents"
+    / "sana_analysis"
     / "skills"
     / "semantic-eval-auditor"
     / "scripts"
@@ -263,6 +265,98 @@ class TestSemanticEvalAuditor(unittest.TestCase):
             self.assertEqual(rows[0]["semantic_bucket"], "semantic_incorrect")
             self.assertEqual(rows[0]["log_error_bucket"], "")
             self.assertEqual(rows[0]["log_error_evidence"], "")
+
+
+class TestSkipExisting(unittest.TestCase):
+    def _tree(self, root: Path) -> Path:
+        eval_dir = root / "source" / "modes" / "openai_gpt-5-mini" / "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+        eval_dir.mkdir(parents=True)
+        eval_path = eval_dir / "eval_results.csv"
+        with eval_path.open("w", newline="") as handle:
+            writer = csv.DictWriter(
+                handle,
+                fieldnames=["task_id", "expected_answer", "predicted_answer", "exact_match", "error", "success"],
+            )
+            writer.writeheader()
+            writer.writerow({
+                "task_id": "k-1-d-1/task_1.json",
+                "expected_answer": "1999",
+                "predicted_answer": "1999",
+                "exact_match": "1.0",
+                "error": "",
+                "success": "True",
+            })
+        return root / "source"
+
+    def _run(self, source_root: Path, output_root: Path, judge, *, force: bool = False) -> None:
+        auditor.SemanticEvalAuditor(
+            source_root=source_root,
+            output_root=output_root,
+            logs_root=source_root.parent / "logs",
+            judge=judge,
+            tail_lines=20,
+            tail_lines_fallback=50,
+            force=force,
+        ).run()
+
+    def test_second_pass_makes_no_judge_calls_and_rewrites_nothing(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = self._tree(root)
+            output_root = root / "source_semantic"
+
+            first = _StubJudge()
+            self._run(source_root, output_root, first)
+            self.assertEqual(len(first.row_calls), 1)
+
+            mirror = output_root / "modes" / "openai_gpt-5-mini" / "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off" / "eval_results.csv"
+            before = mirror.stat().st_mtime_ns
+
+            second = _StubJudge()
+            self._run(source_root, output_root, second)
+            self.assertEqual(second.row_calls, [])
+            self.assertEqual(second.file_calls, [])
+            self.assertEqual(mirror.stat().st_mtime_ns, before)
+
+    def test_force_rejudges(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = self._tree(root)
+            output_root = root / "source_semantic"
+            self._run(source_root, output_root, _StubJudge())
+
+            forced = _StubJudge()
+            self._run(source_root, output_root, forced, force=True)
+            self.assertEqual(len(forced.row_calls), 1)
+
+    def test_invalid_mirror_is_rejudged_rather_than_trusted(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source_root = self._tree(root)
+            output_root = root / "source_semantic"
+            self._run(source_root, output_root, _StubJudge())
+
+            mirror = output_root / "modes" / "openai_gpt-5-mini" / "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off" / "eval_results.csv"
+            rows = list(csv.DictReader(mirror.open(newline="")))
+            rows[0]["semantic_bucket"] = "not_a_bucket"
+            with mirror.open("w", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
+                writer.writeheader()
+                writer.writerows(rows)
+
+            repaired = _StubJudge()
+            self._run(source_root, output_root, repaired)
+            self.assertEqual(len(repaired.row_calls), 1)
+
+
+class TestCollectMirrorIssues(unittest.TestCase):
+    def test_missing_mirror_is_an_issue(self):
+        with TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "eval_results.csv"
+            source.write_text("task_id,exact_match\nk-1-d-1/task_1.json,1.0\n")
+            issues = verifier.collect_mirror_issues(source, root / "absent.csv")
+            self.assertTrue(any("does not exist" in issue for issue in issues))
 
 
 if __name__ == "__main__":

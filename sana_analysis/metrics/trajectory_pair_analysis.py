@@ -17,10 +17,12 @@ from pathlib import Path
 from typing import Any, Iterable
 
 
-IDEAL_MODE = "search_i_results_i_plani_computei_k5_skills_off"
-PAIR_MODES = {
-    "nii_vs_iii": "search_i_results_i_plann_computei_k5_skills_off",
-    "dii_vs_iii": "search_i_results_i_pland_computei_k5_skills_off",
+from sana_analysis.variants import find_variant
+
+IDEAL_AXES = dict(search="ideal", plan="ideal", compute="ideal")
+PAIR_AXES = {
+    "nii_vs_iii": dict(search="ideal", plan="naive", compute="ideal"),
+    "dii_vs_iii": dict(search="ideal", plan="standard", compute="ideal"),
 }
 BENCHMARK_LOG_ROOTS = {
     "lakeqa": Path("logs"),
@@ -198,26 +200,35 @@ def build_pair_rows(
     *,
     benchmark: str,
     log_root: Path,
-    pair_labels: Iterable[str] = PAIR_MODES.keys(),
+    pair_labels: Iterable[str] = PAIR_AXES.keys(),
     model_filter: str | None = None,
     task_filter: str | None = None,
 ) -> list[dict[str, str]]:
     paths_by_model_mode = _mode_log_paths(log_root)
+    observed_modes = {mode for _model, mode in paths_by_model_mode}
+    # When the ideal arm was never run anywhere in this tree, keep emitting rows
+    # for the comparison arms that WERE run: their ideal logs are simply absent
+    # and downstream marks them not_comparable. Returning [] here would silently
+    # drop real data. The empty string is also more honest than the literal this
+    # replaced, which named a directory that might not exist.
+    ideal_mode = find_variant(observed_modes, **IDEAL_AXES) or ""
     rows: list[dict[str, str]] = []
     for pair_label in pair_labels:
-        comparison_mode = PAIR_MODES[pair_label]
+        comparison_mode = find_variant(observed_modes, **PAIR_AXES[pair_label])
+        if comparison_mode is None:
+            continue
         models = sorted(
             {
                 model
                 for model, mode in paths_by_model_mode
-                if mode in {comparison_mode, IDEAL_MODE}
+                if mode in {comparison_mode, ideal_mode}
             }
         )
         for model_variant in models:
             if model_filter and model_variant != model_filter:
                 continue
             comparison_logs = paths_by_model_mode.get((model_variant, comparison_mode), {})
-            ideal_logs = paths_by_model_mode.get((model_variant, IDEAL_MODE), {})
+            ideal_logs = paths_by_model_mode.get((model_variant, ideal_mode), {})
             task_ids = sorted(set(comparison_logs) | set(ideal_logs))
             for task_id in task_ids:
                 if task_filter and task_filter not in task_id:
@@ -257,7 +268,7 @@ def build_pair_rows(
                     "runner_model": runner_model,
                     "task_id": task_id,
                     "comparison_mode": comparison_mode,
-                    "ideal_mode": IDEAL_MODE,
+                    "ideal_mode": ideal_mode,
                     "comparison_log": comparison_log_str,
                     "ideal_log": ideal_log_str,
                     "comparison_start_line": str(comparison_start_line),
@@ -400,8 +411,8 @@ def summarize_rows(rows: Iterable[dict[str, str]]) -> tuple[list[dict[str, Any]]
             "benchmark": benchmark,
             "model_variant": model_variant,
             "pair_label": pair_label,
-            "comparison_mode": PAIR_MODES[pair_label],
-            "ideal_mode": IDEAL_MODE,
+            "comparison_mode": group_rows[0].get("comparison_mode", ""),
+            "ideal_mode": group_rows[0].get("ideal_mode", ""),
             "n_total": n_total,
             "n_complete": statuses.get("complete", 0),
             "n_pending": statuses.get("pending", 0),
@@ -911,7 +922,7 @@ def judge_pending_rows(
 
 def build_all_rows(args: argparse.Namespace) -> list[dict[str, str]]:
     benchmarks = list(BENCHMARK_LOG_ROOTS) if args.benchmark == "all" else [args.benchmark]
-    pair_labels = list(PAIR_MODES) if args.pair == "all" else [args.pair]
+    pair_labels = list(PAIR_AXES) if args.pair == "all" else [args.pair]
     rows: list[dict[str, str]] = []
     for benchmark in benchmarks:
         root = Path(args.input_root) / BENCHMARK_LOG_ROOTS[benchmark]
@@ -1010,7 +1021,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input-root", default=".", help="Repository/input root containing logs and log-kramabench.")
     parser.add_argument("--output-dir", default="agent_analysis/trajectory_pair_analysis")
     parser.add_argument("--benchmark", choices=["all", *BENCHMARK_LOG_ROOTS.keys()], default="all")
-    parser.add_argument("--pair", choices=["all", *PAIR_MODES.keys()], default="all")
+    parser.add_argument("--pair", choices=["all", *PAIR_AXES.keys()], default="all")
     parser.add_argument("--model", default="", help="Optional model folder, e.g. openai_gpt-5-mini.")
     parser.add_argument("--task", default="", help="Optional task-id substring filter.")
     parser.add_argument("--judge", action="store_true", help="Judge pending pairs.")

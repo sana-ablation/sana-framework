@@ -35,6 +35,7 @@ from sana_analysis.answer_failure.validation import (
     validate_answer_failure_root,
 )
 from sana_analysis.answer_failure.report import build_answer_failure_report
+from sana_analysis.variants import short_name
 
 
 SOURCE_ROOTS = {
@@ -511,20 +512,14 @@ def _compact_slug_for_journal(value: str) -> str:
 
 
 def _short_mode_variant(mode_variant: str) -> str:
-    tokens = mode_variant.split("_")
-    kept: list[str] = []
-    index = 0
-    while index < len(tokens):
-        token = tokens[index]
-        if token == "results":
-            index += 2
-            continue
-        if re.fullmatch(r"k\d+", token) or token in {"skills", "off", "on"}:
-            index += 1
-            continue
-        kept.append(token)
-        index += 1
-    return "_".join(kept)
+    """Shorten a variant name for a journal filename.
+
+    `variants.short_name` is the whole implementation: the decoder owns the
+    grammar, so it owns which segments are condition identity and which are not.
+    This wrapper exists only because the journal filename is what this module
+    needs the shortening for.
+    """
+    return short_name(mode_variant)
 
 
 def _default_journal_path(layout: AuditLayout) -> Path:

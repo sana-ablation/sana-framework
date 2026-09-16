@@ -105,7 +105,7 @@ class TestRunModeDeltaFigures(unittest.TestCase):
 
         self.assertEqual(by_key[("Plan Ablation", "No Plan")]["delta"], 0.0)
         self.assertEqual(by_key[("Plan Ablation", "No Plan")]["semantic_match"], 0.40)
-        self.assertEqual(by_key[("Plan Ablation", "Default Plan")]["delta"], 0.10)
+        self.assertEqual(by_key[("Plan Ablation", "Standard Plan")]["delta"], 0.10)
         self.assertEqual(by_key[("Plan Ablation", "Ideal Plan")]["delta"], 0.40)
         self.assertEqual(by_key[("Search Ablation", "BM25 Search")]["delta"], 0.0)
         self.assertEqual(by_key[("Search Ablation", "PNEUMA Hybrid Search")]["delta"], 0.30)
@@ -305,6 +305,83 @@ class TestRunModeDeltaFigures(unittest.TestCase):
             self.assertTrue((output_dir / "semantic_delta_ablation_comparison.pdf").exists())
             self.assertTrue((output_dir / "semantic_delta_ablation_compact.pdf").exists())
             self.assertTrue((output_dir / "paired_mode_metrics_comparison.pdf").exists())
+
+
+class TestCanonicalDeltaRows(unittest.TestCase):
+    """The gen-4 names every directory uses. Before the decoder these produced
+    zero rows, which is why semantic_delta_ablation.csv was header-only."""
+
+    def _summary_rows(self):
+        gen4 = {
+            "No Plan": "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off",
+            "Standard Plan": "search_ideal__plan_standard__compute_ideal__results_rich__k5__skills_off",
+            "Ideal": "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "BM25": "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "Pneuma Hybrid": "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "Preloaded": "search_preloaded__plan_ideal__compute_ideal__results_rich__k5__skills_off",
+            "Standard Computation": "search_ideal__plan_ideal__compute_standard__results_rich__k5__skills_off",
+        }
+        return [
+            {
+                "model": "model_a",
+                "variant": name,
+                "semantic_match": 0.5 + index / 100,
+                "em": 0.4,
+                "D_ret": 0.3,
+                "D_acc": 0.2,
+            }
+            for index, name in enumerate(gen4.values())
+        ]
+
+    def test_canonical_variants_produce_delta_rows(self):
+        rows = build_semantic_delta_rows(self._summary_rows())
+        self.assertGreater(len(rows), 0, "canonical variants produced no delta rows")
+
+    def test_all_three_ablations_are_represented(self):
+        rows = build_semantic_delta_rows(self._summary_rows())
+        self.assertEqual(
+            {row["ablation"] for row in rows},
+            {"Plan Ablation", "Search Ablation", "Data Analysis Ablation"},
+        )
+
+    def test_canonical_variants_produce_paired_rows(self):
+        rows = build_paired_mode_metric_rows(self._summary_rows())
+        self.assertGreater(len(rows), 0, "canonical variants produced no paired rows")
+
+    def test_the_standard_plan_condition_is_labelled_consistently(self):
+        from sana_analysis.paper.delta_figures import PLAN_ABLATION
+
+        labels = [label for _code, label in PLAN_ABLATION]
+        self.assertIn("Standard Plan", labels)
+        self.assertNotIn("Default Plan", labels)
+
+    def test_ablation_codes_are_resolved_words_not_letters(self):
+        from sana_analysis.paper.delta_figures import ABLATIONS
+
+        for _name, _axis, baseline_code, members, fixed_context in ABLATIONS:
+            self.assertGreater(len(baseline_code), 1, baseline_code)
+            for code, _label in members:
+                self.assertGreater(len(code), 1, code)
+            for value in fixed_context.values():
+                self.assertGreater(len(value), 1, value)
+
+    def test_the_results_axis_is_held_at_rich_not_ideal(self):
+        from sana_analysis.paper.delta_figures import ABLATIONS
+
+        for _name, _axis, _baseline, _members, fixed_context in ABLATIONS:
+            if "results" in fixed_context:
+                self.assertEqual(fixed_context["results"], "rich")
+
+    def test_gen1_variants_still_produce_rows(self):
+        rows = build_semantic_delta_rows(
+            [
+                {"model": "m", "variant": "search_i_results_i_plann_computei_k5_skills_off",
+                 "semantic_match": 0.5, "em": 0.4, "D_ret": 0.3, "D_acc": 0.2},
+                {"model": "m", "variant": "search_i_results_i_plani_computei_k5_skills_off",
+                 "semantic_match": 0.7, "em": 0.4, "D_ret": 0.3, "D_acc": 0.2},
+            ]
+        )
+        self.assertGreater(len(rows), 0)
 
 
 if __name__ == "__main__":

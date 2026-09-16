@@ -369,5 +369,67 @@ class TestPaperFigureGenerator(unittest.TestCase):
             self.assertFalse((root / "paper_figures" / "agent_analysis" / ".DS_Store").exists())
 
 
+class TestCanonicalSearchVariantLabels(unittest.TestCase):
+    def test_canonical_directories_get_their_search_codes(self):
+        from sana_analysis.paper.figures import _search_variant_label
+
+        self.assertEqual(
+            _search_variant_label(
+                "search_naive__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+            ),
+            "NII",
+        )
+        self.assertEqual(
+            _search_variant_label(
+                "search_standard__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+            ),
+            "DII",
+        )
+        self.assertEqual(
+            _search_variant_label(
+                "search_ideal__plan_ideal__compute_ideal__results_rich__k5__skills_off"
+            ),
+            "III",
+        )
+
+    def test_gen1_literals_still_get_the_same_codes(self):
+        from sana_analysis.paper.figures import _search_variant_label
+
+        self.assertEqual(
+            _search_variant_label("search_n_results_i_plani_computei_k5_skills_off"), "NII"
+        )
+        self.assertEqual(
+            _search_variant_label("search_d_results_i_plani_computei_k5_skills_off"), "DII"
+        )
+        self.assertEqual(
+            _search_variant_label("search_i_results_i_plani_computei_k5_skills_off"), "III"
+        )
+
+    def test_a_non_search_ablation_variant_has_no_code(self):
+        from sana_analysis.paper.figures import _search_variant_label
+
+        self.assertIsNone(
+            _search_variant_label(
+                "search_ideal__plan_naive__compute_ideal__results_rich__k5__skills_off"
+            )
+        )
+
+    def test_a_non_variant_string_has_no_code(self):
+        from sana_analysis.paper.figures import _search_variant_label
+
+        self.assertIsNone(_search_variant_label("not-a-variant"))
+
+    def test_every_search_code_has_an_order_entry_and_a_colour(self):
+        from sana_analysis.paper.figures import (
+            SEARCH_COLORS,
+            SEARCH_ORDER,
+            SEARCH_VARIANTS,
+        )
+
+        for _axes, code in SEARCH_VARIANTS:
+            self.assertIn(code, SEARCH_ORDER)
+            self.assertIn(code, SEARCH_COLORS)
+
+
 if __name__ == "__main__":
     unittest.main()

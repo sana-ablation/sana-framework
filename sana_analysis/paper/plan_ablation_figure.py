@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Generate the default-plan vs ideal-plan comparison figure."""
+"""Generate the standard-plan vs ideal-plan comparison figure.
+
+The plan axis value is `standard`; `run_mode_analysis`, `combine_grouped_models`
+and `delta_figures` all label this condition "Standard Plan", and so does this
+figure's title. The `plan_default_analysis` paths below are directory names on
+disk and keep their existing spelling.
+"""
 
 from __future__ import annotations
 
@@ -10,9 +16,17 @@ from collections import Counter
 from pathlib import Path
 from typing import Iterable, Optional
 
+from sana_analysis.variants import find_variant
 
-CANONICAL_PLAN_D_MODE = "search_i_results_i_pland_computei_k5_skills_off"
-CANONICAL_PLAN_I_MODE = "search_i_results_i_plani_computei_k5_skills_off"
+# The plan ablation's two arms: standard plan against ideal plan, everything
+# else held at ideal.
+PLAN_D_AXES = dict(search="ideal", plan="standard", compute="ideal")
+PLAN_I_AXES = dict(search="ideal", plan="ideal", compute="ideal")
+
+# "Standard Plan", matching run_mode_analysis, combine_grouped_models and
+# delta_figures. The same condition under two names in figure and table is how
+# the naming drift this package just retired began.
+FIGURE_TITLE = "Standard Plan vs Ideal Plan Similarity"
 
 BENCHMARK_ROOTS = {
     "lakeqa": Path("agent_analysis/plan_default_analysis/logs"),
@@ -51,6 +65,14 @@ BUCKET_COLORS = {
 
 
 def _normalize_plan_similarity(row: dict) -> Optional[str]:
+    """The bucket this row belongs in, or None to leave it out of the figure.
+
+    A blank `plan_similarity` means no judge ever looked at this pair -- a
+    prepare-only run writes exactly that. It is absence, not a verdict, so it is
+    skipped rather than bucketed: mapping it to `not_comparable` rendered a
+    never-judged run as 100% "Not comparable", a named category that reads as a
+    result. An explicitly judged `not_comparable` still counts.
+    """
     missing_type = str(row.get("missing_plan_type", "") or "").strip()
     if missing_type in {"missing_both", "missing_plan_i"}:
         return None
@@ -59,7 +81,7 @@ def _normalize_plan_similarity(row: dict) -> Optional[str]:
     label = str(row.get("plan_similarity", "") or "").strip()
     if label in BUCKET_ORDER:
         return label
-    return "not_comparable"
+    return None
 
 
 def _pretty_model(model: str) -> str:
@@ -87,11 +109,28 @@ def load_plan_default_rows(input_root: Path) -> list[dict]:
 
 
 def _summarize_rows(rows: Iterable[dict]) -> dict[tuple[str, str], dict]:
+    rows_list = list(rows)
+
+    observed_plan_d_modes = []
+    observed_plan_i_modes = []
+    for row in rows_list:
+        plan_d = str(row.get("plan_d_mode", "")).strip()
+        plan_i = str(row.get("plan_i_mode", "")).strip()
+        if plan_d and plan_d not in observed_plan_d_modes:
+            observed_plan_d_modes.append(plan_d)
+        if plan_i and plan_i not in observed_plan_i_modes:
+            observed_plan_i_modes.append(plan_i)
+
+    plan_d_mode = find_variant(observed_plan_d_modes, **PLAN_D_AXES)
+    plan_i_mode = find_variant(observed_plan_i_modes, **PLAN_I_AXES)
+    if plan_d_mode is None or plan_i_mode is None:
+        return {}
+
     summary: dict[tuple[str, str], dict] = {}
-    for row in rows:
-        if str(row.get("plan_d_mode", "")) != CANONICAL_PLAN_D_MODE:
+    for row in rows_list:
+        if str(row.get("plan_d_mode", "")) != plan_d_mode:
             continue
-        if str(row.get("plan_i_mode", "")) != CANONICAL_PLAN_I_MODE:
+        if str(row.get("plan_i_mode", "")) != plan_i_mode:
             continue
         bucket = _normalize_plan_similarity(row)
         if bucket is None:
@@ -197,7 +236,7 @@ def render_plan_default_similarity_figure(rows: Iterable[dict], output_path: Pat
 
     ax.set_ylim(0, 108)
     ax.set_ylabel("Rows with ideal plan available (%)")
-    ax.set_title("Default Plan vs Ideal Plan Similarity")
+    ax.set_title(FIGURE_TITLE)
     ax.set_xticks(x_positions)
     ax.set_xticklabels(bar_labels, rotation=0, ha="center")
     ax.grid(axis="y", alpha=0.22, linestyle="--", linewidth=0.7)
